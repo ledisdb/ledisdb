@@ -9,6 +9,7 @@ import (
 	"net"
 	"runtime"
 	"strconv"
+	"strings"
 )
 
 var errReadRequest = errors.New("read request error, invalid format")
@@ -19,6 +20,9 @@ type client struct {
 
 	rb *bufio.Reader
 	wb *bufio.Writer
+
+	cmd  string
+	args [][]byte
 }
 
 func newClient(c net.Conn, app *App) {
@@ -126,31 +130,23 @@ func (c *client) readRequest() ([][]byte, error) {
 
 func (c *client) handleRequest(req [][]byte) {
 	var err error
-	var r interface{}
-	f, ok := regCmds[hack.String(req[0])]
-	if !ok {
-		err = ErrNotFound
+
+	if len(req) == 0 {
+		err = ErrEmptyCommand
 	} else {
-		r, err = f(c, req[1:])
+		c.cmd = strings.ToLower(hack.String(req[0]))
+		c.args = req[1:]
+
+		f, ok := regCmds[c.cmd]
+		if !ok {
+			err = ErrNotFound
+		} else {
+			err = f(c)
+		}
 	}
 
 	if err != nil {
 		c.writeError(err)
-	} else {
-		switch v := r.(type) {
-		case string:
-			c.writeStatus(v)
-		case []byte:
-			c.writeBulk(v)
-		case int64:
-			c.writeInteger(v)
-		case []interface{}:
-			c.writeArray(v)
-		case nil:
-			c.writeBulk(nil)
-		default:
-			panic("invalid type")
-		}
 	}
 
 	c.wb.Flush()

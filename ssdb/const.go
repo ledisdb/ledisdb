@@ -7,6 +7,7 @@ import (
 var (
 	ErrEmptyCommand = errors.New("empty command")
 	ErrNotFound     = errors.New("command not found")
+	ErrCmdParams    = errors.New("invalid command param")
 )
 
 var (
@@ -14,4 +15,7 @@ var (
 
 	NullBulk  = []byte("-1")
 	NullArray = []byte("-1")
+
+	PONG = "PONG"
+	OK   = "OK"
 )
