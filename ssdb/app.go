@@ -4,6 +4,7 @@ import (
 	"github.com/siddontang/golib/leveldb"
 	"net"
 	"strings"
+	"sync"
 )
 
 type App struct {
@@ -12,6 +13,11 @@ type App struct {
 	listener net.Listener
 
 	db *leveldb.DB
+
+	kvMutex   sync.Mutex
+	hashMutex sync.Mutex
+	listMutex sync.Mutex
+	zsetMutex sync.Mutex
 }
 
 func NewApp(cfg *Config) (*App, error) {
@@ -36,6 +42,8 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	app.dbMutex = newKeyMutex(128)
+
 	return app, nil
 }
 
@@ -54,4 +62,8 @@ func (app *App) Run() {
 
 		newClient(conn, app)
 	}
+}
+
+func (app *App) getMutex(key []byte) *sync.Mutex {
+	return app.dbMutex.Get(key)
 }

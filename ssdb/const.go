@@ -19,3 +19,13 @@ var (
 	PONG = "PONG"
 	OK   = "OK"
 )
+
+const (
+	KV_TYPE byte = iota + 1
+	HASH_TYPE
+	HSIZE_TYPE
+	ZSET_TYPE
+	ZSIZE_TYPE
+	LIST_TYPE
+	LSIZE_TYPE
+)
