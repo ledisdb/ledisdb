@@ -42,8 +42,6 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	app.dbMutex = newKeyMutex(128)
-
 	return app, nil
 }
 
@@ -62,8 +60,4 @@ func (app *App) Run() {
 
 		newClient(conn, app)
 	}
-}
-
-func (app *App) getMutex(key []byte) *sync.Mutex {
-	return app.dbMutex.Get(key)
 }

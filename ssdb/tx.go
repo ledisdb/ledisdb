@@ -33,7 +33,6 @@ func (t *tx) Commit() error {
 	return err
 }
 
-func (t *tx) Rollback() error {
-	err := t.wb.Rollback()
-	return err
+func (t *tx) Rollback() {
+	t.wb.Rollback()
 }

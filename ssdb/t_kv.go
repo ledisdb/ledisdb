@@ -10,7 +10,7 @@ var errEmptyKVKey = errors.New("invalid empty kv key")
 var errKVKey = errors.New("invalid encode kv key")
 
 func encode_kv_key(key []byte) []byte {
-	ek := make([]byte, key+1)
+	ek := make([]byte, len(key)+1)
 	ek[0] = KV_TYPE
 	copy(ek[1:], key)
 	return ek
@@ -97,7 +97,7 @@ func (a *App) kv_exists(key []byte) (int64, error) {
 
 	var v []byte
 	v, err = a.db.Get(key)
-	if v != nil && err != nil {
+	if v != nil && err == nil {
 		return 1, nil
 	} else {
 		return 0, err

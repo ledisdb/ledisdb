@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var errReadRequest = errors.New("read request error, invalid format")
+var errReadRequest = errors.New("invalid request protocol")
 
 type client struct {
 	app *App
@@ -88,15 +88,16 @@ func (c *client) readRequest() ([][]byte, error) {
 		return nil, errReadRequest
 	}
 
-	var n int
-	if n, err = strconv.Atoi(hack.String(l[1:])); err != nil {
+	var nparams int
+	if nparams, err = strconv.Atoi(hack.String(l[1:])); err != nil {
 		return nil, err
-	} else if n <= 0 {
+	} else if nparams <= 0 {
 		return nil, errReadRequest
 	}
 
-	req := make([][]byte, 0, n)
-	for i := 0; i < n; i++ {
+	req := make([][]byte, 0, nparams)
+	var n int
+	for i := 0; i < nparams; i++ {
 		if l, err = c.readLine(); err != nil {
 			return nil, err
 		}
@@ -115,12 +116,15 @@ func (c *client) readRequest() ([][]byte, error) {
 					return nil, err
 				} else if buf[len(buf)-2] != '\r' || buf[len(buf)-1] != '\n' {
 					return nil, errReadRequest
+
 				} else {
 					req = append(req, buf[0:len(buf)-2])
 				}
 			}
 
 		} else {
+			println("return 6")
+
 			return nil, errReadRequest
 		}
 	}
