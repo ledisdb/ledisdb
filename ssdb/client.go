@@ -123,8 +123,6 @@ func (c *client) readRequest() ([][]byte, error) {
 			}
 
 		} else {
-			println("return 6")
-
 			return nil, errReadRequest
 		}
 	}

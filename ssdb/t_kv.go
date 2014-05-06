@@ -6,7 +6,6 @@ import (
 	"strconv"
 )
 
-var errEmptyKVKey = errors.New("invalid empty kv key")
 var errKVKey = errors.New("invalid encode kv key")
 
 func encode_kv_key(key []byte) []byte {
@@ -16,12 +15,12 @@ func encode_kv_key(key []byte) []byte {
 	return ek
 }
 
-func decode_kv_key(encodeKey []byte) ([]byte, error) {
-	if encodeKey[0] != KV_TYPE {
+func decode_kv_key(ek []byte) ([]byte, error) {
+	if len(ek) == 0 || ek[0] != KV_TYPE {
 		return nil, errKVKey
 	}
 
-	return encodeKey[1:], nil
+	return ek[1:], nil
 }
 
 func (a *App) kv_get(key []byte) ([]byte, error) {
@@ -34,10 +33,10 @@ func (a *App) kv_set(key []byte, value []byte) error {
 	key = encode_kv_key(key)
 	var err error
 
-	t := a.newTx()
+	t := a.kvTx
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	t.Put(key, value)
 
@@ -52,12 +51,12 @@ func (a *App) kv_getset(key []byte, value []byte) ([]byte, error) {
 	key = encode_kv_key(key)
 	var err error
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t := a.kvTx
+
+	t.Lock()
+	defer t.Unlock()
 
 	oldValue, _ := a.db.Get(key)
-
-	t := a.newTx()
 
 	t.Put(key, value)
 	//todo, binlog
@@ -73,10 +72,10 @@ func (a *App) kv_setnx(key []byte, value []byte) (int64, error) {
 
 	var n int64 = 1
 
-	t := a.newTx()
+	t := a.kvTx
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	if v, _ := a.db.Get(key); v != nil {
 		n = 0
@@ -108,23 +107,15 @@ func (a *App) kv_incr(key []byte, delta int64) (int64, error) {
 	key = encode_kv_key(key)
 	var err error
 
-	t := a.newTx()
+	t := a.kvTx
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
-	var v []byte
-	v, err = a.db.Get(key)
+	var n int64
+	n, err = a.db.GetInt(key)
 	if err != nil {
 		return 0, err
-	}
-
-	var n int64 = 0
-	if v != nil {
-		n, err = strconv.ParseInt(hack.String(v), 10, 64)
-		if err != nil {
-			return 0, err
-		}
 	}
 
 	n += delta
@@ -142,10 +133,10 @@ func (a *App) tx_del(keys [][]byte) (int64, error) {
 		keys[i] = encode_kv_key(keys[i])
 	}
 
-	t := a.newTx()
+	t := a.kvTx
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	for i := range keys {
 		t.Delete(keys[i])
@@ -157,10 +148,10 @@ func (a *App) tx_del(keys [][]byte) (int64, error) {
 }
 
 func (a *App) tx_mset(args [][]byte) error {
-	t := a.newTx()
+	t := a.kvTx
 
-	a.kvMutex.Lock()
-	defer a.kvMutex.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	for i := 0; i < len(args); i += 2 {
 		key := encode_kv_key(args[i])

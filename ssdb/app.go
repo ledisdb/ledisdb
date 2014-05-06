@@ -4,7 +4,6 @@ import (
 	"github.com/siddontang/golib/leveldb"
 	"net"
 	"strings"
-	"sync"
 )
 
 type App struct {
@@ -14,10 +13,10 @@ type App struct {
 
 	db *leveldb.DB
 
-	kvMutex   sync.Mutex
-	hashMutex sync.Mutex
-	listMutex sync.Mutex
-	zsetMutex sync.Mutex
+	kvTx   *tx
+	listTx *tx
+	hashTx *tx
+	zsetTx *tx
 }
 
 func NewApp(cfg *Config) (*App, error) {
@@ -41,6 +40,11 @@ func NewApp(cfg *Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	app.kvTx = app.newTx()
+	app.listTx = app.newTx()
+	app.hashTx = app.newTx()
+	app.zsetTx = app.newTx()
 
 	return app, nil
 }
