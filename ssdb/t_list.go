@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/golib/hack"
+	"github.com/siddontang/golib/leveldb"
 	"strconv"
 )
 
@@ -211,7 +212,7 @@ func (a *App) list_range(key []byte, start int64, stop int64) ([]interface{}, er
 		}
 
 		startSeq = seq + start
-		stopSeq = seq + stop + 1
+		stopSeq = seq + stop
 
 	} else if start < 0 && stop < 0 {
 		seq, err := a.list_getSeq(key, listTailSeq)
@@ -220,7 +221,7 @@ func (a *App) list_range(key []byte, start int64, stop int64) ([]interface{}, er
 		}
 
 		startSeq = seq + start + 1
-		stopSeq = seq + stop + 2
+		stopSeq = seq + stop + 1
 	} else {
 		//start < 0 && stop > 0
 		var err error
@@ -236,7 +237,7 @@ func (a *App) list_range(key []byte, start int64, stop int64) ([]interface{}, er
 			return nil, err
 		}
 
-		stopSeq += stop + 1
+		stopSeq += stop
 	}
 
 	if startSeq < listMinSeq {
@@ -246,7 +247,7 @@ func (a *App) list_range(key []byte, start int64, stop int64) ([]interface{}, er
 	}
 
 	it := a.db.Iterator(encode_list_key(key, startSeq),
-		encode_list_key(key, stopSeq), 0)
+		encode_list_key(key, stopSeq), leveldb.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}

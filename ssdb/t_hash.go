@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/golib/hack"
+	"github.com/siddontang/golib/leveldb"
 	"strconv"
 )
 
@@ -12,7 +13,7 @@ var errHSizeKey = errors.New("invalid hsize key")
 
 const (
 	hashStartSep byte = ':'
-	hashStopSep  byte = ';'
+	hashStopSep  byte = hashStartSep + 1
 )
 
 func encode_hsize_key(key []byte) []byte {
@@ -51,35 +52,16 @@ func encode_hash_key(key []byte, field []byte) []byte {
 }
 
 func encode_hash_start_key(key []byte) []byte {
-	buf := make([]byte, len(key)+1+4+1)
-
-	pos := 0
-	buf[pos] = HASH_TYPE
-	pos++
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-	pos += 4
-
-	copy(buf[pos:], key)
-	pos += len(key)
-
-	buf[pos] = hashStartSep
-	return buf
+	k := encode_hash_key(key, nil)
+	return k
 }
 
 func encode_hash_stop_key(key []byte) []byte {
-	buf := make([]byte, len(key)+1+4+1)
+	k := encode_hash_key(key, nil)
 
-	pos := 0
-	buf[pos] = HASH_TYPE
-	pos++
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-	pos += 4
+	k[len(k)-1] = hashStopSep
 
-	copy(buf[pos:], key)
-	pos += len(key)
-
-	buf[pos] = hashStopSep
-	return buf
+	return k
 }
 
 func decode_hash_key(ek []byte) ([]byte, []byte, error) {
@@ -268,7 +250,7 @@ func (a *App) hash_getall(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, 0)
+	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := decode_hash_key(it.Key())
 		if err != nil {
@@ -277,6 +259,8 @@ func (a *App) hash_getall(key []byte) ([]interface{}, error) {
 		v = append(v, k)
 		v = append(v, it.Value())
 	}
+
+	it.Close()
 
 	return v, nil
 }
@@ -287,7 +271,7 @@ func (a *App) hash_keys(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, 0)
+	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := decode_hash_key(it.Key())
 		if err != nil {
@@ -295,6 +279,8 @@ func (a *App) hash_keys(key []byte) ([]interface{}, error) {
 		}
 		v = append(v, k)
 	}
+
+	it.Close()
 
 	return v, nil
 }
@@ -305,10 +291,12 @@ func (a *App) hash_values(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, 0)
+	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}
+
+	it.Close()
 
 	return v, nil
 }

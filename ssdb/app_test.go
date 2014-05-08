@@ -33,14 +33,14 @@ func startTestApp() {
 	f := func() {
 		newTestRedisPool()
 
-		os.RemoveAll("./testdb")
+		os.RemoveAll("/tmp/testdb")
 
 		var d = []byte(`
             {
                 "addr" : "127.0.0.1:6380",
                 "leveldb" :     
                 {
-                    "path" : "./testdb",
+                    "path" : "/tmp/testdb",
                     "compression":true,
                     "block_size" : 32768,
                     "write_buffer_size" : 2097152,

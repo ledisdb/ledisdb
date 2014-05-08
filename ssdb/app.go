@@ -17,10 +17,14 @@ type App struct {
 	listTx *tx
 	hashTx *tx
 	zsetTx *tx
+
+	closed bool
 }
 
 func NewApp(cfg *Config) (*App, error) {
 	app := new(App)
+
+	app.closed = false
 
 	app.cfg = cfg
 
@@ -50,13 +54,19 @@ func NewApp(cfg *Config) (*App, error) {
 }
 
 func (app *App) Close() {
+	if app.closed {
+		return
+	}
+
 	app.listener.Close()
 
 	app.db.Close()
+
+	app.closed = true
 }
 
 func (app *App) Run() {
-	for {
+	for !app.closed {
 		conn, err := app.listener.Accept()
 		if err != nil {
 			continue
