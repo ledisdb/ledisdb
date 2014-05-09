@@ -40,6 +40,10 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
     ./ledis-server -config=/etc/ledis.json
 
+## Benchmark
+
+可以通过查看benchmark.md获取最新的性能测试结果
+
 ## Todo
 
 + Binlog
