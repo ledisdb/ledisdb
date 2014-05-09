@@ -1,6 +1,6 @@
 # ledisdb
 
-ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基于leveldb实现。提供了kv，list，hash以及zset几种数据结构的实现。
+ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基于leveldb实现。提供了kv，list，hash以及zset几种数据结构的支持。
 
 最开始源于[ssdb](https://github.com/ideawu/ssdb)，在使用了一段时间之后，因为兴趣的原因，决定用go实现一个。
 
@@ -22,7 +22,7 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
     默认该脚本会将leveldb以及snappy安装到/usr/local/leveldb以及/usr/local/snappy目录
 
-+ 在dev.sh里面设置LEVELDB_DIR以及SNAPPY_DIR为实际的安装路径，默认为usr/local/leveldb以及/usr/local/snappy
++ 在dev.sh里面设置LEVELDB_DIR以及SNAPPY_DIR为实际的安装路径，默认为/usr/local/leveldb以及/usr/local/snappy
 
 + 运行bootstrap.sh构建ledisdb go的依赖库
 
