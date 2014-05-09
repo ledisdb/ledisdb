@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"github.com/siddontang/go-ssdb/ssdb"
+	"github.com/siddontang/ledisdb/ledis"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 )
 
-var configFile = flag.String("config", "", "ssdb config file")
+var configFile = flag.String("config", "", "ledisdb config file")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -20,13 +20,13 @@ func main() {
 		panic("must use a config file")
 	}
 
-	cfg, err := ssdb.NewConfigWithFile(*configFile)
+	cfg, err := ledis.NewConfigWithFile(*configFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var app *ssdb.App
-	app, err = ssdb.NewApp(cfg)
+	var app *ledis.App
+	app, err = ledis.NewApp(cfg)
 	if err != nil {
 		panic(err)
 	}

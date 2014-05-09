@@ -1,7 +1,7 @@
 {
     "addr": "127.0.0.1:6380",
     "leveldb": {
-        "path": "/tmp/ssdb",
+        "path": "/tmp/ledisdb",
         "compression": false,
         "block_size": 32768,
         "write_buffer_size": 67108864,

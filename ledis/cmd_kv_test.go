@@ -1,4 +1,4 @@
-package ssdb
+package ledis
 
 import (
 	"github.com/garyburd/redigo/redis"
