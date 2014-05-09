@@ -5,12 +5,15 @@ import (
 	"github.com/siddontang/go-ssdb/ssdb"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 )
 
 var configFile = flag.String("config", "", "ssdb config file")
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	flag.Parse()
 
 	if len(*configFile) == 0 {

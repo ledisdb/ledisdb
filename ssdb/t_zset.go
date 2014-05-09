@@ -161,7 +161,7 @@ func (a *App) zset_setItem(key []byte, score int64, member []byte) (int64, error
 	} else if v != nil {
 		exists = 1
 
-		if s, err := strconv.ParseInt(hack.String(v), 10, 64); err != nil {
+		if s, err := Int64(v, err); err != nil {
 			return 0, err
 		} else {
 			sk := encode_zscore_key(key, member, s)
@@ -169,7 +169,7 @@ func (a *App) zset_setItem(key []byte, score int64, member []byte) (int64, error
 		}
 	}
 
-	t.Put(ek, hack.Slice(strconv.FormatInt(score, 10)))
+	t.Put(ek, PutInt64(score))
 
 	sk := encode_zscore_key(key, member, score)
 	t.Put(sk, []byte{})
@@ -190,7 +190,7 @@ func (a *App) zset_delItem(key []byte, member []byte, skipDelScore bool) (int64,
 		//exists
 		if !skipDelScore {
 			//we must del score
-			if s, err := strconv.ParseInt(hack.String(v), 10, 64); err != nil {
+			if s, err := Int64(v, err); err != nil {
 				return 0, err
 			} else {
 				sk := encode_zscore_key(key, member, s)
@@ -233,7 +233,7 @@ func (a *App) zset_add(key []byte, args []interface{}) (int64, error) {
 func (a *App) zset_incrSize(key []byte, delta int64) (int64, error) {
 	t := a.zsetTx
 	sk := encode_zsize_key(key)
-	size, err := a.db.GetInt(sk)
+	size, err := Int64(a.db.Get(sk))
 	if err != nil {
 		return 0, err
 	} else {
@@ -242,7 +242,7 @@ func (a *App) zset_incrSize(key []byte, delta int64) (int64, error) {
 			size = 0
 			t.Delete(sk)
 		} else {
-			t.Put(sk, hack.Slice(strconv.FormatInt(size, 10)))
+			t.Put(sk, PutInt64(size))
 		}
 	}
 
@@ -251,13 +251,18 @@ func (a *App) zset_incrSize(key []byte, delta int64) (int64, error) {
 
 func (a *App) zset_card(key []byte) (int64, error) {
 	sk := encode_zsize_key(key)
-	size, err := a.db.GetInt(sk)
+	size, err := Int64(a.db.Get(sk))
 	return size, err
 }
 
 func (a *App) zset_score(key []byte, member []byte) ([]byte, error) {
 	k := encode_zset_key(key, member)
-	return a.db.Get(k)
+	score, err := Int64(a.db.Get(k))
+	if err != nil {
+		return nil, err
+	}
+
+	return hack.Slice(strconv.FormatInt(score, 10)), nil
 }
 
 func (a *App) zset_rem(key []byte, args [][]byte) (int64, error) {
@@ -293,7 +298,7 @@ func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error
 	if err != nil {
 		return nil, err
 	} else if v != nil {
-		if s, err := strconv.ParseInt(hack.String(v), 10, 64); err != nil {
+		if s, err := Int64(v, err); err != nil {
 			return nil, err
 		} else {
 			sk := encode_zscore_key(key, member, s)
@@ -309,13 +314,12 @@ func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error
 		a.zset_incrSize(key, 1)
 	}
 
-	buf := hack.Slice(strconv.FormatInt(score, 10))
-	t.Put(ek, buf)
+	t.Put(ek, PutInt64(score))
 
 	t.Put(encode_zscore_key(key, member, score), []byte{})
 
 	err = t.Commit()
-	return buf, err
+	return hack.Slice(strconv.FormatInt(score, 10)), err
 }
 
 func (a *App) zset_count(key []byte, min int64, max int64) (int64, error) {
@@ -342,7 +346,7 @@ func (a *App) zset_rank(key []byte, member []byte, reverse bool) (int64, error) 
 	} else if v == nil {
 		return -1, nil
 	} else {
-		if s, err := strconv.ParseInt(hack.String(v), 10, 64); err != nil {
+		if s, err := Int64(v, err); err != nil {
 			return 0, err
 		} else {
 			var it *leveldb.Iterator

@@ -91,7 +91,7 @@ func lindexCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.app.list_index(args[0], index); err != nil {
+	if v, err := c.app.list_index(args[0], int32(index)); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -120,7 +120,7 @@ func lrangeCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.app.list_range(args[0], start, stop); err != nil {
+	if v, err := c.app.list_range(args[0], int32(start), int32(stop)); err != nil {
 		return err
 	} else {
 		c.writeArray(v)

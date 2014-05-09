@@ -54,19 +54,11 @@ func testListRange(key []byte, start int64, stop int64, checkValues ...int) erro
 }
 
 func testPrintList(key []byte) {
-	headSeq, _ := testApp.db.GetString(encode_list_key(key, listHeadSeq))
-	tailSeq, _ := testApp.db.GetString(encode_list_key(key, listTailSeq))
-
-	size, _ := testApp.db.GetString(encode_lsize_key(key))
-
-	println("begin ---------------------")
-	println(headSeq, tailSeq, size)
-
 	it := testApp.db.Iterator(encode_list_key(key, listMinSeq),
 		encode_list_key(key, listMaxSeq), 0, 0, -1)
 	for ; it.Valid(); it.Next() {
 		k, seq, _ := decode_list_key(it.Key())
-		println(string(k), seq, string(it.Value()))
+		println(string(k), "seq ", seq, "value:", string(it.Value()))
 	}
 	println("end ---------------------")
 }

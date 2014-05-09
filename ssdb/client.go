@@ -23,6 +23,8 @@ type client struct {
 
 	cmd  string
 	args [][]byte
+
+	reqC chan error
 }
 
 func newClient(c net.Conn, app *App) {
@@ -32,6 +34,8 @@ func newClient(c net.Conn, app *App) {
 
 	co.rb = bufio.NewReaderSize(c, 256)
 	co.wb = bufio.NewWriterSize(c, 256)
+
+	co.reqC = make(chan error, 1)
 
 	go co.run()
 }
@@ -52,7 +56,6 @@ func (c *client) run() {
 	for {
 		req, err := c.readRequest()
 		if err != nil {
-			log.Info("read request error %v", err)
 			return
 		}
 
@@ -143,7 +146,10 @@ func (c *client) handleRequest(req [][]byte) {
 		if !ok {
 			err = ErrNotFound
 		} else {
-			err = f(c)
+			go func() {
+				c.reqC <- f(c)
+			}()
+			err = <-c.reqC
 		}
 	}
 
