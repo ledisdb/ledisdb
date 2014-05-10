@@ -46,6 +46,6 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
 ## Todo
 
-+ Binlog
++ Expire + TTL
 + Replication
 + Admin
