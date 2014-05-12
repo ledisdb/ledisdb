@@ -474,4 +474,17 @@ func TestZSetRange(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
+	if n, err := redis.Int(c.Do("zclear", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 }

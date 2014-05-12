@@ -129,6 +129,21 @@ func lrangeCommand(c *client) error {
 	return nil
 }
 
+func lclearCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.app.list_clear(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
@@ -137,4 +152,9 @@ func init() {
 	register("lpush", lpushCommand)
 	register("rpop", rpopCommand)
 	register("rpush", rpushCommand)
+
+	//ledisdb special command
+
+	register("lclear", lclearCommand)
+
 }

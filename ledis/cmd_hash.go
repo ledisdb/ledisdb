@@ -183,6 +183,21 @@ func hvalsCommand(c *client) error {
 	return nil
 }
 
+func hclearCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.app.hash_clear(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("hdel", hdelCommand)
 	register("hexists", hexistsCommand)
@@ -195,4 +210,8 @@ func init() {
 	register("hmset", hmsetCommand)
 	register("hset", hsetCommand)
 	register("hvals", hvalsCommand)
+
+	//ledisdb special command
+
+	register("hclear", hclearCommand)
 }

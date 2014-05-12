@@ -282,4 +282,19 @@ func TestPop(t *testing.T) {
 	} else if n != 0 {
 		t.Fatal(n)
 	}
+
+	c.Do("rpush", key, 1, 2, 3, 4, 5)
+
+	if n, err := redis.Int(c.Do("lclear", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 5 {
+		t.Fatal(n)
+	}
+
+	if n, err := redis.Int(c.Do("llen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 }

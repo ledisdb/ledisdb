@@ -440,6 +440,21 @@ func zrevrangebyscoreCommand(c *client) error {
 	return zrangebyscoreGeneric(c, true)
 }
 
+func zclearCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.app.zset_clear(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -455,4 +470,8 @@ func init() {
 	register("zrevrank", zrevrankCommand)
 	register("zrevrangebyscore", zrevrangebyscoreCommand)
 	register("zscore", zscoreCommand)
+
+	//ledisdb special command
+	register("zclear", zclearCommand)
+
 }

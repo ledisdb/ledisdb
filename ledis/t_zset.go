@@ -445,3 +445,7 @@ func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offs
 
 	return v, nil
 }
+
+func (a *App) zset_clear(key []byte) (int64, error) {
+	return a.zset_remRange(key, MinScore, MaxScore, 0, -1)
+}

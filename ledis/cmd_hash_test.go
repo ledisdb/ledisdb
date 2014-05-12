@@ -212,4 +212,15 @@ func TestHashGetAll(t *testing.T) {
 		}
 	}
 
+	if n, err := redis.Int(c.Do("hclear", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 3 {
+		t.Fatal(n)
+	}
+
+	if n, err := redis.Int(c.Do("hlen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
 }

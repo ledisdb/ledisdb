@@ -289,3 +289,33 @@ func (a *App) list_index(key []byte, index int32) ([]byte, error) {
 
 	return a.db.Get(encode_list_key(key, seq))
 }
+
+func (a *App) list_clear(key []byte) (int64, error) {
+	mk := encode_lmeta_key(key)
+
+	t := a.listTx
+	t.Lock()
+	defer t.Unlock()
+
+	metaKey := encode_lmeta_key(key)
+	headSeq, tailSeq, _, err := a.list_getMeta(metaKey)
+
+	if err != nil {
+		return 0, err
+	}
+
+	var num int64 = 0
+	it := a.db.Iterator(encode_list_key(key, headSeq),
+		encode_list_key(key, tailSeq), leveldb.RangeClose, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		num++
+	}
+
+	it.Close()
+
+	t.Delete(mk)
+
+	err = t.Commit()
+	return num, err
+}

@@ -300,3 +300,28 @@ func (a *App) hash_values(key []byte) ([]interface{}, error) {
 
 	return v, nil
 }
+
+func (a *App) hash_clear(key []byte) (int64, error) {
+	sk := encode_hsize_key(key)
+
+	t := a.hashTx
+	t.Lock()
+	defer t.Unlock()
+
+	start := encode_hash_start_key(key)
+	stop := encode_hash_stop_key(key)
+
+	var num int64 = 0
+	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		num++
+	}
+
+	it.Close()
+
+	t.Delete(sk)
+
+	err := t.Commit()
+	return num, err
+}
