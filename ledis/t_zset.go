@@ -426,9 +426,41 @@ func (a *App) zset_remRange(key []byte, min int64, max int64, offset int, limit 
 	return num, err
 }
 
+func (a *App) zset_reverse(s []interface{}, withScores bool) []interface{} {
+	if withScores {
+		for i, j := 0, len(s)-2; i < j; i, j = i+2, j-2 {
+			s[i], s[j] = s[j], s[i]
+			s[i+1], s[j+1] = s[j+1], s[i+1]
+		}
+	} else {
+		for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+			s[i], s[j] = s[j], s[i]
+		}
+	}
+
+	return s
+}
+
 func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
-	v := make([]interface{}, 0, 16)
-	it := a.zset_iterator(key, min, max, offset, limit, reverse)
+	nv := 64
+	if limit > 0 {
+		nv = limit
+	}
+	if withScores {
+		nv = 2 * nv
+	}
+	v := make([]interface{}, 0, nv)
+
+	var it *leveldb.Iterator
+
+	//if reverse and offset is 0, limit < 0, we may use forward iterator then reverse
+	//because leveldb iterator prev is slower than next
+	if !reverse || (offset == 0 && limit < 0) {
+		it = a.zset_iterator(key, min, max, offset, limit, false)
+	} else {
+		it = a.zset_iterator(key, min, max, offset, limit, true)
+	}
+
 	for ; it.Valid(); it.Next() {
 		_, m, s, err := decode_zscore_key(it.Key())
 		//may be we will check key equal?
@@ -441,6 +473,10 @@ func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offs
 		if withScores {
 			v = append(v, hack.Slice(strconv.FormatInt(s, 10)))
 		}
+	}
+
+	if reverse && (offset == 0 && limit < 0) {
+		v = a.zset_reverse(v, withScores)
 	}
 
 	return v, nil
