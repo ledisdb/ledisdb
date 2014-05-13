@@ -14,7 +14,7 @@ var testPool *redis.Pool
 
 func newTestRedisPool() {
 	f := func() (redis.Conn, error) {
-		c, err := redis.Dial("tcp", "127.0.0.1:6380")
+		c, err := redis.Dial("tcp", "127.0.0.1:16380")
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ func startTestApp() {
 
 		var d = []byte(`
             {
-                "addr" : "127.0.0.1:6380",
+                "addr" : "127.0.0.1:16380",
                 "leveldb" :     
                 {
                     "path" : "/tmp/testdb",
