@@ -187,7 +187,7 @@ func benchZIncr() {
 
 func benchZRangeByScore() {
 	f := func() {
-		waitBench("zrangebyscore", "myzsetkey", 0, rand.Int())
+		waitBench("zrangebyscore", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
 	bench("zrangebyscore", f)
@@ -203,7 +203,7 @@ func benchZRangeByRank() {
 
 func benchZRevRangeByScore() {
 	f := func() {
-		waitBench("zrevrangebyscore", "myzsetkey", 0, rand.Int())
+		waitBench("zrevrangebyscore", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
 	bench("zrevrangebyscore", f)
