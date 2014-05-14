@@ -49,14 +49,16 @@ func (a *App) kv_set(key []byte, value []byte) error {
 
 func (a *App) kv_getset(key []byte, value []byte) ([]byte, error) {
 	key = encode_kv_key(key)
-	var err error
 
 	t := a.kvTx
 
 	t.Lock()
 	defer t.Unlock()
 
-	oldValue, _ := a.db.Get(key)
+	oldValue, err := a.db.Get(key)
+	if err != nil {
+		return nil, err
+	}
 
 	t.Put(key, value)
 	//todo, binlog
@@ -77,7 +79,9 @@ func (a *App) kv_setnx(key []byte, value []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	if v, _ := a.db.Get(key); v != nil {
+	if v, err := a.db.Get(key); err != nil {
+		return 0, err
+	} else if v != nil {
 		n = 0
 	} else {
 		t.Put(key, value)
