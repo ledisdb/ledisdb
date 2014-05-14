@@ -1,9 +1,6 @@
 package ledis
 
-import (
-	"github.com/siddontang/golib/hack"
-	"strconv"
-)
+import ()
 
 func lpushCommand(c *client) error {
 	args := c.args
@@ -86,7 +83,7 @@ func lindexCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	index, err := strconv.ParseInt(hack.String(args[1]), 10, 64)
+	index, err := StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
@@ -110,12 +107,12 @@ func lrangeCommand(c *client) error {
 	var stop int64
 	var err error
 
-	start, err = strconv.ParseInt(hack.String(args[1]), 10, 64)
+	start, err = StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
 
-	stop, err = strconv.ParseInt(hack.String(args[2]), 10, 64)
+	stop, err = StrInt64(args[2], nil)
 	if err != nil {
 		return err
 	}

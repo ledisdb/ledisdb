@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/golib/hack"
-	"github.com/siddontang/golib/leveldb"
+	"github.com/siddontang/go-leveldb/leveldb"
 	"strconv"
 )
 
@@ -262,7 +261,7 @@ func (a *App) zset_score(key []byte, member []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return hack.Slice(strconv.FormatInt(score, 10)), nil
+	return Slice(strconv.FormatInt(score, 10)), nil
 }
 
 func (a *App) zset_rem(key []byte, args [][]byte) (int64, error) {
@@ -319,7 +318,7 @@ func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error
 	t.Put(encode_zscore_key(key, member, score), []byte{})
 
 	err = t.Commit()
-	return hack.Slice(strconv.FormatInt(score, 10)), err
+	return Slice(strconv.FormatInt(score, 10)), err
 }
 
 func (a *App) zset_count(key []byte, min int64, max int64) (int64, error) {
@@ -471,7 +470,7 @@ func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offs
 		v = append(v, m)
 
 		if withScores {
-			v = append(v, hack.Slice(strconv.FormatInt(s, 10)))
+			v = append(v, Slice(strconv.FormatInt(s, 10)))
 		}
 	}
 

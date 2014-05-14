@@ -2,8 +2,6 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/golib/hack"
-	"strconv"
 )
 
 var errKVKey = errors.New("invalid encode kv key")
@@ -117,14 +115,14 @@ func (a *App) kv_incr(key []byte, delta int64) (int64, error) {
 	defer t.Unlock()
 
 	var n int64
-	n, err = a.db.GetInt(key)
+	n, err = StrInt64(a.db.Get(key))
 	if err != nil {
 		return 0, err
 	}
 
 	n += delta
 
-	t.Put(key, hack.Slice(strconv.FormatInt(n, 10)))
+	t.Put(key, StrPutInt64(n))
 
 	//todo binlog
 

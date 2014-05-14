@@ -2,7 +2,6 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/golib/hack"
 	"math"
 	"strconv"
 	"strings"
@@ -31,7 +30,7 @@ func zaddCommand(c *client) error {
 	args = args[1:]
 	params := make([]interface{}, len(args))
 	for i := 0; i < len(params); i += 2 {
-		score, err := strconv.ParseInt(hack.String(args[i]), 10, 64)
+		score, err := StrInt64(args[i], nil)
 		if err != nil {
 			return err
 		}
@@ -102,7 +101,7 @@ func zincrbyCommand(c *client) error {
 
 	key := args[0]
 
-	delta, err := strconv.ParseInt(hack.String(args[1]), 10, 64)
+	delta, err := StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
@@ -117,7 +116,7 @@ func zincrbyCommand(c *client) error {
 }
 
 func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err error) {
-	if strings.ToLower(hack.String(minBuf)) == "-inf" {
+	if strings.ToLower(String(minBuf)) == "-inf" {
 		min = math.MinInt64
 	} else {
 		var lopen bool = false
@@ -131,7 +130,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 			return
 		}
 
-		min, err = strconv.ParseInt(hack.String(minBuf), 10, 64)
+		min, err = StrInt64(minBuf, nil)
 		if err != nil {
 			return
 		}
@@ -146,7 +145,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 		}
 	}
 
-	if strings.ToLower(hack.String(maxBuf)) == "+inf" {
+	if strings.ToLower(String(maxBuf)) == "+inf" {
 		max = math.MaxInt64
 	} else {
 		var ropen = false
@@ -160,7 +159,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 			return
 		}
 
-		max, err = strconv.ParseInt(hack.String(maxBuf), 10, 64)
+		max, err = StrInt64(maxBuf, nil)
 		if err != nil {
 			return
 		}
@@ -288,11 +287,11 @@ func zremrangebyscoreCommand(c *client) error {
 func zparseRange(c *client, key []byte, startBuf []byte, stopBuf []byte) (offset int, limit int, err error) {
 	var start int
 	var stop int
-	if start, err = strconv.Atoi(hack.String(startBuf)); err != nil {
+	if start, err = strconv.Atoi(String(startBuf)); err != nil {
 		return
 	}
 
-	if stop, err = strconv.Atoi(hack.String(stopBuf)); err != nil {
+	if stop, err = strconv.Atoi(String(stopBuf)); err != nil {
 		return
 	}
 
@@ -354,7 +353,7 @@ func zrangeGeneric(c *client, reverse bool) error {
 	args = args[3:]
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(hack.String(args[0])) == "withscores" {
+	if len(args) > 0 && strings.ToLower(String(args[0])) == "withscores" {
 		withScores = true
 	}
 
@@ -390,7 +389,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(hack.String(args[0])) == "withscores" {
+	if len(args) > 0 && strings.ToLower(String(args[0])) == "withscores" {
 		withScores = true
 		args = args[1:]
 	}
@@ -403,15 +402,15 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 			return ErrCmdParams
 		}
 
-		if strings.ToLower(hack.String(args[0])) != "limit" {
+		if strings.ToLower(String(args[0])) != "limit" {
 			return ErrCmdParams
 		}
 
-		if offset, err = strconv.Atoi(hack.String(args[1])); err != nil {
+		if offset, err = strconv.Atoi(String(args[1])); err != nil {
 			return ErrCmdParams
 		}
 
-		if limit, err = strconv.Atoi(hack.String(args[2])); err != nil {
+		if limit, err = strconv.Atoi(String(args[2])); err != nil {
 			return ErrCmdParams
 		}
 	}

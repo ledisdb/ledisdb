@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/golib/leveldb"
+	"github.com/siddontang/go-leveldb/leveldb"
 )
 
 const (

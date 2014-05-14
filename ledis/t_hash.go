@@ -3,9 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/golib/hack"
-	"github.com/siddontang/golib/leveldb"
-	"strconv"
+	"github.com/siddontang/go-leveldb/leveldb"
 )
 
 var errHashKey = errors.New("invalid hash key")
@@ -90,26 +88,21 @@ func decode_hash_key(ek []byte) ([]byte, []byte, error) {
 }
 
 func (a *App) hash_len(key []byte) (int64, error) {
-	return a.db.GetInt(encode_hsize_key(key))
+	return Int64(a.db.Get(encode_hsize_key(key)))
 }
 
 func (a *App) hash_setItem(key []byte, field []byte, value []byte) (int64, error) {
 	t := a.hashTx
 
 	ek := encode_hash_key(key, field)
-	sk := encode_hsize_key(key)
-
-	size, err := a.db.GetInt(sk)
-	if err != nil {
-		return 0, err
-	}
 
 	var n int64 = 1
 	if v, _ := a.db.Get(ek); v != nil {
 		n = 0
 	} else {
-		size++
-		t.Put(sk, hack.Slice(strconv.FormatInt(size, 10)))
+		if _, err := a.hash_incrSize(key, 1); err != nil {
+			return 0, err
+		}
 	}
 
 	t.Put(ek, value)
@@ -137,30 +130,26 @@ func (a *App) hash_get(key []byte, field []byte) ([]byte, error) {
 }
 
 func (a *App) hash_mset(key []byte, args [][]byte) error {
-	sk := encode_hsize_key(key)
-
 	t := a.hashTx
 	t.Lock()
 	defer t.Unlock()
 
-	size, err := a.db.GetInt(sk)
-	if err != nil {
-		return err
-	}
-
+	var num int64 = 0
 	for i := 0; i < len(args); i += 2 {
 		ek := encode_hash_key(key, args[i])
 		if v, _ := a.db.Get(ek); v == nil {
-			size++
+			num++
 		}
 
 		t.Put(ek, args[i+1])
 	}
 
-	t.Put(sk, hack.Slice(strconv.FormatInt(size, 10)))
+	if _, err := a.hash_incrSize(key, num); err != nil {
+		return err
+	}
 
 	//todo add binglog
-	err = t.Commit()
+	err := t.Commit()
 	return err
 }
 
@@ -179,16 +168,9 @@ func (a *App) hash_mget(key []byte, args [][]byte) ([]interface{}, error) {
 }
 
 func (a *App) hash_del(key []byte, args [][]byte) (int64, error) {
-	sk := encode_hsize_key(key)
-
 	t := a.hashTx
 	t.Lock()
 	defer t.Unlock()
-
-	size, err := a.db.GetInt(sk)
-	if err != nil {
-		return 0, err
-	}
 
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
@@ -199,20 +181,36 @@ func (a *App) hash_del(key []byte, args [][]byte) (int64, error) {
 			continue
 		} else {
 			num++
-			size--
 			t.Delete(ek)
 		}
 	}
 
-	if size <= 0 {
-		t.Delete(sk)
-	} else {
-		t.Put(sk, hack.Slice(strconv.FormatInt(size, 10)))
+	if _, err := a.hash_incrSize(key, -num); err != nil {
+		return 0, err
 	}
 
-	err = t.Commit()
+	err := t.Commit()
 
 	return num, err
+}
+
+func (a *App) hash_incrSize(key []byte, delta int64) (int64, error) {
+	t := a.hashTx
+	sk := encode_hsize_key(key)
+	size, err := Int64(a.db.Get(sk))
+	if err != nil {
+		return 0, err
+	} else {
+		size += delta
+		if size <= 0 {
+			size = 0
+			t.Delete(sk)
+		} else {
+			t.Put(sk, PutInt64(size))
+		}
+	}
+
+	return size, nil
 }
 
 func (a *App) hash_incrby(key []byte, field []byte, delta int64) (int64, error) {
@@ -223,18 +221,14 @@ func (a *App) hash_incrby(key []byte, field []byte, delta int64) (int64, error) 
 	ek := encode_hash_key(key, field)
 
 	var n int64 = 0
-	v, err := a.db.Get(ek)
+	n, err := StrInt64(a.db.Get(ek))
 	if err != nil {
 		return 0, err
-	} else if v != nil {
-		if n, err = strconv.ParseInt(hack.String(v), 10, 64); err != nil {
-			return 0, err
-		}
 	}
 
 	n += delta
 
-	_, err = a.hash_setItem(key, field, hack.Slice(strconv.FormatInt(n, 10)))
+	_, err = a.hash_setItem(key, field, StrPutInt64(n))
 	if err != nil {
 		return 0, err
 	}

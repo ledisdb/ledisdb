@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"encoding/json"
-	"github.com/siddontang/golib/leveldb"
+	"github.com/siddontang/go-leveldb/leveldb"
 	"io/ioutil"
 )
 
