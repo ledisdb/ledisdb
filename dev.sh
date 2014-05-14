@@ -26,6 +26,8 @@ function add_path()
   fi
 }
 
+export GOPATH=$(add_path $GOPATH $VTROOT)
+
 export CGO_CFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
 export CGO_CXXFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
 export CGO_LDFLAGS="-L$LEVELDB_DIR/lib -L$SNAPPY_DIR/lib -lsnappy"
