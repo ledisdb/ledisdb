@@ -3,19 +3,26 @@
 SNAPPY_DIR=/usr/local/snappy
 LEVELDB_DIR=/usr/local/leveldb
 
-mkdir -p ./build
+ROOT_DIR=$(pwd)
 
-cd ./build
+BUILD_DIR=/tmp/build_leveldb
+
+mkdir -p $BUILD_DIR
+
+cd $BUILD_DIR
 
 if [ ! -f $SNAPPY_DIR/lib/libsnappy.a ]; then
     (git clone git@github.com:siddontang/snappy.git && \
         cd ./snappy && \
         ./configure --prefix=$SNAPPY_DIR && \
         make && \
-        make install)
+        make install && \
+        cd ..)
 else
     echo "skip install snappy"
 fi
+
+cd $BUILD_DIR
 
 if [ ! -f $LEVELDB_DIR/lib/libleveldb.a ]; then
     (git clone git@github.com:siddontang/leveldb.git && \
@@ -28,7 +35,10 @@ if [ ! -f $LEVELDB_DIR/lib/libleveldb.a ]; then
         mkdir -p $LEVELDB_DIR/include/leveldb && \
         install include/leveldb/*.h $LEVELDB_DIR/include/leveldb && \
         mkdir -p $LEVELDB_DIR/lib && \
-        cp -f libleveldb.* $LEVELDB_DIR/lib)
+        cp -f libleveldb.* $LEVELDB_DIR/lib &&\
+        cd ..)
 else
     echo "skip install leveldb"
 fi
+
+cd $ROOT_DIR
