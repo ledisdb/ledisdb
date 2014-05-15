@@ -137,7 +137,7 @@ func decrbyCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.DecrBy(c.args[0], -delta); err != nil {
+	if n, err := c.db.DecrBy(c.args[0], delta); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

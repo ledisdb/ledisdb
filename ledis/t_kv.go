@@ -51,7 +51,7 @@ func (db *DB) Decr(key []byte) (int64, error) {
 }
 
 func (db *DB) DecrBy(key []byte, decrement int64) (int64, error) {
-	return db.incr(key, decrement)
+	return db.incr(key, -decrement)
 }
 
 func (db *DB) Del(keys [][]byte) (int64, error) {
