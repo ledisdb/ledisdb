@@ -8,7 +8,7 @@ func hsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.hash_set(args[0], args[1], args[2]); err != nil {
+	if n, err := c.db.HSet(args[0], args[1], args[2]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -23,7 +23,7 @@ func hgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.hash_get(args[0], args[1]); err != nil {
+	if v, err := c.db.HGet(args[0], args[1]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -39,7 +39,7 @@ func hexistsCommand(c *client) error {
 	}
 
 	var n int64 = 1
-	if v, err := c.app.hash_get(args[0], args[1]); err != nil {
+	if v, err := c.db.HGet(args[0], args[1]); err != nil {
 		return err
 	} else {
 		if v == nil {
@@ -57,7 +57,7 @@ func hdelCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.hash_del(args[0], args[1:]); err != nil {
+	if n, err := c.db.HDel(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -72,7 +72,7 @@ func hlenCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.hash_len(args[0]); err != nil {
+	if n, err := c.db.HLen(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -93,7 +93,7 @@ func hincrbyCommand(c *client) error {
 	}
 
 	var n int64
-	if n, err = c.app.hash_incrby(args[0], args[1], delta); err != nil {
+	if n, err = c.db.HIncrBy(args[0], args[1], delta); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -111,7 +111,7 @@ func hmsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if err := c.app.hash_mset(args[0], args[1:]); err != nil {
+	if err := c.db.HMset(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeStatus(OK)
@@ -126,7 +126,7 @@ func hmgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.hash_mget(args[0], args[1:]); err != nil {
+	if v, err := c.db.HMget(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -141,7 +141,7 @@ func hgetallCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.hash_getall(args[0]); err != nil {
+	if v, err := c.db.HGetAll(args[0]); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -156,7 +156,7 @@ func hkeysCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.hash_keys(args[0]); err != nil {
+	if v, err := c.db.HKeys(args[0]); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -171,7 +171,7 @@ func hvalsCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.hash_values(args[0]); err != nil {
+	if v, err := c.db.HValues(args[0]); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -186,7 +186,7 @@ func hclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.hash_clear(args[0]); err != nil {
+	if n, err := c.db.HClear(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

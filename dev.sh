@@ -31,6 +31,11 @@ export GOPATH=$(add_path $GOPATH $VTROOT)
 export CGO_CFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
 export CGO_CXXFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
 export CGO_LDFLAGS="-L$LEVELDB_DIR/lib -L$SNAPPY_DIR/lib -lsnappy"
+
+#for linux, use LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $SNAPPY_DIR/lib)
 export LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LEVELDB_DIR/lib)
 
+#for macos, use DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $SNAPPY_DIR/lib)
+export DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LEVELDB_DIR/lib)

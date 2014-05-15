@@ -14,8 +14,8 @@ import (
 var errReadRequest = errors.New("invalid request protocol")
 
 type client struct {
-	app *App
-	c   net.Conn
+	db *DB
+	c  net.Conn
 
 	rb *bufio.Reader
 	wb *bufio.Writer
@@ -26,9 +26,9 @@ type client struct {
 	reqC chan error
 }
 
-func newClient(c net.Conn, app *App) {
+func newClient(c net.Conn, db *DB) {
 	co := new(client)
-	co.app = app
+	co.db = db
 	co.c = c
 
 	co.rb = bufio.NewReaderSize(c, 256)

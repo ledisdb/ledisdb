@@ -87,20 +87,20 @@ func decode_hash_key(ek []byte) ([]byte, []byte, error) {
 	return key, field, nil
 }
 
-func (a *App) hash_len(key []byte) (int64, error) {
-	return Int64(a.db.Get(encode_hsize_key(key)))
+func (db *DB) HLen(key []byte) (int64, error) {
+	return Int64(db.db.Get(encode_hsize_key(key)))
 }
 
-func (a *App) hash_setItem(key []byte, field []byte, value []byte) (int64, error) {
-	t := a.hashTx
+func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
+	t := db.hashTx
 
 	ek := encode_hash_key(key, field)
 
 	var n int64 = 1
-	if v, _ := a.db.Get(ek); v != nil {
+	if v, _ := db.db.Get(ek); v != nil {
 		n = 0
 	} else {
-		if _, err := a.hash_incrSize(key, 1); err != nil {
+		if _, err := db.hIncrSize(key, 1); err != nil {
 			return 0, err
 		}
 	}
@@ -109,12 +109,12 @@ func (a *App) hash_setItem(key []byte, field []byte, value []byte) (int64, error
 	return n, nil
 }
 
-func (a *App) hash_set(key []byte, field []byte, value []byte) (int64, error) {
-	t := a.hashTx
+func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := a.hash_setItem(key, field, value)
+	n, err := db.hSetItem(key, field, value)
 	if err != nil {
 		return 0, err
 	}
@@ -125,26 +125,26 @@ func (a *App) hash_set(key []byte, field []byte, value []byte) (int64, error) {
 	return n, err
 }
 
-func (a *App) hash_get(key []byte, field []byte) ([]byte, error) {
-	return a.db.Get(encode_hash_key(key, field))
+func (db *DB) HGet(key []byte, field []byte) ([]byte, error) {
+	return db.db.Get(encode_hash_key(key, field))
 }
 
-func (a *App) hash_mset(key []byte, args [][]byte) error {
-	t := a.hashTx
+func (db *DB) HMset(key []byte, args [][]byte) error {
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
 	for i := 0; i < len(args); i += 2 {
 		ek := encode_hash_key(key, args[i])
-		if v, _ := a.db.Get(ek); v == nil {
+		if v, _ := db.db.Get(ek); v == nil {
 			num++
 		}
 
 		t.Put(ek, args[i+1])
 	}
 
-	if _, err := a.hash_incrSize(key, num); err != nil {
+	if _, err := db.hIncrSize(key, num); err != nil {
 		return err
 	}
 
@@ -153,10 +153,10 @@ func (a *App) hash_mset(key []byte, args [][]byte) error {
 	return err
 }
 
-func (a *App) hash_mget(key []byte, args [][]byte) ([]interface{}, error) {
+func (db *DB) HMget(key []byte, args [][]byte) ([]interface{}, error) {
 	r := make([]interface{}, len(args))
 	for i := 0; i < len(args); i++ {
-		v, err := a.db.Get(encode_hash_key(key, args[i]))
+		v, err := db.db.Get(encode_hash_key(key, args[i]))
 		if err != nil {
 			return nil, err
 		}
@@ -167,15 +167,15 @@ func (a *App) hash_mget(key []byte, args [][]byte) ([]interface{}, error) {
 	return r, nil
 }
 
-func (a *App) hash_del(key []byte, args [][]byte) (int64, error) {
-	t := a.hashTx
+func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
 		ek := encode_hash_key(key, args[i])
-		if v, err := a.db.Get(ek); err != nil {
+		if v, err := db.db.Get(ek); err != nil {
 			return 0, err
 		} else if v == nil {
 			continue
@@ -185,7 +185,7 @@ func (a *App) hash_del(key []byte, args [][]byte) (int64, error) {
 		}
 	}
 
-	if _, err := a.hash_incrSize(key, -num); err != nil {
+	if _, err := db.hIncrSize(key, -num); err != nil {
 		return 0, err
 	}
 
@@ -194,10 +194,10 @@ func (a *App) hash_del(key []byte, args [][]byte) (int64, error) {
 	return num, err
 }
 
-func (a *App) hash_incrSize(key []byte, delta int64) (int64, error) {
-	t := a.hashTx
+func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
+	t := db.hashTx
 	sk := encode_hsize_key(key)
-	size, err := Int64(a.db.Get(sk))
+	size, err := Int64(db.db.Get(sk))
 	if err != nil {
 		return 0, err
 	} else {
@@ -213,22 +213,22 @@ func (a *App) hash_incrSize(key []byte, delta int64) (int64, error) {
 	return size, nil
 }
 
-func (a *App) hash_incrby(key []byte, field []byte, delta int64) (int64, error) {
-	t := a.hashTx
+func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
 	ek := encode_hash_key(key, field)
 
 	var n int64 = 0
-	n, err := StrInt64(a.db.Get(ek))
+	n, err := StrInt64(db.db.Get(ek))
 	if err != nil {
 		return 0, err
 	}
 
 	n += delta
 
-	_, err = a.hash_setItem(key, field, StrPutInt64(n))
+	_, err = db.hSetItem(key, field, StrPutInt64(n))
 	if err != nil {
 		return 0, err
 	}
@@ -238,13 +238,13 @@ func (a *App) hash_incrby(key []byte, field []byte, delta int64) (int64, error) 
 	return n, err
 }
 
-func (a *App) hash_getall(key []byte) ([]interface{}, error) {
+func (db *DB) HGetAll(key []byte) ([]interface{}, error) {
 	start := encode_hash_start_key(key)
 	stop := encode_hash_stop_key(key)
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := decode_hash_key(it.Key())
 		if err != nil {
@@ -259,13 +259,13 @@ func (a *App) hash_getall(key []byte) ([]interface{}, error) {
 	return v, nil
 }
 
-func (a *App) hash_keys(key []byte) ([]interface{}, error) {
+func (db *DB) HKeys(key []byte) ([]interface{}, error) {
 	start := encode_hash_start_key(key)
 	stop := encode_hash_stop_key(key)
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := decode_hash_key(it.Key())
 		if err != nil {
@@ -279,13 +279,13 @@ func (a *App) hash_keys(key []byte) ([]interface{}, error) {
 	return v, nil
 }
 
-func (a *App) hash_values(key []byte) ([]interface{}, error) {
+func (db *DB) HValues(key []byte) ([]interface{}, error) {
 	start := encode_hash_start_key(key)
 	stop := encode_hash_stop_key(key)
 
 	v := make([]interface{}, 0, 16)
 
-	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}
@@ -295,10 +295,10 @@ func (a *App) hash_values(key []byte) ([]interface{}, error) {
 	return v, nil
 }
 
-func (a *App) hash_clear(key []byte) (int64, error) {
+func (db *DB) HClear(key []byte) (int64, error) {
 	sk := encode_hsize_key(key)
 
-	t := a.hashTx
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
@@ -306,7 +306,7 @@ func (a *App) hash_clear(key []byte) (int64, error) {
 	stop := encode_hash_stop_key(key)
 
 	var num int64 = 0
-	it := a.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++

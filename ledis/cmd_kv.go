@@ -8,7 +8,7 @@ func getCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.kv_get(args[0]); err != nil {
+	if v, err := c.db.Get(args[0]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -22,7 +22,7 @@ func setCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if err := c.app.kv_set(args[0], args[1]); err != nil {
+	if err := c.db.Set(args[0], args[1]); err != nil {
 		return err
 	} else {
 		c.writeStatus(OK)
@@ -37,7 +37,7 @@ func getsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.kv_getset(args[0], args[1]); err != nil {
+	if v, err := c.db.GetSet(args[0], args[1]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -52,7 +52,7 @@ func setnxCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.kv_setnx(args[0], args[1]); err != nil {
+	if n, err := c.db.SetNX(args[0], args[1]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -67,7 +67,7 @@ func existsCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.kv_exists(args[0]); err != nil {
+	if n, err := c.db.Exists(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -82,7 +82,7 @@ func incrCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.kv_incr(c.args[0], 1); err != nil {
+	if n, err := c.db.Incr(c.args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -97,7 +97,7 @@ func decrCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.kv_incr(c.args[0], -1); err != nil {
+	if n, err := c.db.Decr(c.args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -117,7 +117,7 @@ func incrbyCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.app.kv_incr(c.args[0], delta); err != nil {
+	if n, err := c.db.IncryBy(c.args[0], delta); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -137,7 +137,7 @@ func decrbyCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.app.kv_incr(c.args[0], -delta); err != nil {
+	if n, err := c.db.DecrBy(c.args[0], -delta); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -152,7 +152,7 @@ func delCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.tx_del(args); err != nil {
+	if n, err := c.db.Del(args); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -167,7 +167,7 @@ func msetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if err := c.app.tx_mset(args); err != nil {
+	if err := c.db.MSet(args); err != nil {
 		return err
 	} else {
 		c.writeStatus(OK)
@@ -186,7 +186,7 @@ func mgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.kv_mget(args); err != nil {
+	if v, err := c.db.MGet(args); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -207,6 +207,5 @@ func init() {
 	register("mget", mgetCommand)
 	register("mset", msetCommand)
 	register("set", setCommand)
-	//	register("setex", setexCommand)
 	register("setnx", setnxCommand)
 }

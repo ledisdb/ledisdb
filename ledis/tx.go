@@ -8,19 +8,7 @@ import (
 type tx struct {
 	m sync.Mutex
 
-	app *App
-
 	wb *leveldb.WriteBatch
-}
-
-func (app *App) newTx() *tx {
-	t := new(tx)
-
-	t.app = app
-
-	t.wb = app.db.NewWriteBatch()
-
-	return t
 }
 
 func (t *tx) Close() {

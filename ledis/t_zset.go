@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+const (
+	MinScore int64 = -1<<63 + 1
+	MaxScore int64 = 1<<63 - 1
+)
+
 var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
 var errZScoreKey = errors.New("invalid zscore key")
@@ -146,16 +151,16 @@ func decode_zscore_key(ek []byte) (key []byte, member []byte, score int64, err e
 	return
 }
 
-func (a *App) zset_setItem(key []byte, score int64, member []byte) (int64, error) {
+func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
 	if score <= MinScore || score >= MaxScore {
 		return 0, errScoreOverflow
 	}
 
-	t := a.zsetTx
+	t := db.zsetTx
 
 	var exists int64 = 0
 	ek := encode_zset_key(key, member)
-	if v, err := a.db.Get(ek); err != nil {
+	if v, err := db.db.Get(ek); err != nil {
 		return 0, err
 	} else if v != nil {
 		exists = 1
@@ -176,11 +181,11 @@ func (a *App) zset_setItem(key []byte, score int64, member []byte) (int64, error
 	return exists, nil
 }
 
-func (a *App) zset_delItem(key []byte, member []byte, skipDelScore bool) (int64, error) {
-	t := a.zsetTx
+func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, error) {
+	t := db.zsetTx
 
 	ek := encode_zset_key(key, member)
-	if v, err := a.db.Get(ek); err != nil {
+	if v, err := db.db.Get(ek); err != nil {
 		return 0, err
 	} else if v == nil {
 		//not exists
@@ -202,8 +207,8 @@ func (a *App) zset_delItem(key []byte, member []byte, skipDelScore bool) (int64,
 	return 1, nil
 }
 
-func (a *App) zset_add(key []byte, args []interface{}) (int64, error) {
-	t := a.zsetTx
+func (db *DB) ZAdd(key []byte, args []interface{}) (int64, error) {
+	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
@@ -212,7 +217,7 @@ func (a *App) zset_add(key []byte, args []interface{}) (int64, error) {
 		score := args[i].(int64)
 		member := args[i+1].([]byte)
 
-		if n, err := a.zset_setItem(key, score, member); err != nil {
+		if n, err := db.zSetItem(key, score, member); err != nil {
 			return 0, err
 		} else if n == 0 {
 			//add new
@@ -220,7 +225,7 @@ func (a *App) zset_add(key []byte, args []interface{}) (int64, error) {
 		}
 	}
 
-	if _, err := a.zset_incrSize(key, num); err != nil {
+	if _, err := db.zIncrSize(key, num); err != nil {
 		return 0, err
 	}
 
@@ -229,10 +234,10 @@ func (a *App) zset_add(key []byte, args []interface{}) (int64, error) {
 	return num, err
 }
 
-func (a *App) zset_incrSize(key []byte, delta int64) (int64, error) {
-	t := a.zsetTx
+func (db *DB) zIncrSize(key []byte, delta int64) (int64, error) {
+	t := db.zsetTx
 	sk := encode_zsize_key(key)
-	size, err := Int64(a.db.Get(sk))
+	size, err := Int64(db.db.Get(sk))
 	if err != nil {
 		return 0, err
 	} else {
@@ -248,15 +253,15 @@ func (a *App) zset_incrSize(key []byte, delta int64) (int64, error) {
 	return size, nil
 }
 
-func (a *App) zset_card(key []byte) (int64, error) {
+func (db *DB) ZCard(key []byte) (int64, error) {
 	sk := encode_zsize_key(key)
-	size, err := Int64(a.db.Get(sk))
+	size, err := Int64(db.db.Get(sk))
 	return size, err
 }
 
-func (a *App) zset_score(key []byte, member []byte) ([]byte, error) {
+func (db *DB) ZScore(key []byte, member []byte) ([]byte, error) {
 	k := encode_zset_key(key, member)
-	score, err := Int64(a.db.Get(k))
+	score, err := Int64(db.db.Get(k))
 	if err != nil {
 		return nil, err
 	}
@@ -264,21 +269,21 @@ func (a *App) zset_score(key []byte, member []byte) ([]byte, error) {
 	return Slice(strconv.FormatInt(score, 10)), nil
 }
 
-func (a *App) zset_rem(key []byte, args [][]byte) (int64, error) {
-	t := a.zsetTx
+func (db *DB) ZRem(key []byte, args [][]byte) (int64, error) {
+	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
-		if n, err := a.zset_delItem(key, args[i], false); err != nil {
+		if n, err := db.zDelItem(key, args[i], false); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
 		}
 	}
 
-	if _, err := a.zset_incrSize(key, -num); err != nil {
+	if _, err := db.zIncrSize(key, -num); err != nil {
 		return 0, err
 	}
 
@@ -286,14 +291,14 @@ func (a *App) zset_rem(key []byte, args [][]byte) (int64, error) {
 	return num, err
 }
 
-func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error) {
-	t := a.zsetTx
+func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
+	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
 	ek := encode_zset_key(key, member)
 	var score int64 = delta
-	v, err := a.db.Get(ek)
+	v, err := db.db.Get(ek)
 	if err != nil {
 		return nil, err
 	} else if v != nil {
@@ -310,7 +315,7 @@ func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error
 			}
 		}
 	} else {
-		a.zset_incrSize(key, 1)
+		db.zIncrSize(key, 1)
 	}
 
 	t.Put(ek, PutInt64(score))
@@ -321,13 +326,13 @@ func (a *App) zset_incrby(key []byte, delta int64, member []byte) ([]byte, error
 	return Slice(strconv.FormatInt(score, 10)), err
 }
 
-func (a *App) zset_count(key []byte, min int64, max int64) (int64, error) {
+func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
 	minKey := encode_start_zscore_key(key, min)
 	maxKey := encode_stop_zscore_key(key, max)
 
 	rangeType := leveldb.RangeROpen
 
-	it := a.db.Iterator(minKey, maxKey, rangeType, 0, -1)
+	it := db.db.Iterator(minKey, maxKey, rangeType, 0, -1)
 	var n int64 = 0
 	for ; it.Valid(); it.Next() {
 		n++
@@ -337,10 +342,10 @@ func (a *App) zset_count(key []byte, min int64, max int64) (int64, error) {
 	return n, nil
 }
 
-func (a *App) zset_rank(key []byte, member []byte, reverse bool) (int64, error) {
+func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 	k := encode_zset_key(key, member)
 
-	if v, err := a.db.Get(k); err != nil {
+	if v, err := db.db.Get(k); err != nil {
 		return 0, err
 	} else if v == nil {
 		return -1, nil
@@ -354,10 +359,10 @@ func (a *App) zset_rank(key []byte, member []byte, reverse bool) (int64, error) 
 
 			if !reverse {
 				minKey := encode_start_zscore_key(key, MinScore)
-				it = a.db.Iterator(minKey, sk, leveldb.RangeClose, 0, -1)
+				it = db.db.Iterator(minKey, sk, leveldb.RangeClose, 0, -1)
 			} else {
 				maxKey := encode_stop_zscore_key(key, MaxScore)
-				it = a.db.RevIterator(sk, maxKey, leveldb.RangeClose, 0, -1)
+				it = db.db.RevIterator(sk, maxKey, leveldb.RangeClose, 0, -1)
 			}
 
 			var lastKey []byte = nil
@@ -381,23 +386,23 @@ func (a *App) zset_rank(key []byte, member []byte, reverse bool) (int64, error) 
 	return -1, nil
 }
 
-func (a *App) zset_iterator(key []byte, min int64, max int64, offset int, limit int, reverse bool) *leveldb.Iterator {
+func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int, reverse bool) *leveldb.Iterator {
 	minKey := encode_start_zscore_key(key, min)
 	maxKey := encode_stop_zscore_key(key, max)
 
 	if !reverse {
-		return a.db.Iterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
+		return db.db.Iterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
 	} else {
-		return a.db.RevIterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
+		return db.db.RevIterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
 	}
 }
 
-func (a *App) zset_remRange(key []byte, min int64, max int64, offset int, limit int) (int64, error) {
-	t := a.zsetTx
+func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int) (int64, error) {
+	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
-	it := a.zset_iterator(key, min, max, offset, limit, false)
+	it := db.zIterator(key, min, max, offset, limit, false)
 	var num int64 = 0
 	for ; it.Valid(); it.Next() {
 		k := it.Key()
@@ -406,7 +411,7 @@ func (a *App) zset_remRange(key []byte, min int64, max int64, offset int, limit 
 			continue
 		}
 
-		if n, err := a.zset_delItem(key, m, true); err != nil {
+		if n, err := db.zDelItem(key, m, true); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
@@ -415,7 +420,7 @@ func (a *App) zset_remRange(key []byte, min int64, max int64, offset int, limit 
 		t.Delete(k)
 	}
 
-	if _, err := a.zset_incrSize(key, -num); err != nil {
+	if _, err := db.zIncrSize(key, -num); err != nil {
 		return 0, err
 	}
 
@@ -425,7 +430,7 @@ func (a *App) zset_remRange(key []byte, min int64, max int64, offset int, limit 
 	return num, err
 }
 
-func (a *App) zset_reverse(s []interface{}, withScores bool) []interface{} {
+func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
 	if withScores {
 		for i, j := 0, len(s)-2; i < j; i, j = i+2, j-2 {
 			s[i], s[j] = s[j], s[i]
@@ -440,7 +445,11 @@ func (a *App) zset_reverse(s []interface{}, withScores bool) []interface{} {
 	return s
 }
 
-func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
+func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
+	if offset < 0 {
+		return []interface{}{}, nil
+	}
+
 	nv := 64
 	if limit > 0 {
 		nv = limit
@@ -455,9 +464,9 @@ func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offs
 	//if reverse and offset is 0, limit < 0, we may use forward iterator then reverse
 	//because leveldb iterator prev is slower than next
 	if !reverse || (offset == 0 && limit < 0) {
-		it = a.zset_iterator(key, min, max, offset, limit, false)
+		it = db.zIterator(key, min, max, offset, limit, false)
 	} else {
-		it = a.zset_iterator(key, min, max, offset, limit, true)
+		it = db.zIterator(key, min, max, offset, limit, true)
 	}
 
 	for ; it.Valid(); it.Next() {
@@ -475,12 +484,111 @@ func (a *App) zset_range(key []byte, min int64, max int64, withScores bool, offs
 	}
 
 	if reverse && (offset == 0 && limit < 0) {
-		v = a.zset_reverse(v, withScores)
+		v = db.zReverse(v, withScores)
 	}
 
 	return v, nil
 }
 
-func (a *App) zset_clear(key []byte) (int64, error) {
-	return a.zset_remRange(key, MinScore, MaxScore, 0, -1)
+func (db *DB) zParseLimit(key []byte, start int, stop int) (offset int, limit int, err error) {
+	if start < 0 || stop < 0 {
+		//refer redis implementation
+		var size int64
+		size, err = db.ZCard(key)
+		if err != nil {
+			return
+		}
+
+		llen := int(size)
+
+		if start < 0 {
+			start = llen + start
+		}
+		if stop < 0 {
+			stop = llen + stop
+		}
+
+		if start < 0 {
+			start = 0
+		}
+
+		if start >= llen {
+			offset = -1
+			return
+		}
+	}
+
+	if start > stop {
+		offset = -1
+		return
+	}
+
+	offset = start
+	limit = (stop - start) + 1
+	return
+}
+
+func (db *DB) ZClear(key []byte) (int64, error) {
+	return db.zRemRange(key, MinScore, MaxScore, 0, -1)
+}
+
+func (db *DB) ZRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
+	return db.ZRangeGeneric(key, start, stop, withScores, false)
+}
+
+//min and max must be inclusive
+//if no limit, set offset = 0 and count = -1
+func (db *DB) ZRangeByScore(key []byte, min int64, max int64,
+	withScores bool, offset int, count int) ([]interface{}, error) {
+	return db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, false)
+}
+
+func (db *DB) ZRank(key []byte, member []byte) (int64, error) {
+	return db.zrank(key, member, false)
+}
+
+func (db *DB) ZRemRangeByRank(key []byte, start int, stop int) (int64, error) {
+	offset, limit, err := db.zParseLimit(key, start, stop)
+	if err != nil {
+		return 0, err
+	}
+	return db.zRemRange(key, MinScore, MaxScore, offset, limit)
+}
+
+//min and max must be inclusive
+func (db *DB) ZRemRangeByScore(key []byte, min int64, max int64) (int64, error) {
+	return db.zRemRange(key, min, max, 0, -1)
+}
+
+func (db *DB) ZRevRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
+	return db.ZRangeGeneric(key, start, stop, withScores, true)
+}
+
+func (db *DB) ZRevRank(key []byte, member []byte) (int64, error) {
+	return db.zrank(key, member, true)
+}
+
+//min and max must be inclusive
+//if no limit, set offset = 0 and count = -1
+func (db *DB) ZRevRangeByScore(key []byte, min int64, max int64,
+	withScores bool, offset int, count int) ([]interface{}, error) {
+	return db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, true)
+}
+
+func (db *DB) ZRangeGeneric(key []byte, start int, stop int,
+	withScores bool, reverse bool) ([]interface{}, error) {
+	offset, limit, err := db.zParseLimit(key, start, stop)
+	if err != nil {
+		return nil, err
+	}
+
+	return db.zRange(key, MinScore, MaxScore, withScores, offset, limit, reverse)
+}
+
+//min and max must be inclusive
+//if no limit, set offset = 0 and count = -1
+func (db *DB) ZRangeByScoreGeneric(key []byte, min int64, max int64,
+	withScores bool, offset int, count int, reverse bool) ([]interface{}, error) {
+
+	return db.zRange(key, min, max, withScores, offset, count, reverse)
 }

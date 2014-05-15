@@ -9,11 +9,6 @@ import (
 
 //for simple implementation, we only support int64 score
 
-const (
-	MinScore int64 = -1<<63 + 1
-	MaxScore int64 = 1<<63 - 1
-)
-
 var errScoreOverflow = errors.New("zset score overflow")
 
 func zaddCommand(c *client) error {
@@ -39,7 +34,7 @@ func zaddCommand(c *client) error {
 		params[i+1] = args[i+1]
 	}
 
-	if n, err := c.app.zset_add(key, params); err != nil {
+	if n, err := c.db.ZAdd(key, params); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -54,7 +49,7 @@ func zcardCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.zset_card(args[0]); err != nil {
+	if n, err := c.db.ZCard(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -69,7 +64,7 @@ func zscoreCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.zset_score(args[0], args[1]); err != nil {
+	if v, err := c.db.ZScore(args[0], args[1]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -84,7 +79,7 @@ func zremCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.zset_rem(args[0], args[1:]); err != nil {
+	if n, err := c.db.ZRem(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -106,7 +101,7 @@ func zincrbyCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.app.zset_incrby(key, delta, args[2]); err != nil {
+	if v, err := c.db.ZIncrBy(key, delta, args[2]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -193,7 +188,7 @@ func zcountCommand(c *client) error {
 		return nil
 	}
 
-	if n, err := c.app.zset_count(args[0], min, max); err != nil {
+	if n, err := c.db.ZCount(args[0], min, max); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -208,7 +203,7 @@ func zrankCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.zset_rank(args[0], args[1], false); err != nil {
+	if n, err := c.db.ZRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
 		c.writeBulk(nil)
@@ -225,7 +220,7 @@ func zrevrankCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.zset_rank(args[0], args[1], true); err != nil {
+	if n, err := c.db.ZRevRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
 		c.writeBulk(nil)
@@ -244,17 +239,12 @@ func zremrangebyrankCommand(c *client) error {
 
 	key := args[0]
 
-	offset, limit, err := zparseRange(c, key, args[1], args[2])
+	start, stop, err := zparseRange(c, args[1], args[2])
 	if err != nil {
 		return err
 	}
 
-	if offset < 0 {
-		c.writeInteger(0)
-		return nil
-	}
-
-	if n, err := c.app.zset_remRange(key, MinScore, MaxScore, offset, limit); err != nil {
+	if n, err := c.db.ZRemRangeByRank(key, start, stop); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -275,7 +265,7 @@ func zremrangebyscoreCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.app.zset_remRange(key, min, max, 0, -1); err != nil {
+	if n, err := c.db.ZRemRangeByScore(key, min, max); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -284,51 +274,15 @@ func zremrangebyscoreCommand(c *client) error {
 	return nil
 }
 
-func zparseRange(c *client, key []byte, startBuf []byte, stopBuf []byte) (offset int, limit int, err error) {
-	var start int
-	var stop int
-	if start, err = strconv.Atoi(String(startBuf)); err != nil {
+func zparseRange(c *client, a1 []byte, a2 []byte) (start int, stop int, err error) {
+	if start, err = strconv.Atoi(String(a1)); err != nil {
 		return
 	}
 
-	if stop, err = strconv.Atoi(String(stopBuf)); err != nil {
+	if stop, err = strconv.Atoi(String(a2)); err != nil {
 		return
 	}
 
-	if start < 0 || stop < 0 {
-		//refer redis implementation
-		var size int64
-		size, err = c.app.zset_card(key)
-		if err != nil {
-			return
-		}
-
-		llen := int(size)
-
-		if start < 0 {
-			start = llen + start
-		}
-		if stop < 0 {
-			stop = llen + stop
-		}
-
-		if start < 0 {
-			start = 0
-		}
-
-		if start >= llen {
-			offset = -1
-			return
-		}
-	}
-
-	if start > stop {
-		offset = -1
-		return
-	}
-
-	offset = start
-	limit = (stop - start) + 1
 	return
 }
 
@@ -340,14 +294,9 @@ func zrangeGeneric(c *client, reverse bool) error {
 
 	key := args[0]
 
-	offset, limit, err := zparseRange(c, key, args[1], args[2])
+	start, stop, err := zparseRange(c, args[1], args[2])
 	if err != nil {
 		return err
-	}
-
-	if offset < 0 {
-		c.writeArray([]interface{}{})
-		return nil
 	}
 
 	args = args[3:]
@@ -357,7 +306,7 @@ func zrangeGeneric(c *client, reverse bool) error {
 		withScores = true
 	}
 
-	if v, err := c.app.zset_range(key, MinScore, MaxScore, withScores, offset, limit, reverse); err != nil {
+	if v, err := c.db.ZRangeGeneric(key, start, stop, withScores, reverse); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -395,7 +344,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	}
 
 	var offset int = 0
-	var limit int = -1
+	var count int = -1
 
 	if len(args) > 0 {
 		if len(args) != 3 {
@@ -410,7 +359,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 			return ErrCmdParams
 		}
 
-		if limit, err = strconv.Atoi(String(args[2])); err != nil {
+		if count, err = strconv.Atoi(String(args[2])); err != nil {
 			return ErrCmdParams
 		}
 	}
@@ -422,7 +371,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 		return nil
 	}
 
-	if v, err := c.app.zset_range(key, min, max, withScores, offset, limit, reverse); err != nil {
+	if v, err := c.db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, reverse); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -445,7 +394,7 @@ func zclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.zset_clear(args[0]); err != nil {
+	if n, err := c.db.ZClear(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

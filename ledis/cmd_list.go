@@ -8,7 +8,7 @@ func lpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.list_lpush(args[0], args[1:]); err != nil {
+	if n, err := c.db.LPush(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -23,7 +23,7 @@ func rpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.list_rpush(args[0], args[1:]); err != nil {
+	if n, err := c.db.RPush(args[0], args[1:]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -38,7 +38,7 @@ func lpopCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.list_lpop(args[0]); err != nil {
+	if v, err := c.db.LPop(args[0]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -53,7 +53,7 @@ func rpopCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.app.list_rpop(args[0]); err != nil {
+	if v, err := c.db.RPop(args[0]); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -68,7 +68,7 @@ func llenCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.list_len(args[0]); err != nil {
+	if n, err := c.db.LLen(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -88,7 +88,7 @@ func lindexCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.app.list_index(args[0], int32(index)); err != nil {
+	if v, err := c.db.LIndex(args[0], int32(index)); err != nil {
 		return err
 	} else {
 		c.writeBulk(v)
@@ -117,7 +117,7 @@ func lrangeCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.app.list_range(args[0], int32(start), int32(stop)); err != nil {
+	if v, err := c.db.LRange(args[0], int32(start), int32(stop)); err != nil {
 		return err
 	} else {
 		c.writeArray(v)
@@ -132,7 +132,7 @@ func lclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.app.list_clear(args[0]); err != nil {
+	if n, err := c.db.LClear(args[0]); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

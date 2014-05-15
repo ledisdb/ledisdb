@@ -1,7 +1,6 @@
 package ledis
 
 import (
-	"github.com/siddontang/go-leveldb/leveldb"
 	"net"
 	"strings"
 )
@@ -11,12 +10,7 @@ type App struct {
 
 	listener net.Listener
 
-	db *leveldb.DB
-
-	kvTx   *tx
-	listTx *tx
-	hashTx *tx
-	zsetTx *tx
+	db *DB
 
 	closed bool
 }
@@ -40,15 +34,10 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	app.db, err = leveldb.OpenWithConfig(&cfg.DB)
+	app.db, err = OpenDBWithConfig(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}
-
-	app.kvTx = app.newTx()
-	app.listTx = app.newTx()
-	app.hashTx = app.newTx()
-	app.zsetTx = app.newTx()
 
 	return app, nil
 }
@@ -72,6 +61,6 @@ func (app *App) Run() {
 			continue
 		}
 
-		newClient(conn, app)
+		newClient(conn, app.db)
 	}
 }
