@@ -1,4 +1,4 @@
-package ledis
+package server
 
 import (
 	"errors"
@@ -18,15 +18,4 @@ var (
 
 	PONG = "PONG"
 	OK   = "OK"
-)
-
-const (
-	KV_TYPE byte = iota + 1
-	HASH_TYPE
-	HSIZE_TYPE
-	LIST_TYPE
-	LMETA_TYPE
-	ZSET_TYPE
-	ZSIZE_TYPE
-	ZSCORE_TYPE
 )

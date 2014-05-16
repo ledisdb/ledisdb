@@ -20,6 +20,7 @@ type ScorePair struct {
 var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
 var errZScoreKey = errors.New("invalid zscore key")
+var errScoreOverflow = errors.New("zset score overflow")
 
 const (
 	zsetNScoreSep    byte = '<'
@@ -32,14 +33,14 @@ const (
 
 func encode_zsize_key(key []byte) []byte {
 	buf := make([]byte, len(key)+1)
-	buf[0] = ZSIZE_TYPE
+	buf[0] = zSizeType
 
 	copy(buf[1:], key)
 	return buf
 }
 
 func decode_zsize_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != ZSIZE_TYPE {
+	if len(ek) == 0 || ek[0] != zSizeType {
 		return nil, errZSizeKey
 	}
 
@@ -50,7 +51,7 @@ func encode_zset_key(key []byte, member []byte) []byte {
 	buf := make([]byte, len(key)+len(member)+5)
 
 	pos := 0
-	buf[pos] = ZSET_TYPE
+	buf[pos] = zsetType
 	pos++
 
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
@@ -65,7 +66,7 @@ func encode_zset_key(key []byte, member []byte) []byte {
 }
 
 func decode_zset_key(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != ZSET_TYPE {
+	if len(ek) < 5 || ek[0] != zsetType {
 		return nil, nil, errZSetKey
 	}
 
@@ -83,7 +84,7 @@ func encode_zscore_key(key []byte, member []byte, score int64) []byte {
 	buf := make([]byte, len(key)+len(member)+15)
 
 	pos := 0
-	buf[pos] = ZSCORE_TYPE
+	buf[pos] = zScoreType
 	pos++
 
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
@@ -121,7 +122,7 @@ func encode_stop_zscore_key(key []byte, score int64) []byte {
 }
 
 func decode_zscore_key(ek []byte) (key []byte, member []byte, score int64, err error) {
-	if len(ek) < 15 || ek[0] != ZSCORE_TYPE {
+	if len(ek) < 15 || ek[0] != zScoreType {
 		err = errZScoreKey
 		return
 	}

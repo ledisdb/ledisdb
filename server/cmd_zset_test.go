@@ -1,60 +1,11 @@
-package ledis
+package server
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"strconv"
 	"testing"
 )
-
-func TestCodecZSet(t *testing.T) {
-	key := []byte("a")
-
-	ek := encode_zsize_key(key)
-
-	if k, err := decode_zsize_key(ek); err != nil {
-		t.Fatal(err)
-	} else if !bytes.Equal(key, k) {
-		t.Fatal(string(k))
-	}
-
-	member := []byte("f")
-
-	ek = encode_zset_key(key, member)
-
-	if k, m, err := decode_zset_key(ek); err != nil {
-		t.Fatal(err)
-	} else if !bytes.Equal(key, k) {
-		t.Fatal(string(k))
-	} else if !bytes.Equal(member, m) {
-		t.Fatal(string(m))
-	}
-
-	ek = encode_zscore_key(key, member, 3)
-
-	if k, m, s, err := decode_zscore_key(ek); err != nil {
-		t.Fatal(err)
-	} else if !bytes.Equal(key, k) {
-		t.Fatal(string(k))
-	} else if !bytes.Equal(member, m) {
-		t.Fatal(string(m))
-	} else if s != 3 {
-		t.Fatal(s)
-	}
-
-	ek = encode_zscore_key(key, member, -3)
-
-	if k, m, s, err := decode_zscore_key(ek); err != nil {
-		t.Fatal(err)
-	} else if !bytes.Equal(key, k) {
-		t.Fatal(string(k))
-	} else if !bytes.Equal(member, m) {
-		t.Fatal(string(m))
-	} else if s != -3 {
-		t.Fatal(s)
-	}
-}
 
 func TestZSet(t *testing.T) {
 	c := getTestConn()

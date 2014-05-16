@@ -1,4 +1,4 @@
-package ledis
+package server
 
 import (
 	"fmt"

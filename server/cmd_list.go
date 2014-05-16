@@ -1,6 +1,8 @@
-package ledis
+package server
 
-import ()
+import (
+	"github.com/siddontang/ledisdb/ledis"
+)
 
 func lpushCommand(c *client) error {
 	args := c.args
@@ -83,7 +85,7 @@ func lindexCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	index, err := StrInt64(args[1], nil)
+	index, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
@@ -107,12 +109,12 @@ func lrangeCommand(c *client) error {
 	var stop int64
 	var err error
 
-	start, err = StrInt64(args[1], nil)
+	start, err = ledis.StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
 
-	stop, err = StrInt64(args[2], nil)
+	stop, err = ledis.StrInt64(args[2], nil)
 	if err != nil {
 		return err
 	}

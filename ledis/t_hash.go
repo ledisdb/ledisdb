@@ -21,14 +21,14 @@ const (
 
 func encode_hsize_key(key []byte) []byte {
 	buf := make([]byte, len(key)+1)
-	buf[0] = HSIZE_TYPE
+	buf[0] = hSizeType
 
 	copy(buf[1:], key)
 	return buf
 }
 
 func decode_hsize_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != HSIZE_TYPE {
+	if len(ek) == 0 || ek[0] != hSizeType {
 		return nil, errHSizeKey
 	}
 
@@ -39,7 +39,7 @@ func encode_hash_key(key []byte, field []byte) []byte {
 	buf := make([]byte, len(key)+len(field)+1+4+1)
 
 	pos := 0
-	buf[pos] = HASH_TYPE
+	buf[pos] = hashType
 	pos++
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
 	pos += 4
@@ -68,7 +68,7 @@ func encode_hash_stop_key(key []byte) []byte {
 }
 
 func decode_hash_key(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 6 || ek[0] != HASH_TYPE {
+	if len(ek) < 6 || ek[0] != hashType {
 		return nil, nil, errHashKey
 	}
 

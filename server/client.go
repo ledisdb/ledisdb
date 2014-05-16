@@ -1,9 +1,10 @@
-package ledis
+package server
 
 import (
 	"bufio"
 	"errors"
 	"github.com/siddontang/golib/log"
+	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
 	"runtime"
@@ -14,7 +15,7 @@ import (
 var errReadRequest = errors.New("invalid request protocol")
 
 type client struct {
-	db *DB
+	db *ledis.DB
 	c  net.Conn
 
 	rb *bufio.Reader
@@ -26,7 +27,7 @@ type client struct {
 	reqC chan error
 }
 
-func newClient(c net.Conn, db *DB) {
+func newClient(c net.Conn, db *ledis.DB) {
 	co := new(client)
 	co.db = db
 	co.c = c
@@ -91,7 +92,7 @@ func (c *client) readRequest() ([][]byte, error) {
 	}
 
 	var nparams int
-	if nparams, err = strconv.Atoi(String(l[1:])); err != nil {
+	if nparams, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
 		return nil, err
 	} else if nparams <= 0 {
 		return nil, errReadRequest
@@ -108,7 +109,7 @@ func (c *client) readRequest() ([][]byte, error) {
 			return nil, errReadRequest
 		} else if l[0] == '$' {
 			//handle resp string
-			if n, err = strconv.Atoi(String(l[1:])); err != nil {
+			if n, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
 				return nil, err
 			} else if n == -1 {
 				req = append(req, nil)
@@ -138,7 +139,7 @@ func (c *client) handleRequest(req [][]byte) {
 	if len(req) == 0 {
 		err = ErrEmptyCommand
 	} else {
-		c.cmd = strings.ToLower(String(req[0]))
+		c.cmd = strings.ToLower(ledis.String(req[0]))
 		c.args = req[1:]
 
 		f, ok := regCmds[c.cmd]
@@ -160,23 +161,23 @@ func (c *client) handleRequest(req [][]byte) {
 }
 
 func (c *client) writeError(err error) {
-	c.wb.Write(Slice("-ERR"))
+	c.wb.Write(ledis.Slice("-ERR"))
 	if err != nil {
 		c.wb.WriteByte(' ')
-		c.wb.Write(Slice(err.Error()))
+		c.wb.Write(ledis.Slice(err.Error()))
 	}
 	c.wb.Write(Delims)
 }
 
 func (c *client) writeStatus(status string) {
 	c.wb.WriteByte('+')
-	c.wb.Write(Slice(status))
+	c.wb.Write(ledis.Slice(status))
 	c.wb.Write(Delims)
 }
 
 func (c *client) writeInteger(n int64) {
 	c.wb.WriteByte(':')
-	c.wb.Write(StrPutInt64(n))
+	c.wb.Write(ledis.StrPutInt64(n))
 	c.wb.Write(Delims)
 }
 
@@ -185,7 +186,7 @@ func (c *client) writeBulk(b []byte) {
 	if b == nil {
 		c.wb.Write(NullBulk)
 	} else {
-		c.wb.Write(Slice(strconv.Itoa(len(b))))
+		c.wb.Write(ledis.Slice(strconv.Itoa(len(b))))
 		c.wb.Write(Delims)
 		c.wb.Write(b)
 	}
@@ -199,7 +200,7 @@ func (c *client) writeArray(ay []interface{}) {
 		c.wb.Write(NullArray)
 		c.wb.Write(Delims)
 	} else {
-		c.wb.Write(Slice(strconv.Itoa(len(ay))))
+		c.wb.Write(ledis.Slice(strconv.Itoa(len(ay))))
 		c.wb.Write(Delims)
 
 		for i := 0; i < len(ay); i++ {

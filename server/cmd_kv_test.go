@@ -1,4 +1,4 @@
-package ledis
+package server
 
 import (
 	"github.com/garyburd/redigo/redis"

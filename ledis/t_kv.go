@@ -13,13 +13,13 @@ var errKVKey = errors.New("invalid encode kv key")
 
 func encode_kv_key(key []byte) []byte {
 	ek := make([]byte, len(key)+1)
-	ek[0] = KV_TYPE
+	ek[0] = kvType
 	copy(ek[1:], key)
 	return ek
 }
 
 func decode_kv_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != KV_TYPE {
+	if len(ek) == 0 || ek[0] != kvType {
 		return nil, errKVKey
 	}
 

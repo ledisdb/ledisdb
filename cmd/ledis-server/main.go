@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/ledisdb/server"
 	"os"
 	"os/signal"
 	"runtime"
@@ -20,13 +20,13 @@ func main() {
 		panic("must use a config file")
 	}
 
-	cfg, err := ledis.NewConfigWithFile(*configFile)
+	cfg, err := server.NewConfigWithFile(*configFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var app *ledis.App
-	app, err = ledis.NewApp(cfg)
+	var app *server.App
+	app, err = server.NewApp(cfg)
 	if err != nil {
 		panic(err)
 	}

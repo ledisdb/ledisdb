@@ -1,4 +1,4 @@
-package ledis
+package server
 
 import (
 	"github.com/garyburd/redigo/redis"
@@ -28,12 +28,6 @@ func newTestRedisPool() {
 func getTestConn() redis.Conn {
 	startTestApp()
 	return testPool.Get()
-}
-
-func getTestDB() *DB {
-	startTestApp()
-
-	return testApp.db
 }
 
 func startTestApp() {

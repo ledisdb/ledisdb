@@ -1,6 +1,8 @@
-package ledis
+package server
 
-import ()
+import (
+	"github.com/siddontang/ledisdb/ledis"
+)
 
 func hsetCommand(c *client) error {
 	args := c.args
@@ -87,7 +89,7 @@ func hincrbyCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	delta, err := StrInt64(args[2], nil)
+	delta, err := ledis.StrInt64(args[2], nil)
 	if err != nil {
 		return err
 	}
@@ -115,7 +117,7 @@ func hmsetCommand(c *client) error {
 
 	args = args[1:]
 
-	kvs := make([]FVPair, len(args)/2)
+	kvs := make([]ledis.FVPair, len(args)/2)
 	for i := 0; i < len(kvs); i++ {
 		kvs[i].Field = args[2*i]
 		kvs[i].Value = args[2*i+1]

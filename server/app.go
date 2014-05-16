@@ -1,6 +1,7 @@
-package ledis
+package server
 
 import (
+	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"strings"
 )
@@ -10,7 +11,7 @@ type App struct {
 
 	listener net.Listener
 
-	db *DB
+	db *ledis.DB
 
 	closed bool
 }
@@ -34,7 +35,7 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	app.db, err = OpenDBWithConfig(&cfg.DB)
+	app.db, err = ledis.OpenDBWithConfig(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}

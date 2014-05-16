@@ -1,7 +1,8 @@
-package ledis
+package server
 
 import (
 	"errors"
+	"github.com/siddontang/ledisdb/ledis"
 	"math"
 	"strconv"
 	"strings"
@@ -24,9 +25,9 @@ func zaddCommand(c *client) error {
 
 	args = args[1:]
 
-	params := make([]ScorePair, len(args)/2)
+	params := make([]ledis.ScorePair, len(args)/2)
 	for i := 0; i < len(params); i++ {
-		score, err := StrInt64(args[2*i], nil)
+		score, err := ledis.StrInt64(args[2*i], nil)
 		if err != nil {
 			return err
 		}
@@ -97,7 +98,7 @@ func zincrbyCommand(c *client) error {
 
 	key := args[0]
 
-	delta, err := StrInt64(args[1], nil)
+	delta, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func zincrbyCommand(c *client) error {
 }
 
 func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err error) {
-	if strings.ToLower(String(minBuf)) == "-inf" {
+	if strings.ToLower(ledis.String(minBuf)) == "-inf" {
 		min = math.MinInt64
 	} else {
 		var lopen bool = false
@@ -126,12 +127,12 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 			return
 		}
 
-		min, err = StrInt64(minBuf, nil)
+		min, err = ledis.StrInt64(minBuf, nil)
 		if err != nil {
 			return
 		}
 
-		if min <= MinScore || min >= MaxScore {
+		if min <= ledis.MinScore || min >= ledis.MaxScore {
 			err = errScoreOverflow
 			return
 		}
@@ -141,7 +142,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 		}
 	}
 
-	if strings.ToLower(String(maxBuf)) == "+inf" {
+	if strings.ToLower(ledis.String(maxBuf)) == "+inf" {
 		max = math.MaxInt64
 	} else {
 		var ropen = false
@@ -155,12 +156,12 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 			return
 		}
 
-		max, err = StrInt64(maxBuf, nil)
+		max, err = ledis.StrInt64(maxBuf, nil)
 		if err != nil {
 			return
 		}
 
-		if max <= MinScore || max >= MaxScore {
+		if max <= ledis.MinScore || max >= ledis.MaxScore {
 			err = errScoreOverflow
 			return
 		}
@@ -276,11 +277,11 @@ func zremrangebyscoreCommand(c *client) error {
 }
 
 func zparseRange(c *client, a1 []byte, a2 []byte) (start int, stop int, err error) {
-	if start, err = strconv.Atoi(String(a1)); err != nil {
+	if start, err = strconv.Atoi(ledis.String(a1)); err != nil {
 		return
 	}
 
-	if stop, err = strconv.Atoi(String(a2)); err != nil {
+	if stop, err = strconv.Atoi(ledis.String(a2)); err != nil {
 		return
 	}
 
@@ -303,7 +304,7 @@ func zrangeGeneric(c *client, reverse bool) error {
 	args = args[3:]
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(String(args[0])) == "withscores" {
+	if len(args) > 0 && strings.ToLower(ledis.String(args[0])) == "withscores" {
 		withScores = true
 	}
 
@@ -339,7 +340,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(String(args[0])) == "withscores" {
+	if len(args) > 0 && strings.ToLower(ledis.String(args[0])) == "withscores" {
 		withScores = true
 		args = args[1:]
 	}
@@ -352,15 +353,15 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 			return ErrCmdParams
 		}
 
-		if strings.ToLower(String(args[0])) != "limit" {
+		if strings.ToLower(ledis.String(args[0])) != "limit" {
 			return ErrCmdParams
 		}
 
-		if offset, err = strconv.Atoi(String(args[1])); err != nil {
+		if offset, err = strconv.Atoi(ledis.String(args[1])); err != nil {
 			return ErrCmdParams
 		}
 
-		if count, err = strconv.Atoi(String(args[2])); err != nil {
+		if count, err = strconv.Atoi(ledis.String(args[2])); err != nil {
 			return ErrCmdParams
 		}
 	}

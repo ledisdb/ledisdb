@@ -1,14 +1,15 @@
-package ledis
+package server
 
 import (
 	"encoding/json"
+	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 )
 
 type Config struct {
 	Addr string `json:"addr"`
 
-	DB DBConfig `json:"db"`
+	DB ledis.DBConfig `json:"db"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {

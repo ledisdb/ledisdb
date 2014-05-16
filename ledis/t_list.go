@@ -21,14 +21,14 @@ var errListSeq = errors.New("invalid list sequence, overflow")
 
 func encode_lmeta_key(key []byte) []byte {
 	buf := make([]byte, len(key)+1)
-	buf[0] = LMETA_TYPE
+	buf[0] = lMetaType
 
 	copy(buf[1:], key)
 	return buf
 }
 
 func decode_lmeta_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != LMETA_TYPE {
+	if len(ek) == 0 || ek[0] != lMetaType {
 		return nil, errLMetaKey
 	}
 
@@ -39,7 +39,7 @@ func encode_list_key(key []byte, seq int32) []byte {
 	buf := make([]byte, len(key)+9)
 
 	pos := 0
-	buf[pos] = LIST_TYPE
+	buf[pos] = listType
 	pos++
 
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
@@ -54,7 +54,7 @@ func encode_list_key(key []byte, seq int32) []byte {
 }
 
 func decode_list_key(ek []byte) (key []byte, seq int32, err error) {
-	if len(ek) < 9 || ek[0] != LIST_TYPE {
+	if len(ek) < 9 || ek[0] != listType {
 		err = errListKey
 		return
 	}
