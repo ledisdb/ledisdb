@@ -6,8 +6,6 @@ import (
 )
 
 func TestKV(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -77,8 +75,6 @@ func TestKV(t *testing.T) {
 }
 
 func TestKVM(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -108,8 +104,6 @@ func TestKVM(t *testing.T) {
 }
 
 func TestKVIncrDecr(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 

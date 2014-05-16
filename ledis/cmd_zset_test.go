@@ -57,8 +57,6 @@ func TestCodecZSet(t *testing.T) {
 }
 
 func TestZSet(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -156,8 +154,6 @@ func TestZSet(t *testing.T) {
 }
 
 func TestZSetCount(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -220,8 +216,6 @@ func TestZSetCount(t *testing.T) {
 }
 
 func TestZSetRank(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -279,8 +273,6 @@ func testZSetRange(ay []interface{}, checkValues ...interface{}) error {
 }
 
 func TestZSetRangeScore(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -375,8 +367,6 @@ func TestZSetRangeScore(t *testing.T) {
 }
 
 func TestZSetRange(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 

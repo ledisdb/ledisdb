@@ -8,8 +8,6 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -82,8 +80,6 @@ func testHashArray(ay []interface{}, checkValues ...int) error {
 }
 
 func TestHashM(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -136,8 +132,6 @@ func TestHashM(t *testing.T) {
 }
 
 func TestHashIncr(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -175,8 +169,6 @@ func TestHashIncr(t *testing.T) {
 }
 
 func TestHashGetAll(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 

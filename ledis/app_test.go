@@ -26,7 +26,14 @@ func newTestRedisPool() {
 }
 
 func getTestConn() redis.Conn {
+	startTestApp()
 	return testPool.Get()
+}
+
+func getTestDB() *DB {
+	startTestApp()
+
+	return testApp.db
 }
 
 func startTestApp() {

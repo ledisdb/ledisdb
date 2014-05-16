@@ -54,8 +54,6 @@ func testListRange(key []byte, start int64, stop int64, checkValues ...int) erro
 }
 
 func TestList(t *testing.T) {
-	startTestApp()
-
 	c := getTestConn()
 	defer c.Close()
 
@@ -199,7 +197,6 @@ func TestList(t *testing.T) {
 }
 
 func TestListMPush(t *testing.T) {
-	startTestApp()
 	c := getTestConn()
 	defer c.Close()
 
@@ -226,7 +223,6 @@ func TestListMPush(t *testing.T) {
 }
 
 func TestPop(t *testing.T) {
-	startTestApp()
 	c := getTestConn()
 	defer c.Close()
 
