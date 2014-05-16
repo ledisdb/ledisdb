@@ -45,14 +45,15 @@ func startTestApp() {
 		var d = []byte(`
             {
                 "addr" : "127.0.0.1:16380",
-                "leveldb" :     
-                {
-                    "path" : "/tmp/testdb",
-                    "compression":true,
-                    "block_size" : 32768,
-                    "write_buffer_size" : 2097152,
-                    "cache_size" : 20971520
-                }
+                "db" : {
+                    "data_db" : {
+                        "path" : "/tmp/testdb",
+                        "compression":true,
+                        "block_size" : 32768,
+                        "write_buffer_size" : 2097152,
+                        "cache_size" : 20971520
+                    }
+                }    
             }
             `)
 

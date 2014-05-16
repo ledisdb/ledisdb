@@ -1,10 +1,12 @@
 {
     "addr": "127.0.0.1:6380",
-    "leveldb": {
-        "path": "/tmp/ledisdb",
-        "compression": false,
-        "block_size": 32768,
-        "write_buffer_size": 67108864,
-        "cache_size": 524288000
+    "db": {
+        "data_db" : {
+            "path": "/tmp/ledisdb",
+            "compression": false,
+            "block_size": 32768,
+            "write_buffer_size": 67108864,
+            "cache_size": 524288000            
+        }
     }
 }

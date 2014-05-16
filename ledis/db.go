@@ -5,7 +5,13 @@ import (
 	"github.com/siddontang/go-leveldb/leveldb"
 )
 
+type DBConfig struct {
+	DataDB leveldb.Config `json:"data_db"`
+}
+
 type DB struct {
+	cfg *DBConfig
+
 	db *leveldb.DB
 
 	kvTx   *tx
@@ -15,25 +21,24 @@ type DB struct {
 }
 
 func OpenDB(configJson json.RawMessage) (*DB, error) {
-	db, err := leveldb.Open(configJson)
+	var cfg DBConfig
+
+	if err := json.Unmarshal(configJson, &cfg); err != nil {
+		return nil, err
+	}
+
+	return OpenDBWithConfig(&cfg)
+}
+
+func OpenDBWithConfig(cfg *DBConfig) (*DB, error) {
+	db, err := leveldb.OpenWithConfig(&cfg.DataDB)
 	if err != nil {
 		return nil, err
 	}
 
-	return newDB(db)
-}
-
-func OpenDBWithConfig(cfg *leveldb.Config) (*DB, error) {
-	db, err := leveldb.OpenWithConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return newDB(db)
-}
-
-func newDB(db *leveldb.DB) (*DB, error) {
 	d := new(DB)
+
+	d.cfg = cfg
 
 	d.db = db
 

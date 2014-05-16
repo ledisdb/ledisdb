@@ -2,14 +2,13 @@ package ledis
 
 import (
 	"encoding/json"
-	"github.com/siddontang/go-leveldb/leveldb"
 	"io/ioutil"
 )
 
 type Config struct {
 	Addr string `json:"addr"`
 
-	DB leveldb.Config `json:"leveldb"`
+	DB DBConfig `json:"db"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {
