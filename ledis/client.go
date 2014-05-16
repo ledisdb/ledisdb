@@ -176,7 +176,7 @@ func (c *client) writeStatus(status string) {
 
 func (c *client) writeInteger(n int64) {
 	c.wb.WriteByte(':')
-	c.wb.Write(Slice(strconv.FormatInt(n, 10)))
+	c.wb.Write(StrPutInt64(n))
 	c.wb.Write(Delims)
 }
 

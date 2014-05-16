@@ -6,6 +6,11 @@ import (
 	"github.com/siddontang/go-leveldb/leveldb"
 )
 
+type FVPair struct {
+	Field []byte
+	Value []byte
+}
+
 var errHashKey = errors.New("invalid hash key")
 var errHSizeKey = errors.New("invalid hsize key")
 
@@ -129,19 +134,19 @@ func (db *DB) HGet(key []byte, field []byte) ([]byte, error) {
 	return db.db.Get(encode_hash_key(key, field))
 }
 
-func (db *DB) HMset(key []byte, args [][]byte) error {
+func (db *DB) HMset(key []byte, args ...FVPair) error {
 	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
-	for i := 0; i < len(args); i += 2 {
-		ek := encode_hash_key(key, args[i])
+	for i := 0; i < len(args); i++ {
+		ek := encode_hash_key(key, args[i].Field)
 		if v, _ := db.db.Get(ek); v == nil {
 			num++
 		}
 
-		t.Put(ek, args[i+1])
+		t.Put(ek, args[i].Value)
 	}
 
 	if _, err := db.hIncrSize(key, num); err != nil {

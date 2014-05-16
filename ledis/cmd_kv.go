@@ -152,7 +152,7 @@ func delCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Del(args); err != nil {
+	if n, err := c.db.Del(args...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -167,7 +167,13 @@ func msetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if err := c.db.MSet(args); err != nil {
+	kvs := make([]KVPair, len(args)/2)
+	for i := 0; i < len(kvs); i++ {
+		kvs[i].Key = args[2*i]
+		kvs[i].Value = args[2*i+1]
+	}
+
+	if err := c.db.MSet(kvs...); err != nil {
 		return err
 	} else {
 		c.writeStatus(OK)
@@ -186,7 +192,7 @@ func mgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.MGet(args); err != nil {
+	if v, err := c.db.MGet(args...); err != nil {
 		return err
 	} else {
 		c.writeArray(v)

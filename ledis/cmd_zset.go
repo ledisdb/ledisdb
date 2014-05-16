@@ -23,18 +23,19 @@ func zaddCommand(c *client) error {
 	}
 
 	args = args[1:]
-	params := make([]interface{}, len(args))
-	for i := 0; i < len(params); i += 2 {
-		score, err := StrInt64(args[i], nil)
+
+	params := make([]ScorePair, len(args)/2)
+	for i := 0; i < len(params); i++ {
+		score, err := StrInt64(args[2*i], nil)
 		if err != nil {
 			return err
 		}
 
-		params[i] = score
-		params[i+1] = args[i+1]
+		params[i].Score = score
+		params[i].Member = args[2*i+1]
 	}
 
-	if n, err := c.db.ZAdd(key, params); err != nil {
+	if n, err := c.db.ZAdd(key, params...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -79,7 +80,7 @@ func zremCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZRem(args[0], args[1:]); err != nil {
+	if n, err := c.db.ZRem(args[0], args[1:]...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

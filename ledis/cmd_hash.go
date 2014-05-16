@@ -111,7 +111,17 @@ func hmsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if err := c.db.HMset(args[0], args[1:]); err != nil {
+	key := args[0]
+
+	args = args[1:]
+
+	kvs := make([]FVPair, len(args)/2)
+	for i := 0; i < len(kvs); i++ {
+		kvs[i].Field = args[2*i]
+		kvs[i].Value = args[2*i+1]
+	}
+
+	if err := c.db.HMset(key, kvs...); err != nil {
 		return err
 	} else {
 		c.writeStatus(OK)

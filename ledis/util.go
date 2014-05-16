@@ -63,5 +63,5 @@ func StrInt64(v []byte, err error) (int64, error) {
 }
 
 func StrPutInt64(v int64) []byte {
-	return Slice(strconv.FormatInt(v, 10))
+	return strconv.AppendInt(nil, v, 10)
 }

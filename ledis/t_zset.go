@@ -5,13 +5,17 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
-	"strconv"
 )
 
 const (
 	MinScore int64 = -1<<63 + 1
 	MaxScore int64 = 1<<63 - 1
 )
+
+type ScorePair struct {
+	Score  int64
+	Member []byte
+}
 
 var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
@@ -207,15 +211,19 @@ func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, err
 	return 1, nil
 }
 
-func (db *DB) ZAdd(key []byte, args []interface{}) (int64, error) {
+func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
+	if len(args) == 0 {
+		return 0, nil
+	}
+
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
-	for i := 0; i < len(args); i += 2 {
-		score := args[i].(int64)
-		member := args[i+1].([]byte)
+	for i := 0; i < len(args); i++ {
+		score := args[i].Score
+		member := args[i].Member
 
 		if n, err := db.zSetItem(key, score, member); err != nil {
 			return 0, err
@@ -266,17 +274,21 @@ func (db *DB) ZScore(key []byte, member []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return Slice(strconv.FormatInt(score, 10)), nil
+	return StrPutInt64(score), nil
 }
 
-func (db *DB) ZRem(key []byte, args [][]byte) (int64, error) {
+func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
+	if len(members) == 0 {
+		return 0, nil
+	}
+
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
 	var num int64 = 0
-	for i := 0; i < len(args); i++ {
-		if n, err := db.zDelItem(key, args[i], false); err != nil {
+	for i := 0; i < len(members); i++ {
+		if n, err := db.zDelItem(key, members[i], false); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
@@ -323,7 +335,7 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
 	t.Put(encode_zscore_key(key, member, score), []byte{})
 
 	err = t.Commit()
-	return Slice(strconv.FormatInt(score, 10)), err
+	return StrPutInt64(score), err
 }
 
 func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
@@ -479,7 +491,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 		v = append(v, m)
 
 		if withScores {
-			v = append(v, Slice(strconv.FormatInt(s, 10)))
+			v = append(v, StrPutInt64(s))
 		}
 	}
 

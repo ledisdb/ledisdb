@@ -4,6 +4,11 @@ import (
 	"errors"
 )
 
+type KVPair struct {
+	Key   []byte
+	Value []byte
+}
+
 var errKVKey = errors.New("invalid encode kv key")
 
 func encode_kv_key(key []byte) []byte {
@@ -54,7 +59,11 @@ func (db *DB) DecrBy(key []byte, decrement int64) (int64, error) {
 	return db.incr(key, -decrement)
 }
 
-func (db *DB) Del(keys [][]byte) (int64, error) {
+func (db *DB) Del(keys ...[]byte) (int64, error) {
+	if len(keys) == 0 {
+		return 0, nil
+	}
+
 	for i := range keys {
 		keys[i] = encode_kv_key(keys[i])
 	}
@@ -121,7 +130,7 @@ func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
 	return db.incr(key, increment)
 }
 
-func (db *DB) MGet(keys [][]byte) ([]interface{}, error) {
+func (db *DB) MGet(keys ...[]byte) ([]interface{}, error) {
 	values := make([]interface{}, len(keys))
 
 	for i := range keys {
@@ -137,15 +146,19 @@ func (db *DB) MGet(keys [][]byte) ([]interface{}, error) {
 	return values, nil
 }
 
-func (db *DB) MSet(args [][]byte) error {
+func (db *DB) MSet(args ...KVPair) error {
+	if len(args) == 0 {
+		return nil
+	}
+
 	t := db.kvTx
 
 	t.Lock()
 	defer t.Unlock()
 
-	for i := 0; i < len(args); i += 2 {
-		key := encode_kv_key(args[i])
-		value := args[i+1]
+	for i := 0; i < len(args); i++ {
+		key := encode_kv_key(args[i].Key)
+		value := args[i].Value
 
 		t.Put(key, value)
 

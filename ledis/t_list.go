@@ -70,12 +70,18 @@ func decode_list_key(ek []byte) (key []byte, seq int32, err error) {
 	return
 }
 
-func (db *DB) lpush(key []byte, args [][]byte, whereSeq int32) (int64, error) {
+func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
+	metaKey := encode_lmeta_key(key)
+
+	if len(args) == 0 {
+		_, _, size, err := db.lGetMeta(metaKey)
+		return int64(size), err
+	}
+
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
-	metaKey := encode_lmeta_key(key)
 	headSeq, tailSeq, size, err := db.lGetMeta(metaKey)
 
 	if err != nil {
@@ -234,8 +240,8 @@ func (db *DB) LPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listHeadSeq)
 }
 
-func (db *DB) LPush(key []byte, args [][]byte) (int64, error) {
-	return db.lpush(key, args, listHeadSeq)
+func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {
+	return db.lpush(key, listHeadSeq, args...)
 }
 
 func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error) {
@@ -286,8 +292,8 @@ func (db *DB) RPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listTailSeq)
 }
 
-func (db *DB) RPush(key []byte, args [][]byte) (int64, error) {
-	return db.lpush(key, args, listTailSeq)
+func (db *DB) RPush(key []byte, args ...[]byte) (int64, error) {
+	return db.lpush(key, listTailSeq, args...)
 }
 
 func (db *DB) LClear(key []byte) (int64, error) {

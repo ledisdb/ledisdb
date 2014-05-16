@@ -8,7 +8,7 @@ func lpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LPush(args[0], args[1:]); err != nil {
+	if n, err := c.db.LPush(args[0], args[1:]...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -23,7 +23,7 @@ func rpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.RPush(args[0], args[1:]); err != nil {
+	if n, err := c.db.RPush(args[0], args[1:]...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
