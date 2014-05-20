@@ -4,6 +4,18 @@ import (
 	"testing"
 )
 
+func TestKVCodec(t *testing.T) {
+	db := getTestDB()
+
+	ek := db.encodeKVKey([]byte("key"))
+
+	if k, err := db.decodeKVKey(ek); err != nil {
+		t.Fatal(err)
+	} else if string(k) != "key" {
+		t.Fatal(string(k))
+	}
+}
+
 func TestDBKV(t *testing.T) {
 	db := getTestDB()
 

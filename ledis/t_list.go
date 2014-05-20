@@ -19,31 +19,34 @@ var errLMetaKey = errors.New("invalid lmeta key")
 var errListKey = errors.New("invalid list key")
 var errListSeq = errors.New("invalid list sequence, overflow")
 
-func encode_lmeta_key(key []byte) []byte {
-	buf := make([]byte, len(key)+1)
-	buf[0] = lMetaType
+func (db *DB) lEncodeMetaKey(key []byte) []byte {
+	buf := make([]byte, len(key)+2)
+	buf[0] = db.index
+	buf[1] = lMetaType
 
-	copy(buf[1:], key)
+	copy(buf[2:], key)
 	return buf
 }
 
-func decode_lmeta_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != lMetaType {
+func (db *DB) lDecodeMetaKey(ek []byte) ([]byte, error) {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != lMetaType {
 		return nil, errLMetaKey
 	}
 
-	return ek[1:], nil
+	return ek[2:], nil
 }
 
-func encode_list_key(key []byte, seq int32) []byte {
-	buf := make([]byte, len(key)+9)
+func (db *DB) lEncodeListKey(key []byte, seq int32) []byte {
+	buf := make([]byte, len(key)+8)
 
 	pos := 0
+	buf[pos] = db.index
+	pos++
 	buf[pos] = listType
 	pos++
 
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-	pos += 4
+	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
+	pos += 2
 
 	copy(buf[pos:], key)
 	pos += len(key)
@@ -53,25 +56,34 @@ func encode_list_key(key []byte, seq int32) []byte {
 	return buf
 }
 
-func decode_list_key(ek []byte) (key []byte, seq int32, err error) {
-	if len(ek) < 9 || ek[0] != listType {
+func (db *DB) lDecodeListKey(ek []byte) (key []byte, seq int32, err error) {
+	if len(ek) < 8 || ek[0] != db.index || ek[1] != listType {
 		err = errListKey
 		return
 	}
 
-	keyLen := int(binary.BigEndian.Uint32(ek[1:]))
-	if keyLen+9 != len(ek) {
+	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
+	if keyLen+8 != len(ek) {
 		err = errListKey
 		return
 	}
 
-	key = ek[5 : 5+keyLen]
-	seq = int32(binary.BigEndian.Uint32(ek[5+keyLen:]))
+	key = ek[4 : 4+keyLen]
+	seq = int32(binary.BigEndian.Uint32(ek[4+keyLen:]))
 	return
 }
 
 func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
-	metaKey := encode_lmeta_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	var headSeq int32
+	var tailSeq int32
+	var size int32
+	var err error
+
+	metaKey := db.lEncodeMetaKey(key)
 
 	if len(args) == 0 {
 		_, _, size, err := db.lGetMeta(metaKey)
@@ -82,9 +94,7 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	headSeq, tailSeq, size, err := db.lGetMeta(metaKey)
-
-	if err != nil {
+	if headSeq, tailSeq, size, err = db.lGetMeta(metaKey); err != nil {
 		return 0, err
 	}
 
@@ -106,7 +116,8 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	}
 
 	for i := 0; i < len(args); i++ {
-		t.Put(encode_list_key(key, seq+int32(i)*delta), args[i])
+		ek := db.lEncodeListKey(key, seq+int32(i)*delta)
+		t.Put(ek, args[i])
 		//to do add binlog
 	}
 
@@ -132,12 +143,22 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 }
 
 func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
-	metaKey := encode_lmeta_key(key)
-	headSeq, tailSeq, size, err := db.lGetMeta(metaKey)
+	var headSeq int32
+	var tailSeq int32
+	var size int32
+	var err error
+
+	metaKey := db.lEncodeMetaKey(key)
+
+	headSeq, tailSeq, size, err = db.lGetMeta(metaKey)
 
 	if err != nil {
 		return nil, err
@@ -152,7 +173,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 		seq = tailSeq
 	}
 
-	itemKey := encode_list_key(key, seq)
+	itemKey := db.lEncodeListKey(key, seq)
 	var value []byte
 	value, err = db.db.Get(itemKey)
 	if err != nil {
@@ -181,7 +202,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 }
 
 func (db *DB) lGetSeq(key []byte, whereSeq int32) (int64, error) {
-	ek := encode_list_key(key, whereSeq)
+	ek := db.lEncodeListKey(key, whereSeq)
 
 	return Int64(db.db.Get(ek))
 }
@@ -215,8 +236,18 @@ func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32, size int32) {
 }
 
 func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
 	var seq int32
-	headSeq, tailSeq, _, err := db.lGetMeta(encode_lmeta_key(key))
+	var headSeq int32
+	var tailSeq int32
+	var err error
+
+	metaKey := db.lEncodeMetaKey(key)
+
+	headSeq, tailSeq, _, err = db.lGetMeta(metaKey)
 	if err != nil {
 		return nil, err
 	}
@@ -227,11 +258,16 @@ func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 		seq = tailSeq + index + 1
 	}
 
-	return db.db.Get(encode_list_key(key, seq))
+	sk := db.lEncodeListKey(key, seq)
+	return db.db.Get(sk)
 }
 
 func (db *DB) LLen(key []byte) (int64, error) {
-	ek := encode_lmeta_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	ek := db.lEncodeMetaKey(key)
 	_, _, size, err := db.lGetMeta(ek)
 	return int64(size), err
 }
@@ -245,6 +281,10 @@ func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {
 }
 
 func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
 	v := make([]interface{}, 0, 16)
 
 	var startSeq int32
@@ -254,8 +294,13 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error)
 		return []interface{}{}, nil
 	}
 
-	headSeq, tailSeq, _, err := db.lGetMeta(encode_lmeta_key(key))
-	if err != nil {
+	var headSeq int32
+	var tailSeq int32
+	var err error
+
+	metaKey := db.lEncodeMetaKey(key)
+
+	if headSeq, tailSeq, _, err = db.lGetMeta(metaKey); err != nil {
 		return nil, err
 	}
 
@@ -277,8 +322,9 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error)
 		stopSeq = listMaxSeq
 	}
 
-	it := db.db.Iterator(encode_list_key(key, startSeq),
-		encode_list_key(key, stopSeq), leveldb.RangeClose, 0, -1)
+	startKey := db.lEncodeListKey(key, startSeq)
+	stopKey := db.lEncodeListKey(key, stopSeq)
+	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}
@@ -297,22 +343,31 @@ func (db *DB) RPush(key []byte, args ...[]byte) (int64, error) {
 }
 
 func (db *DB) LClear(key []byte) (int64, error) {
-	mk := encode_lmeta_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	mk := db.lEncodeMetaKey(key)
 
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
-	metaKey := encode_lmeta_key(key)
-	headSeq, tailSeq, _, err := db.lGetMeta(metaKey)
+	var headSeq int32
+	var tailSeq int32
+	var err error
+
+	headSeq, tailSeq, _, err = db.lGetMeta(mk)
 
 	if err != nil {
 		return 0, err
 	}
 
 	var num int64 = 0
-	it := db.db.Iterator(encode_list_key(key, headSeq),
-		encode_list_key(key, tailSeq), leveldb.RangeClose, 0, -1)
+	startKey := db.lEncodeListKey(key, headSeq)
+	stopKey := db.lEncodeListKey(key, tailSeq)
+
+	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++

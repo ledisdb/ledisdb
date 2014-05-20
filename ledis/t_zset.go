@@ -31,31 +31,44 @@ const (
 	zsetStopMemSep  byte = zsetStartMemSep + 1
 )
 
-func encode_zsize_key(key []byte) []byte {
-	buf := make([]byte, len(key)+1)
-	buf[0] = zSizeType
+func checkZSetKMSize(key []byte, member []byte) error {
+	if len(key) > MaxKeySize {
+		return ErrKeySize
+	} else if len(member) > MaxZSetMemberSize {
+		return ErrZSetMemberSize
+	}
+	return nil
+}
 
-	copy(buf[1:], key)
+func (db *DB) zEncodeSizeKey(key []byte) []byte {
+	buf := make([]byte, len(key)+2)
+	buf[0] = db.index
+	buf[1] = zSizeType
+
+	copy(buf[2:], key)
 	return buf
 }
 
-func decode_zsize_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != zSizeType {
+func (db *DB) zDecodeSizeKey(ek []byte) ([]byte, error) {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != zSizeType {
 		return nil, errZSizeKey
 	}
 
-	return ek[1:], nil
+	return ek[2:], nil
 }
 
-func encode_zset_key(key []byte, member []byte) []byte {
-	buf := make([]byte, len(key)+len(member)+5)
+func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
+	buf := make([]byte, len(key)+len(member)+4)
 
 	pos := 0
+	buf[pos] = db.index
+	pos++
+
 	buf[pos] = zsetType
 	pos++
 
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-	pos += 4
+	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
+	pos += 2
 
 	copy(buf[pos:], key)
 	pos += len(key)
@@ -65,30 +78,33 @@ func encode_zset_key(key []byte, member []byte) []byte {
 	return buf
 }
 
-func decode_zset_key(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != zsetType {
+func (db *DB) zDecodeSetKey(ek []byte) ([]byte, []byte, error) {
+	if len(ek) < 4 || ek[0] != db.index || ek[1] != zsetType {
 		return nil, nil, errZSetKey
 	}
 
-	keyLen := int(binary.BigEndian.Uint32(ek[1:]))
-	if keyLen+5 > len(ek) {
+	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
+	if keyLen+4 > len(ek) {
 		return nil, nil, errZSetKey
 	}
 
-	key := ek[5 : 5+keyLen]
-	member := ek[5+keyLen:]
+	key := ek[4 : 4+keyLen]
+	member := ek[4+keyLen:]
 	return key, member, nil
 }
 
-func encode_zscore_key(key []byte, member []byte, score int64) []byte {
-	buf := make([]byte, len(key)+len(member)+15)
+func (db *DB) zEncodeScoreKey(key []byte, member []byte, score int64) []byte {
+	buf := make([]byte, len(key)+len(member)+14)
 
 	pos := 0
+	buf[pos] = db.index
+	pos++
+
 	buf[pos] = zScoreType
 	pos++
 
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-	pos += 4
+	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
+	pos += 2
 
 	copy(buf[pos:], key)
 	pos += len(key)
@@ -110,31 +126,30 @@ func encode_zscore_key(key []byte, member []byte, score int64) []byte {
 	return buf
 }
 
-func encode_start_zscore_key(key []byte, score int64) []byte {
-	k := encode_zscore_key(key, nil, score)
-	return k
+func (db *DB) zEncodeStartScoreKey(key []byte, score int64) []byte {
+	return db.zEncodeScoreKey(key, nil, score)
 }
 
-func encode_stop_zscore_key(key []byte, score int64) []byte {
-	k := encode_zscore_key(key, nil, score)
+func (db *DB) zEncodeStopScoreKey(key []byte, score int64) []byte {
+	k := db.zEncodeScoreKey(key, nil, score)
 	k[len(k)-1] = zsetStopMemSep
 	return k
 }
 
-func decode_zscore_key(ek []byte) (key []byte, member []byte, score int64, err error) {
-	if len(ek) < 15 || ek[0] != zScoreType {
+func (db *DB) zDecodeScoreKey(ek []byte) (key []byte, member []byte, score int64, err error) {
+	if len(ek) < 14 || ek[0] != db.index || ek[1] != zScoreType {
 		err = errZScoreKey
 		return
 	}
 
-	keyLen := int(binary.BigEndian.Uint32(ek[1:]))
+	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
 	if keyLen+14 > len(ek) {
 		err = errZScoreKey
 		return
 	}
 
-	key = ek[5 : 5+keyLen]
-	pos := 5 + keyLen
+	key = ek[4 : 4+keyLen]
+	pos := 4 + keyLen
 
 	if (ek[pos] != zsetNScoreSep) && (ek[pos] != zsetPScoreSep) {
 		err = errZScoreKey
@@ -164,7 +179,8 @@ func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
 	t := db.zsetTx
 
 	var exists int64 = 0
-	ek := encode_zset_key(key, member)
+	ek := db.zEncodeSetKey(key, member)
+
 	if v, err := db.db.Get(ek); err != nil {
 		return 0, err
 	} else if v != nil {
@@ -173,14 +189,14 @@ func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
 		if s, err := Int64(v, err); err != nil {
 			return 0, err
 		} else {
-			sk := encode_zscore_key(key, member, s)
+			sk := db.zEncodeScoreKey(key, member, s)
 			t.Delete(sk)
 		}
 	}
 
 	t.Put(ek, PutInt64(score))
 
-	sk := encode_zscore_key(key, member, score)
+	sk := db.zEncodeScoreKey(key, member, score)
 	t.Put(sk, []byte{})
 
 	return exists, nil
@@ -189,7 +205,7 @@ func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
 func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, error) {
 	t := db.zsetTx
 
-	ek := encode_zset_key(key, member)
+	ek := db.zEncodeSetKey(key, member)
 	if v, err := db.db.Get(ek); err != nil {
 		return 0, err
 	} else if v == nil {
@@ -202,7 +218,7 @@ func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, err
 			if s, err := Int64(v, err); err != nil {
 				return 0, err
 			} else {
-				sk := encode_zscore_key(key, member, s)
+				sk := db.zEncodeScoreKey(key, member, s)
 				t.Delete(sk)
 			}
 		}
@@ -226,6 +242,10 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 		score := args[i].Score
 		member := args[i].Member
 
+		if err := checkZSetKMSize(key, member); err != nil {
+			return 0, err
+		}
+
 		if n, err := db.zSetItem(key, score, member); err != nil {
 			return 0, err
 		} else if n == 0 {
@@ -245,7 +265,8 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 
 func (db *DB) zIncrSize(key []byte, delta int64) (int64, error) {
 	t := db.zsetTx
-	sk := encode_zsize_key(key)
+	sk := db.zEncodeSizeKey(key)
+
 	size, err := Int64(db.db.Get(sk))
 	if err != nil {
 		return 0, err
@@ -263,13 +284,21 @@ func (db *DB) zIncrSize(key []byte, delta int64) (int64, error) {
 }
 
 func (db *DB) ZCard(key []byte) (int64, error) {
-	sk := encode_zsize_key(key)
-	size, err := Int64(db.db.Get(sk))
-	return size, err
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	sk := db.zEncodeSizeKey(key)
+	return Int64(db.db.Get(sk))
 }
 
 func (db *DB) ZScore(key []byte, member []byte) ([]byte, error) {
-	k := encode_zset_key(key, member)
+	if err := checkZSetKMSize(key, member); err != nil {
+		return nil, err
+	}
+
+	k := db.zEncodeSetKey(key, member)
+
 	score, err := Int64(db.db.Get(k))
 	if err != nil {
 		return nil, err
@@ -289,6 +318,10 @@ func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
 
 	var num int64 = 0
 	for i := 0; i < len(members); i++ {
+		if err := checkZSetKMSize(key, members[i]); err != nil {
+			return 0, err
+		}
+
 		if n, err := db.zDelItem(key, members[i], false); err != nil {
 			return 0, err
 		} else if n == 1 {
@@ -305,12 +338,18 @@ func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
 }
 
 func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
+	if err := checkZSetKMSize(key, member); err != nil {
+		return nil, err
+	}
+
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
 
-	ek := encode_zset_key(key, member)
+	ek := db.zEncodeSetKey(key, member)
+
 	var score int64 = delta
+
 	v, err := db.db.Get(ek)
 	if err != nil {
 		return nil, err
@@ -318,7 +357,7 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
 		if s, err := Int64(v, err); err != nil {
 			return nil, err
 		} else {
-			sk := encode_zscore_key(key, member, s)
+			sk := db.zEncodeScoreKey(key, member, s)
 			t.Delete(sk)
 
 			score = s + delta
@@ -333,15 +372,19 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
 
 	t.Put(ek, PutInt64(score))
 
-	t.Put(encode_zscore_key(key, member, score), []byte{})
+	sk := db.zEncodeScoreKey(key, member, score)
+	t.Put(sk, []byte{})
 
 	err = t.Commit()
 	return StrPutInt64(score), err
 }
 
 func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
-	minKey := encode_start_zscore_key(key, min)
-	maxKey := encode_stop_zscore_key(key, max)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	minKey := db.zEncodeStartScoreKey(key, min)
+	maxKey := db.zEncodeStopScoreKey(key, max)
 
 	rangeType := leveldb.RangeROpen
 
@@ -356,7 +399,11 @@ func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
 }
 
 func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
-	k := encode_zset_key(key, member)
+	if err := checkZSetKMSize(key, member); err != nil {
+		return 0, err
+	}
+
+	k := db.zEncodeSetKey(key, member)
 
 	if v, err := db.db.Get(k); err != nil {
 		return 0, err
@@ -368,13 +415,13 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 		} else {
 			var it *leveldb.Iterator
 
-			sk := encode_zscore_key(key, member, s)
+			sk := db.zEncodeScoreKey(key, member, s)
 
 			if !reverse {
-				minKey := encode_start_zscore_key(key, MinScore)
+				minKey := db.zEncodeStartScoreKey(key, MinScore)
 				it = db.db.Iterator(minKey, sk, leveldb.RangeClose, 0, -1)
 			} else {
-				maxKey := encode_stop_zscore_key(key, MaxScore)
+				maxKey := db.zEncodeStopScoreKey(key, MaxScore)
 				it = db.db.RevIterator(sk, maxKey, leveldb.RangeClose, 0, -1)
 			}
 
@@ -389,7 +436,7 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 
 			it.Close()
 
-			if _, m, _, err := decode_zscore_key(lastKey); err == nil && bytes.Equal(m, member) {
+			if _, m, _, err := db.zDecodeScoreKey(lastKey); err == nil && bytes.Equal(m, member) {
 				n--
 				return n, nil
 			}
@@ -400,8 +447,8 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 }
 
 func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int, reverse bool) *leveldb.Iterator {
-	minKey := encode_start_zscore_key(key, min)
-	maxKey := encode_stop_zscore_key(key, max)
+	minKey := db.zEncodeStartScoreKey(key, min)
+	maxKey := db.zEncodeStopScoreKey(key, max)
 
 	if !reverse {
 		return db.db.Iterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
@@ -411,6 +458,10 @@ func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int,
 }
 
 func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int) (int64, error) {
+	if len(key) > MaxKeySize {
+		return 0, ErrKeySize
+	}
+
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
@@ -419,7 +470,7 @@ func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int)
 	var num int64 = 0
 	for ; it.Valid(); it.Next() {
 		k := it.Key()
-		_, m, _, err := decode_zscore_key(k)
+		_, m, _, err := db.zDecodeScoreKey(k)
 		if err != nil {
 			continue
 		}
@@ -459,6 +510,10 @@ func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
 }
 
 func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
+	if len(key) > MaxKeySize {
+		return nil, ErrKeySize
+	}
+
 	if offset < 0 {
 		return []interface{}{}, nil
 	}
@@ -483,7 +538,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 	}
 
 	for ; it.Valid(); it.Next() {
-		_, m, s, err := decode_zscore_key(it.Key())
+		_, m, s, err := db.zDecodeScoreKey(it.Key())
 		//may be we will check key equal?
 		if err != nil {
 			continue

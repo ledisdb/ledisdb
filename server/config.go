@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Addr string `json:"addr"`
 
-	DB ledis.DBConfig `json:"db"`
+	DB ledis.Config `json:"db"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {

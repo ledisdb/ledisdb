@@ -2,6 +2,9 @@ package server
 
 import (
 	"fmt"
+	"github.com/siddontang/ledisdb/ledis"
+	"strconv"
+
 	"strings"
 )
 
@@ -31,7 +34,26 @@ func echoCommand(c *client) error {
 	return nil
 }
 
+func selectCommand(c *client) error {
+	if len(c.args) != 1 {
+		return ErrCmdParams
+	}
+
+	if index, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
+		return err
+	} else {
+		if db, err := c.ldb.Select(index); err != nil {
+			return err
+		} else {
+			c.db = db
+			c.writeStatus(OK)
+		}
+	}
+	return nil
+}
+
 func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)
+	register("select", selectCommand)
 }

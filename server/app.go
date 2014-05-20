@@ -11,7 +11,7 @@ type App struct {
 
 	listener net.Listener
 
-	db *ledis.DB
+	ldb *ledis.Ledis
 
 	closed bool
 }
@@ -35,7 +35,7 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	app.db, err = ledis.OpenDBWithConfig(&cfg.DB)
+	app.ldb, err = ledis.OpenWithConfig(&cfg.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (app *App) Close() {
 
 	app.listener.Close()
 
-	app.db.Close()
+	app.ldb.Close()
 
 	app.closed = true
 }
@@ -62,6 +62,6 @@ func (app *App) Run() {
 			continue
 		}
 
-		newClient(conn, app.db)
+		newClient(conn, app.ldb)
 	}
 }

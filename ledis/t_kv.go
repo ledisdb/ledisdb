@@ -11,24 +11,36 @@ type KVPair struct {
 
 var errKVKey = errors.New("invalid encode kv key")
 
-func encode_kv_key(key []byte) []byte {
-	ek := make([]byte, len(key)+1)
-	ek[0] = kvType
-	copy(ek[1:], key)
+func checkKeySize(key []byte) error {
+	if len(key) > MaxKeySize {
+		return ErrKeySize
+	}
+	return nil
+}
+
+func (db *DB) encodeKVKey(key []byte) []byte {
+	ek := make([]byte, len(key)+2)
+	ek[0] = db.index
+	ek[1] = kvType
+	copy(ek[2:], key)
 	return ek
 }
 
-func decode_kv_key(ek []byte) ([]byte, error) {
-	if len(ek) == 0 || ek[0] != kvType {
+func (db *DB) decodeKVKey(ek []byte) ([]byte, error) {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != kvType {
 		return nil, errKVKey
 	}
 
-	return ek[1:], nil
+	return ek[2:], nil
 }
 
 func (db *DB) incr(key []byte, delta int64) (int64, error) {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
 	var err error
+	key = db.encodeKVKey(key)
 
 	t := db.kvTx
 
@@ -64,8 +76,9 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 		return 0, nil
 	}
 
+	var err error
 	for i := range keys {
-		keys[i] = encode_kv_key(keys[i])
+		keys[i] = db.encodeKVKey(keys[i])
 	}
 
 	t := db.kvTx
@@ -78,13 +91,17 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 		//todo binlog
 	}
 
-	err := t.Commit()
+	err = t.Commit()
 	return int64(len(keys)), err
 }
 
 func (db *DB) Exists(key []byte) (int64, error) {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
 	var err error
+	key = db.encodeKVKey(key)
 
 	var v []byte
 	v, err = db.db.Get(key)
@@ -96,13 +113,21 @@ func (db *DB) Exists(key []byte) (int64, error) {
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
+	key = db.encodeKVKey(key)
 
 	return db.db.Get(key)
 }
 
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
+	key = db.encodeKVKey(key)
 
 	t := db.kvTx
 
@@ -133,10 +158,14 @@ func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
 func (db *DB) MGet(keys ...[]byte) ([]interface{}, error) {
 	values := make([]interface{}, len(keys))
 
+	var err error
+	var value []byte
 	for i := range keys {
-		key := encode_kv_key(keys[i])
-		value, err := db.db.Get(key)
-		if err != nil {
+		if err := checkKeySize(keys[i]); err != nil {
+			return nil, err
+		}
+
+		if value, err = db.db.Get(db.encodeKVKey(keys[i])); err != nil {
 			return nil, err
 		}
 
@@ -153,25 +182,38 @@ func (db *DB) MSet(args ...KVPair) error {
 
 	t := db.kvTx
 
+	var err error
+	var key []byte
+	var value []byte
+
 	t.Lock()
 	defer t.Unlock()
 
 	for i := 0; i < len(args); i++ {
-		key := encode_kv_key(args[i].Key)
-		value := args[i].Value
+		if err := checkKeySize(args[i].Key); err != nil {
+			return err
+		}
+
+		key = db.encodeKVKey(args[i].Key)
+
+		value = args[i].Value
 
 		t.Put(key, value)
 
 		//todo binlog
 	}
 
-	err := t.Commit()
+	err = t.Commit()
 	return err
 }
 
 func (db *DB) Set(key []byte, value []byte) error {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return err
+	}
+
 	var err error
+	key = db.encodeKVKey(key)
 
 	t := db.kvTx
 
@@ -188,8 +230,12 @@ func (db *DB) Set(key []byte, value []byte) error {
 }
 
 func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
-	key = encode_kv_key(key)
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
 	var err error
+	key = db.encodeKVKey(key)
 
 	var n int64 = 1
 

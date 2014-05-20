@@ -15,6 +15,8 @@ import (
 var errReadRequest = errors.New("invalid request protocol")
 
 type client struct {
+	ldb *ledis.Ledis
+
 	db *ledis.DB
 	c  net.Conn
 
@@ -27,9 +29,11 @@ type client struct {
 	reqC chan error
 }
 
-func newClient(c net.Conn, db *ledis.DB) {
+func newClient(c net.Conn, ldb *ledis.Ledis) {
 	co := new(client)
-	co.db = db
+	co.ldb = ldb
+	//use default db
+	co.db, _ = ldb.Select(0)
 	co.c = c
 
 	co.rb = bufio.NewReaderSize(c, 256)
