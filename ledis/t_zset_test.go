@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	EndPos int = -1
+	endPos int = -1
 )
 
 func bin(sz string) []byte {
@@ -135,7 +135,7 @@ func TestZSetOrder(t *testing.T) {
 		}
 	}
 
-	if qMembs, err := db.ZRange(key, 0, EndPos, false); err != nil {
+	if qMembs, err := db.ZRange(key, 0, endPos, false); err != nil {
 		t.Fatal(err)
 	} else if len(qMembs) != membCnt {
 		t.Fatal(fmt.Sprintf("%d vs %d", len(qMembs), membCnt))
