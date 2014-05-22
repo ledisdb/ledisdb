@@ -190,12 +190,4 @@ func TestZSetOrder(t *testing.T) {
 	if pos, _ := db.ZRevRank(key, bin("e")); int(pos) != 1 {
 		t.Fatal(pos)
 	}
-
-	if dropCnt, _ := testLedis.FlushDB(); dropCnt <= 0 {
-		t.Fatal(dropCnt)
-	}
-
-	if n, _ := db.ZCount(key, 0, 0XFFFF); n > 0 {
-		t.Fatal(n)
-	}
 }
