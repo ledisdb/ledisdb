@@ -380,3 +380,26 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	err = t.Commit()
 	return num, err
 }
+
+func (db *DB) LFlush() (drop int64, err error) {
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
+
+	minKey := make([]byte, 2)
+	minKey[0] = db.index
+	minKey[1] = listType
+
+	maxKey := make([]byte, 2)
+	maxKey[0] = db.index
+	maxKey[1] = lMetaType + 1
+
+	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		drop++
+	}
+
+	err = t.Commit()
+	return
+}

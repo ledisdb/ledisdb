@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"errors"
+	"github.com/siddontang/go-leveldb/leveldb"
 )
 
 type KVPair struct {
@@ -257,4 +258,27 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	}
 
 	return n, err
+}
+
+func (db *DB) KvFlush() (drop int64, err error) {
+	t := db.kvTx
+	t.Lock()
+	defer t.Unlock()
+
+	minKey := make([]byte, 2)
+	minKey[0] = db.index
+	minKey[1] = kvType
+
+	maxKey := make([]byte, 2)
+	maxKey[0] = db.index
+	maxKey[1] = kvType + 1
+
+	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		drop++
+	}
+
+	err = t.Commit()
+	return
 }

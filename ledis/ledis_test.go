@@ -62,3 +62,40 @@ func TestSelect(t *testing.T) {
 		t.Fatal(string(v))
 	}
 }
+
+func TestFlush(t *testing.T) {
+	db0, _ := testLedis.Select(0)
+	db1, _ := testLedis.Select(1)
+
+	db0.Set([]byte("a"), []byte("1"))
+	db0.ZAdd([]byte("zset_0"), ScorePair{int64(1), []byte("ma")})
+	db0.ZAdd([]byte("zset_0"), ScorePair{int64(2), []byte("mb")})
+
+	db1.Set([]byte("b"), []byte("2"))
+	db1.LPush([]byte("lst"), []byte("a1"), []byte("b2"))
+	db1.ZAdd([]byte("zset_0"), ScorePair{int64(3), []byte("mc")})
+
+	db1.Flush()
+
+	//	0 - existing
+	if exists, _ := db0.Exists([]byte("a")); exists <= 0 {
+		t.Fatal(false)
+	}
+
+	if zcnt, _ := db0.ZCard([]byte("zset_0")); zcnt != 2 {
+		t.Fatal(zcnt)
+	}
+
+	//	1 - deleted
+	if exists, _ := db1.Exists([]byte("b")); exists > 0 {
+		t.Fatal(false)
+	}
+
+	if llen, _ := db1.LLen([]byte("lst")); llen > 0 {
+		t.Fatal(llen)
+	}
+
+	if zcnt, _ := db1.ZCard([]byte("zset_1")); zcnt > 0 {
+		t.Fatal(zcnt)
+	}
+}

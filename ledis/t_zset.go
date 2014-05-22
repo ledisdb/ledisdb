@@ -660,3 +660,27 @@ func (db *DB) ZRangeByScoreGeneric(key []byte, min int64, max int64,
 
 	return db.zRange(key, min, max, withScores, offset, count, reverse)
 }
+
+func (db *DB) ZFlush() (drop int64, err error) {
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	minKey := make([]byte, 2)
+	minKey[0] = db.index
+	minKey[1] = zsetType
+
+	maxKey := make([]byte, 2)
+	maxKey[0] = db.index
+	maxKey[1] = zScoreType + 1
+
+	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		drop++
+	}
+
+	err = t.Commit()
+	// to do : binlog
+	return
+}
