@@ -80,3 +80,24 @@ func (l *Ledis) Select(index int) (*DB, error) {
 
 	return l.dbs[index], nil
 }
+
+func (l *Ledis) FlushDB() (drop int64, err error) {
+	db := l.ldb
+	if db == nil {
+		drop = int64(-1)
+		return
+	}
+
+	ftx := &tx{wb: db.NewWriteBatch()}
+	ftx.Lock()
+	defer ftx.Unlock()
+
+	it := db.Iterator(nil, nil, leveldb.RangeClose, 0, -1)
+	for ; it.Valid(); it.Next() {
+		ftx.Delete(it.Key())
+		drop++
+	}
+
+	err = ftx.Commit()
+	return
+}
