@@ -13,7 +13,7 @@ type KVPair struct {
 var errKVKey = errors.New("invalid encode kv key")
 
 func checkKeySize(key []byte) error {
-	if len(key) > MaxKeySize {
+	if len(key) > MaxKeySize || len(key) == 0 {
 		return ErrKeySize
 	}
 	return nil
