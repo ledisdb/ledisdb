@@ -16,6 +16,10 @@ const (
 )
 
 const (
+	defaultScanCount int = 20
+)
+
+const (
 	//we don't support too many databases
 	MaxDBNumber uint8 = 16
 

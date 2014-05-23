@@ -35,6 +35,17 @@ func (db *DB) decodeKVKey(ek []byte) ([]byte, error) {
 	return ek[2:], nil
 }
 
+func (db *DB) encodeKVMinKey() []byte {
+	ek := db.encodeKVKey(nil)
+	return ek
+}
+
+func (db *DB) encodeKVMaxKey() []byte {
+	ek := db.encodeKVKey(nil)
+	ek[len(ek)-1] = kvType + 1
+	return ek
+}
+
 func (db *DB) incr(key []byte, delta int64) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -265,13 +276,8 @@ func (db *DB) KvFlush() (drop int64, err error) {
 	t.Lock()
 	defer t.Unlock()
 
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = kvType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = kvType + 1
+	minKey := db.encodeKVMinKey()
+	maxKey := db.encodeKVMaxKey()
 
 	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
@@ -281,4 +287,38 @@ func (db *DB) KvFlush() (drop int64, err error) {
 
 	err = t.Commit()
 	return
+}
+
+func (db *DB) Scan(cursor int, count int) ([]interface{}, error) {
+	minKey := db.encodeKVMinKey()
+	maxKey := db.encodeKVMaxKey()
+
+	if count <= 0 {
+		count = defaultScanCount
+	}
+
+	v := make([]interface{}, 2)
+	r := make([]interface{}, 0, count)
+
+	var num int = 0
+	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, cursor, count)
+	for ; it.Valid(); it.Next() {
+		num++
+
+		if key, err := db.decodeKVKey(it.Key()); err != nil {
+			continue
+		} else {
+			r = append(r, key)
+		}
+	}
+
+	if num < count {
+		v[0] = int64(0)
+	} else {
+		v[0] = int64(cursor + count)
+	}
+
+	v[1] = r
+
+	return v, nil
 }

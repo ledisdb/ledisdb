@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/siddontang/ledisdb/ledis"
+	"strings"
 )
 
 func getCommand(c *client) error {
@@ -203,6 +204,40 @@ func mgetCommand(c *client) error {
 	return nil
 }
 
+func scanCommand(c *client) error {
+	args := c.args
+
+	if len(args) != 1 && len(args) != 3 {
+		return ErrCmdParams
+	}
+	var offset int64
+	var count int64
+	var err error
+
+	if offset, err = ledis.StrInt64(args[0], nil); err != nil {
+		return err
+	}
+
+	//now we only support count
+	if len(args) == 3 {
+		if strings.ToLower(ledis.String(args[1])) != "count" {
+			return ErrCmdParams
+		}
+
+		if count, err = ledis.StrInt64(args[2], nil); err != nil {
+			return err
+		}
+	}
+
+	if v, err := c.db.Scan(int(offset), int(count)); err != nil {
+		return err
+	} else {
+		c.writeArray(v)
+	}
+
+	return nil
+}
+
 func init() {
 	register("decr", decrCommand)
 	register("decrby", decrbyCommand)
@@ -216,4 +251,5 @@ func init() {
 	register("mset", msetCommand)
 	register("set", setCommand)
 	register("setnx", setnxCommand)
+	register("scan", scanCommand)
 }
