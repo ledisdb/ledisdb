@@ -3,7 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
-	"github.com/siddontang/golib/log"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
