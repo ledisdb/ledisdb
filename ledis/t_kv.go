@@ -289,7 +289,8 @@ func (db *DB) KvFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) Scan(key []byte, count int) ([]KVPair, error) {
+//if inclusive is true, scan range [key, inf) else (key, inf)
+func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 	var minKey []byte
 	if key != nil {
 		if err := checkKeySize(key); err != nil {
@@ -308,7 +309,12 @@ func (db *DB) Scan(key []byte, count int) ([]KVPair, error) {
 
 	v := make([]KVPair, 0, 2*count)
 
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, count)
+	rangeType := leveldb.RangeROpen
+	if !inclusive {
+		rangeType = leveldb.RangeOpen
+	}
+
+	it := db.db.Iterator(minKey, maxKey, rangeType, 0, count)
 	for ; it.Valid(); it.Next() {
 		if key, err := db.decodeKVKey(it.Key()); err != nil {
 			continue
