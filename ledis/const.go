@@ -16,7 +16,7 @@ const (
 )
 
 const (
-	defaultScanCount int = 20
+	defaultScanCount int = 10
 )
 
 const (

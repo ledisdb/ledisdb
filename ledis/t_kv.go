@@ -289,36 +289,33 @@ func (db *DB) KvFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) Scan(cursor int, count int) ([]interface{}, error) {
-	minKey := db.encodeKVMinKey()
+func (db *DB) Scan(key []byte, count int) ([]KVPair, error) {
+	var minKey []byte
+	if key != nil {
+		if err := checkKeySize(key); err != nil {
+			return nil, err
+		}
+		minKey = key
+	} else {
+		minKey = db.encodeKVMinKey()
+	}
+
 	maxKey := db.encodeKVMaxKey()
 
 	if count <= 0 {
 		count = defaultScanCount
 	}
 
-	v := make([]interface{}, 2)
-	r := make([]interface{}, 0, count)
+	v := make([]KVPair, 0, 2*count)
 
-	var num int = 0
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, cursor, count)
+	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, count)
 	for ; it.Valid(); it.Next() {
-		num++
-
 		if key, err := db.decodeKVKey(it.Key()); err != nil {
 			continue
 		} else {
-			r = append(r, key)
+			v = append(v, KVPair{Key: key, Value: it.Value()})
 		}
 	}
-
-	if num < count {
-		v[0] = int64(0)
-	} else {
-		v[0] = int64(cursor + count)
-	}
-
-	v[1] = r
 
 	return v, nil
 }
