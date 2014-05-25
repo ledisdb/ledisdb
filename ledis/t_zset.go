@@ -58,7 +58,7 @@ func (db *DB) zDecodeSizeKey(ek []byte) ([]byte, error) {
 }
 
 func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
-	buf := make([]byte, len(key)+len(member)+4)
+	buf := make([]byte, len(key)+len(member)+5)
 
 	pos := 0
 	buf[pos] = db.index
@@ -73,24 +73,43 @@ func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
 	copy(buf[pos:], key)
 	pos += len(key)
 
+	buf[pos] = zsetStartMemSep
+	pos++
+
 	copy(buf[pos:], member)
 
 	return buf
 }
 
 func (db *DB) zDecodeSetKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 4 || ek[0] != db.index || ek[1] != zsetType {
+	if len(ek) < 5 || ek[0] != db.index || ek[1] != zsetType {
 		return nil, nil, errZSetKey
 	}
 
 	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
-	if keyLen+4 > len(ek) {
+	if keyLen+5 > len(ek) {
 		return nil, nil, errZSetKey
 	}
 
 	key := ek[4 : 4+keyLen]
-	member := ek[4+keyLen:]
+
+	if ek[4+keyLen] != zsetStartMemSep {
+		return nil, nil, errZSetKey
+	}
+
+	member := ek[5+keyLen:]
 	return key, member, nil
+}
+
+func (db *DB) zEncodeStartSetKey(key []byte) []byte {
+	k := db.zEncodeSetKey(key, nil)
+	return k
+}
+
+func (db *DB) zEncodeStopSetKey(key []byte) []byte {
+	k := db.zEncodeSetKey(key, nil)
+	k[len(k)-1] = zsetStartMemSep + 1
+	return k
 }
 
 func (db *DB) zEncodeScoreKey(key []byte, member []byte, score int64) []byte {
@@ -683,4 +702,42 @@ func (db *DB) ZFlush() (drop int64, err error) {
 	err = t.Commit()
 	// to do : binlog
 	return
+}
+
+func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]ScorePair, error) {
+	var minKey []byte
+	if member != nil {
+		if err := checkZSetKMSize(key, member); err != nil {
+			return nil, err
+		}
+
+		minKey = db.zEncodeSetKey(key, member)
+	} else {
+		minKey = db.zEncodeStartSetKey(key)
+	}
+
+	maxKey := db.zEncodeStopSetKey(key)
+
+	if count <= 0 {
+		count = defaultScanCount
+	}
+
+	v := make([]ScorePair, 0, 2*count)
+
+	rangeType := leveldb.RangeROpen
+	if !inclusive {
+		rangeType = leveldb.RangeOpen
+	}
+
+	it := db.db.Iterator(minKey, maxKey, rangeType, 0, count)
+	for ; it.Valid(); it.Next() {
+		if _, m, err := db.zDecodeSetKey(it.Key()); err != nil {
+			continue
+		} else {
+			score, _ := Int64(it.Value(), nil)
+			v = append(v, ScorePair{Member: m, Score: score})
+		}
+	}
+
+	return v, nil
 }

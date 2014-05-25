@@ -419,3 +419,39 @@ func (db *DB) HFlush() (drop int64, err error) {
 	err = t.Commit()
 	return
 }
+
+func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPair, error) {
+	var minKey []byte
+	if field != nil {
+		if err := checkHashKFSize(key, field); err != nil {
+			return nil, err
+		}
+		minKey = db.hEncodeHashKey(key, field)
+	} else {
+		minKey = db.hEncodeStartKey(key)
+	}
+
+	maxKey := db.hEncodeStopKey(key)
+
+	if count <= 0 {
+		count = defaultScanCount
+	}
+
+	v := make([]FVPair, 0, 2*count)
+
+	rangeType := leveldb.RangeROpen
+	if !inclusive {
+		rangeType = leveldb.RangeOpen
+	}
+
+	it := db.db.Iterator(minKey, maxKey, rangeType, 0, count)
+	for ; it.Valid(); it.Next() {
+		if _, f, err := db.hDecodeHashKey(it.Key()); err != nil {
+			continue
+		} else {
+			v = append(v, FVPair{Field: f, Value: it.Value()})
+		}
+	}
+
+	return v, nil
+}
