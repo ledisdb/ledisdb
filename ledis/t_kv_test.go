@@ -25,3 +25,37 @@ func TestDBKV(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestDBScan(t *testing.T) {
+	db := getTestDB()
+
+	db.Flush()
+
+	if v, err := db.Scan(nil, 10, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(len(v))
+	}
+
+	db.Set([]byte("a"), []byte{})
+	db.Set([]byte("b"), []byte{})
+	db.Set([]byte("c"), []byte{})
+
+	if v, err := db.Scan(nil, 1, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.Scan([]byte("a"), 2, false); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.Scan(nil, 3, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 3 {
+		t.Fatal(len(v))
+	}
+}

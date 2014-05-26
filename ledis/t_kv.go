@@ -296,7 +296,7 @@ func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 		if err := checkKeySize(key); err != nil {
 			return nil, err
 		}
-		minKey = key
+		minKey = db.encodeKVKey(key)
 	} else {
 		minKey = db.encodeKVMinKey()
 	}

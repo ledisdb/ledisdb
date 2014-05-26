@@ -38,3 +38,33 @@ func TestDBHash(t *testing.T) {
 		t.Fatal(n)
 	}
 }
+
+func TestDBHScan(t *testing.T) {
+	db := getTestDB()
+
+	db.HFlush()
+
+	key := []byte("a")
+	db.HSet(key, []byte("1"), []byte{})
+	db.HSet(key, []byte("2"), []byte{})
+	db.HSet(key, []byte("3"), []byte{})
+
+	if v, err := db.HScan(key, nil, 1, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.HScan(key, []byte("1"), 2, false); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.HScan(key, nil, 10, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 3 {
+		t.Fatal(len(v))
+	}
+
+}

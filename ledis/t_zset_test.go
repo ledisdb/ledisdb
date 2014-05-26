@@ -191,3 +191,30 @@ func TestZSetOrder(t *testing.T) {
 		t.Fatal(pos)
 	}
 }
+
+func TestDBZScan(t *testing.T) {
+	db := getTestDB()
+
+	db.ZFlush()
+
+	key := []byte("key")
+	db.ZAdd(key, pair("a", 0), pair("b", 1), pair("c", 2))
+
+	if v, err := db.ZScan(key, nil, 1, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.ZScan(key, []byte("a"), 2, false); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.ZScan(key, nil, 10, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 3 {
+		t.Fatal(len(v))
+	}
+}
