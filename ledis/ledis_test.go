@@ -18,7 +18,13 @@ func getTestDB() *DB {
                     "block_size" : 32768,
                     "write_buffer_size" : 2097152,
                     "cache_size" : 20971520
-                }
+                },
+
+                "binlog" : {
+                	"path" : "/tmp/testdb_binlog",
+                	"max_file_size" : 1073741824,
+                	"max_file_num" : 3
+                }	
             }
             `)
 		var err error

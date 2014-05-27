@@ -38,3 +38,20 @@ var (
 	ErrHashFieldSize  = errors.New("invalid hash field size")
 	ErrZSetMemberSize = errors.New("invalid zset member size")
 )
+
+const BinLogBaseName = "ledis-bin"
+const BinLogIndexFile = "ledis-bin.index"
+
+const (
+	MaxBinLogFileSize int = 1024 * 1024 * 1024
+	MaxBinLogFileNum  int = 10000
+
+	DefaultBinLogFileSize int = MaxBinLogFileSize
+	DefaultBinLogFileNum  int = 10
+)
+
+//like leveldb
+const (
+	BinLogTypeDeletion uint8 = 0x0
+	BinLogTypeValue    uint8 = 0x1
+)

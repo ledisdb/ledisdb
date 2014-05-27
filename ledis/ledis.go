@@ -8,6 +8,8 @@ import (
 
 type Config struct {
 	DataDB leveldb.Config `json:"data_db"`
+
+	BinLog BinLogConfig `json:"binlog"`
 }
 
 type DB struct {
@@ -26,6 +28,8 @@ type Ledis struct {
 
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
+
+	binlog *BinLog
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
@@ -47,6 +51,15 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 	l := new(Ledis)
 	l.ldb = ldb
 
+	if len(cfg.BinLog.Path) > 0 {
+		l.binlog, err = NewBinLogWithConfig(&cfg.BinLog)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		l.binlog = nil
+	}
+
 	for i := uint8(0); i < MaxDBNumber; i++ {
 		l.dbs[i] = newDB(l, i)
 	}
@@ -61,10 +74,10 @@ func newDB(l *Ledis, index uint8) *DB {
 
 	d.index = index
 
-	d.kvTx = &tx{wb: d.db.NewWriteBatch()}
-	d.listTx = &tx{wb: d.db.NewWriteBatch()}
-	d.hashTx = &tx{wb: d.db.NewWriteBatch()}
-	d.zsetTx = &tx{wb: d.db.NewWriteBatch()}
+	d.kvTx = newTx(l)
+	d.listTx = newTx(l)
+	d.hashTx = newTx(l)
+	d.zsetTx = newTx(l)
 
 	return d
 }
@@ -79,4 +92,17 @@ func (l *Ledis) Select(index int) (*DB, error) {
 	}
 
 	return l.dbs[index], nil
+}
+
+func (l *Ledis) Snapshot() (*leveldb.Snapshot, string, int64) {
+	if l.binlog == nil {
+		return l.ldb.NewSnapshot(), "", 0
+	} else {
+		l.binlog.Lock()
+		s := l.ldb.NewSnapshot()
+		fileName, offset := l.binlog.SavePoint()
+		l.binlog.Unlock()
+
+		return s, fileName, offset
+	}
 }
