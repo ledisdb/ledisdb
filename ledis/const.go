@@ -24,17 +24,21 @@ const (
 	MaxDBNumber uint8 = 16
 
 	//max key size
-	MaxKeySize int = 1<<16 - 1
+	MaxKeySize int = 1024
 
 	//max hash field size
-	MaxHashFieldSize int = 1<<16 - 1
+	MaxHashFieldSize int = 1024
 
 	//max zset member size
-	MaxZSetMemberSize int = 1<<16 - 1
+	MaxZSetMemberSize int = 1024
+
+	//max value size
+	MaxValueSize int = 10 * 1024 * 1024
 )
 
 var (
 	ErrKeySize        = errors.New("invalid key size")
+	ErrValueSize      = errors.New("invalid value size")
 	ErrHashFieldSize  = errors.New("invalid hash field size")
 	ErrZSetMemberSize = errors.New("invalid zset member size")
 )

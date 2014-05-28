@@ -130,6 +130,8 @@ func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
 func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 	if err := checkHashKFSize(key, field); err != nil {
 		return 0, err
+	} else if err := checkValueSize(value); err != nil {
+		return 0, err
 	}
 
 	t := db.hashTx
@@ -165,6 +167,8 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i].Field); err != nil {
+			return err
+		} else if err := checkValueSize(args[i].Value); err != nil {
 			return err
 		}
 
@@ -414,6 +418,11 @@ func (db *DB) HFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+		if drop%1000 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
 
 	err = t.Commit()

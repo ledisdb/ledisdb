@@ -33,11 +33,11 @@ func (t *tx) Put(key []byte, value []byte) {
 	t.wb.Put(key, value)
 
 	if t.binlog != nil {
-		buf := make([]byte, 9+len(key)+len(value))
+		buf := make([]byte, 7+len(key)+len(value))
 		buf[0] = BinLogTypeValue
 		pos := 1
-		binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-		pos += 4
+		binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
+		pos += 2
 		copy(buf[pos:], key)
 		pos += len(key)
 		binary.BigEndian.PutUint32(buf[pos:], uint32(len(value)))
@@ -52,11 +52,11 @@ func (t *tx) Delete(key []byte) {
 	t.wb.Delete(key)
 
 	if t.binlog != nil {
-		buf := make([]byte, 5+len(key))
+		buf := make([]byte, 3+len(key))
 		buf[0] = BinLogTypeDeletion
 		pos := 1
-		binary.BigEndian.PutUint32(buf[pos:], uint32(len(key)))
-		pos += 4
+		binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
+		pos += 2
 		copy(buf[pos:], key)
 
 		t.batch = append(t.batch, buf)

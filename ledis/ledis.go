@@ -93,16 +93,3 @@ func (l *Ledis) Select(index int) (*DB, error) {
 
 	return l.dbs[index], nil
 }
-
-func (l *Ledis) Snapshot() (*leveldb.Snapshot, string, int64) {
-	if l.binlog == nil {
-		return l.ldb.NewSnapshot(), "", 0
-	} else {
-		l.binlog.Lock()
-		s := l.ldb.NewSnapshot()
-		fileName, offset := l.binlog.SavePoint()
-		l.binlog.Unlock()
-
-		return s, fileName, offset
-	}
-}

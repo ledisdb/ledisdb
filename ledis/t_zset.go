@@ -697,6 +697,11 @@ func (db *DB) ZFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+		if drop%1000 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
 
 	err = t.Commit()

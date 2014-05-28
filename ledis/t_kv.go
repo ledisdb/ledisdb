@@ -19,6 +19,14 @@ func checkKeySize(key []byte) error {
 	return nil
 }
 
+func checkValueSize(value []byte) error {
+	if len(value) > MaxValueSize {
+		return ErrValueSize
+	}
+
+	return nil
+}
+
 func (db *DB) encodeKVKey(key []byte) []byte {
 	ek := make([]byte, len(key)+2)
 	ek[0] = db.index
@@ -137,6 +145,8 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
+	} else if err := checkValueSize(value); err != nil {
+		return nil, err
 	}
 
 	key = db.encodeKVKey(key)
@@ -204,6 +214,8 @@ func (db *DB) MSet(args ...KVPair) error {
 	for i := 0; i < len(args); i++ {
 		if err := checkKeySize(args[i].Key); err != nil {
 			return err
+		} else if err := checkValueSize(args[i].Value); err != nil {
+			return err
 		}
 
 		key = db.encodeKVKey(args[i].Key)
@@ -221,6 +233,8 @@ func (db *DB) MSet(args ...KVPair) error {
 
 func (db *DB) Set(key []byte, value []byte) error {
 	if err := checkKeySize(key); err != nil {
+		return err
+	} else if err := checkValueSize(value); err != nil {
 		return err
 	}
 
@@ -243,6 +257,8 @@ func (db *DB) Set(key []byte, value []byte) error {
 
 func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
+		return 0, err
+	} else if err := checkValueSize(value); err != nil {
 		return 0, err
 	}
 
@@ -283,6 +299,12 @@ func (db *DB) KvFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+
+		if drop%1000 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
 
 	err = t.Commit()

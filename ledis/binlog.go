@@ -263,11 +263,19 @@ func (b *BinLog) Log(args ...[]byte) error {
 	return nil
 }
 
-func (b *BinLog) SavePoint() (string, int64) {
+func (b *BinLog) LogFileName() string {
+	if len(b.logNames) == 0 {
+		return ""
+	} else {
+		return b.logNames[len(b.logNames)-1]
+	}
+}
+
+func (b *BinLog) LogFilePos() int64 {
 	if b.logFile == nil {
-		return "", 0
+		return 0
 	} else {
 		st, _ := b.logFile.Stat()
-		return b.logNames[len(b.logNames)-1], st.Size()
+		return st.Size()
 	}
 }
