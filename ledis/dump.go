@@ -36,11 +36,11 @@ func (l *Ledis) Dump(w io.Writer) error {
 	if l.binlog == nil {
 		sp = l.ldb.NewSnapshot()
 	} else {
-		l.binlog.Lock()
+		l.Lock()
 		sp = l.ldb.NewSnapshot()
 		logFileName = l.binlog.LogFileName()
 		logPos = l.binlog.LogFilePos()
-		l.binlog.Unlock()
+		l.Unlock()
 	}
 
 	var head = DumpHead{
@@ -104,6 +104,9 @@ func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 }
 
 func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
+	l.Lock()
+	defer l.Unlock()
+
 	rb := bufio.NewReaderSize(r, 4096)
 
 	var headLen uint32
@@ -148,6 +151,10 @@ func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 
 		if err = l.ldb.Put(keyBuf.Bytes(), valueBuf.Bytes()); err != nil {
 			return nil, err
+		}
+
+		if l.binlog != nil {
+			err = l.binlog.Log(encodeBinLogPut(keyBuf.Bytes(), valueBuf.Bytes()))
 		}
 
 		keyBuf.Reset()

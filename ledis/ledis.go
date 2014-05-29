@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"sync"
 )
 
 type Config struct {
@@ -24,6 +25,8 @@ type DB struct {
 }
 
 type Ledis struct {
+	sync.Mutex
+
 	cfg *Config
 
 	ldb *leveldb.DB

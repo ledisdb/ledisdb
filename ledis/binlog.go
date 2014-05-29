@@ -11,7 +11,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -28,6 +27,8 @@ timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData|Lo
 */
 
 type BinLogConfig struct {
+	BaseName    string `json:"base_name"`
+	IndexName   string `json:"index_name"`
 	Path        string `json:"path"`
 	MaxFileSize int    `json:"max_file_size"`
 	MaxFileNum  int    `json:"max_file_num"`
@@ -45,11 +46,16 @@ func (cfg *BinLogConfig) adjust() {
 	} else if cfg.MaxFileNum > MaxBinLogFileNum {
 		cfg.MaxFileNum = MaxBinLogFileNum
 	}
+
+	if len(cfg.BaseName) == 0 {
+		cfg.BaseName = "ledis"
+	}
+	if len(cfg.IndexName) == 0 {
+		cfg.IndexName = "ledis"
+	}
 }
 
 type BinLog struct {
-	sync.Mutex
-
 	cfg *BinLogConfig
 
 	logFile *os.File
@@ -132,7 +138,7 @@ func (b *BinLog) flushIndex() error {
 }
 
 func (b *BinLog) loadIndex() error {
-	b.indexName = path.Join(b.cfg.Path, BinLogIndexFile)
+	b.indexName = path.Join(b.cfg.Path, fmt.Sprintf("%s-bin.index", b.cfg.IndexName))
 	fd, err := os.OpenFile(b.indexName, os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return err
@@ -187,7 +193,7 @@ func (b *BinLog) loadIndex() error {
 }
 
 func (b *BinLog) getLogName() string {
-	return fmt.Sprintf("%s.%05d", BinLogBaseName, b.lastLogIndex)
+	return fmt.Sprintf("%s-bin.%05d", b.cfg.BaseName, b.lastLogIndex)
 }
 
 func (b *BinLog) openNewLogFile() error {
@@ -241,13 +247,13 @@ func (b *BinLog) openLogFile() error {
 func (b *BinLog) Log(args ...[]byte) error {
 	var err error
 
+	if err = b.openLogFile(); err != nil {
+		return err
+	}
+
 	for _, data := range args {
 		createTime := uint32(time.Now().Unix())
 		payLoadLen := len(data)
-
-		if err = b.openLogFile(); err != nil {
-			return err
-		}
 
 		binary.Write(b.logWb, binary.BigEndian, createTime)
 		binary.Write(b.logWb, binary.BigEndian, payLoadLen)
