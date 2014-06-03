@@ -1,4 +1,4 @@
-package ledis
+package replication
 
 import (
 	"bufio"
@@ -12,6 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	MaxBinLogFileSize int = 1024 * 1024 * 1024
+	MaxBinLogFileNum  int = 10000
+
+	DefaultBinLogFileSize int = MaxBinLogFileSize
+	DefaultBinLogFileNum  int = 10
 )
 
 /*

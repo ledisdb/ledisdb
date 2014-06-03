@@ -1,4 +1,4 @@
-package ledis
+package replication
 
 import (
 	"io/ioutil"

@@ -44,14 +44,6 @@ var (
 )
 
 const (
-	MaxBinLogFileSize int = 1024 * 1024 * 1024
-	MaxBinLogFileNum  int = 10000
-
-	DefaultBinLogFileSize int = MaxBinLogFileSize
-	DefaultBinLogFileNum  int = 10
-)
-
-const (
 	BinLogTypeDeletion uint8 = 0x0
 	BinLogTypePut      uint8 = 0x1
 	BinLogTypeCommand  uint8 = 0x2
