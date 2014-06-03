@@ -28,6 +28,7 @@ func (cfg *RelayLogConfig) adjust() {
 		cfg.IndexName = "ledis"
 	}
 
+	//relaylog not care file num
 	cfg.MaxFileNum = -1
 	cfg.LogType = "relay"
 }

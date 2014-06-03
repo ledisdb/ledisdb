@@ -145,7 +145,7 @@ func (l *Log) loadIndex() error {
 }
 
 func (l *Log) getLogFile() string {
-	return fmt.Sprintf("%s-%s.%05d", l.cfg.BaseName, l.cfg.LogType, l.lastLogIndex)
+	return fmt.Sprintf("%s-%s.%07d", l.cfg.BaseName, l.cfg.LogType, l.lastLogIndex)
 }
 
 func (l *Log) openNewLogFile() error {

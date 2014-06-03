@@ -51,6 +51,7 @@ func (cfg *BinLogConfig) adjust() {
 		cfg.IndexName = "ledis"
 	}
 
+	//binlog not care space limit
 	cfg.SpaceLimit = -1
 
 	cfg.LogType = "bin"
