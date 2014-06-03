@@ -12,7 +12,7 @@ type tx struct {
 	l  *Ledis
 	wb *leveldb.WriteBatch
 
-	binlog *replication.BinLog
+	binlog *replication.Log
 	batch  [][]byte
 }
 

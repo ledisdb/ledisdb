@@ -33,7 +33,7 @@ type Ledis struct {
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
 
-	binlog *replication.BinLog
+	binlog *replication.Log
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
