@@ -424,6 +424,7 @@ func (db *DB) HFlush() (drop int64, err error) {
 			}
 		}
 	}
+	it.Close()
 
 	err = t.Commit()
 	return
@@ -461,6 +462,7 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 			v = append(v, FVPair{Field: f, Value: it.Value()})
 		}
 	}
+	it.Close()
 
 	return v, nil
 }

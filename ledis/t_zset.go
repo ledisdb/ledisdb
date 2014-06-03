@@ -502,6 +502,7 @@ func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int)
 
 		t.Delete(k)
 	}
+	it.Close()
 
 	if _, err := db.zIncrSize(key, -num); err != nil {
 		return 0, err
@@ -569,6 +570,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 			v = append(v, StrPutInt64(s))
 		}
 	}
+	it.Close()
 
 	if reverse && (offset == 0 && limit < 0) {
 		v = db.zReverse(v, withScores)
@@ -703,6 +705,7 @@ func (db *DB) ZFlush() (drop int64, err error) {
 			}
 		}
 	}
+	it.Close()
 
 	err = t.Commit()
 	// to do : binlog
@@ -743,6 +746,7 @@ func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]Sco
 			v = append(v, ScorePair{Member: m, Score: score})
 		}
 	}
+	it.Close()
 
 	return v, nil
 }

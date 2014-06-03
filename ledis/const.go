@@ -13,6 +13,15 @@ const (
 	zsetType
 	zSizeType
 	zScoreType
+
+	kvExpType
+	kvExpMetaType
+	lExpType
+	lExpMetaType
+	hExpType
+	hExpMetaType
+	zExpType
+	zExpMetaType
 )
 
 const (
@@ -41,6 +50,7 @@ var (
 	ErrValueSize      = errors.New("invalid value size")
 	ErrHashFieldSize  = errors.New("invalid hash field size")
 	ErrZSetMemberSize = errors.New("invalid zset member size")
+	ErrExpireValue    = errors.New("invalid expire value")
 )
 
 const (

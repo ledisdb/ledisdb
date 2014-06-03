@@ -1,8 +1,12 @@
 package ledis
 
-func (db *DB) Flush() (drop int64, err error) {
+import (
+	"time"
+)
+
+func (db *DB) FlushAll() (drop int64, err error) {
 	all := [...](func() (int64, error)){
-		db.KvFlush,
+		db.Flush,
 		db.LFlush,
 		db.HFlush,
 		db.ZFlush}
@@ -15,5 +19,18 @@ func (db *DB) Flush() (drop int64, err error) {
 			drop += n
 		}
 	}
+
 	return
+}
+
+func (db *DB) activeExpireCycle() {
+	eliminator := newEliminator(db)
+	eliminator.regRetireContext(kvExpType, db.kvTx, db.delete)
+
+	go func() {
+		for {
+			eliminator.active()
+			time.Sleep(1 * time.Second)
+		}
+	}()
 }

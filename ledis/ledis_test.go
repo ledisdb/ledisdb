@@ -81,7 +81,7 @@ func TestFlush(t *testing.T) {
 	db1.LPush([]byte("lst"), []byte("a1"), []byte("b2"))
 	db1.ZAdd([]byte("zset_0"), ScorePair{int64(3), []byte("mc")})
 
-	db1.Flush()
+	db1.FlushAll()
 
 	//	0 - existing
 	if exists, _ := db0.Exists([]byte("a")); exists <= 0 {

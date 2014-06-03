@@ -82,6 +82,8 @@ func newDB(l *Ledis, index uint8) *DB {
 	d.hashTx = newTx(l)
 	d.zsetTx = newTx(l)
 
+	d.activeExpireCycle()
+
 	return d
 }
 
