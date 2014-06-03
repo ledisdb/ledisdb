@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/replication"
 	"sync"
 )
 
 type Config struct {
 	DataDB leveldb.Config `json:"data_db"`
 
-	BinLog BinLogConfig `json:"binlog"`
+	BinLog replication.BinLogConfig `json:"binlog"`
 }
 
 type DB struct {
@@ -32,7 +33,7 @@ type Ledis struct {
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
 
-	binlog *BinLog
+	binlog *replication.Log
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
@@ -55,7 +56,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 	l.ldb = ldb
 
 	if len(cfg.BinLog.Path) > 0 {
-		l.binlog, err = NewBinLogWithConfig(&cfg.BinLog)
+		l.binlog, err = replication.NewBinLogWithConfig(&cfg.BinLog)
 		if err != nil {
 			return nil, err
 		}
