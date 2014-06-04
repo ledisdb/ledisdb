@@ -15,8 +15,8 @@ import (
 // |keylen(bigendian int32)|key|valuelen(bigendian int32)|value......
 
 type DumpHead struct {
-	LogFile string `json:"bin_log_file"`
-	LogPos  int64  `json:"bin_log_pos"`
+	LogFile string `json:"log_file"`
+	LogPos  int64  `json:"log_pos"`
 }
 
 func (l *Ledis) DumpFile(path string) error {

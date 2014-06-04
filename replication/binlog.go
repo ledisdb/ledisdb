@@ -23,7 +23,7 @@ ledis-bin.00003
 
 log file format
 
-timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData|LogId
+timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
 
 */
 
