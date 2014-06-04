@@ -71,6 +71,16 @@ func TestDBZSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if s, err := db.ZScore(key, bin("d")); err != nil {
+		t.Fatal(err)
+	} else if s != 3 {
+		t.Fatal(s)
+	}
+
+	if s, err := db.ZScore(key, bin("zzz")); err != errScoreMiss || s != InvalidScore {
+		t.Fatal(fmt.Sprintf("s=[%d] err=[%s]", s, err))
+	}
+
 	// {c':2, 'd':3}
 	if n, err := db.ZRem(key, bin("a"), bin("b")); err != nil {
 		t.Fatal(err)
@@ -179,8 +189,10 @@ func TestZSetOrder(t *testing.T) {
 	}
 
 	// {'a':0, 'b':1, 'c':2, 'd':999, 'e':6, 'f':5}
-	if _, err := db.ZIncrBy(key, 2, bin("e")); err != nil {
+	if s, err := db.ZIncrBy(key, 2, bin("e")); err != nil {
 		t.Fatal(err)
+	} else if s != 6 {
+		t.Fatal(s)
 	}
 
 	if pos, _ := db.ZRank(key, bin("e")); int(pos) != 4 {
@@ -190,6 +202,19 @@ func TestZSetOrder(t *testing.T) {
 	if pos, _ := db.ZRevRank(key, bin("e")); int(pos) != 1 {
 		t.Fatal(pos)
 	}
+
+	if datas, _ := db.ZRange(key, 0, endPos, true); len(datas) != 12 {
+		t.Fatal(len(datas))
+	} else {
+		scores := []int64{0, 1, 2, 5, 6, 999}
+		for i := 1; i < len(datas); i += 2 {
+			if s, ok := datas[i].(int64); !ok || s != scores[(i-1)/2] {
+				t.Fatal(fmt.Sprintf("[%d]=%d", i, datas[i]))
+			}
+		}
+	}
+
+	return
 }
 
 func TestDBZScan(t *testing.T) {

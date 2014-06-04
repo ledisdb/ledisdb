@@ -66,10 +66,10 @@ func zscoreCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.ZScore(args[0], args[1]); err != nil {
+	if s, err := c.db.ZScore(args[0], args[1]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		c.writeInteger(s)
 	}
 
 	return nil

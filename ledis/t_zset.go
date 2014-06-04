@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	MinScore int64 = -1<<63 + 1
-	MaxScore int64 = 1<<63 - 1
+	MinScore     int64 = -1<<63 + 1
+	MaxScore     int64 = 1<<63 - 1
+	InvalidScore int64 = -1 << 63
 )
 
 type ScorePair struct {
@@ -21,6 +22,7 @@ var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
 var errZScoreKey = errors.New("invalid zscore key")
 var errScoreOverflow = errors.New("zset score overflow")
+var errScoreMiss = errors.New("zset score miss")
 
 const (
 	zsetNScoreSep    byte = '<'
@@ -311,19 +313,25 @@ func (db *DB) ZCard(key []byte) (int64, error) {
 	return Int64(db.db.Get(sk))
 }
 
-func (db *DB) ZScore(key []byte, member []byte) ([]byte, error) {
+func (db *DB) ZScore(key []byte, member []byte) (int64, error) {
 	if err := checkZSetKMSize(key, member); err != nil {
-		return nil, err
+		return InvalidScore, err
 	}
+
+	var score int64 = InvalidScore
 
 	k := db.zEncodeSetKey(key, member)
-
-	score, err := Int64(db.db.Get(k))
-	if err != nil {
-		return nil, err
+	if v, err := db.db.Get(k); err != nil {
+		return InvalidScore, err
+	} else if v == nil {
+		return InvalidScore, errScoreMiss
+	} else {
+		if score, err = Int64(v, nil); err != nil {
+			return InvalidScore, err
+		}
 	}
 
-	return StrPutInt64(score), nil
+	return score, nil
 }
 
 func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
@@ -356,9 +364,9 @@ func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
 	return num, err
 }
 
-func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
+func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) (int64, error) {
 	if err := checkZSetKMSize(key, member); err != nil {
-		return nil, err
+		return InvalidScore, err
 	}
 
 	t := db.zsetTx
@@ -371,18 +379,17 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
 
 	v, err := db.db.Get(ek)
 	if err != nil {
-		return nil, err
+		return InvalidScore, err
 	} else if v != nil {
 		if s, err := Int64(v, err); err != nil {
-			return nil, err
+			return InvalidScore, err
 		} else {
 			sk := db.zEncodeScoreKey(key, member, s)
 			t.Delete(sk)
 
 			score = s + delta
-
 			if score >= MaxScore || score <= MinScore {
-				return nil, errScoreOverflow
+				return InvalidScore, errScoreOverflow
 			}
 		}
 	} else {
@@ -395,7 +402,7 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) ([]byte, error) {
 	t.Put(sk, []byte{})
 
 	err = t.Commit()
-	return StrPutInt64(score), err
+	return score, err
 }
 
 func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
@@ -563,10 +570,10 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 			continue
 		}
 
-		v = append(v, m)
-
 		if withScores {
-			v = append(v, StrPutInt64(s))
+			v = append(v, m, s)
+		} else {
+			v = append(v, m)
 		}
 	}
 
