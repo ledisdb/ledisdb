@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"os"
 	"sync"
 	"testing"
 )
@@ -27,14 +28,16 @@ func getTestDB() *DB {
                 }	
             }
             `)
+
+		os.RemoveAll("/tmp/testdb")
+		os.RemoveAll("/tmp/testdb_binlog")
+
 		var err error
 		testLedis, err = Open(d)
 		if err != nil {
 			println(err.Error())
 			panic(err)
 		}
-
-		testLedis.ldb.Clear()
 	}
 
 	testLedisOnce.Do(f)
