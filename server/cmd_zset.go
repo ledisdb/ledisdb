@@ -66,10 +66,14 @@ func zscoreCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.ZScore(args[0], args[1]); err != nil {
-		return err
+	if s, err := c.db.ZScore(args[0], args[1]); err != nil {
+		if err == ledis.ErrScoreMiss {
+			c.writeBulk(nil)
+		} else {
+			return err
+		}
 	} else {
-		c.writeBulk(v)
+		c.writeBulk(ledis.StrPutInt64(s))
 	}
 
 	return nil
@@ -106,7 +110,7 @@ func zincrbyCommand(c *client) error {
 	if v, err := c.db.ZIncrBy(key, delta, args[2]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		c.writeBulk(ledis.StrPutInt64(v))
 	}
 
 	return nil
@@ -308,10 +312,16 @@ func zrangeGeneric(c *client, reverse bool) error {
 		withScores = true
 	}
 
-	if v, err := c.db.ZRangeGeneric(key, start, stop, withScores, reverse); err != nil {
+	if datas, err := c.db.ZRangeGeneric(key, start, stop, withScores, reverse); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		if withScores {
+			for i := len(datas) - 1; i > 0; i -= 2 {
+				v, _ := datas[i].(int64)
+				datas[i] = ledis.StrPutInt64(v)
+			}
+		}
+		c.writeArray(datas)
 	}
 	return nil
 }
@@ -373,10 +383,16 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 		return nil
 	}
 
-	if v, err := c.db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, reverse); err != nil {
+	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, reverse); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		if withScores {
+			for i := len(datas) - 1; i > 0; i -= 2 {
+				v, _ := datas[i].(int64)
+				datas[i] = ledis.StrPutInt64(v)
+			}
+		}
+		c.writeArray(datas)
 	}
 
 	return nil

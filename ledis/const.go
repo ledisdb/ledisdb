@@ -51,6 +51,7 @@ var (
 	ErrHashFieldSize  = errors.New("invalid hash field size")
 	ErrZSetMemberSize = errors.New("invalid zset member size")
 	ErrExpireValue    = errors.New("invalid expire value")
+	ErrScoreMiss      = errors.New("zset score miss")
 )
 
 const (
