@@ -28,9 +28,16 @@ func (db *DB) activeExpireCycle() {
 	eliminator.regRetireContext(kvExpType, db.kvTx, db.delete)
 
 	go func() {
+		tick := time.NewTicker(1 * time.Second)
 		for {
-			eliminator.active()
-			time.Sleep(1 * time.Second)
+			select {
+			case <-tick.C:
+				eliminator.active()
+			case <-db.l.quit:
+				break
+			}
 		}
+
+		tick.Stop()
 	}()
 }

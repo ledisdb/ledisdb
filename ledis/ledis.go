@@ -11,10 +11,13 @@ import (
 type Config struct {
 	DataDB leveldb.Config `json:"data_db"`
 
-	BinLog replication.BinLogConfig `json:"binlog"`
+	BinLog   replication.BinLogConfig   `json:"binlog"`
+	RelayLog replication.RelayLogConfig `json:"relaylog"`
 }
 
 type DB struct {
+	l *Ledis
+
 	db *leveldb.DB
 
 	index uint8
@@ -33,7 +36,10 @@ type Ledis struct {
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
 
-	binlog *replication.Log
+	binlog   *replication.Log
+	relaylog *replication.Log
+
+	quit chan struct{}
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
@@ -53,6 +59,9 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 	}
 
 	l := new(Ledis)
+
+	l.quit = make(chan struct{})
+
 	l.ldb = ldb
 
 	if len(cfg.BinLog.Path) > 0 {
@@ -64,6 +73,15 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 		l.binlog = nil
 	}
 
+	if len(cfg.RelayLog.Path) > 0 {
+		l.relaylog, err = replication.NewRelayLogWithConfig(&cfg.RelayLog)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		l.relaylog = nil
+	}
+
 	for i := uint8(0); i < MaxDBNumber; i++ {
 		l.dbs[i] = newDB(l, i)
 	}
@@ -73,6 +91,8 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 
 func newDB(l *Ledis, index uint8) *DB {
 	d := new(DB)
+
+	d.l = l
 
 	d.db = l.ldb
 
@@ -89,7 +109,19 @@ func newDB(l *Ledis, index uint8) *DB {
 }
 
 func (l *Ledis) Close() {
+	close(l.quit)
+
 	l.ldb.Close()
+
+	if l.binlog != nil {
+		l.binlog.Close()
+		l.binlog = nil
+	}
+
+	if l.relaylog != nil {
+		l.relaylog.Close()
+		l.relaylog = nil
+	}
 }
 
 func (l *Ledis) Select(index int) (*DB, error) {
