@@ -15,7 +15,7 @@ var mapExpMetaType = map[byte]byte{
 
 type retireCallback func(*tx, []byte) int64
 
-type Elimination struct {
+type elimination struct {
 	db         *DB
 	exp2Tx     map[byte]*tx
 	exp2Retire map[byte]retireCallback
@@ -92,10 +92,12 @@ func (db *DB) ttl(expType byte, key []byte) (t int64, err error) {
 
 func (db *DB) rmExpire(t *tx, expType byte, key []byte) {
 	mk := db.expEncodeMetaKey(expType+1, key)
-	when, err := Int64(db.db.Get(mk))
-	if err == nil && when > 0 {
+	if v, err := db.db.Get(mk); err != nil || v == nil {
+		return
+	} else if when, err2 := Int64(v, nil); err2 != nil {
+		return
+	} else {
 		tk := db.expEncodeTimeKey(expType, key, when)
-
 		t.Delete(mk)
 		t.Delete(tk)
 	}
@@ -127,6 +129,7 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 			}
 		}
 	}
+	it.Close()
 
 	err = t.Commit()
 	return
@@ -136,21 +139,21 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 //
 //////////////////////////////////////////////////////////
 
-func newEliminator(db *DB) *Elimination {
-	eli := new(Elimination)
+func newEliminator(db *DB) *elimination {
+	eli := new(elimination)
 	eli.db = db
 	eli.exp2Tx = make(map[byte]*tx)
 	eli.exp2Retire = make(map[byte]retireCallback)
 	return eli
 }
 
-func (eli *Elimination) regRetireContext(expType byte, t *tx, onRetire retireCallback) {
+func (eli *elimination) regRetireContext(expType byte, t *tx, onRetire retireCallback) {
 	eli.exp2Tx[expType] = t
 	eli.exp2Retire[expType] = onRetire
 }
 
 //	call by outside ... (from *db to another *db)
-func (eli *Elimination) active() {
+func (eli *elimination) active() {
 	now := time.Now().Unix()
 	db := eli.db
 	dbGet := db.db.Get
@@ -202,6 +205,7 @@ func (eli *Elimination) active() {
 			t.Commit()
 			t.Unlock()
 		} // end : it
+		it.Close()
 	} // end : expType
 
 	return

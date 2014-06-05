@@ -26,6 +26,9 @@ func (db *DB) FlushAll() (drop int64, err error) {
 func (db *DB) activeExpireCycle() {
 	eliminator := newEliminator(db)
 	eliminator.regRetireContext(kvExpType, db.kvTx, db.delete)
+	eliminator.regRetireContext(lExpType, db.listTx, db.lDelete)
+	eliminator.regRetireContext(hExpType, db.hashTx, db.hDelete)
+	eliminator.regRetireContext(zExpType, db.zsetTx, db.zDelete)
 
 	go func() {
 		tick := time.NewTicker(1 * time.Second)

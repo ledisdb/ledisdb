@@ -84,10 +84,28 @@ func (db *DB) incr(key []byte, delta int64) (int64, error) {
 	return n, err
 }
 
+//	ps : here just focus on deleting the key-value data,
+//		 any other likes expire is ignore.
 func (db *DB) delete(t *tx, key []byte) int64 {
 	key = db.encodeKVKey(key)
 	t.Delete(key)
 	return 1
+}
+
+func (db *DB) setExpireAt(key []byte, when int64) (int64, error) {
+	t := db.kvTx
+	t.Lock()
+	defer t.Unlock()
+
+	if exist, err := db.Exists(key); err != nil || exist == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, kvExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
 }
 
 func (db *DB) Decr(key []byte) (int64, error) {
@@ -115,7 +133,6 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 	for i, k := range keys {
 		t.Delete(codedKeys[i])
 		db.rmExpire(t, kvExpType, k)
-		//todo binlog
 	}
 
 	err := t.Commit()
@@ -363,20 +380,7 @@ func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 		return 0, errExpireValue
 	}
 
-	t := db.kvTx
-	t.Lock()
-	defer t.Unlock()
-
-	if exist, err := db.Exists(key); err != nil || exist == 0 {
-		return 0, err
-	} else {
-		db.expire(t, kvExpType, key, duration)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		} else {
-			return 1, nil
-		}
-	}
+	return db.setExpireAt(key, time.Now().Unix()+duration)
 }
 
 func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
@@ -384,23 +388,10 @@ func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
 		return 0, errExpireValue
 	}
 
-	t := db.kvTx
-	t.Lock()
-	defer t.Unlock()
-
-	if exist, err := db.Exists(key); err != nil || exist == 0 {
-		return 0, err
-	} else {
-		db.expireAt(t, kvExpType, key, when)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		} else {
-			return 1, nil
-		}
-	}
+	return db.setExpireAt(key, when)
 }
 
-func (db *DB) Ttl(key []byte) (int64, error) {
+func (db *DB) TTL(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return -1, err
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"time"
 )
 
 type FVPair struct {
@@ -105,10 +106,6 @@ func (db *DB) hEncodeStopKey(key []byte) []byte {
 	return k
 }
 
-func (db *DB) HLen(key []byte) (int64, error) {
-	return Int64(db.db.Get(db.hEncodeSizeKey(key)))
-}
-
 func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
 	t := db.hashTx
 
@@ -125,6 +122,49 @@ func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
 
 	t.Put(ek, value)
 	return n, nil
+}
+
+//	ps : here just focus on deleting the hash data,
+//		 any other likes expire is ignore.
+func (db *DB) hDelete(t *tx, key []byte) int64 {
+	sk := db.hEncodeSizeKey(key)
+	start := db.hEncodeStartKey(key)
+	stop := db.hEncodeStopKey(key)
+
+	var num int64 = 0
+	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		num++
+	}
+	it.Close()
+
+	t.Delete(sk)
+	return num
+}
+
+func (db *DB) hExpireAt(key []byte, when int64) (int64, error) {
+	t := db.hashTx
+	t.Lock()
+	defer t.Unlock()
+
+	if hlen, err := db.HLen(key); err != nil || hlen == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, hExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
+}
+
+func (db *DB) HLen(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	return Int64(db.db.Get(db.hEncodeSizeKey(key)))
 }
 
 func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
@@ -265,6 +305,7 @@ func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
+			db.rmExpire(t, hExpType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -378,24 +419,12 @@ func (db *DB) HClear(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	sk := db.hEncodeSizeKey(key)
-	start := db.hEncodeStartKey(key)
-	stop := db.hEncodeStopKey(key)
-
 	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
 
-	var num int64 = 0
-	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		num++
-	}
-
-	it.Close()
-
-	t.Delete(sk)
+	num := db.hDelete(t, key)
+	db.rmExpire(t, hExpType, key)
 
 	err := t.Commit()
 	return num, err
@@ -418,13 +447,15 @@ func (db *DB) HFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
-		if drop%1000 == 0 {
+		if drop&1023 == 0 {
 			if err = t.Commit(); err != nil {
 				return
 			}
 		}
 	}
 	it.Close()
+
+	db.expFlush(t, hExpType)
 
 	err = t.Commit()
 	return
@@ -465,4 +496,28 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 	it.Close()
 
 	return v, nil
+}
+
+func (db *DB) HExpire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
+
+	return db.hExpireAt(key, time.Now().Unix()+duration)
+}
+
+func (db *DB) HExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
+
+	return db.hExpireAt(key, when)
+}
+
+func (db *DB) HTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
+
+	return db.ttl(hExpType, key)
 }

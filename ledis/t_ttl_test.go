@@ -69,7 +69,7 @@ func TestKvExpireAt(t *testing.T) {
 	}
 }
 
-func TestKvTtl(t *testing.T) {
+func TestKvTTL(t *testing.T) {
 	db := getTestDB()
 	m.Lock()
 	defer m.Unlock()
@@ -80,17 +80,17 @@ func TestKvTtl(t *testing.T) {
 	db.Set(k, []byte("1"))
 	db.Expire(k, 2)
 
-	if tRemain, _ := db.Ttl(k); tRemain != 2 {
+	if tRemain, _ := db.TTL(k); tRemain != 2 {
 		t.Fatal(tRemain)
 	}
 
 	//	err - check ttl on an inexisting key
-	if tRemain, _ := db.Ttl(ek); tRemain != -1 {
+	if tRemain, _ := db.TTL(ek); tRemain != -1 {
 		t.Fatal(tRemain)
 	}
 
 	db.Del(k)
-	if tRemain, _ := db.Ttl(k); tRemain != -1 {
+	if tRemain, _ := db.TTL(k); tRemain != -1 {
 		t.Fatal(tRemain)
 	}
 }
@@ -112,35 +112,35 @@ func TestKvExpCompose(t *testing.T) {
 	db.Expire(k1, 2)
 	db.Expire(k2, 60)
 
-	if tRemain, _ := db.Ttl(k0); tRemain != 5 {
+	if tRemain, _ := db.TTL(k0); tRemain != 5 {
 		t.Fatal(tRemain)
 	}
-	if tRemain, _ := db.Ttl(k1); tRemain != 2 {
+	if tRemain, _ := db.TTL(k1); tRemain != 2 {
 		t.Fatal(tRemain)
 	}
-	if tRemain, _ := db.Ttl(k2); tRemain != 60 {
+	if tRemain, _ := db.TTL(k2); tRemain != 60 {
 		t.Fatal(tRemain)
 	}
 
 	// after 1 sec
 	time.Sleep(1 * time.Second)
-	if tRemain, _ := db.Ttl(k0); tRemain != 4 {
+	if tRemain, _ := db.TTL(k0); tRemain != 4 {
 		t.Fatal(tRemain)
 	}
-	if tRemain, _ := db.Ttl(k1); tRemain != 1 {
+	if tRemain, _ := db.TTL(k1); tRemain != 1 {
 		t.Fatal(tRemain)
 	}
 
 	// after 2 sec
 	time.Sleep(2 * time.Second)
-	if tRemain, _ := db.Ttl(k1); tRemain != -1 {
+	if tRemain, _ := db.TTL(k1); tRemain != -1 {
 		t.Fatal(tRemain)
 	}
 	if v, _ := db.Get(k1); v != nil {
 		t.Fatal(v)
 	}
 
-	if tRemain, _ := db.Ttl(k0); tRemain != 2 {
+	if tRemain, _ := db.TTL(k0); tRemain != 2 {
 		t.Fatal(tRemain)
 	}
 	if v, _ := db.Get(k0); v == nil {
@@ -148,7 +148,7 @@ func TestKvExpCompose(t *testing.T) {
 	}
 
 	// refresh the expiration of key
-	if tRemain, _ := db.Ttl(k2); !(0 < tRemain && tRemain < 60) {
+	if tRemain, _ := db.TTL(k2); !(0 < tRemain && tRemain < 60) {
 		t.Fatal(tRemain)
 	}
 
@@ -156,7 +156,7 @@ func TestKvExpCompose(t *testing.T) {
 		t.Fatal(false)
 	}
 
-	if tRemain, _ := db.Ttl(k2); tRemain != 100 {
+	if tRemain, _ := db.TTL(k2); tRemain != 100 {
 		t.Fatal(tRemain)
 	}
 
@@ -164,7 +164,7 @@ func TestKvExpCompose(t *testing.T) {
 	if ok, _ := db.Expire(k1, 10); ok == 1 {
 		t.Fatal(false)
 	}
-	if tRemain, _ := db.Ttl(k1); tRemain != -1 {
+	if tRemain, _ := db.TTL(k1); tRemain != -1 {
 		t.Fatal(tRemain)
 	}
 

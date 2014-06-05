@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"time"
 )
 
 const (
@@ -172,12 +173,17 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	}
 
 	t.Delete(itemKey)
-	db.lSetMeta(metaKey, headSeq, tailSeq)
+	size := db.lSetMeta(metaKey, headSeq, tailSeq)
+	if size == 0 {
+		db.rmExpire(t, hExpType, key)
+	}
 
 	err = t.Commit()
 	return value, err
 }
 
+//	ps : here just focus on deleting the list data,
+//		 any other likes expire is ignore.
 func (db *DB) lDelete(t *tx, key []byte) int64 {
 	mk := db.lEncodeMetaKey(key)
 
@@ -230,7 +236,7 @@ func (db *DB) lGetMeta(ek []byte) (headSeq int32, tailSeq int32, size int32, err
 	return
 }
 
-func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) {
+func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
 	t := db.listTx
 
 	var size int32 = tailSeq - headSeq + 1
@@ -243,10 +249,27 @@ func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) {
 
 		binary.LittleEndian.PutUint32(buf[0:4], uint32(headSeq))
 		binary.LittleEndian.PutUint32(buf[4:8], uint32(tailSeq))
-		//binary.LittleEndian.PutUint32(buf[8:], uint32(size))
 
 		t.Put(ek, buf)
 	}
+
+	return size
+}
+
+func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
+
+	if llen, err := db.LLen(key); err != nil || llen == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, lExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
 }
 
 func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
@@ -366,6 +389,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	defer t.Unlock()
 
 	num := db.lDelete(t, key)
+	db.rmExpire(t, lExpType, key)
 
 	err := t.Commit()
 	return num, err
@@ -396,6 +420,32 @@ func (db *DB) LFlush() (drop int64, err error) {
 	}
 	it.Close()
 
+	db.expFlush(t, lExpType)
+
 	err = t.Commit()
 	return
+}
+
+func (db *DB) LExpire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
+
+	return db.lExpireAt(key, time.Now().Unix()+duration)
+}
+
+func (db *DB) LExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
+
+	return db.lExpireAt(key, when)
+}
+
+func (db *DB) LTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
+
+	return db.ttl(lExpType, key)
 }
