@@ -130,3 +130,7 @@ func (l *Ledis) RepliateRelayLog(relayLog string, offset int64) (int64, error) {
 	log.Error("can not go here")
 	return offset, nil
 }
+
+func (l *Ledis) WriteRelayLog(data []byte) error {
+	return nil
+}

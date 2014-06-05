@@ -34,9 +34,9 @@ const (
 
 func checkZSetKMSize(key []byte, member []byte) error {
 	if len(key) > MaxKeySize || len(key) == 0 {
-		return ErrKeySize
+		return errKeySize
 	} else if len(member) > MaxZSetMemberSize || len(member) == 0 {
-		return ErrZSetMemberSize
+		return errZSetMemberSize
 	}
 	return nil
 }
@@ -484,7 +484,7 @@ func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int,
 
 func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int) (int64, error) {
 	if len(key) > MaxKeySize {
-		return 0, ErrKeySize
+		return 0, errKeySize
 	}
 
 	t := db.zsetTx
@@ -537,7 +537,7 @@ func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
 
 func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
 	if len(key) > MaxKeySize {
-		return nil, ErrKeySize
+		return nil, errKeySize
 	}
 
 	if offset < 0 {

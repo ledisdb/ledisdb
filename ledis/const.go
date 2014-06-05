@@ -28,6 +28,14 @@ const (
 	defaultScanCount int = 10
 )
 
+var (
+	errKeySize        = errors.New("invalid key size")
+	errValueSize      = errors.New("invalid value size")
+	errHashFieldSize  = errors.New("invalid hash field size")
+	errZSetMemberSize = errors.New("invalid zset member size")
+	errExpireValue    = errors.New("invalid expire value")
+)
+
 const (
 	//we don't support too many databases
 	MaxDBNumber uint8 = 16
@@ -46,12 +54,7 @@ const (
 )
 
 var (
-	ErrKeySize        = errors.New("invalid key size")
-	ErrValueSize      = errors.New("invalid value size")
-	ErrHashFieldSize  = errors.New("invalid hash field size")
-	ErrZSetMemberSize = errors.New("invalid zset member size")
-	ErrExpireValue    = errors.New("invalid expire value")
-	ErrScoreMiss      = errors.New("zset score miss")
+	ErrScoreMiss = errors.New("zset score miss")
 )
 
 const (

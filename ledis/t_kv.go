@@ -15,14 +15,14 @@ var errKVKey = errors.New("invalid encode kv key")
 
 func checkKeySize(key []byte) error {
 	if len(key) > MaxKeySize || len(key) == 0 {
-		return ErrKeySize
+		return errKeySize
 	}
 	return nil
 }
 
 func checkValueSize(value []byte) error {
 	if len(value) > MaxValueSize {
-		return ErrValueSize
+		return errValueSize
 	}
 
 	return nil
@@ -360,7 +360,7 @@ func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 
 func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
-		return 0, ErrExpireValue
+		return 0, errExpireValue
 	}
 
 	t := db.kvTx
@@ -381,7 +381,7 @@ func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 
 func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
 	if when <= time.Now().Unix() {
-		return 0, ErrExpireValue
+		return 0, errExpireValue
 	}
 
 	t := db.kvTx

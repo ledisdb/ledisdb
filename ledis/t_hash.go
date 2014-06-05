@@ -21,9 +21,9 @@ const (
 
 func checkHashKFSize(key []byte, field []byte) error {
 	if len(key) > MaxKeySize || len(key) == 0 {
-		return ErrKeySize
+		return errKeySize
 	} else if len(field) > MaxHashFieldSize || len(field) == 0 {
-		return ErrHashFieldSize
+		return errHashFieldSize
 	}
 	return nil
 }
