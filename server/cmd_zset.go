@@ -67,9 +67,13 @@ func zscoreCommand(c *client) error {
 	}
 
 	if s, err := c.db.ZScore(args[0], args[1]); err != nil {
-		return err
+		if err == ledis.ErrScoreMiss {
+			c.writeBulk(nil)
+		} else {
+			return err
+		}
 	} else {
-		c.writeInteger(s)
+		c.writeBulk(ledis.StrPutInt64(s))
 	}
 
 	return nil

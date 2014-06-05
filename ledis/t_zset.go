@@ -22,7 +22,6 @@ var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
 var errZScoreKey = errors.New("invalid zscore key")
 var errScoreOverflow = errors.New("zset score overflow")
-var errScoreMiss = errors.New("zset score miss")
 
 const (
 	zsetNScoreSep    byte = '<'
@@ -324,7 +323,7 @@ func (db *DB) ZScore(key []byte, member []byte) (int64, error) {
 	if v, err := db.db.Get(k); err != nil {
 		return InvalidScore, err
 	} else if v == nil {
-		return InvalidScore, errScoreMiss
+		return InvalidScore, ErrScoreMiss
 	} else {
 		if score, err = Int64(v, nil); err != nil {
 			return InvalidScore, err
