@@ -17,9 +17,7 @@ func TestReplication(t *testing.T) {
 	master, err = Open([]byte(`
         {
             "data_dir" : "/tmp/test_repl/master",
-            "bin_log": {
-                "name" : "ledis"
-            }
+            "use_bin_log" : true
         }
         `))
 	if err != nil {
@@ -40,7 +38,7 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("b"), []byte("2"))
 	db.Set([]byte("c"), []byte("3"))
 
-	relayLog := "/tmp/test_repl/master/binlog/ledis-bin.0000001"
+	relayLog := "/tmp/test_repl/master/bin_log/ledis-bin.0000001"
 
 	var offset int64
 	offset, err = slave.RepliateRelayLog(relayLog, 0)

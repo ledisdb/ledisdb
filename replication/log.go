@@ -52,7 +52,7 @@ func newLog(handler logHandler, cfg *LogConfig) (*Log, error) {
 	l.handler = handler
 
 	if len(l.cfg.Name) == 0 {
-		return nil, fmt.Errorf("you must set log name first")
+		l.cfg.Name = "ledis"
 	}
 
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {

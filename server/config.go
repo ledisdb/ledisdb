@@ -15,6 +15,10 @@ type Config struct {
 	//if you not set db path, use data_dir
 	DB ledis.Config `json:"db"`
 
+	//set slaveof to enable replication from master
+	//empty, no replication
+	SlaveOf string `json:"slaveof"`
+
 	//if you not set relay log path, use data_dir/realy_log
 	RelayLog replication.RelayLogConfig `json:"relay_log"`
 }

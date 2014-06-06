@@ -12,12 +12,11 @@ import (
 type Config struct {
 	DataDir string `json:"data_dir"`
 
-	//data_db path is data_dir/data
 	//if you not set leveldb path, use data_dir/data
 	DataDB leveldb.Config `json:"data_db"`
 
-	//binlog path is data_dir/binlog
-	//you muse set binlog name to enable binlog
+	UseBinLog bool `json:"use_bin_log"`
+
 	//if you not set bin log path, use data_dir/bin_log
 	BinLog replication.BinLogConfig `json:"bin_log"`
 }
@@ -78,7 +77,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if len(cfg.BinLog.Name) > 0 {
+	if cfg.UseBinLog {
 		if len(cfg.BinLog.Path) == 0 {
 			cfg.BinLog.Path = path.Join(cfg.DataDir, "bin_log")
 		}
