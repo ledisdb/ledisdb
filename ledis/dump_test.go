@@ -8,14 +8,13 @@ import (
 )
 
 func TestDump(t *testing.T) {
-	os.RemoveAll("/tmp/testdb_master")
-	os.RemoveAll("/tmp/testdb_slave")
-	os.Remove("/tmp/testdb.dump")
+	os.RemoveAll("/tmp/test_ledis_master")
+	os.RemoveAll("/tmp/test_ledis_slave")
 
 	var masterConfig = []byte(`
     {
+        "data_dir" : "/tmp/test_ledis_master",
         "data_db" : {
-            "path" : "/tmp/testdb_master",
             "compression":true,
             "block_size" : 32768,
             "write_buffer_size" : 2097152,
@@ -31,8 +30,8 @@ func TestDump(t *testing.T) {
 
 	var slaveConfig = []byte(`
     {
+        "data_dir" : "/tmp/test_ledis_slave",
         "data_db" : {
-            "path" : "/tmp/testdb_slave",
             "compression":true,
             "block_size" : 32768,
             "write_buffer_size" : 2097152,

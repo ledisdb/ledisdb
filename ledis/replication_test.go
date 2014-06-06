@@ -12,18 +12,14 @@ func TestReplication(t *testing.T) {
 	var slave *Ledis
 	var err error
 
-	os.RemoveAll("/tmp/repl")
-	os.MkdirAll("/tmp/repl", os.ModePerm)
+	os.RemoveAll("/tmp/repl_repl")
 
 	master, err = Open([]byte(`
         {
-            "data_db" : {
-                "path" : "/tmp/repl/master_db"
-            },
-
-            "binlog" : {
-                "path" : "/tmp/repl/master_binlog"
-            }   
+            "data_dir" : "/tmp/test_repl/master",
+            "binlog": {
+                "name" : "ledis"
+            }
         }
         `))
 	if err != nil {
@@ -32,13 +28,7 @@ func TestReplication(t *testing.T) {
 
 	slave, err = Open([]byte(`
         {
-            "data_db" : {
-                "path" : "/tmp/repl/slave_db"
-            },
-
-            "binlog" : {
-                "path" : "/tmp/repl/slave_binlog"
-            }   
+            "data_dir" : "/tmp/test_repl/slave"
         }
         `))
 	if err != nil {
@@ -50,7 +40,7 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("b"), []byte("2"))
 	db.Set([]byte("c"), []byte("3"))
 
-	relayLog := "/tmp/repl/master_binlog/ledis-bin.0000001"
+	relayLog := "/tmp/test_repl/master/binlog/ledis-bin.0000001"
 
 	var offset int64
 	offset, err = slave.RepliateRelayLog(relayLog, 0)

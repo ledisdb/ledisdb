@@ -12,6 +12,7 @@ func TestBinLog(t *testing.T) {
 	cfg.MaxFileNum = 1
 	cfg.MaxFileSize = 1024
 	cfg.Path = "/tmp/ledis_binlog"
+	cfg.Name = "ledis"
 
 	os.RemoveAll(cfg.Path)
 

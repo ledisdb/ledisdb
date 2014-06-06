@@ -11,6 +11,7 @@ func TestRelayLog(t *testing.T) {
 	cfg.MaxFileSize = 1024
 	cfg.SpaceLimit = 1024
 	cfg.Path = "/tmp/ledis_relaylog"
+	cfg.Name = "ledis"
 
 	os.RemoveAll(cfg.Path)
 

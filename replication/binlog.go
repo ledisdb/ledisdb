@@ -44,13 +44,6 @@ func (cfg *BinLogConfig) adjust() {
 		cfg.MaxFileNum = MaxBinLogFileNum
 	}
 
-	if len(cfg.BaseName) == 0 {
-		cfg.BaseName = "ledis"
-	}
-	if len(cfg.IndexName) == 0 {
-		cfg.IndexName = "ledis"
-	}
-
 	//binlog not care space limit
 	cfg.SpaceLimit = -1
 

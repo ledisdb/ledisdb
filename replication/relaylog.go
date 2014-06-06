@@ -21,13 +21,6 @@ func (cfg *RelayLogConfig) adjust() {
 		cfg.MaxFileSize = MaxRelayLogFileSize
 	}
 
-	if len(cfg.BaseName) == 0 {
-		cfg.BaseName = "ledis"
-	}
-	if len(cfg.IndexName) == 0 {
-		cfg.IndexName = "ledis"
-	}
-
 	//relaylog not care file num
 	cfg.MaxFileNum = -1
 	cfg.LogType = "relay"

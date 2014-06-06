@@ -21,8 +21,7 @@ type logHandler interface {
 }
 
 type LogConfig struct {
-	BaseName    string `json:"base_name"`
-	IndexName   string `json:"index_name"`
+	Name        string `json:"name"`
 	LogType     string `json:"log_type"`
 	Path        string `json:"path"`
 	MaxFileSize int    `json:"max_file_size"`
@@ -51,6 +50,10 @@ func newLog(handler logHandler, cfg *LogConfig) (*Log, error) {
 
 	l.cfg = cfg
 	l.handler = handler
+
+	if len(l.cfg.Name) == 0 {
+		return nil, fmt.Errorf("you must set log name first")
+	}
 
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
 		return nil, err
@@ -93,7 +96,7 @@ func (l *Log) flushIndex() error {
 }
 
 func (l *Log) loadIndex() error {
-	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("%s-%s.index", l.cfg.IndexName, l.cfg.LogType))
+	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("%s-%s.index", l.cfg.Name, l.cfg.LogType))
 	if _, err := os.Stat(l.indexName); os.IsNotExist(err) {
 		//no index file, nothing to do
 	} else {
@@ -145,7 +148,7 @@ func (l *Log) loadIndex() error {
 }
 
 func (l *Log) getLogFile() string {
-	return fmt.Sprintf("%s-%s.%07d", l.cfg.BaseName, l.cfg.LogType, l.lastLogIndex)
+	return fmt.Sprintf("%s-%s.%07d", l.cfg.Name, l.cfg.LogType, l.lastLogIndex)
 }
 
 func (l *Log) openNewLogFile() error {

@@ -13,8 +13,8 @@ func getTestDB() *DB {
 	f := func() {
 		var d = []byte(`
             {
+            	"data_dir" : "/tmp/test_ledis",
                 "data_db" : {
-                    "path" : "/tmp/testdb",
                     "compression":true,
                     "block_size" : 32768,
                     "write_buffer_size" : 2097152,
@@ -22,15 +22,13 @@ func getTestDB() *DB {
                 },
 
                 "binlog" : {
-                	"path" : "/tmp/testdb_binlog",
                 	"max_file_size" : 1073741824,
                 	"max_file_num" : 3
                 }	
             }
             `)
 
-		os.RemoveAll("/tmp/testdb")
-		os.RemoveAll("/tmp/testdb_binlog")
+		os.RemoveAll("/tmp/test_ledis")
 
 		var err error
 		testLedis, err = Open(d)
