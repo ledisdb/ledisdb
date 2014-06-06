@@ -217,6 +217,10 @@ func (l *Log) Close() {
 	}
 }
 
+func (l *Log) LogNames() []string {
+	return l.logNames
+}
+
 func (l *Log) LogFileName() string {
 	return l.getLogFile()
 }
