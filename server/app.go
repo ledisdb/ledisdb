@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"strings"
@@ -17,6 +18,14 @@ type App struct {
 }
 
 func NewApp(cfg *Config) (*App, error) {
+	if len(cfg.DataDir) == 0 {
+		return nil, fmt.Errorf("must set data_dir first")
+	}
+
+	if len(cfg.DB.DataDir) == 0 {
+		cfg.DB.DataDir = cfg.DataDir
+	}
+
 	app := new(App)
 
 	app.closed = false

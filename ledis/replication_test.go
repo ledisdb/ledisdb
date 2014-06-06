@@ -17,7 +17,7 @@ func TestReplication(t *testing.T) {
 	master, err = Open([]byte(`
         {
             "data_dir" : "/tmp/test_repl/master",
-            "binlog": {
+            "bin_log": {
                 "name" : "ledis"
             }
         }

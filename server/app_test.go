@@ -38,9 +38,9 @@ func startTestApp() {
 
 		var d = []byte(`
             {
+                "data_dir" : "/tmp/testdb",
                 "addr" : "127.0.0.1:16380",
                 "db" : {
-                    "data_dir" : "/tmp/testdb",
                     "data_db" : {
                         "compression":true,
                         "block_size" : 32768,
