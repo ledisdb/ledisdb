@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	errInvalidBinLogEvent   = errors.New("invalid binglog event")
-	errRelayLogNotSupported = errors.New("write relay log not supported")
+	errInvalidBinLogEvent = errors.New("invalid binglog event")
 )
 
 func (l *Ledis) replicateEvent(event []byte) error {
@@ -130,14 +129,4 @@ func (l *Ledis) RepliateRelayLog(relayLog string, offset int64) (int64, error) {
 	//can not go here???
 	log.Error("can not go here")
 	return offset, nil
-}
-
-func (l *Ledis) WriteRelayLog(data []byte) error {
-	if l.relaylog == nil {
-		return errRelayLogNotSupported
-	}
-
-	err := l.relaylog.Log(data)
-
-	return err
 }
