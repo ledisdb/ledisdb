@@ -1,8 +1,9 @@
-package replication
+package ledis
 
 import (
 	"bufio"
-	"errors"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-log/log"
 	"io/ioutil"
@@ -10,27 +11,56 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var (
-	ErrOverSpaceLimit = errors.New("total log files exceed space limit")
+const (
+	MaxBinLogFileSize int = 1024 * 1024 * 1024
+	MaxBinLogFileNum  int = 10000
+
+	DefaultBinLogFileSize int = MaxBinLogFileSize
+	DefaultBinLogFileNum  int = 10
 )
 
-type logHandler interface {
-	Write(wb *bufio.Writer, data []byte) (int, error)
-}
+/*
+index file format:
+ledis-bin.00001
+ledis-bin.00002
+ledis-bin.00003
 
-type LogConfig struct {
+log file format
+
+timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
+
+*/
+
+type BinLogConfig struct {
 	Name        string `json:"name"`
-	LogType     string `json:"log_type"`
 	Path        string `json:"path"`
 	MaxFileSize int    `json:"max_file_size"`
 	MaxFileNum  int    `json:"max_file_num"`
-	SpaceLimit  int64  `json:"space_limit"`
 }
 
-type Log struct {
-	cfg *LogConfig
+func (cfg *BinLogConfig) adjust() {
+	if cfg.MaxFileSize <= 0 {
+		cfg.MaxFileSize = DefaultBinLogFileSize
+	} else if cfg.MaxFileSize > MaxBinLogFileSize {
+		cfg.MaxFileSize = MaxBinLogFileSize
+	}
+
+	if cfg.MaxFileNum <= 0 {
+		cfg.MaxFileNum = DefaultBinLogFileNum
+	} else if cfg.MaxFileNum > MaxBinLogFileNum {
+		cfg.MaxFileNum = MaxBinLogFileNum
+	}
+
+	if len(cfg.Name) == 0 {
+		cfg.Name = "ledis"
+	}
+}
+
+type BinLog struct {
+	cfg *BinLogConfig
 
 	logFile *os.File
 
@@ -39,28 +69,30 @@ type Log struct {
 	indexName    string
 	logNames     []string
 	lastLogIndex int
-
-	space int64
-
-	handler logHandler
 }
 
-func newLog(handler logHandler, cfg *LogConfig) (*Log, error) {
-	l := new(Log)
+func NewBinLog(data json.RawMessage) (*BinLog, error) {
+	var cfg BinLogConfig
+
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+
+	return NewBinLogWithConfig(&cfg)
+}
+
+func NewBinLogWithConfig(cfg *BinLogConfig) (*BinLog, error) {
+	cfg.adjust()
+
+	l := new(BinLog)
 
 	l.cfg = cfg
-	l.handler = handler
-
-	if len(l.cfg.Name) == 0 {
-		l.cfg.Name = "ledis"
-	}
 
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
 		return nil, err
 	}
 
 	l.logNames = make([]string, 0, 16)
-	l.space = 0
 
 	if err := l.loadIndex(); err != nil {
 		return nil, err
@@ -69,7 +101,7 @@ func newLog(handler logHandler, cfg *LogConfig) (*Log, error) {
 	return l, nil
 }
 
-func (l *Log) flushIndex() error {
+func (l *BinLog) flushIndex() error {
 	data := strings.Join(l.logNames, "\n")
 
 	bakName := fmt.Sprintf("%s.bak", l.indexName)
@@ -95,8 +127,8 @@ func (l *Log) flushIndex() error {
 	return nil
 }
 
-func (l *Log) loadIndex() error {
-	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("%s-%s.index", l.cfg.Name, l.cfg.LogType))
+func (l *BinLog) loadIndex() error {
+	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("%s-bin.index", l.cfg.Name))
 	if _, err := os.Stat(l.indexName); os.IsNotExist(err) {
 		//no index file, nothing to do
 	} else {
@@ -112,12 +144,10 @@ func (l *Log) loadIndex() error {
 				continue
 			}
 
-			if st, err := os.Stat(path.Join(l.cfg.Path, line)); err != nil {
+			if _, err := os.Stat(path.Join(l.cfg.Path, line)); err != nil {
 				log.Error("load index line %s error %s", line, err.Error())
 				return err
 			} else {
-				l.space += st.Size()
-
 				l.logNames = append(l.logNames, line)
 			}
 		}
@@ -147,11 +177,11 @@ func (l *Log) loadIndex() error {
 	return nil
 }
 
-func (l *Log) getLogFile() string {
-	return fmt.Sprintf("%s-%s.%07d", l.cfg.Name, l.cfg.LogType, l.lastLogIndex)
+func (l *BinLog) getLogFile() string {
+	return fmt.Sprintf("%s-bin.%07d", l.cfg.Name, l.lastLogIndex)
 }
 
-func (l *Log) openNewLogFile() error {
+func (l *BinLog) openNewLogFile() error {
 	var err error
 	lastName := l.getLogFile()
 
@@ -180,7 +210,7 @@ func (l *Log) openNewLogFile() error {
 	return nil
 }
 
-func (l *Log) checkLogFileSize() bool {
+func (l *BinLog) checkLogFileSize() bool {
 	if l.logFile == nil {
 		return false
 	}
@@ -197,15 +227,9 @@ func (l *Log) checkLogFileSize() bool {
 	return false
 }
 
-func (l *Log) purge(n int) {
+func (l *BinLog) purge(n int) {
 	for i := 0; i < n; i++ {
 		logPath := path.Join(l.cfg.Path, l.logNames[i])
-		if st, err := os.Stat(logPath); err != nil {
-			log.Error("purge %s error %s", logPath, err.Error())
-		} else {
-			l.space -= st.Size()
-		}
-
 		os.Remove(logPath)
 	}
 
@@ -213,22 +237,22 @@ func (l *Log) purge(n int) {
 	l.logNames = l.logNames[0 : len(l.logNames)-n]
 }
 
-func (l *Log) Close() {
+func (l *BinLog) Close() {
 	if l.logFile != nil {
 		l.logFile.Close()
 		l.logFile = nil
 	}
 }
 
-func (l *Log) LogNames() []string {
+func (l *BinLog) LogNames() []string {
 	return l.logNames
 }
 
-func (l *Log) LogFileName() string {
+func (l *BinLog) LogFileName() string {
 	return l.getLogFile()
 }
 
-func (l *Log) LogFilePos() int64 {
+func (l *BinLog) LogFilePos() int64 {
 	if l.logFile == nil {
 		return 0
 	} else {
@@ -237,7 +261,7 @@ func (l *Log) LogFilePos() int64 {
 	}
 }
 
-func (l *Log) Purge(n int) error {
+func (l *BinLog) Purge(n int) error {
 	if len(l.logNames) == 0 {
 		return nil
 	}
@@ -255,11 +279,7 @@ func (l *Log) Purge(n int) error {
 	return l.flushIndex()
 }
 
-func (l *Log) Log(args ...[]byte) error {
-	if l.cfg.SpaceLimit > 0 && l.space >= l.cfg.SpaceLimit {
-		return ErrOverSpaceLimit
-	}
-
+func (l *BinLog) Log(args ...[]byte) error {
 	var err error
 
 	if l.logFile == nil {
@@ -268,25 +288,29 @@ func (l *Log) Log(args ...[]byte) error {
 		}
 	}
 
-	totalSize := 0
+	//we treat log many args as a batch, so use same createTime
+	createTime := uint32(time.Now().Unix())
 
-	var n int = 0
 	for _, data := range args {
-		if n, err = l.handler.Write(l.logWb, data); err != nil {
-			log.Error("write log error %s", err.Error())
+		payLoadLen := uint32(len(data))
+
+		if err := binary.Write(l.logWb, binary.BigEndian, createTime); err != nil {
 			return err
-		} else {
-			totalSize += n
 		}
 
+		if err := binary.Write(l.logWb, binary.BigEndian, payLoadLen); err != nil {
+			return err
+		}
+
+		if _, err := l.logWb.Write(data); err != nil {
+			return err
+		}
 	}
 
 	if err = l.logWb.Flush(); err != nil {
 		log.Error("write log error %s", err.Error())
 		return err
 	}
-
-	l.space += int64(totalSize)
 
 	l.checkLogFileSize()
 

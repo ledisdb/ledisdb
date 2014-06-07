@@ -14,7 +14,7 @@ var (
 	errInvalidBinLogEvent = errors.New("invalid binglog event")
 )
 
-func (l *Ledis) replicateEvent(event []byte) error {
+func (l *Ledis) ReplicateEvent(event []byte) error {
 	if len(event) == 0 {
 		return errInvalidBinLogEvent
 	}
@@ -70,8 +70,8 @@ func (l *Ledis) replicateCommandEvent(event []byte) error {
 	return errors.New("command event not supported now")
 }
 
-func (l *Ledis) RepliateRelayLog(relayLog string, offset int64) (int64, error) {
-	f, err := os.Open(relayLog)
+func (l *Ledis) RepliateFromBinLog(filePath string, offset int64) (int64, error) {
+	f, err := os.Open(filePath)
 	if err != nil {
 		return 0, err
 	}
@@ -114,7 +114,7 @@ func (l *Ledis) RepliateRelayLog(relayLog string, offset int64) (int64, error) {
 			}
 
 			l.Lock()
-			err = l.replicateEvent(dataBuf.Bytes())
+			err = l.ReplicateEvent(dataBuf.Bytes())
 			l.Unlock()
 			if err != nil {
 				log.Fatal("replication error %s, skip to next", err.Error())

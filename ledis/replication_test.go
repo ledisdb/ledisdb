@@ -38,14 +38,14 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("b"), []byte("2"))
 	db.Set([]byte("c"), []byte("3"))
 
-	relayLog := "/tmp/test_repl/master/bin_log/ledis-bin.0000001"
+	binLogName := "/tmp/test_repl/master/bin_log/ledis-bin.0000001"
 
 	var offset int64
-	offset, err = slave.RepliateRelayLog(relayLog, 0)
+	offset, err = slave.RepliateFromBinLog(binLogName, 0)
 	if err != nil {
 		t.Fatal(err)
 	} else {
-		if st, err := os.Stat(relayLog); err != nil {
+		if st, err := os.Stat(binLogName); err != nil {
 			t.Fatal(err)
 		} else if st.Size() != offset {
 			t.Fatal(st.Size(), offset)

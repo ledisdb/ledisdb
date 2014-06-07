@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-leveldb/leveldb"
-	"github.com/siddontang/ledisdb/replication"
 	"path"
 	"sync"
 )
@@ -18,7 +17,7 @@ type Config struct {
 	UseBinLog bool `json:"use_bin_log"`
 
 	//if you not set bin log path, use data_dir/bin_log
-	BinLog replication.BinLogConfig `json:"bin_log"`
+	BinLog BinLogConfig `json:"bin_log"`
 }
 
 type DB struct {
@@ -42,7 +41,7 @@ type Ledis struct {
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
 
-	binlog *replication.Log
+	binlog *BinLog
 
 	quit chan struct{}
 }
@@ -81,7 +80,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 		if len(cfg.BinLog.Path) == 0 {
 			cfg.BinLog.Path = path.Join(cfg.DataDir, "bin_log")
 		}
-		l.binlog, err = replication.NewBinLogWithConfig(&cfg.BinLog)
+		l.binlog, err = NewBinLogWithConfig(&cfg.BinLog)
 		if err != nil {
 			return nil, err
 		}

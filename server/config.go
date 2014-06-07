@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/replication"
 	"io/ioutil"
 )
 
@@ -18,9 +17,6 @@ type Config struct {
 	//set slaveof to enable replication from master
 	//empty, no replication
 	SlaveOf string `json:"slaveof"`
-
-	//if you not set relay log path, use data_dir/realy_log
-	RelayLog replication.RelayLogConfig `json:"relay_log"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {

@@ -2,7 +2,6 @@ package ledis
 
 import (
 	"github.com/siddontang/go-leveldb/leveldb"
-	"github.com/siddontang/ledisdb/replication"
 	"sync"
 )
 
@@ -12,7 +11,7 @@ type tx struct {
 	l  *Ledis
 	wb *leveldb.WriteBatch
 
-	binlog *replication.Log
+	binlog *BinLog
 	batch  [][]byte
 }
 
