@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/go-log/log"
 	"path"
 	"sync"
 )
@@ -131,4 +132,14 @@ func (l *Ledis) Select(index int) (*DB, error) {
 	}
 
 	return l.dbs[index], nil
+}
+
+func (l *Ledis) FlushAll() error {
+	for index, db := range l.dbs {
+		if _, err := db.FlushAll(); err != nil {
+			log.Error("flush db %d error %s", index, err.Error())
+		}
+	}
+
+	return nil
 }

@@ -16,9 +16,10 @@ type App struct {
 
 	closed bool
 
-	slaveMode bool
-
 	quit chan struct{}
+
+	//for slave replication
+	master masterInfo
 }
 
 func NewApp(cfg *Config) (*App, error) {
@@ -50,12 +51,6 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
-	app.slaveMode = false
-
-	if len(app.cfg.SlaveOf) > 0 {
-		app.slaveMode = true
-	}
-
 	if app.ldb, err = ledis.OpenWithConfig(&cfg.DB); err != nil {
 		return nil, err
 	}
@@ -78,7 +73,7 @@ func (app *App) Close() {
 }
 
 func (app *App) Run() {
-	if app.slaveMode {
+	if len(app.cfg.SlaveOf) > 0 {
 		app.runReplication()
 	}
 
