@@ -4,19 +4,43 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"github.com/siddontang/go-leveldb/leveldb"
 	"io"
 	"os"
 )
 
 //dump format
-// head len(bigendian int32)|head(json format)
+// fileIndex(bigendian int64)|filePos(bigendian int64)
 // |keylen(bigendian int32)|key|valuelen(bigendian int32)|value......
 
-type DumpHead struct {
-	LogFile string `json:"log_file"`
-	LogPos  int64  `json:"log_pos"`
+type MasterInfo struct {
+	LogFileIndex int64
+	LogPos       int64
+}
+
+func (m *MasterInfo) WriteTo(w io.Writer) error {
+	if err := binary.Write(w, binary.BigEndian, m.LogFileIndex); err != nil {
+		return err
+	}
+
+	if err := binary.Write(w, binary.BigEndian, m.LogPos); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MasterInfo) ReadFrom(r io.Reader) error {
+	err := binary.Read(r, binary.BigEndian, &m.LogFileIndex)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Read(r, binary.BigEndian, &m.LogPos)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *Ledis) DumpFile(path string) error {
@@ -31,34 +55,21 @@ func (l *Ledis) DumpFile(path string) error {
 
 func (l *Ledis) Dump(w io.Writer) error {
 	var sp *leveldb.Snapshot
-	var logFileName string
-	var logPos int64
+	var m *MasterInfo = new(MasterInfo)
 	if l.binlog == nil {
 		sp = l.ldb.NewSnapshot()
 	} else {
 		l.Lock()
 		sp = l.ldb.NewSnapshot()
-		logFileName = l.binlog.LogFileName()
-		logPos = l.binlog.LogFilePos()
+		m.LogFileIndex = l.binlog.LogFileIndex()
+		m.LogPos = l.binlog.LogFilePos()
 		l.Unlock()
 	}
 
-	var head = DumpHead{
-		LogFile: logFileName,
-		LogPos:  logPos,
-	}
-
-	data, err := json.Marshal(&head)
-	if err != nil {
-		return err
-	}
+	var err error
 
 	wb := bufio.NewWriterSize(w, 4096)
-	if err = binary.Write(wb, binary.BigEndian, uint32(len(data))); err != nil {
-		return err
-	}
-
-	if _, err = wb.Write(data); err != nil {
+	if err = m.WriteTo(wb); err != nil {
 		return err
 	}
 
@@ -93,7 +104,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 	return nil
 }
 
-func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
+func (l *Ledis) LoadDumpFile(path string) (*MasterInfo, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -103,25 +114,16 @@ func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 	return l.LoadDump(f)
 }
 
-func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
+func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
 	l.Lock()
 	defer l.Unlock()
 
+	info := new(MasterInfo)
+
 	rb := bufio.NewReaderSize(r, 4096)
 
-	var headLen uint32
-	err := binary.Read(rb, binary.BigEndian, &headLen)
+	err := info.ReadFrom(rb)
 	if err != nil {
-		return nil, err
-	}
-
-	buf := make([]byte, headLen)
-	if _, err = io.ReadFull(rb, buf); err != nil {
-		return nil, err
-	}
-
-	var head DumpHead
-	if err = json.Unmarshal(buf, &head); err != nil {
 		return nil, err
 	}
 
@@ -161,5 +163,5 @@ func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 		valueBuf.Reset()
 	}
 
-	return &head, nil
+	return info, nil
 }

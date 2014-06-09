@@ -19,7 +19,7 @@ type App struct {
 	quit chan struct{}
 
 	//for slave replication
-	master masterInfo
+	m *master
 }
 
 func NewApp(cfg *Config) (*App, error) {
@@ -55,6 +55,8 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	app.m = newMaster(app)
+
 	return app, nil
 }
 
@@ -69,12 +71,14 @@ func (app *App) Close() {
 
 	app.listener.Close()
 
+	app.m.Close()
+
 	app.ldb.Close()
 }
 
 func (app *App) Run() {
 	if len(app.cfg.SlaveOf) > 0 {
-		app.runReplication()
+		app.slaveof(app.cfg.SlaveOf)
 	}
 
 	for !app.closed {

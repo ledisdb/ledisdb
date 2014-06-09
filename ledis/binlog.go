@@ -35,7 +35,6 @@ timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
 */
 
 type BinLogConfig struct {
-	Name        string `json:"name"`
 	Path        string `json:"path"`
 	MaxFileSize int    `json:"max_file_size"`
 	MaxFileNum  int    `json:"max_file_num"`
@@ -53,10 +52,6 @@ func (cfg *BinLogConfig) adjust() {
 	} else if cfg.MaxFileNum > MaxBinLogFileNum {
 		cfg.MaxFileNum = MaxBinLogFileNum
 	}
-
-	if len(cfg.Name) == 0 {
-		cfg.Name = "ledis"
-	}
 }
 
 type BinLog struct {
@@ -68,7 +63,7 @@ type BinLog struct {
 
 	indexName    string
 	logNames     []string
-	lastLogIndex int
+	lastLogIndex int64
 }
 
 func NewBinLog(data json.RawMessage) (*BinLog, error) {
@@ -128,7 +123,7 @@ func (l *BinLog) flushIndex() error {
 }
 
 func (l *BinLog) loadIndex() error {
-	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("%s-bin.index", l.cfg.Name))
+	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("ledis-bin.index"))
 	if _, err := os.Stat(l.indexName); os.IsNotExist(err) {
 		//no index file, nothing to do
 	} else {
@@ -165,7 +160,7 @@ func (l *BinLog) loadIndex() error {
 	} else {
 		lastName := l.logNames[len(l.logNames)-1]
 
-		if l.lastLogIndex, err = strconv.Atoi(path.Ext(lastName)[1:]); err != nil {
+		if l.lastLogIndex, err = strconv.ParseInt(path.Ext(lastName)[1:], 10, 64); err != nil {
 			log.Error("invalid logfile name %s", err.Error())
 			return err
 		}
@@ -178,7 +173,7 @@ func (l *BinLog) loadIndex() error {
 }
 
 func (l *BinLog) getLogFile() string {
-	return fmt.Sprintf("%s-bin.%07d", l.cfg.Name, l.lastLogIndex)
+	return l.FormatLogFileName(l.lastLogIndex)
 }
 
 func (l *BinLog) openNewLogFile() error {
@@ -259,6 +254,22 @@ func (l *BinLog) LogFilePos() int64 {
 		st, _ := l.logFile.Stat()
 		return st.Size()
 	}
+}
+
+func (l *BinLog) LogFileIndex() int64 {
+	return l.lastLogIndex
+}
+
+func (l *BinLog) FormatLogFileName(index int64) string {
+	return fmt.Sprintf("ledis-bin.%07d", index)
+}
+
+func (l *BinLog) FormatLogFilePath(index int64) string {
+	return path.Join(l.cfg.Path, fmt.Sprintf("ledis-bin.%07d", index))
+}
+
+func (l *BinLog) LogPath() string {
+	return l.cfg.Path
 }
 
 func (l *BinLog) Purge(n int) error {

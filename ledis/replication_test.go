@@ -40,16 +40,9 @@ func TestReplication(t *testing.T) {
 
 	binLogName := "/tmp/test_repl/master/bin_log/ledis-bin.0000001"
 
-	var offset int64
-	offset, err = slave.RepliateFromBinLog(binLogName, 0)
+	err = slave.ReplicateFromBinLog(binLogName)
 	if err != nil {
 		t.Fatal(err)
-	} else {
-		if st, err := os.Stat(binLogName); err != nil {
-			t.Fatal(err)
-		} else if st.Size() != offset {
-			t.Fatal(st.Size(), offset)
-		}
 	}
 
 	it := master.ldb.Iterator(nil, nil, leveldb.RangeClose, 0, -1)

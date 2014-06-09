@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/ledis"
@@ -28,6 +29,8 @@ type client struct {
 	args [][]byte
 
 	reqC chan error
+
+	syncBuf bytes.Buffer
 }
 
 func newClient(c net.Conn, app *App) {
@@ -71,22 +74,7 @@ func (c *client) run() {
 }
 
 func (c *client) readLine() ([]byte, error) {
-	var line []byte
-	for {
-		l, more, err := c.rb.ReadLine()
-		if err != nil {
-			return nil, err
-		}
-
-		if line == nil && !more {
-			return l, nil
-		}
-		line = append(line, l...)
-		if !more {
-			break
-		}
-	}
-	return line, nil
+	return readLine(c.rb)
 }
 
 //A client sends to the Redis server a RESP Array consisting of just Bulk Strings.
@@ -121,15 +109,19 @@ func (c *client) readRequest() ([][]byte, error) {
 			} else if n == -1 {
 				req = append(req, nil)
 			} else {
-				buf := make([]byte, n+2)
+				buf := make([]byte, n)
 				if _, err = io.ReadFull(c.rb, buf); err != nil {
 					return nil, err
-				} else if buf[len(buf)-2] != '\r' || buf[len(buf)-1] != '\n' {
-					return nil, errReadRequest
-
-				} else {
-					req = append(req, buf[0:len(buf)-2])
 				}
+
+				if l, err = c.readLine(); err != nil {
+					return nil, err
+				} else if len(l) != 0 {
+					return nil, errors.New("bad bulk string format")
+				}
+
+				req = append(req, buf)
+
 			}
 
 		} else {
@@ -225,4 +217,13 @@ func (c *client) writeArray(ay []interface{}) {
 			}
 		}
 	}
+}
+
+func (c *client) writeBulkFrom(n int64, rb io.Reader) {
+	c.wb.WriteByte('$')
+	c.wb.Write(ledis.Slice(strconv.FormatInt(n, 10)))
+	c.wb.Write(Delims)
+
+	io.Copy(c.wb, rb)
+	c.wb.Write(Delims)
 }
