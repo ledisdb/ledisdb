@@ -93,7 +93,9 @@ func syncCommand(c *client) error {
 		return err
 	}
 
-	if m, err := c.app.ldb.ReadEventsTo(logIndex, logPos, &c.syncBuf); err != nil {
+	m := &ledis.MasterInfo{logIndex, logPos}
+
+	if _, err := c.app.ldb.ReadEventsTo(m, &c.syncBuf); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()

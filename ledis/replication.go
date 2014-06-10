@@ -130,43 +130,52 @@ func (l *Ledis) ReplicateFromBinLog(filePath string) error {
 	return err
 }
 
-const maxSyncEvents = 16
+const maxSyncEvents = 64
 
-//events data format
-// nextfileIndex(bigendian int64)|nextfilePos(bigendian int64)|binlogevents
-func (l *Ledis) ReadEventsTo(index int64, offset int64, w io.Writer) (info *MasterInfo, err error) {
-	info = new(MasterInfo)
-
+func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
+	n = 0
 	if l.binlog == nil {
 		//binlog not supported
 		info.LogFileIndex = 0
+		info.LogPos = 0
 		return
 	}
 
-	info.LogFileIndex = index
-	info.LogPos = offset
+	index := info.LogFileIndex
+	offset := info.LogPos
 
 	filePath := l.binlog.FormatLogFilePath(index)
 
 	var f *os.File
 	f, err = os.Open(filePath)
-	if err != nil && !os.IsNotExist(err) {
-		return
-	} else if os.IsNotExist(err) {
-		l.Lock()
+	if os.IsNotExist(err) {
 		lastIndex := l.binlog.LogFileIndex()
+
 		if index == lastIndex {
 			//no binlog at all
-			l.Unlock()
-			return
+			info.LogPos = 0
+		} else {
+			//slave binlog info had lost
+			info.LogFileIndex = -1
 		}
-		l.Unlock()
+	}
 
-		//slave binlog info had lost
-		info.LogFileIndex = -1
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = nil
+		}
+		return
 	}
 
 	defer f.Close()
+
+	var fileSize int64
+	st, _ := f.Stat()
+	fileSize = st.Size()
+
+	if fileSize == info.LogPos {
+		return
+	}
 
 	if _, err = f.Seek(offset, os.SEEK_SET); err != nil {
 		//may be invliad seek offset
@@ -177,27 +186,29 @@ func (l *Ledis) ReadEventsTo(index int64, offset int64, w io.Writer) (info *Mast
 	var createTime uint32
 	var dataLen uint32
 
-	var n int = 0
+	var eventsNum int = 0
 
 	for {
 		if err = binary.Read(f, binary.BigEndian, &createTime); err != nil {
 			if err == io.EOF {
 				//we will try to use next binlog
-				info.LogFileIndex = index + 1
-				info.LogPos = 0
-
+				if index < l.binlog.LogFileIndex() {
+					info.LogFileIndex += 1
+					info.LogPos = 0
+				}
+				err = nil
 				return
 			} else {
 				return
 			}
 		}
 
-		n++
+		eventsNum++
 		if lastCreateTime == 0 {
 			lastCreateTime = createTime
 		} else if lastCreateTime != createTime {
 			return
-		} else if n > maxSyncEvents {
+		} else if eventsNum > maxSyncEvents {
 			return
 		}
 
@@ -217,6 +228,7 @@ func (l *Ledis) ReadEventsTo(index int64, offset int64, w io.Writer) (info *Mast
 			return
 		}
 
+		n += (8 + int(dataLen))
 		info.LogPos = info.LogPos + 8 + int64(dataLen)
 	}
 

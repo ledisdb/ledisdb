@@ -143,3 +143,8 @@ func (l *Ledis) FlushAll() error {
 
 	return nil
 }
+
+//very dangerous to use
+func (l *Ledis) DataDB() *leveldb.DB {
+	return l.ldb
+}

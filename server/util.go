@@ -30,7 +30,7 @@ func readLine(rb *bufio.Reader) ([]byte, error) {
 func readBulkTo(rb *bufio.Reader, w io.Writer) error {
 	l, err := readLine(rb)
 	if len(l) == 0 {
-		return errArrayFormat
+		return errBulkFormat
 	} else if l[0] == '$' {
 		var n int
 		//handle resp string
@@ -50,7 +50,7 @@ func readBulkTo(rb *bufio.Reader, w io.Writer) error {
 			}
 		}
 	} else {
-		return errArrayFormat
+		return errBulkFormat
 	}
 
 	return nil

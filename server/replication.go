@@ -51,7 +51,7 @@ func newMaster(app *App) *master {
 	m.infoName = path.Join(m.app.cfg.DataDir, "master.info")
 	m.infoNameBak = fmt.Sprintf("%s.bak", m.infoName)
 
-	m.quit = make(chan struct{})
+	m.quit = make(chan struct{}, 1)
 
 	//if load error, we will start a fullsync later
 	m.loadInfo()
@@ -60,7 +60,10 @@ func newMaster(app *App) *master {
 }
 
 func (m *master) Close() {
-	close(m.quit)
+	select {
+	case m.quit <- struct{}{}:
+	default:
+	}
 
 	if m.c != nil {
 		m.c.Close()
@@ -157,7 +160,7 @@ func (m *master) startReplication(masterAddr string) error {
 		}
 	}
 
-	m.quit = make(chan struct{})
+	m.quit = make(chan struct{}, 1)
 
 	go m.runReplication()
 	return nil
@@ -193,18 +196,26 @@ func (m *master) runReplication() {
 			}
 		}
 
-		t := time.NewTicker(1 * time.Second)
-
-		//then we will try sync every 1 seconds
 		for {
-			select {
-			case <-t.C:
+			for {
+				lastIndex := m.logFileIndex
+				lastPos := m.logPos
 				if err := m.sync(); err != nil {
 					log.Warn("sync error %s", err.Error())
 					return
 				}
+
+				if m.logFileIndex == lastIndex && m.logPos == lastPos {
+					//sync no data, wait 1s and retry
+					break
+				}
+			}
+
+			select {
 			case <-m.quit:
 				return
+			case <-time.After(1 * time.Second):
+				break
 			}
 		}
 	}
@@ -213,8 +224,8 @@ func (m *master) runReplication() {
 }
 
 var (
-	fullSyncCmd   = []byte("*1\r\n$8\r\nfullsync\r\n")              //fullsync
-	syncCmdFormat = "*3\r\n$4\r\nsync\r\n$%d\r\n%s\r\n%d\r\n%s\r\n" //sync file pos
+	fullSyncCmd   = []byte("*1\r\n$8\r\nfullsync\r\n")               //fullsync
+	syncCmdFormat = "*3\r\n$4\r\nsync\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n" //sync index pos
 )
 
 func (m *master) fullSync() error {
@@ -259,8 +270,9 @@ func (m *master) sync() error {
 	logIndexStr := strconv.FormatInt(m.logFileIndex, 10)
 	logPosStr := strconv.FormatInt(m.logPos, 10)
 
-	if _, err := m.c.Write(ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIndexStr),
-		logIndexStr, len(logPosStr), logPosStr))); err != nil {
+	cmd := ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIndexStr),
+		logIndexStr, len(logPosStr), logPosStr))
+	if _, err := m.c.Write(cmd); err != nil {
 		return err
 	}
 

@@ -265,7 +265,7 @@ func (l *BinLog) FormatLogFileName(index int64) string {
 }
 
 func (l *BinLog) FormatLogFilePath(index int64) string {
-	return path.Join(l.cfg.Path, fmt.Sprintf("ledis-bin.%07d", index))
+	return path.Join(l.cfg.Path, l.FormatLogFileName(index))
 }
 
 func (l *BinLog) LogPath() string {
