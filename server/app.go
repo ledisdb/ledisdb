@@ -90,3 +90,7 @@ func (app *App) Run() {
 		newClient(conn, app)
 	}
 }
+
+func (app *App) Ledis() *ledis.DB {
+	return app.ldb
+}

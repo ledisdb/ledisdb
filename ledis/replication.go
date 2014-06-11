@@ -123,7 +123,9 @@ func (l *Ledis) ReplicateFromBinLog(filePath string) error {
 
 	rb := bufio.NewReaderSize(f, 4096)
 
+	l.Lock()
 	err = l.ReplicateFromReader(rb)
+	l.Unlock()
 
 	f.Close()
 
