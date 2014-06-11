@@ -8,5 +8,7 @@
             "write_buffer_size": 67108864,
             "cache_size": 524288000            
         }
-    }
+    },
+
+    "access_log" : "access.log"
 }

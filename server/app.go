@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
+	"path"
 	"strings"
 )
 
@@ -17,6 +18,8 @@ type App struct {
 	closed bool
 
 	quit chan struct{}
+
+	access *accessLog
 
 	//for slave replication
 	m *master
@@ -51,6 +54,18 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, err
 	}
 
+	if len(cfg.AccessLog) > 0 {
+		if path.Dir(cfg.AccessLog) == "." {
+			app.access, err = newAcessLog(path.Join(cfg.DataDir, cfg.AccessLog))
+		} else {
+			app.access, err = newAcessLog(cfg.AccessLog)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if app.ldb, err = ledis.OpenWithConfig(&cfg.DB); err != nil {
 		return nil, err
 	}
@@ -73,6 +88,10 @@ func (app *App) Close() {
 
 	app.m.Close()
 
+	if app.access != nil {
+		app.access.Close()
+	}
+
 	app.ldb.Close()
 }
 
@@ -91,6 +110,6 @@ func (app *App) Run() {
 	}
 }
 
-func (app *App) Ledis() *ledis.DB {
+func (app *App) Ledis() *ledis.Ledis {
 	return app.ldb
 }

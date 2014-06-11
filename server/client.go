@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var errReadRequest = errors.New("invalid request protocol")
@@ -135,6 +136,8 @@ func (c *client) readRequest() ([][]byte, error) {
 func (c *client) handleRequest(req [][]byte) {
 	var err error
 
+	start := time.Now()
+
 	if len(req) == 0 {
 		err = ErrEmptyCommand
 	} else {
@@ -150,6 +153,12 @@ func (c *client) handleRequest(req [][]byte) {
 			}()
 			err = <-c.reqC
 		}
+	}
+
+	duration := time.Since(start)
+
+	if c.app.access != nil {
+		c.app.access.Log(c.c.RemoteAddr().String(), duration.Nanoseconds()/1000000, c.cmd, c.args, err)
 	}
 
 	if err != nil {

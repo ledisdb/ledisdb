@@ -17,6 +17,8 @@ type Config struct {
 	//set slaveof to enable replication from master
 	//empty, no replication
 	SlaveOf string `json:"slaveof"`
+
+	AccessLog string `json:"access_log"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {
