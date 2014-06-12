@@ -732,7 +732,7 @@ func (db *DB) ZRangeByScoreGeneric(key []byte, min int64, max int64,
 	return db.zRange(key, min, max, withScores, offset, count, reverse)
 }
 
-func (db *DB) ZFlush() (drop int64, err error) {
+func (db *DB) zFlush() (drop int64, err error) {
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()

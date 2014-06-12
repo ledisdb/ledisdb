@@ -220,7 +220,7 @@ func TestZSetOrder(t *testing.T) {
 func TestDBZScan(t *testing.T) {
 	db := getTestDB()
 
-	db.ZFlush()
+	db.zFlush()
 
 	key := []byte("key")
 	db.ZAdd(key, pair("a", 0), pair("b", 1), pair("c", 2))

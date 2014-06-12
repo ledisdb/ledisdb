@@ -395,7 +395,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	return num, err
 }
 
-func (db *DB) LFlush() (drop int64, err error) {
+func (db *DB) lFlush() (drop int64, err error) {
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()

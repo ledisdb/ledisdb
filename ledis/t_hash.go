@@ -430,7 +430,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 	return num, err
 }
 
-func (db *DB) HFlush() (drop int64, err error) {
+func (db *DB) hFlush() (drop int64, err error) {
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()

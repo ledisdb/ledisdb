@@ -311,7 +311,7 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) Flush() (drop int64, err error) {
+func (db *DB) flush() (drop int64, err error) {
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()

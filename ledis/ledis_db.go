@@ -1,15 +1,11 @@
 package ledis
 
-import (
-	"time"
-)
-
 func (db *DB) FlushAll() (drop int64, err error) {
 	all := [...](func() (int64, error)){
-		db.Flush,
-		db.LFlush,
-		db.HFlush,
-		db.ZFlush}
+		db.flush,
+		db.lFlush,
+		db.hFlush,
+		db.zFlush}
 
 	for _, flush := range all {
 		if n, e := flush(); e != nil {
@@ -23,24 +19,12 @@ func (db *DB) FlushAll() (drop int64, err error) {
 	return
 }
 
-func (db *DB) activeExpireCycle() {
+func (db *DB) newEliminator() *elimination {
 	eliminator := newEliminator(db)
 	eliminator.regRetireContext(kvExpType, db.kvTx, db.delete)
 	eliminator.regRetireContext(lExpType, db.listTx, db.lDelete)
 	eliminator.regRetireContext(hExpType, db.hashTx, db.hDelete)
 	eliminator.regRetireContext(zExpType, db.zsetTx, db.zDelete)
 
-	go func() {
-		tick := time.NewTicker(1 * time.Second)
-		for {
-			select {
-			case <-tick.C:
-				eliminator.active()
-			case <-db.l.quit:
-				break
-			}
-		}
-
-		tick.Stop()
-	}()
+	return eliminator
 }

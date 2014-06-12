@@ -7,6 +7,7 @@ import (
 	"github.com/siddontang/go-log/log"
 	"path"
 	"sync"
+	"time"
 )
 
 type Config struct {
@@ -93,6 +94,8 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 		l.dbs[i] = newDB(l, i)
 	}
 
+	l.activeExpireCycle()
+
 	return l, nil
 }
 
@@ -109,8 +112,6 @@ func newDB(l *Ledis, index uint8) *DB {
 	d.listTx = newTx(l)
 	d.hashTx = newTx(l)
 	d.zsetTx = newTx(l)
-
-	d.activeExpireCycle()
 
 	return d
 }
@@ -147,4 +148,27 @@ func (l *Ledis) FlushAll() error {
 //very dangerous to use
 func (l *Ledis) DataDB() *leveldb.DB {
 	return l.ldb
+}
+
+func (l *Ledis) activeExpireCycle() {
+	var executors []*elimination = make([]*elimination, len(l.dbs))
+	for i, db := range l.dbs {
+		executors[i] = db.newEliminator()
+	}
+
+	go func() {
+		tick := time.NewTicker(1 * time.Second)
+		for {
+			select {
+			case <-tick.C:
+				for _, eli := range executors {
+					eli.active()
+				}
+			case <-l.quit:
+				break
+			}
+		}
+
+		tick.Stop()
+	}()
 }

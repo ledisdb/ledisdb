@@ -42,7 +42,7 @@ func TestDBHash(t *testing.T) {
 func TestDBHScan(t *testing.T) {
 	db := getTestDB()
 
-	db.HFlush()
+	db.hFlush()
 
 	key := []byte("a")
 	db.HSet(key, []byte("1"), []byte{})
