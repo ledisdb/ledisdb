@@ -87,11 +87,21 @@ func (m *master) loadInfo() error {
 		return err
 	}
 
+	println(m.addr, m.logFileIndex, m.logPos)
+
 	return nil
 }
 
 func (m *master) saveInfo() error {
-	data, err := json.Marshal(m)
+	data, err := json.Marshal(struct {
+		Addr         string `json:"addr"`
+		LogFileIndex int64  `json:"log_file_index"`
+		LogPos       int64  `json:"log_pos"`
+	}{
+		m.addr,
+		m.logFileIndex,
+		m.logPos,
+	})
 	if err != nil {
 		return err
 	}
@@ -263,7 +273,7 @@ func (m *master) fullSync() error {
 	m.logFileIndex = head.LogFileIndex
 	m.logPos = head.LogPos
 
-	return nil
+	return m.saveInfo()
 }
 
 func (m *master) sync() error {
@@ -307,7 +317,7 @@ func (m *master) sync() error {
 		return err
 	}
 
-	return nil
+	return m.saveInfo()
 
 }
 
