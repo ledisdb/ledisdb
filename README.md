@@ -33,15 +33,45 @@ Ledisdb is a high performance nosql like redis based on leveldb written by go. I
 
     ./ledis-server -config=/etc/ledis.json
 
+    //another shell
+    redis-cli -p 6380
+    
+    redis 127.0.0.1:6380> set a 1
+    OK
+    redis 127.0.0.1:6380> get a
+    "1"
+
+## Lib
+    
+    import "github.com/siddontang/ledisdb/ledis"
+    l, _ := ledis.OpenWithConfig(cfg)
+    db, _ := l.Select(0)
+
+    db.Set(key, value)
+
+    db.Get(key)
+
+
+## Replication
+
+set slaveof in config or dynamiclly
+
+    redis-cli -p 6381 
+
+    redis 127.0.0.1:6381> slaveof 127.0.0.1:6380
+    OK
+
 ## Benchmark
 
 See benchmark.md for more.
 
 ## Todo
 
-+ Expire + TTL
-+ Replication
 + Admin
+
+## Thanks
+
+Gamil: cenqichao@gmail.com
 
 ## Feedback
 
