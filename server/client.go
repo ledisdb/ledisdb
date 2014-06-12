@@ -32,6 +32,8 @@ type client struct {
 	reqC chan error
 
 	syncBuf bytes.Buffer
+
+	logBuf bytes.Buffer
 }
 
 func newClient(c net.Conn, app *App) {
@@ -158,7 +160,22 @@ func (c *client) handleRequest(req [][]byte) {
 	duration := time.Since(start)
 
 	if c.app.access != nil {
-		c.app.access.Log(c.c.RemoteAddr().String(), duration.Nanoseconds()/1000000, c.cmd, c.args, err)
+		c.logBuf.Reset()
+		for i, r := range req {
+			left := 256 - c.logBuf.Len()
+			if left <= 0 {
+				break
+			} else if len(r) <= left {
+				c.logBuf.Write(r)
+				if i != len(req)-1 {
+					c.logBuf.WriteByte(' ')
+				}
+			} else {
+				c.logBuf.Write(r[0:left])
+			}
+		}
+
+		c.app.access.Log(c.c.RemoteAddr().String(), duration.Nanoseconds()/1000000, c.logBuf.Bytes(), err)
 	}
 
 	if err != nil {

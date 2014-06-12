@@ -1,9 +1,7 @@
 package server
 
 import (
-	"fmt"
 	"github.com/siddontang/go-log/log"
-	"strings"
 )
 
 const (
@@ -31,21 +29,13 @@ func (l *accessLog) Close() {
 	l.l.Close()
 }
 
-func (l *accessLog) Log(remoteAddr string, usedTime int64, cmd string, args [][]byte, err error) {
-	argsFormat := make([]string, len(args))
-	argsI := make([]interface{}, len(args))
-	for i := range args {
-		argsFormat[i] = " %.24q"
-		argsI[i] = args[i]
-	}
+func (l *accessLog) Log(remoteAddr string, usedTime int64, request []byte, err error) {
 
-	argsStr := fmt.Sprintf(strings.Join(argsFormat, ""), argsI...)
-
-	format := `%s [%s%s] %d [%s]`
+	format := `%s %q %d [%s]`
 
 	if err == nil {
-		l.l.Info(format, remoteAddr, cmd, argsStr, usedTime, "OK")
+		l.l.Info(format, remoteAddr, request, usedTime, "OK")
 	} else {
-		l.l.Info(format, remoteAddr, cmd, argsStr, usedTime, err.Error())
+		l.l.Info(format, remoteAddr, request, usedTime, err.Error())
 	}
 }
