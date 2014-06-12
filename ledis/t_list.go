@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"time"
 )
 
 const (
@@ -84,62 +85,53 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	var err error
 
 	metaKey := db.lEncodeMetaKey(key)
+	headSeq, tailSeq, size, err = db.lGetMeta(metaKey)
+	if err != nil {
+		return 0, err
+	}
 
-	if len(args) == 0 {
-		_, _, size, err := db.lGetMeta(metaKey)
-		return int64(size), err
+	var pushCnt int = len(args)
+	if pushCnt == 0 {
+		return int64(size), nil
+	}
+
+	var seq int32 = headSeq
+	var delta int32 = -1
+	if whereSeq == listTailSeq {
+		seq = tailSeq
+		delta = 1
 	}
 
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
-	if headSeq, tailSeq, size, err = db.lGetMeta(metaKey); err != nil {
-		return 0, err
-	}
-
-	var delta int32 = 1
-	var seq int32 = 0
-	if whereSeq == listHeadSeq {
-		delta = -1
-		seq = headSeq
-	} else {
-		seq = tailSeq
-	}
-
-	if size == 0 {
-		headSeq = listInitialSeq
-		tailSeq = listInitialSeq
-		seq = headSeq
-	} else {
+	//	append elements
+	if size > 0 {
 		seq += delta
 	}
 
-	for i := 0; i < len(args); i++ {
+	for i := 0; i < pushCnt; i++ {
 		ek := db.lEncodeListKey(key, seq+int32(i)*delta)
 		t.Put(ek, args[i])
-		//to do add binlog
 	}
 
-	seq += int32(len(args)-1) * delta
-
+	seq += int32(pushCnt-1) * delta
 	if seq <= listMinSeq || seq >= listMaxSeq {
 		return 0, errListSeq
 	}
 
-	size += int32(len(args))
-
+	//	set meta info
 	if whereSeq == listHeadSeq {
 		headSeq = seq
 	} else {
 		tailSeq = seq
 	}
 
-	db.lSetMeta(metaKey, headSeq, tailSeq, size)
+	db.lSetMeta(metaKey, headSeq, tailSeq)
 
 	err = t.Commit()
-
-	return int64(size), err
+	return int64(size) + int64(pushCnt), err
 }
 
 func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
@@ -153,52 +145,71 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 
 	var headSeq int32
 	var tailSeq int32
-	var size int32
 	var err error
 
 	metaKey := db.lEncodeMetaKey(key)
-
-	headSeq, tailSeq, size, err = db.lGetMeta(metaKey)
-
+	headSeq, tailSeq, _, err = db.lGetMeta(metaKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var seq int32 = 0
-	var delta int32 = 1
-	if whereSeq == listHeadSeq {
-		seq = headSeq
-	} else {
-		delta = -1
+	var value []byte
+
+	var seq int32 = headSeq
+	if whereSeq == listTailSeq {
 		seq = tailSeq
 	}
 
 	itemKey := db.lEncodeListKey(key, seq)
-	var value []byte
 	value, err = db.db.Get(itemKey)
 	if err != nil {
 		return nil, err
 	}
 
-	t.Delete(itemKey)
-	seq += delta
-
-	size--
-	if size <= 0 {
-		t.Delete(metaKey)
+	if whereSeq == listHeadSeq {
+		headSeq += 1
 	} else {
-		if whereSeq == listHeadSeq {
-			headSeq = seq
-		} else {
-			tailSeq = seq
-		}
-
-		db.lSetMeta(metaKey, headSeq, tailSeq, size)
+		tailSeq -= 1
 	}
 
-	//todo add binlog
+	t.Delete(itemKey)
+	size := db.lSetMeta(metaKey, headSeq, tailSeq)
+	if size == 0 {
+		db.rmExpire(t, hExpType, key)
+	}
+
 	err = t.Commit()
 	return value, err
+}
+
+//	ps : here just focus on deleting the list data,
+//		 any other likes expire is ignore.
+func (db *DB) lDelete(t *tx, key []byte) int64 {
+	mk := db.lEncodeMetaKey(key)
+
+	var headSeq int32
+	var tailSeq int32
+	var err error
+
+	headSeq, tailSeq, _, err = db.lGetMeta(mk)
+	if err != nil {
+		return 0
+	}
+
+	var num int64 = 0
+	startKey := db.lEncodeListKey(key, headSeq)
+	stopKey := db.lEncodeListKey(key, tailSeq)
+
+	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.Key())
+		num++
+	}
+	it.Close()
+
+	t.Delete(mk)
+
+	return num
 }
 
 func (db *DB) lGetSeq(key []byte, whereSeq int32) (int64, error) {
@@ -213,26 +224,52 @@ func (db *DB) lGetMeta(ek []byte) (headSeq int32, tailSeq int32, size int32, err
 	if err != nil {
 		return
 	} else if v == nil {
+		headSeq = listInitialSeq
+		tailSeq = listInitialSeq
 		size = 0
 		return
 	} else {
 		headSeq = int32(binary.LittleEndian.Uint32(v[0:4]))
 		tailSeq = int32(binary.LittleEndian.Uint32(v[4:8]))
-		size = int32(binary.LittleEndian.Uint32(v[8:]))
+		size = tailSeq - headSeq + 1
 	}
 	return
 }
 
-func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32, size int32) {
+func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
 	t := db.listTx
 
-	buf := make([]byte, 12)
+	var size int32 = tailSeq - headSeq + 1
+	if size < 0 {
+		//	todo : log error + panic
+	} else if size == 0 {
+		t.Delete(ek)
+	} else {
+		buf := make([]byte, 8)
 
-	binary.LittleEndian.PutUint32(buf[0:4], uint32(headSeq))
-	binary.LittleEndian.PutUint32(buf[4:8], uint32(tailSeq))
-	binary.LittleEndian.PutUint32(buf[8:], uint32(size))
+		binary.LittleEndian.PutUint32(buf[0:4], uint32(headSeq))
+		binary.LittleEndian.PutUint32(buf[4:8], uint32(tailSeq))
 
-	t.Put(ek, buf)
+		t.Put(ek, buf)
+	}
+
+	return size
+}
+
+func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
+
+	if llen, err := db.LLen(key); err != nil || llen == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, lExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
 }
 
 func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
@@ -347,41 +384,18 @@ func (db *DB) LClear(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	mk := db.lEncodeMetaKey(key)
-
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
-	var headSeq int32
-	var tailSeq int32
-	var err error
+	num := db.lDelete(t, key)
+	db.rmExpire(t, lExpType, key)
 
-	headSeq, tailSeq, _, err = db.lGetMeta(mk)
-
-	if err != nil {
-		return 0, err
-	}
-
-	var num int64 = 0
-	startKey := db.lEncodeListKey(key, headSeq)
-	stopKey := db.lEncodeListKey(key, tailSeq)
-
-	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		num++
-	}
-
-	it.Close()
-
-	t.Delete(mk)
-
-	err = t.Commit()
+	err := t.Commit()
 	return num, err
 }
 
-func (db *DB) LFlush() (drop int64, err error) {
+func (db *DB) lFlush() (drop int64, err error) {
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
@@ -398,8 +412,40 @@ func (db *DB) LFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+		if drop&1023 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
+	it.Close()
+
+	db.expFlush(t, lExpType)
 
 	err = t.Commit()
 	return
+}
+
+func (db *DB) LExpire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
+
+	return db.lExpireAt(key, time.Now().Unix()+duration)
+}
+
+func (db *DB) LExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
+
+	return db.lExpireAt(key, when)
+}
+
+func (db *DB) LTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
+
+	return db.ttl(lExpType, key)
 }

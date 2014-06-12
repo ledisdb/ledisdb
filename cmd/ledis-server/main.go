@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-var configFile = flag.String("config", "", "ledisdb config file")
+var configFile = flag.String("config", "/etc/ledis.json", "ledisdb config file")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

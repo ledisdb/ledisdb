@@ -3,6 +3,7 @@ package ledis
 import (
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"time"
 )
 
 type KVPair struct {
@@ -14,8 +15,16 @@ var errKVKey = errors.New("invalid encode kv key")
 
 func checkKeySize(key []byte) error {
 	if len(key) > MaxKeySize || len(key) == 0 {
-		return ErrKeySize
+		return errKeySize
 	}
+	return nil
+}
+
+func checkValueSize(value []byte) error {
+	if len(value) > MaxValueSize {
+		return errValueSize
+	}
+
 	return nil
 }
 
@@ -75,6 +84,30 @@ func (db *DB) incr(key []byte, delta int64) (int64, error) {
 	return n, err
 }
 
+//	ps : here just focus on deleting the key-value data,
+//		 any other likes expire is ignore.
+func (db *DB) delete(t *tx, key []byte) int64 {
+	key = db.encodeKVKey(key)
+	t.Delete(key)
+	return 1
+}
+
+func (db *DB) setExpireAt(key []byte, when int64) (int64, error) {
+	t := db.kvTx
+	t.Lock()
+	defer t.Unlock()
+
+	if exist, err := db.Exists(key); err != nil || exist == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, kvExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
+}
+
 func (db *DB) Decr(key []byte) (int64, error) {
 	return db.incr(key, -1)
 }
@@ -88,22 +121,21 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 		return 0, nil
 	}
 
-	var err error
-	for i := range keys {
-		keys[i] = db.encodeKVKey(keys[i])
+	codedKeys := make([][]byte, len(keys))
+	for i, k := range keys {
+		codedKeys[i] = db.encodeKVKey(k)
 	}
 
 	t := db.kvTx
-
 	t.Lock()
 	defer t.Unlock()
 
-	for i := range keys {
-		t.Delete(keys[i])
-		//todo binlog
+	for i, k := range keys {
+		t.Delete(codedKeys[i])
+		db.rmExpire(t, kvExpType, k)
 	}
 
-	err = t.Commit()
+	err := t.Commit()
 	return int64(len(keys)), err
 }
 
@@ -136,6 +168,8 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
+		return nil, err
+	} else if err := checkValueSize(value); err != nil {
 		return nil, err
 	}
 
@@ -204,6 +238,8 @@ func (db *DB) MSet(args ...KVPair) error {
 	for i := 0; i < len(args); i++ {
 		if err := checkKeySize(args[i].Key); err != nil {
 			return err
+		} else if err := checkValueSize(args[i].Value); err != nil {
+			return err
 		}
 
 		key = db.encodeKVKey(args[i].Key)
@@ -221,6 +257,8 @@ func (db *DB) MSet(args ...KVPair) error {
 
 func (db *DB) Set(key []byte, value []byte) error {
 	if err := checkKeySize(key); err != nil {
+		return err
+	} else if err := checkValueSize(value); err != nil {
 		return err
 	}
 
@@ -243,6 +281,8 @@ func (db *DB) Set(key []byte, value []byte) error {
 
 func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
+		return 0, err
+	} else if err := checkValueSize(value); err != nil {
 		return 0, err
 	}
 
@@ -271,7 +311,7 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) KvFlush() (drop int64, err error) {
+func (db *DB) flush() (drop int64, err error) {
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
@@ -283,9 +323,17 @@ func (db *DB) KvFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+
+		if drop&1023 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
+	it.Close()
 
 	err = t.Commit()
+	err = db.expFlush(t, kvExpType)
 	return
 }
 
@@ -322,6 +370,31 @@ func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 			v = append(v, KVPair{Key: key, Value: it.Value()})
 		}
 	}
+	it.Close()
 
 	return v, nil
+}
+
+func (db *DB) Expire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
+
+	return db.setExpireAt(key, time.Now().Unix()+duration)
+}
+
+func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
+
+	return db.setExpireAt(key, when)
+}
+
+func (db *DB) TTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
+
+	return db.ttl(kvExpType, key)
 }

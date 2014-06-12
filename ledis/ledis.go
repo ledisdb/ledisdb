@@ -4,13 +4,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/go-log/log"
+	"path"
+	"sync"
+	"time"
 )
 
 type Config struct {
+	DataDir string `json:"data_dir"`
+
+	//if you not set leveldb path, use data_dir/data
 	DataDB leveldb.Config `json:"data_db"`
+
+	UseBinLog bool `json:"use_bin_log"`
+
+	//if you not set bin log path, use data_dir/bin_log
+	BinLog BinLogConfig `json:"bin_log"`
 }
 
 type DB struct {
+	l *Ledis
+
 	db *leveldb.DB
 
 	index uint8
@@ -22,10 +36,16 @@ type DB struct {
 }
 
 type Ledis struct {
+	sync.Mutex
+
 	cfg *Config
 
 	ldb *leveldb.DB
 	dbs [MaxDBNumber]*DB
+
+	binlog *BinLog
+
+	quit chan struct{}
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
@@ -39,17 +59,42 @@ func Open(configJson json.RawMessage) (*Ledis, error) {
 }
 
 func OpenWithConfig(cfg *Config) (*Ledis, error) {
+	if len(cfg.DataDir) == 0 {
+		return nil, fmt.Errorf("must set correct data_dir")
+	}
+
+	if len(cfg.DataDB.Path) == 0 {
+		cfg.DataDB.Path = path.Join(cfg.DataDir, "data")
+	}
+
 	ldb, err := leveldb.OpenWithConfig(&cfg.DataDB)
 	if err != nil {
 		return nil, err
 	}
 
 	l := new(Ledis)
+
+	l.quit = make(chan struct{})
+
 	l.ldb = ldb
+
+	if cfg.UseBinLog {
+		if len(cfg.BinLog.Path) == 0 {
+			cfg.BinLog.Path = path.Join(cfg.DataDir, "bin_log")
+		}
+		l.binlog, err = NewBinLogWithConfig(&cfg.BinLog)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		l.binlog = nil
+	}
 
 	for i := uint8(0); i < MaxDBNumber; i++ {
 		l.dbs[i] = newDB(l, i)
 	}
+
+	l.activeExpireCycle()
 
 	return l, nil
 }
@@ -57,20 +102,29 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 func newDB(l *Ledis, index uint8) *DB {
 	d := new(DB)
 
+	d.l = l
+
 	d.db = l.ldb
 
 	d.index = index
 
-	d.kvTx = &tx{wb: d.db.NewWriteBatch()}
-	d.listTx = &tx{wb: d.db.NewWriteBatch()}
-	d.hashTx = &tx{wb: d.db.NewWriteBatch()}
-	d.zsetTx = &tx{wb: d.db.NewWriteBatch()}
+	d.kvTx = newTx(l)
+	d.listTx = newTx(l)
+	d.hashTx = newTx(l)
+	d.zsetTx = newTx(l)
 
 	return d
 }
 
 func (l *Ledis) Close() {
+	close(l.quit)
+
 	l.ldb.Close()
+
+	if l.binlog != nil {
+		l.binlog.Close()
+		l.binlog = nil
+	}
 }
 
 func (l *Ledis) Select(index int) (*DB, error) {
@@ -79,4 +133,42 @@ func (l *Ledis) Select(index int) (*DB, error) {
 	}
 
 	return l.dbs[index], nil
+}
+
+func (l *Ledis) FlushAll() error {
+	for index, db := range l.dbs {
+		if _, err := db.FlushAll(); err != nil {
+			log.Error("flush db %d error %s", index, err.Error())
+		}
+	}
+
+	return nil
+}
+
+//very dangerous to use
+func (l *Ledis) DataDB() *leveldb.DB {
+	return l.ldb
+}
+
+func (l *Ledis) activeExpireCycle() {
+	var executors []*elimination = make([]*elimination, len(l.dbs))
+	for i, db := range l.dbs {
+		executors[i] = db.newEliminator()
+	}
+
+	go func() {
+		tick := time.NewTicker(1 * time.Second)
+		for {
+			select {
+			case <-tick.C:
+				for _, eli := range executors {
+					eli.active()
+				}
+			case <-l.quit:
+				break
+			}
+		}
+
+		tick.Stop()
+	}()
 }

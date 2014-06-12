@@ -9,7 +9,16 @@ import (
 type Config struct {
 	Addr string `json:"addr"`
 
+	DataDir string `json:"data_dir"`
+
+	//if you not set db path, use data_dir
 	DB ledis.Config `json:"db"`
+
+	//set slaveof to enable replication from master
+	//empty, no replication
+	SlaveOf string `json:"slaveof"`
+
+	AccessLog string `json:"access_log"`
 }
 
 func NewConfig(data json.RawMessage) (*Config, error) {

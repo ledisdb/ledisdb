@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"os"
 	"sync"
 	"testing"
 )
@@ -12,23 +13,29 @@ func getTestDB() *DB {
 	f := func() {
 		var d = []byte(`
             {
+            	"data_dir" : "/tmp/test_ledis",
                 "data_db" : {
-                    "path" : "/tmp/testdb",
                     "compression":true,
                     "block_size" : 32768,
                     "write_buffer_size" : 2097152,
                     "cache_size" : 20971520
-                }
+                },
+
+                "binlog" : {
+                	"max_file_size" : 1073741824,
+                	"max_file_num" : 3
+                }	
             }
             `)
+
+		os.RemoveAll("/tmp/test_ledis")
+
 		var err error
 		testLedis, err = Open(d)
 		if err != nil {
 			println(err.Error())
 			panic(err)
 		}
-
-		testLedis.ldb.Clear()
 	}
 
 	testLedisOnce.Do(f)
@@ -75,7 +82,7 @@ func TestFlush(t *testing.T) {
 	db1.LPush([]byte("lst"), []byte("a1"), []byte("b2"))
 	db1.ZAdd([]byte("zset_0"), ScorePair{int64(3), []byte("mc")})
 
-	db1.Flush()
+	db1.FlushAll()
 
 	//	0 - existing
 	if exists, _ := db0.Exists([]byte("a")); exists <= 0 {

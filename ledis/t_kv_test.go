@@ -29,7 +29,7 @@ func TestDBKV(t *testing.T) {
 func TestDBScan(t *testing.T) {
 	db := getTestDB()
 
-	db.Flush()
+	db.FlushAll()
 
 	if v, err := db.Scan(nil, 10, true); err != nil {
 		t.Fatal(err)

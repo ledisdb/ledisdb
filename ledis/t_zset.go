@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-leveldb/leveldb"
+	"time"
 )
 
 const (
@@ -34,9 +35,9 @@ const (
 
 func checkZSetKMSize(key []byte, member []byte) error {
 	if len(key) > MaxKeySize || len(key) == 0 {
-		return ErrKeySize
+		return errKeySize
 	} else if len(member) > MaxZSetMemberSize || len(member) == 0 {
-		return ErrZSetMemberSize
+		return errZSetMemberSize
 	}
 	return nil
 }
@@ -191,12 +192,10 @@ func (db *DB) zDecodeScoreKey(ek []byte) (key []byte, member []byte, score int64
 	return
 }
 
-func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
+func (db *DB) zSetItem(t *tx, key []byte, score int64, member []byte) (int64, error) {
 	if score <= MinScore || score >= MaxScore {
 		return 0, errScoreOverflow
 	}
-
-	t := db.zsetTx
 
 	var exists int64 = 0
 	ek := db.zEncodeSetKey(key, member)
@@ -222,9 +221,7 @@ func (db *DB) zSetItem(key []byte, score int64, member []byte) (int64, error) {
 	return exists, nil
 }
 
-func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, error) {
-	t := db.zsetTx
-
+func (db *DB) zDelItem(t *tx, key []byte, member []byte, skipDelScore bool) (int64, error) {
 	ek := db.zEncodeSetKey(key, member)
 	if v, err := db.db.Get(ek); err != nil {
 		return 0, err
@@ -245,6 +242,29 @@ func (db *DB) zDelItem(key []byte, member []byte, skipDelScore bool) (int64, err
 	}
 
 	t.Delete(ek)
+
+	return 1, nil
+}
+
+func (db *DB) zDelete(t *tx, key []byte) int64 {
+	delMembCnt, _ := db.zRemRange(t, key, MinScore, MaxScore, 0, -1)
+	//	todo : log err
+	return delMembCnt
+}
+
+func (db *DB) zExpireAt(key []byte, when int64) (int64, error) {
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	if zcnt, err := db.ZCard(key); err != nil || zcnt == 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, zExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
 	return 1, nil
 }
 
@@ -266,7 +286,7 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 			return 0, err
 		}
 
-		if n, err := db.zSetItem(key, score, member); err != nil {
+		if n, err := db.zSetItem(t, key, score, member); err != nil {
 			return 0, err
 		} else if n == 0 {
 			//add new
@@ -274,7 +294,7 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 		}
 	}
 
-	if _, err := db.zIncrSize(key, num); err != nil {
+	if _, err := db.zIncrSize(t, key, num); err != nil {
 		return 0, err
 	}
 
@@ -283,8 +303,7 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 	return num, err
 }
 
-func (db *DB) zIncrSize(key []byte, delta int64) (int64, error) {
-	t := db.zsetTx
+func (db *DB) zIncrSize(t *tx, key []byte, delta int64) (int64, error) {
 	sk := db.zEncodeSizeKey(key)
 
 	size, err := Int64(db.db.Get(sk))
@@ -295,6 +314,7 @@ func (db *DB) zIncrSize(key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
+			db.rmExpire(t, zExpType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -348,14 +368,14 @@ func (db *DB) ZRem(key []byte, members ...[]byte) (int64, error) {
 			return 0, err
 		}
 
-		if n, err := db.zDelItem(key, members[i], false); err != nil {
+		if n, err := db.zDelItem(t, key, members[i], false); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
 		}
 	}
 
-	if _, err := db.zIncrSize(key, -num); err != nil {
+	if _, err := db.zIncrSize(t, key, -num); err != nil {
 		return 0, err
 	}
 
@@ -374,34 +394,35 @@ func (db *DB) ZIncrBy(key []byte, delta int64, member []byte) (int64, error) {
 
 	ek := db.zEncodeSetKey(key, member)
 
-	var score int64 = delta
-
+	var oldScore int64 = 0
 	v, err := db.db.Get(ek)
 	if err != nil {
 		return InvalidScore, err
-	} else if v != nil {
-		if s, err := Int64(v, err); err != nil {
-			return InvalidScore, err
-		} else {
-			sk := db.zEncodeScoreKey(key, member, s)
-			t.Delete(sk)
-
-			score = s + delta
-			if score >= MaxScore || score <= MinScore {
-				return InvalidScore, errScoreOverflow
-			}
-		}
+	} else if v == nil {
+		db.zIncrSize(t, key, 1)
 	} else {
-		db.zIncrSize(key, 1)
+		if oldScore, err = Int64(v, err); err != nil {
+			return InvalidScore, err
+		}
 	}
 
-	t.Put(ek, PutInt64(score))
+	newScore := oldScore + delta
+	if newScore >= MaxScore || newScore <= MinScore {
+		return InvalidScore, errScoreOverflow
+	}
 
-	sk := db.zEncodeScoreKey(key, member, score)
+	sk := db.zEncodeScoreKey(key, member, newScore)
 	t.Put(sk, []byte{})
+	t.Put(ek, PutInt64(newScore))
+
+	if v != nil {
+		// so as to update score, we must delete the old one
+		oldSk := db.zEncodeScoreKey(key, member, oldScore)
+		t.Delete(oldSk)
+	}
 
 	err = t.Commit()
-	return score, err
+	return newScore, err
 }
 
 func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
@@ -482,41 +503,35 @@ func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int,
 	}
 }
 
-func (db *DB) zRemRange(key []byte, min int64, max int64, offset int, limit int) (int64, error) {
+func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, limit int) (int64, error) {
 	if len(key) > MaxKeySize {
-		return 0, ErrKeySize
+		return 0, errKeySize
 	}
-
-	t := db.zsetTx
-	t.Lock()
-	defer t.Unlock()
 
 	it := db.zIterator(key, min, max, offset, limit, false)
 	var num int64 = 0
 	for ; it.Valid(); it.Next() {
-		k := it.Key()
-		_, m, _, err := db.zDecodeScoreKey(k)
+		sk := it.Key()
+		_, m, _, err := db.zDecodeScoreKey(sk)
 		if err != nil {
 			continue
 		}
 
-		if n, err := db.zDelItem(key, m, true); err != nil {
+		if n, err := db.zDelItem(t, key, m, true); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
 		}
 
-		t.Delete(k)
+		t.Delete(sk)
 	}
+	it.Close()
 
-	if _, err := db.zIncrSize(key, -num); err != nil {
+	if _, err := db.zIncrSize(t, key, -num); err != nil {
 		return 0, err
 	}
 
-	//todo add binlog
-
-	err := t.Commit()
-	return num, err
+	return num, nil
 }
 
 func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
@@ -536,7 +551,7 @@ func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
 
 func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
 	if len(key) > MaxKeySize {
-		return nil, ErrKeySize
+		return nil, errKeySize
 	}
 
 	if offset < 0 {
@@ -575,6 +590,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 			v = append(v, m)
 		}
 	}
+	it.Close()
 
 	if reverse && (offset == 0 && limit < 0) {
 		v = db.zReverse(v, withScores)
@@ -622,7 +638,16 @@ func (db *DB) zParseLimit(key []byte, start int, stop int) (offset int, limit in
 }
 
 func (db *DB) ZClear(key []byte) (int64, error) {
-	return db.zRemRange(key, MinScore, MaxScore, 0, -1)
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	rmCnt, err := db.zRemRange(t, key, MinScore, MaxScore, 0, -1)
+	if err == nil {
+		err = t.Commit()
+	}
+
+	return rmCnt, err
 }
 
 func (db *DB) ZRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
@@ -645,12 +670,33 @@ func (db *DB) ZRemRangeByRank(key []byte, start int, stop int) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return db.zRemRange(key, MinScore, MaxScore, offset, limit)
+
+	var rmCnt int64
+
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	rmCnt, err = db.zRemRange(t, key, MinScore, MaxScore, offset, limit)
+	if err == nil {
+		err = t.Commit()
+	}
+
+	return rmCnt, err
 }
 
 //min and max must be inclusive
 func (db *DB) ZRemRangeByScore(key []byte, min int64, max int64) (int64, error) {
-	return db.zRemRange(key, min, max, 0, -1)
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	rmCnt, err := db.zRemRange(t, key, min, max, 0, -1)
+	if err == nil {
+		err = t.Commit()
+	}
+
+	return rmCnt, err
 }
 
 func (db *DB) ZRevRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
@@ -686,7 +732,7 @@ func (db *DB) ZRangeByScoreGeneric(key []byte, min int64, max int64,
 	return db.zRange(key, min, max, withScores, offset, count, reverse)
 }
 
-func (db *DB) ZFlush() (drop int64, err error) {
+func (db *DB) zFlush() (drop int64, err error) {
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
@@ -703,10 +749,17 @@ func (db *DB) ZFlush() (drop int64, err error) {
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
+		if drop&1023 == 0 {
+			if err = t.Commit(); err != nil {
+				return
+			}
+		}
 	}
+	it.Close()
+
+	db.expFlush(t, zExpType)
 
 	err = t.Commit()
-	// to do : binlog
 	return
 }
 
@@ -744,6 +797,31 @@ func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]Sco
 			v = append(v, ScorePair{Member: m, Score: score})
 		}
 	}
+	it.Close()
 
 	return v, nil
+}
+
+func (db *DB) ZExpire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
+
+	return db.zExpireAt(key, time.Now().Unix()+duration)
+}
+
+func (db *DB) ZExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
+
+	return db.zExpireAt(key, when)
+}
+
+func (db *DB) ZTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
+
+	return db.ttl(zExpType, key)
 }
