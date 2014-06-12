@@ -40,14 +40,39 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
     ./ledis-server -config=/etc/ledis.json
 
+    //another shell
+    redis-cli -p 6380
+    
+    redis 127.0.0.1:6380> set a 1
+    OK
+    redis 127.0.0.1:6380> get a
+    "1"
+
+## 嵌入库
+    
+    import "github.com/siddontang/ledisdb/ledis"
+    l, _ := ledis.OpenWithConfig(cfg)
+    db, _ := l.Select(0)
+
+    db.Set(key, value)
+
+    db.Get(key)
+
 ## Benchmark
 
 可以通过查看benchmark.md获取最新的性能测试结果
 
+## Replication
+
+通过配置或者运行时输入slaveof开启slave的replication功能
+
+    redis-cli -p 6381 
+
+    redis 127.0.0.1:6381> slaveof 127.0.0.1:6380
+    OK
+    
 ## Todo
 
-+ Expire + TTL
-+ Replication
 + Admin
 
 ## 联系我
