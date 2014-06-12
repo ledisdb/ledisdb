@@ -70,10 +70,14 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
     redis 127.0.0.1:6381> slaveof 127.0.0.1:6380
     OK
-    
+
 ## Todo
 
 + Admin
+
+## 感谢
+
+Gamil: cenqichao@gmail.com
 
 ## 联系我
 

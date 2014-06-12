@@ -69,6 +69,10 @@ See benchmark.md for more.
 
 + Admin
 
+## Thanks
+
+Gamil: cenqichao@gmail.com
+
 ## Feedback
 
 Gmail: siddontang@gmail.com
