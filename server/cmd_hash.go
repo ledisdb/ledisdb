@@ -207,6 +207,61 @@ func hclearCommand(c *client) error {
 	return nil
 }
 
+func hexpireCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	duration, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.HExpire(args[0], duration); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func hexpireAtCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	when, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.HExpireAt(args[0], when); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func httlCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	if v, err := c.db.HTTL(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
 func init() {
 	register("hdel", hdelCommand)
 	register("hexists", hexistsCommand)
@@ -223,4 +278,7 @@ func init() {
 	//ledisdb special command
 
 	register("hclear", hclearCommand)
+	register("hexpire", hexpireCommand)
+	register("hexpireat", hexpireAtCommand)
+	register("httl", httlCommand)
 }

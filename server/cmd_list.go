@@ -143,6 +143,61 @@ func lclearCommand(c *client) error {
 	return nil
 }
 
+func lexpireCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	duration, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.LExpire(args[0], duration); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func lexpireAtCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	when, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.LExpireAt(args[0], when); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func lttlCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	if v, err := c.db.LTTL(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
 func init() {
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
@@ -155,5 +210,7 @@ func init() {
 	//ledisdb special command
 
 	register("lclear", lclearCommand)
-
+	register("lexpire", lexpireCommand)
+	register("lexpireat", lexpireAtCommand)
+	register("lttl", lttlCommand)
 }

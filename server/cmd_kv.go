@@ -203,6 +203,65 @@ func mgetCommand(c *client) error {
 	return nil
 }
 
+func expireCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	duration, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.Expire(args[0], duration); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func expireAtCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	when, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.ExpireAt(args[0], when); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func ttlCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	if v, err := c.db.TTL(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+// func (db *DB) Expire(key []byte, duration int6
+// func (db *DB) ExpireAt(key []byte, when int64)
+// func (db *DB) TTL(key []byte) (int64, error)
+
 func init() {
 	register("decr", decrCommand)
 	register("decrby", decrbyCommand)
@@ -216,4 +275,7 @@ func init() {
 	register("mset", msetCommand)
 	register("set", setCommand)
 	register("setnx", setnxCommand)
+	register("expire", expireCommand)
+	register("expireat", expireAtCommand)
+	register("ttl", ttlCommand)
 }
