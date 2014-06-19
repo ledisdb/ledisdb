@@ -90,11 +90,17 @@ func (it *Iterator) Seek(key []byte) {
 
 func (it *Iterator) Find(key []byte) []byte {
 	it.Seek(key)
-	if it.Valid() && bytes.Equal(it.Key(), key) {
-		return it.Value()
-	} else {
-		return nil
+	if it.Valid() {
+		var klen C.size_t
+		kdata := C.leveldb_iter_key(it.it, &klen)
+		if kdata == nil {
+			return nil
+		} else if bytes.Equal(slice(unsafe.Pointer(kdata), int(C.int(klen))), key) {
+			return it.Value()
+		}
 	}
+
+	return nil
 }
 
 type RangeLimitIterator struct {
