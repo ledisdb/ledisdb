@@ -138,7 +138,7 @@ func hmgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HMget(args[0], args[1:]); err != nil {
+	if v, err := c.db.HMget(args[0], args[1:]...); err != nil {
 		return err
 	} else {
 		c.writeArray(v)

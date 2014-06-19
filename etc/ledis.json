@@ -6,7 +6,8 @@
             "compression": false,
             "block_size": 32768,
             "write_buffer_size": 67108864,
-            "cache_size": 524288000            
+            "cache_size": 524288000,
+            "max_open_files":1024         
         }
     },
 

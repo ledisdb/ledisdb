@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"io"
 	"os"
 )
@@ -73,7 +73,9 @@ func (l *Ledis) Dump(w io.Writer) error {
 		return err
 	}
 
-	it := sp.Iterator(nil, nil, leveldb.RangeClose, 0, -1)
+	it := sp.NewIterator()
+	it.SeekToFirst()
+
 	var key []byte
 	var value []byte
 	for ; it.Valid(); it.Next() {

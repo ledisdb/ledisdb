@@ -32,11 +32,28 @@ func TestDBHash(t *testing.T) {
 
 	key := []byte("testdb_hash_a")
 
-	if n, err := db.HSet(key, []byte("a"), []byte("hello world")); err != nil {
+	if n, err := db.HSet(key, []byte("a"), []byte("hello world 1")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
+
+	if n, err := db.HSet(key, []byte("b"), []byte("hello world 2")); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	ay, _ := db.HMget(key, []byte("a"), []byte("b"))
+
+	if v1, _ := ay[0].([]byte); string(v1) != "hello world 1" {
+		t.Fatal(string(v1))
+	}
+
+	if v2, _ := ay[1].([]byte); string(v2) != "hello world 2" {
+		t.Fatal(string(v2))
+	}
+
 }
 
 func TestDBHScan(t *testing.T) {

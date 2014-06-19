@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"time"
 )
 
@@ -119,7 +119,7 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 	maxKey[0] = db.index
 	maxKey[1] = expMetaType + 1
 
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
@@ -173,7 +173,7 @@ func (eli *elimination) active() {
 			continue
 		}
 
-		it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+		it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 		for it.Valid() {
 			for i := 1; i < 512 && it.Valid(); i++ {
 				expKeys = append(expKeys, it.Key(), it.Value())

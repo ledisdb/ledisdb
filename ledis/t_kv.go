@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"time"
 )
 
@@ -204,18 +204,15 @@ func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
 func (db *DB) MGet(keys ...[]byte) ([]interface{}, error) {
 	values := make([]interface{}, len(keys))
 
-	var err error
-	var value []byte
+	it := db.db.NewIterator()
+	defer it.Close()
+
 	for i := range keys {
 		if err := checkKeySize(keys[i]); err != nil {
 			return nil, err
 		}
 
-		if value, err = db.db.Get(db.encodeKVKey(keys[i])); err != nil {
-			return nil, err
-		}
-
-		values[i] = value
+		values[i] = it.Find(db.encodeKVKey(keys[i]))
 	}
 
 	return values, nil
@@ -319,7 +316,7 @@ func (db *DB) flush() (drop int64, err error) {
 	minKey := db.encodeKVMinKey()
 	maxKey := db.encodeKVMaxKey()
 
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
@@ -362,7 +359,7 @@ func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 		rangeType = leveldb.RangeOpen
 	}
 
-	it := db.db.Iterator(minKey, maxKey, rangeType, 0, count)
+	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
 	for ; it.Valid(); it.Next() {
 		if key, err := db.decodeKVKey(it.Key()); err != nil {
 			continue
