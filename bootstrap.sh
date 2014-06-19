@@ -2,4 +2,4 @@
 
 . ./dev.sh
 
-go get -u github.com/siddontang/go-log/log 
+#nothing to do now

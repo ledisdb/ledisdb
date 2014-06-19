@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/log"
 )
 
 const (
