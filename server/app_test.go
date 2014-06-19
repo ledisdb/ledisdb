@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/garyburd/redigo/redis"
+	"github.com/siddontang/ledisdb/client/go/redis"
 	"os"
 	"sync"
 	"testing"
