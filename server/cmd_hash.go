@@ -59,7 +59,7 @@ func hdelCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HDel(args[0], args[1:]); err != nil {
+	if n, err := c.db.HDel(args[0], args[1:]...); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)

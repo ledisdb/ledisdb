@@ -252,7 +252,7 @@ func (db *DB) HMget(key []byte, args ...[]byte) ([]interface{}, error) {
 	return r, nil
 }
 
-func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
+func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 	t := db.hashTx
 
 	var ek []byte
@@ -262,6 +262,9 @@ func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
+	it := db.db.NewIterator()
+	defer it.Close()
+
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i]); err != nil {
@@ -270,9 +273,8 @@ func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
 
 		ek = db.hEncodeHashKey(key, args[i])
 
-		if v, err = db.db.Get(ek); err != nil {
-			return 0, err
-		} else if v == nil {
+		v = it.Find(ek)
+		if v == nil {
 			continue
 		} else {
 			num++
