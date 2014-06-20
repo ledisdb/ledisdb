@@ -19,11 +19,28 @@ func TestKVCodec(t *testing.T) {
 func TestDBKV(t *testing.T) {
 	db := getTestDB()
 
-	key := []byte("testdb_kv_a")
+	key1 := []byte("testdb_kv_a")
 
-	if err := db.Set(key, []byte("hello world")); err != nil {
+	if err := db.Set(key1, []byte("hello world 1")); err != nil {
 		t.Fatal(err)
 	}
+
+	key2 := []byte("testdb_kv_b")
+
+	if err := db.Set(key2, []byte("hello world 2")); err != nil {
+		t.Fatal(err)
+	}
+
+	ay, _ := db.MGet(key1, key2)
+
+	if v1, _ := ay[0].([]byte); string(v1) != "hello world 1" {
+		t.Fatal(string(v1))
+	}
+
+	if v2, _ := ay[1].([]byte); string(v2) != "hello world 2" {
+		t.Fatal(string(v2))
+	}
+
 }
 
 func TestDBScan(t *testing.T) {

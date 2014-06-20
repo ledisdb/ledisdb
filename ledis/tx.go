@@ -1,7 +1,7 @@
 package ledis
 
 import (
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"sync"
 )
 

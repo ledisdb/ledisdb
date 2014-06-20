@@ -421,6 +421,61 @@ func zclearCommand(c *client) error {
 	return nil
 }
 
+func zexpireCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	duration, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.ZExpire(args[0], duration); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func zexpireAtCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	when, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.ZExpireAt(args[0], when); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func zttlCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 {
+		return ErrCmdParams
+	}
+
+	if v, err := c.db.ZTTL(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(v)
+	}
+
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -438,6 +493,9 @@ func init() {
 	register("zscore", zscoreCommand)
 
 	//ledisdb special command
-	register("zclear", zclearCommand)
 
+	register("zclear", zclearCommand)
+	register("zexpire", zexpireCommand)
+	register("zexpireat", zexpireAtCommand)
+	register("zttl", zttlCommand)
 }

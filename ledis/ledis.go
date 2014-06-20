@@ -3,8 +3,8 @@ package ledis
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/siddontang/go-leveldb/leveldb"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/log"
 	"path"
 	"sync"
 	"time"
@@ -46,6 +46,7 @@ type Ledis struct {
 	binlog *BinLog
 
 	quit chan struct{}
+	jobs *sync.WaitGroup
 }
 
 func Open(configJson json.RawMessage) (*Ledis, error) {
@@ -75,6 +76,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 	l := new(Ledis)
 
 	l.quit = make(chan struct{})
+	l.jobs = new(sync.WaitGroup)
 
 	l.ldb = ldb
 
@@ -118,6 +120,7 @@ func newDB(l *Ledis, index uint8) *DB {
 
 func (l *Ledis) Close() {
 	close(l.quit)
+	l.jobs.Wait()
 
 	l.ldb.Close()
 
@@ -156,19 +159,23 @@ func (l *Ledis) activeExpireCycle() {
 		executors[i] = db.newEliminator()
 	}
 
+	l.jobs.Add(1)
 	go func() {
 		tick := time.NewTicker(1 * time.Second)
-		for {
+		end := false
+		for !end {
 			select {
 			case <-tick.C:
 				for _, eli := range executors {
 					eli.active()
 				}
 			case <-l.quit:
+				end = true
 				break
 			}
 		}
 
 		tick.Stop()
+		l.jobs.Done()
 	}()
 }

@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"time"
 )
 
@@ -132,7 +132,7 @@ func (db *DB) hDelete(t *tx, key []byte) int64 {
 	stop := db.hEncodeStopKey(key)
 
 	var num int64 = 0
-	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++
@@ -232,10 +232,11 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 	return err
 }
 
-func (db *DB) HMget(key []byte, args [][]byte) ([]interface{}, error) {
+func (db *DB) HMget(key []byte, args ...[]byte) ([]interface{}, error) {
 	var ek []byte
-	var v []byte
-	var err error
+
+	it := db.db.NewIterator()
+	defer it.Close()
 
 	r := make([]interface{}, len(args))
 	for i := 0; i < len(args); i++ {
@@ -245,17 +246,13 @@ func (db *DB) HMget(key []byte, args [][]byte) ([]interface{}, error) {
 
 		ek = db.hEncodeHashKey(key, args[i])
 
-		if v, err = db.db.Get(ek); err != nil {
-			return nil, err
-		}
-
-		r[i] = v
+		r[i] = it.Find(ek)
 	}
 
 	return r, nil
 }
 
-func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
+func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 	t := db.hashTx
 
 	var ek []byte
@@ -265,6 +262,9 @@ func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
+	it := db.db.NewIterator()
+	defer it.Close()
+
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i]); err != nil {
@@ -273,9 +273,8 @@ func (db *DB) HDel(key []byte, args [][]byte) (int64, error) {
 
 		ek = db.hEncodeHashKey(key, args[i])
 
-		if v, err = db.db.Get(ek); err != nil {
-			return 0, err
-		} else if v == nil {
+		v = it.Find(ek)
+		if v == nil {
 			continue
 		} else {
 			num++
@@ -355,7 +354,7 @@ func (db *DB) HGetAll(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -380,7 +379,7 @@ func (db *DB) HKeys(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, k, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -404,7 +403,7 @@ func (db *DB) HValues(key []byte) ([]interface{}, error) {
 
 	v := make([]interface{}, 0, 16)
 
-	it := db.db.Iterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}
@@ -443,7 +442,7 @@ func (db *DB) hFlush() (drop int64, err error) {
 	maxKey[0] = db.index
 	maxKey[1] = hSizeType + 1
 
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
@@ -485,7 +484,7 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 		rangeType = leveldb.RangeOpen
 	}
 
-	it := db.db.Iterator(minKey, maxKey, rangeType, 0, count)
+	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
 	for ; it.Valid(); it.Next() {
 		if _, f, err := db.hDecodeHashKey(it.Key()); err != nil {
 			continue

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/garyburd/redigo/redis"
+	"github.com/siddontang/ledisdb/client/go/redis"
 	"math/rand"
 	"sync"
 	"time"

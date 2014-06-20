@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/go-leveldb/leveldb"
+	"github.com/siddontang/ledisdb/leveldb"
 	"time"
 )
 
@@ -200,7 +200,7 @@ func (db *DB) lDelete(t *tx, key []byte) int64 {
 	startKey := db.lEncodeListKey(key, headSeq)
 	stopKey := db.lEncodeListKey(key, tailSeq)
 
-	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
+	it := db.db.RangeLimitIterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++
@@ -361,7 +361,7 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error)
 
 	startKey := db.lEncodeListKey(key, startSeq)
 	stopKey := db.lEncodeListKey(key, stopSeq)
-	it := db.db.Iterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
+	it := db.db.RangeLimitIterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}
@@ -408,7 +408,7 @@ func (db *DB) lFlush() (drop int64, err error) {
 	maxKey[0] = db.index
 	maxKey[1] = lMetaType + 1
 
-	it := db.db.Iterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		drop++
