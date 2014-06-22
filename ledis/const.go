@@ -54,10 +54,7 @@ const (
 )
 
 var (
-	ErrKeySize        = errors.New("invalid key size")
-	ErrHashFieldSize  = errors.New("invalid hash field size")
-	ErrZSetMemberSize = errors.New("invalid zset member size")
-	ErrScoreMiss      = errors.New("zset score miss")
+	ErrScoreMiss = errors.New("zset score miss")
 )
 
 const (

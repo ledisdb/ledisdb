@@ -34,11 +34,11 @@ Ledisdb is a high performance nosql like redis based on leveldb written by go. I
     ./ledis-server -config=/etc/ledis.json
 
     //another shell
-    redis-cli -p 6380
+    ledis-cli -p 6380
     
-    redis 127.0.0.1:6380> set a 1
+    ledis 127.0.0.1:6380> set a 1
     OK
-    redis 127.0.0.1:6380> get a
+    ledis 127.0.0.1:6380> get a
     "1"
 
 ## Lib
@@ -56,9 +56,9 @@ Ledisdb is a high performance nosql like redis based on leveldb written by go. I
 
 set slaveof in config or dynamiclly
 
-    redis-cli -p 6381 
+    ledis-cli -p 6381 
 
-    redis 127.0.0.1:6381> slaveof 127.0.0.1:6380
+    ledis 127.0.0.1:6381> slaveof 127.0.0.1:6380
     OK
 
 ## Benchmark
