@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/go/redis"
+	"github.com/siddontang/ledisdb/client/go/ledis"
 	"testing"
 	"time"
 )
@@ -19,13 +19,13 @@ func TestKVExpire(t *testing.T) {
 
 	//	expire + ttl
 	exp := int64(10)
-	if n, err := redis.Int(c.Do("expire", k, exp)); err != nil {
+	if n, err := ledis.Int(c.Do("expire", k, exp)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if ttl, err := redis.Int64(c.Do("ttl", k)); err != nil {
+	if ttl, err := ledis.Int64(c.Do("ttl", k)); err != nil {
 		t.Fatal(err)
 	} else if ttl != exp {
 		t.Fatal(ttl)
@@ -33,13 +33,13 @@ func TestKVExpire(t *testing.T) {
 
 	//	expireat + ttl
 	tm := now() + 3
-	if n, err := redis.Int(c.Do("expireat", k, tm)); err != nil {
+	if n, err := ledis.Int(c.Do("expireat", k, tm)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if ttl, err := redis.Int64(c.Do("ttl", k)); err != nil {
+	if ttl, err := ledis.Int64(c.Do("ttl", k)); err != nil {
 		t.Fatal(err)
 	} else if ttl != 3 {
 		t.Fatal(ttl)
@@ -48,15 +48,15 @@ func TestKVExpire(t *testing.T) {
 	kErr := "not_exist_ttl"
 
 	//	err - expire, expireat
-	if n, err := redis.Int(c.Do("expire", kErr, tm)); err != nil || n != 0 {
+	if n, err := ledis.Int(c.Do("expire", kErr, tm)); err != nil || n != 0 {
 		t.Fatal(false)
 	}
 
-	if n, err := redis.Int(c.Do("expireat", kErr, tm)); err != nil || n != 0 {
+	if n, err := ledis.Int(c.Do("expireat", kErr, tm)); err != nil || n != 0 {
 		t.Fatal(false)
 	}
 
-	if n, err := redis.Int(c.Do("ttl", kErr)); err != nil || n != -1 {
+	if n, err := ledis.Int(c.Do("ttl", kErr)); err != nil || n != -1 {
 		t.Fatal(false)
 	}
 

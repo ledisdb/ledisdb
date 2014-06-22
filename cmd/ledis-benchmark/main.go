@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/redis"
+	"github.com/siddontang/ledisdb/client/go/ledis"
 	"math/rand"
 	"sync"
 	"time"
@@ -16,14 +16,14 @@ var clients = flag.Int("c", 50, "number of clients")
 
 var wg sync.WaitGroup
 
-var pool *redis.Pool
+var client *ledis.Client
 
 var loop int = 0
 
 func waitBench(cmd string, args ...interface{}) {
 	defer wg.Done()
 
-	c := pool.Get()
+	c := client.Get()
 	defer c.Close()
 
 	for i := 0; i < loop; i++ {
@@ -234,15 +234,9 @@ func main() {
 
 	addr := fmt.Sprintf("%s:%d", *ip, *port)
 
-	f := func() (redis.Conn, error) {
-		c, err := redis.Dial("tcp", addr)
-		if err != nil {
-			return nil, err
-		}
-
-		return c, nil
-	}
-	pool = redis.NewPool(f, *clients)
+	cfg := new(ledis.Config)
+	cfg.Addr = addr
+	client = ledis.NewClient(cfg)
 
 	benchSet()
 	benchIncr()
