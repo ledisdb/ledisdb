@@ -41,11 +41,11 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
     ./ledis-server -config=/etc/ledis.json
 
     //another shell
-    redis-cli -p 6380
+    ledis-cli -p 6380
     
-    redis 127.0.0.1:6380> set a 1
+    ledis 127.0.0.1:6380> set a 1
     OK
-    redis 127.0.0.1:6380> get a
+    ledis 127.0.0.1:6380> get a
     "1"
 
 ## 嵌入库
@@ -66,9 +66,9 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
 通过配置或者运行时输入slaveof开启slave的replication功能
 
-    redis-cli -p 6381 
+    ledis-cli -p 6381 
 
-    redis 127.0.0.1:6381> slaveof 127.0.0.1:6380
+    ledis 127.0.0.1:6381> slaveof 127.0.0.1:6380
     OK
 
 ## Todo
