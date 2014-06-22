@@ -534,38 +534,21 @@ func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, lim
 	return num, nil
 }
 
-func (db *DB) zReverse(s []interface{}, withScores bool) []interface{} {
-	if withScores {
-		for i, j := 0, len(s)-2; i < j; i, j = i+2, j-2 {
-			s[i], s[j] = s[j], s[i]
-			s[i+1], s[j+1] = s[j+1], s[i+1]
-		}
-	} else {
-		for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-			s[i], s[j] = s[j], s[i]
-		}
-	}
-
-	return s
-}
-
-func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset int, limit int, reverse bool) ([]interface{}, error) {
+func (db *DB) zRange(key []byte, min int64, max int64, offset int, limit int, reverse bool) ([]ScorePair, error) {
 	if len(key) > MaxKeySize {
 		return nil, errKeySize
 	}
 
 	if offset < 0 {
-		return []interface{}{}, nil
+		return []ScorePair{}, nil
 	}
 
 	nv := 64
 	if limit > 0 {
 		nv = limit
 	}
-	if withScores {
-		nv = 2 * nv
-	}
-	v := make([]interface{}, 0, nv)
+
+	v := make([]ScorePair, 0, nv)
 
 	var it *leveldb.RangeLimitIterator
 
@@ -584,16 +567,14 @@ func (db *DB) zRange(key []byte, min int64, max int64, withScores bool, offset i
 			continue
 		}
 
-		if withScores {
-			v = append(v, m, s)
-		} else {
-			v = append(v, m)
-		}
+		v = append(v, ScorePair{Member: m, Score: s})
 	}
 	it.Close()
 
 	if reverse && (offset == 0 && limit < 0) {
-		v = db.zReverse(v, withScores)
+		for i, j := 0, len(v)-1; i < j; i, j = i+1, j-1 {
+			v[i], v[j] = v[j], v[i]
+		}
 	}
 
 	return v, nil
@@ -650,15 +631,15 @@ func (db *DB) ZClear(key []byte) (int64, error) {
 	return rmCnt, err
 }
 
-func (db *DB) ZRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
-	return db.ZRangeGeneric(key, start, stop, withScores, false)
+func (db *DB) ZRange(key []byte, start int, stop int) ([]ScorePair, error) {
+	return db.ZRangeGeneric(key, start, stop, false)
 }
 
 //min and max must be inclusive
 //if no limit, set offset = 0 and count = -1
 func (db *DB) ZRangeByScore(key []byte, min int64, max int64,
-	withScores bool, offset int, count int) ([]interface{}, error) {
-	return db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, false)
+	offset int, count int) ([]ScorePair, error) {
+	return db.ZRangeByScoreGeneric(key, min, max, offset, count, false)
 }
 
 func (db *DB) ZRank(key []byte, member []byte) (int64, error) {
@@ -699,8 +680,8 @@ func (db *DB) ZRemRangeByScore(key []byte, min int64, max int64) (int64, error) 
 	return rmCnt, err
 }
 
-func (db *DB) ZRevRange(key []byte, start int, stop int, withScores bool) ([]interface{}, error) {
-	return db.ZRangeGeneric(key, start, stop, withScores, true)
+func (db *DB) ZRevRange(key []byte, start int, stop int) ([]ScorePair, error) {
+	return db.ZRangeGeneric(key, start, stop, true)
 }
 
 func (db *DB) ZRevRank(key []byte, member []byte) (int64, error) {
@@ -709,27 +690,25 @@ func (db *DB) ZRevRank(key []byte, member []byte) (int64, error) {
 
 //min and max must be inclusive
 //if no limit, set offset = 0 and count = -1
-func (db *DB) ZRevRangeByScore(key []byte, min int64, max int64,
-	withScores bool, offset int, count int) ([]interface{}, error) {
-	return db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, true)
+func (db *DB) ZRevRangeByScore(key []byte, min int64, max int64, offset int, count int) ([]ScorePair, error) {
+	return db.ZRangeByScoreGeneric(key, min, max, offset, count, true)
 }
 
-func (db *DB) ZRangeGeneric(key []byte, start int, stop int,
-	withScores bool, reverse bool) ([]interface{}, error) {
+func (db *DB) ZRangeGeneric(key []byte, start int, stop int, reverse bool) ([]ScorePair, error) {
 	offset, limit, err := db.zParseLimit(key, start, stop)
 	if err != nil {
 		return nil, err
 	}
 
-	return db.zRange(key, MinScore, MaxScore, withScores, offset, limit, reverse)
+	return db.zRange(key, MinScore, MaxScore, offset, limit, reverse)
 }
 
 //min and max must be inclusive
 //if no limit, set offset = 0 and count = -1
 func (db *DB) ZRangeByScoreGeneric(key []byte, min int64, max int64,
-	withScores bool, offset int, count int, reverse bool) ([]interface{}, error) {
+	offset int, count int, reverse bool) ([]ScorePair, error) {
 
-	return db.zRange(key, min, max, withScores, offset, count, reverse)
+	return db.zRange(key, min, max, offset, count, reverse)
 }
 
 func (db *DB) zFlush() (drop int64, err error) {

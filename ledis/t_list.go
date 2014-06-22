@@ -317,19 +317,19 @@ func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {
 	return db.lpush(key, listHeadSeq, args...)
 }
 
-func (db *DB) LRange(key []byte, start int32, stop int32) ([]interface{}, error) {
+func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
 	}
-
-	v := make([]interface{}, 0, 16)
 
 	var startSeq int32
 	var stopSeq int32
 
 	if start > stop {
-		return []interface{}{}, nil
+		return [][]byte{}, nil
 	}
+
+	v := make([][]byte, 0, 16)
 
 	var headSeq int32
 	var tailSeq int32

@@ -122,7 +122,7 @@ func lrangeCommand(c *client) error {
 	if v, err := c.db.LRange(args[0], int32(start), int32(stop)); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeSliceArray(v)
 	}
 
 	return nil

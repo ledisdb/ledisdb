@@ -245,6 +245,62 @@ func (c *client) writeArray(ay []interface{}) {
 	}
 }
 
+func (c *client) writeSliceArray(ay [][]byte) {
+	c.wb.WriteByte('*')
+	if ay == nil {
+		c.wb.Write(NullArray)
+		c.wb.Write(Delims)
+	} else {
+		c.wb.Write(ledis.Slice(strconv.Itoa(len(ay))))
+		c.wb.Write(Delims)
+
+		for i := 0; i < len(ay); i++ {
+			c.writeBulk(ay[i])
+		}
+	}
+}
+
+func (c *client) writeFVPairArray(ay []ledis.FVPair) {
+	c.wb.WriteByte('*')
+	if ay == nil {
+		c.wb.Write(NullArray)
+		c.wb.Write(Delims)
+	} else {
+		c.wb.Write(ledis.Slice(strconv.Itoa(len(ay) * 2)))
+		c.wb.Write(Delims)
+
+		for i := 0; i < len(ay); i++ {
+			c.writeBulk(ay[i].Field)
+			c.writeBulk(ay[i].Value)
+		}
+	}
+}
+
+func (c *client) writeScorePairArray(ay []ledis.ScorePair, withScores bool) {
+	c.wb.WriteByte('*')
+	if ay == nil {
+		c.wb.Write(NullArray)
+		c.wb.Write(Delims)
+	} else {
+		if withScores {
+			c.wb.Write(ledis.Slice(strconv.Itoa(len(ay) * 2)))
+			c.wb.Write(Delims)
+		} else {
+			c.wb.Write(ledis.Slice(strconv.Itoa(len(ay))))
+			c.wb.Write(Delims)
+
+		}
+
+		for i := 0; i < len(ay); i++ {
+			c.writeBulk(ay[i].Member)
+
+			if withScores {
+				c.writeBulk(ledis.StrPutInt64(ay[i].Score))
+			}
+		}
+	}
+}
+
 func (c *client) writeBulkFrom(n int64, rb io.Reader) {
 	c.wb.WriteByte('$')
 	c.wb.Write(ledis.Slice(strconv.FormatInt(n, 10)))

@@ -197,7 +197,7 @@ func mgetCommand(c *client) error {
 	if v, err := c.db.MGet(args...); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeSliceArray(v)
 	}
 
 	return nil
