@@ -1,18 +1,4 @@
-// Copyright 2012 Gary Burd
-//
-// Licensed under the Apache License, Version 2.0 (the "License"): you may
-// not use this file except in compliance with the License. You may obtain
-// a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
-package redis
+package ledis
 
 import (
 	"errors"
@@ -21,7 +7,7 @@ import (
 )
 
 // ErrNil indicates that a reply value is nil.
-var ErrNil = errors.New("redigo: nil returned")
+var ErrNil = errors.New("ledis: nil returned")
 
 // Int is a helper that converts a command reply to an integer. If err is not
 // equal to nil, then Int returns 0, err. Otherwise, Int converts the
@@ -51,7 +37,7 @@ func Int(reply interface{}, err error) (int, error) {
 	case Error:
 		return 0, reply
 	}
-	return 0, fmt.Errorf("redigo: unexpected type for Int, got type %T", reply)
+	return 0, fmt.Errorf("ledis: unexpected type for Int, got type %T", reply)
 }
 
 // Int64 is a helper that converts a command reply to 64 bit integer. If err is
@@ -78,10 +64,10 @@ func Int64(reply interface{}, err error) (int64, error) {
 	case Error:
 		return 0, reply
 	}
-	return 0, fmt.Errorf("redigo: unexpected type for Int64, got type %T", reply)
+	return 0, fmt.Errorf("ledis: unexpected type for Int64, got type %T", reply)
 }
 
-var errNegativeInt = errors.New("redigo: unexpected value for Uint64")
+var errNegativeInt = errors.New("ledis: unexpected value for Uint64")
 
 // Uint64 is a helper that converts a command reply to 64 bit integer. If err is
 // not equal to nil, then Int returns 0, err. Otherwise, Int64 converts the
@@ -110,7 +96,7 @@ func Uint64(reply interface{}, err error) (uint64, error) {
 	case Error:
 		return 0, reply
 	}
-	return 0, fmt.Errorf("redigo: unexpected type for Uint64, got type %T", reply)
+	return 0, fmt.Errorf("ledis: unexpected type for Uint64, got type %T", reply)
 }
 
 // Float64 is a helper that converts a command reply to 64 bit float. If err is
@@ -134,7 +120,7 @@ func Float64(reply interface{}, err error) (float64, error) {
 	case Error:
 		return 0, reply
 	}
-	return 0, fmt.Errorf("redigo: unexpected type for Float64, got type %T", reply)
+	return 0, fmt.Errorf("ledis: unexpected type for Float64, got type %T", reply)
 }
 
 // String is a helper that converts a command reply to a string. If err is not
@@ -160,7 +146,7 @@ func String(reply interface{}, err error) (string, error) {
 	case Error:
 		return "", reply
 	}
-	return "", fmt.Errorf("redigo: unexpected type for String, got type %T", reply)
+	return "", fmt.Errorf("ledis: unexpected type for String, got type %T", reply)
 }
 
 // Bytes is a helper that converts a command reply to a slice of bytes. If err
@@ -186,7 +172,7 @@ func Bytes(reply interface{}, err error) ([]byte, error) {
 	case Error:
 		return nil, reply
 	}
-	return nil, fmt.Errorf("redigo: unexpected type for Bytes, got type %T", reply)
+	return nil, fmt.Errorf("ledis: unexpected type for Bytes, got type %T", reply)
 }
 
 // Bool is a helper that converts a command reply to a boolean. If err is not
@@ -212,7 +198,7 @@ func Bool(reply interface{}, err error) (bool, error) {
 	case Error:
 		return false, reply
 	}
-	return false, fmt.Errorf("redigo: unexpected type for Bool, got type %T", reply)
+	return false, fmt.Errorf("ledis: unexpected type for Bool, got type %T", reply)
 }
 
 // MultiBulk is deprecated. Use Values.
@@ -238,7 +224,7 @@ func Values(reply interface{}, err error) ([]interface{}, error) {
 	case Error:
 		return nil, reply
 	}
-	return nil, fmt.Errorf("redigo: unexpected type for Values, got type %T", reply)
+	return nil, fmt.Errorf("ledis: unexpected type for Values, got type %T", reply)
 }
 
 // Strings is a helper that converts an array command reply to a []string. If
@@ -257,7 +243,7 @@ func Strings(reply interface{}, err error) ([]string, error) {
 			}
 			p, ok := reply[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf("redigo: unexpected element type for Strings, got type %T", reply[i])
+				return nil, fmt.Errorf("ledis: unexpected element type for Strings, got type %T", reply[i])
 			}
 			result[i] = string(p)
 		}
@@ -267,5 +253,5 @@ func Strings(reply interface{}, err error) ([]string, error) {
 	case Error:
 		return nil, reply
 	}
-	return nil, fmt.Errorf("redigo: unexpected type for Strings, got type %T", reply)
+	return nil, fmt.Errorf("ledis: unexpected type for Strings, got type %T", reply)
 }

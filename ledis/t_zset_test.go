@@ -145,15 +145,13 @@ func TestZSetOrder(t *testing.T) {
 		}
 	}
 
-	if qMembs, err := db.ZRange(key, 0, endPos, false); err != nil {
+	if qMembs, err := db.ZRange(key, 0, endPos); err != nil {
 		t.Fatal(err)
 	} else if len(qMembs) != membCnt {
 		t.Fatal(fmt.Sprintf("%d vs %d", len(qMembs), membCnt))
 	} else {
 		for i := 0; i < membCnt; i++ {
-			if memb, ok := qMembs[i].([]byte); !ok {
-				t.Fatal(ok)
-			} else if string(memb) != membs[i] {
+			if string(qMembs[i].Member) != membs[i] {
 				t.Fatal(fmt.Sprintf("[%s] vs [%s]", qMembs[i], membs[i]))
 			}
 		}
@@ -182,7 +180,7 @@ func TestZSetOrder(t *testing.T) {
 		t.Fatal(pos)
 	}
 
-	if qMembs, err := db.ZRangeByScore(key, 999, 0XFFFF, false, 0, membCnt); err != nil {
+	if qMembs, err := db.ZRangeByScore(key, 999, 0XFFFF, 0, membCnt); err != nil {
 		t.Fatal(err)
 	} else if len(qMembs) != 1 {
 		t.Fatal(len(qMembs))
@@ -203,12 +201,12 @@ func TestZSetOrder(t *testing.T) {
 		t.Fatal(pos)
 	}
 
-	if datas, _ := db.ZRange(key, 0, endPos, true); len(datas) != 12 {
+	if datas, _ := db.ZRange(key, 0, endPos); len(datas) != 6 {
 		t.Fatal(len(datas))
 	} else {
 		scores := []int64{0, 1, 2, 5, 6, 999}
-		for i := 1; i < len(datas); i += 2 {
-			if s, ok := datas[i].(int64); !ok || s != scores[(i-1)/2] {
+		for i := 0; i < len(datas); i++ {
+			if datas[i].Score != scores[i] {
 				t.Fatal(fmt.Sprintf("[%d]=%d", i, datas[i]))
 			}
 		}

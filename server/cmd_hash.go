@@ -141,7 +141,7 @@ func hmgetCommand(c *client) error {
 	if v, err := c.db.HMget(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeSliceArray(v)
 	}
 
 	return nil
@@ -156,7 +156,7 @@ func hgetallCommand(c *client) error {
 	if v, err := c.db.HGetAll(args[0]); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeFVPairArray(v)
 	}
 
 	return nil
@@ -171,7 +171,7 @@ func hkeysCommand(c *client) error {
 	if v, err := c.db.HKeys(args[0]); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeSliceArray(v)
 	}
 
 	return nil
@@ -186,7 +186,7 @@ func hvalsCommand(c *client) error {
 	if v, err := c.db.HValues(args[0]); err != nil {
 		return err
 	} else {
-		c.writeArray(v)
+		c.writeSliceArray(v)
 	}
 
 	return nil

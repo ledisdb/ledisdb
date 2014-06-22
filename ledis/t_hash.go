@@ -232,13 +232,13 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 	return err
 }
 
-func (db *DB) HMget(key []byte, args ...[]byte) ([]interface{}, error) {
+func (db *DB) HMget(key []byte, args ...[]byte) ([][]byte, error) {
 	var ek []byte
 
 	it := db.db.NewIterator()
 	defer it.Close()
 
-	r := make([]interface{}, len(args))
+	r := make([][]byte, len(args))
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i]); err != nil {
 			return nil, err
@@ -344,7 +344,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 	return n, err
 }
 
-func (db *DB) HGetAll(key []byte) ([]interface{}, error) {
+func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
 	}
@@ -352,16 +352,16 @@ func (db *DB) HGetAll(key []byte) ([]interface{}, error) {
 	start := db.hEncodeStartKey(key)
 	stop := db.hEncodeStopKey(key)
 
-	v := make([]interface{}, 0, 16)
+	v := make([]FVPair, 0, 16)
 
 	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
-		_, k, err := db.hDecodeHashKey(it.Key())
+		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
 			return nil, err
 		}
-		v = append(v, k)
-		v = append(v, it.Value())
+
+		v = append(v, FVPair{Field: f, Value: it.Value()})
 	}
 
 	it.Close()
@@ -369,7 +369,7 @@ func (db *DB) HGetAll(key []byte) ([]interface{}, error) {
 	return v, nil
 }
 
-func (db *DB) HKeys(key []byte) ([]interface{}, error) {
+func (db *DB) HKeys(key []byte) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
 	}
@@ -377,15 +377,15 @@ func (db *DB) HKeys(key []byte) ([]interface{}, error) {
 	start := db.hEncodeStartKey(key)
 	stop := db.hEncodeStopKey(key)
 
-	v := make([]interface{}, 0, 16)
+	v := make([][]byte, 0, 16)
 
 	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
-		_, k, err := db.hDecodeHashKey(it.Key())
+		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
 			return nil, err
 		}
-		v = append(v, k)
+		v = append(v, f)
 	}
 
 	it.Close()
@@ -393,7 +393,7 @@ func (db *DB) HKeys(key []byte) ([]interface{}, error) {
 	return v, nil
 }
 
-func (db *DB) HValues(key []byte) ([]interface{}, error) {
+func (db *DB) HValues(key []byte) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
 	}
@@ -401,10 +401,15 @@ func (db *DB) HValues(key []byte) ([]interface{}, error) {
 	start := db.hEncodeStartKey(key)
 	stop := db.hEncodeStopKey(key)
 
-	v := make([]interface{}, 0, 16)
+	v := make([][]byte, 0, 16)
 
 	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
+		_, _, err := db.hDecodeHashKey(it.Key())
+		if err != nil {
+			return nil, err
+		}
+
 		v = append(v, it.Value())
 	}
 
@@ -477,7 +482,7 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 		count = defaultScanCount
 	}
 
-	v := make([]FVPair, 0, 2*count)
+	v := make([]FVPair, 0, count)
 
 	rangeType := leveldb.RangeROpen
 	if !inclusive {

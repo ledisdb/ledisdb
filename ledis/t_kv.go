@@ -201,8 +201,8 @@ func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
 	return db.incr(key, increment)
 }
 
-func (db *DB) MGet(keys ...[]byte) ([]interface{}, error) {
-	values := make([]interface{}, len(keys))
+func (db *DB) MGet(keys ...[]byte) ([][]byte, error) {
+	values := make([][]byte, len(keys))
 
 	it := db.db.NewIterator()
 	defer it.Close()

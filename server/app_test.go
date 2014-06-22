@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/go/redis"
+	"github.com/siddontang/ledisdb/client/go/ledis"
 	"os"
 	"sync"
 	"testing"
@@ -10,29 +10,23 @@ import (
 var testAppOnce sync.Once
 var testApp *App
 
-var testPool *redis.Pool
+var testLedisClient *ledis.Client
 
-func newTestRedisPool() {
-	f := func() (redis.Conn, error) {
-		c, err := redis.Dial("tcp", "127.0.0.1:16380")
-		if err != nil {
-			return nil, err
-		}
-
-		return c, nil
-	}
-
-	testPool = redis.NewPool(f, 4)
+func newTestLedisClient() {
+	cfg := new(ledis.Config)
+	cfg.Addr = "127.0.0.1:16380"
+	cfg.MaxIdleConns = 4
+	testLedisClient = ledis.NewClient(cfg)
 }
 
-func getTestConn() redis.Conn {
+func getTestConn() *ledis.Conn {
 	startTestApp()
-	return testPool.Get()
+	return testLedisClient.Get()
 }
 
 func startTestApp() {
 	f := func() {
-		newTestRedisPool()
+		newTestLedisClient()
 
 		os.RemoveAll("/tmp/testdb")
 

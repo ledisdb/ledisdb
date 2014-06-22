@@ -46,11 +46,11 @@ func TestDBHash(t *testing.T) {
 
 	ay, _ := db.HMget(key, []byte("a"), []byte("b"))
 
-	if v1, _ := ay[0].([]byte); string(v1) != "hello world 1" {
+	if v1 := ay[0]; string(v1) != "hello world 1" {
 		t.Fatal(string(v1))
 	}
 
-	if v2, _ := ay[1].([]byte); string(v2) != "hello world 2" {
+	if v2 := ay[1]; string(v2) != "hello world 2" {
 		t.Fatal(string(v2))
 	}
 

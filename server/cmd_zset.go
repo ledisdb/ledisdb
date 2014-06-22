@@ -312,16 +312,10 @@ func zrangeGeneric(c *client, reverse bool) error {
 		withScores = true
 	}
 
-	if datas, err := c.db.ZRangeGeneric(key, start, stop, withScores, reverse); err != nil {
+	if datas, err := c.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
 		return err
 	} else {
-		if withScores {
-			for i := len(datas) - 1; i > 0; i -= 2 {
-				v, _ := datas[i].(int64)
-				datas[i] = ledis.StrPutInt64(v)
-			}
-		}
-		c.writeArray(datas)
+		c.writeScorePairArray(datas, withScores)
 	}
 	return nil
 }
@@ -377,22 +371,16 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	}
 
 	if offset < 0 {
-		//for redis, if offset < 0, a empty will return
+		//for ledis, if offset < 0, a empty will return
 		//so here we directly return a empty array
 		c.writeArray([]interface{}{})
 		return nil
 	}
 
-	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, withScores, offset, count, reverse); err != nil {
+	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse); err != nil {
 		return err
 	} else {
-		if withScores {
-			for i := len(datas) - 1; i > 0; i -= 2 {
-				v, _ := datas[i].(int64)
-				datas[i] = ledis.StrPutInt64(v)
-			}
-		}
-		c.writeArray(datas)
+		c.writeScorePairArray(datas, withScores)
 	}
 
 	return nil

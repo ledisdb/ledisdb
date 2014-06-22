@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/redis"
+	"github.com/siddontang/ledisdb/client/go/ledis"
 	"strconv"
 	"testing"
 )
@@ -12,91 +12,91 @@ func TestZSet(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
-	if n, err := redis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
+	if n, err := ledis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(n)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zadd", key, 1, "a", 2, "b")); err != nil {
+	if n, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(n)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zadd", key, 3, "c", 4, "d")); err != nil {
+	if n, err := ledis.Int(c.Do("zadd", key, 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if s, err := redis.Int(c.Do("zscore", key, "c")); err != nil {
+	if s, err := ledis.Int(c.Do("zscore", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if s != 3 {
 		t.Fatal(s)
 	}
 
-	if n, err := redis.Int(c.Do("zrem", key, "d", "e")); err != nil {
+	if n, err := ledis.Int(c.Do("zrem", key, "d", "e")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zincrby", key, 4, "c")); err != nil {
+	if n, err := ledis.Int(c.Do("zincrby", key, 4, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 7 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zincrby", key, -4, "c")); err != nil {
+	if n, err := ledis.Int(c.Do("zincrby", key, -4, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zincrby", key, 4, "d")); err != nil {
+	if n, err := ledis.Int(c.Do("zincrby", key, 4, "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zrem", key, "a", "b", "c", "d")); err != nil {
+	if n, err := ledis.Int(c.Do("zrem", key, "a", "b", "c", "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -109,47 +109,47 @@ func TestZSetCount(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
-	if _, err := redis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, 2, 4)); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, 2, 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, 4, 4)); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, 4, 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, 4, 3)); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, 4, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, "(2", 4)); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, "(2", 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, "2", "(4")); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, "2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcount", key, "-inf", "+inf")); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, "-inf", "+inf")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
@@ -157,7 +157,7 @@ func TestZSetCount(t *testing.T) {
 
 	c.Do("zadd", key, 3, "e")
 
-	if n, err := redis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
+	if n, err := ledis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
@@ -171,27 +171,27 @@ func TestZSetRank(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
-	if _, err := redis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if n, err := redis.Int(c.Do("zrank", key, "c")); err != nil {
+	if n, err := ledis.Int(c.Do("zrank", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if _, err := redis.Int(c.Do("zrank", key, "e")); err != redis.ErrNil {
+	if _, err := ledis.Int(c.Do("zrank", key, "e")); err != ledis.ErrNil {
 		t.Fatal(err)
 	}
 
-	if n, err := redis.Int(c.Do("zrevrank", key, "c")); err != nil {
+	if n, err := ledis.Int(c.Do("zrevrank", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if _, err := redis.Int(c.Do("zrevrank", key, "e")); err != redis.ErrNil {
+	if _, err := ledis.Int(c.Do("zrevrank", key, "e")); err != ledis.ErrNil {
 		t.Fatal(err)
 	}
 }
@@ -228,11 +228,11 @@ func TestZSetRangeScore(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset_range")
-	if _, err := redis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -240,7 +240,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "c", 3); err != nil {
@@ -248,7 +248,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -256,7 +256,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrangebyscore", key, "(1", "(4")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, "(1", "(4")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", "c"); err != nil {
@@ -264,7 +264,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -272,7 +272,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", 3, "b", 2); err != nil {
@@ -280,7 +280,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -288,7 +288,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrangebyscore", key, "(1", "(4")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "(1", "(4")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", "b"); err != nil {
@@ -296,19 +296,19 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if n, err := redis.Int(c.Do("zremrangebyscore", key, 2, 3)); err != nil {
+	if n, err := ledis.Int(c.Do("zremrangebyscore", key, 2, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrangebyscore", key, 1, 4)); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", "d"); err != nil {
@@ -322,11 +322,11 @@ func TestZSetRange(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset_range_rank")
-	if _, err := redis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, 0, 3, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, 3, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -334,7 +334,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, 1, 4, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, 1, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "c", 3, "d", 4); err != nil {
@@ -342,7 +342,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, -2, -1, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, -2, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", 3, "d", 4); err != nil {
@@ -350,7 +350,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, 0, -1, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -358,13 +358,13 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, -1, -2, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, -1, -2, "withscores")); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 0 {
 		t.Fatal(len(v))
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrange", key, 0, 4, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 0, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -372,7 +372,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrange", key, 0, -1, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 0, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -380,7 +380,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrange", key, 2, 3, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 2, 3, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "a", 1); err != nil {
@@ -388,7 +388,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrevrange", key, -2, -1, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, -2, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "a", 1); err != nil {
@@ -396,19 +396,19 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if n, err := redis.Int(c.Do("zremrangebyrank", key, 2, 3)); err != nil {
+	if n, err := ledis.Int(c.Do("zremrangebyrank", key, 2, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if v, err := redis.MultiBulk(c.Do("zrange", key, 0, 4)); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, 4)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", "b"); err != nil {
@@ -416,13 +416,13 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if n, err := redis.Int(c.Do("zclear", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zclear", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := redis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
