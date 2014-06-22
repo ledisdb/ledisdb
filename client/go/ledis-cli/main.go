@@ -68,11 +68,14 @@ func printReply(reply interface{}) {
 		fmt.Printf("%s", string(reply))
 	case []interface{}:
 		for i, v := range reply {
-			fmt.Printf("%d) ", i)
+			fmt.Printf("%d) ", i+1)
 			if v == nil {
 				fmt.Printf("(nil)")
 			} else {
 				fmt.Printf("%q", v)
+			}
+			if i != len(reply)-1 {
+				fmt.Printf("\n")
 			}
 		}
 	default:
