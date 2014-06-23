@@ -395,3 +395,20 @@ func (db *DB) TTL(key []byte) (int64, error) {
 
 	return db.ttl(kvExpType, key)
 }
+
+func (db *DB) Persist(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	t := db.kvTx
+	t.Lock()
+	defer t.Unlock()
+	n, err := db.rmExpire(t, kvExpType, key)
+	if err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
+	return n, err
+}

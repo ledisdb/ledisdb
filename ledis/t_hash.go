@@ -525,3 +525,21 @@ func (db *DB) HTTL(key []byte) (int64, error) {
 
 	return db.ttl(hExpType, key)
 }
+
+func (db *DB) HPersist(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	t := db.hashTx
+	t.Lock()
+	defer t.Unlock()
+
+	n, err := db.rmExpire(t, hExpType, key)
+	if err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
+	return n, err
+}

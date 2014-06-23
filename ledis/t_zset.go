@@ -804,3 +804,21 @@ func (db *DB) ZTTL(key []byte) (int64, error) {
 
 	return db.ttl(zExpType, key)
 }
+
+func (db *DB) ZPersist(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	n, err := db.rmExpire(t, zExpType, key)
+	if err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
+	return n, err
+}

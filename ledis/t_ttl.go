@@ -90,16 +90,19 @@ func (db *DB) ttl(expType byte, key []byte) (t int64, err error) {
 	return t, err
 }
 
-func (db *DB) rmExpire(t *tx, expType byte, key []byte) {
+func (db *DB) rmExpire(t *tx, expType byte, key []byte) (int64, error) {
 	mk := db.expEncodeMetaKey(expType+1, key)
-	if v, err := db.db.Get(mk); err != nil || v == nil {
-		return
+	if v, err := db.db.Get(mk); err != nil {
+		return 0, err
+	} else if v == nil {
+		return 0, nil
 	} else if when, err2 := Int64(v, nil); err2 != nil {
-		return
+		return 0, err2
 	} else {
 		tk := db.expEncodeTimeKey(expType, key, when)
 		t.Delete(mk)
 		t.Delete(tk)
+		return 1, nil
 	}
 }
 
