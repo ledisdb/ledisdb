@@ -464,6 +464,21 @@ func zttlCommand(c *client) error {
 	return nil
 }
 
+func zpersistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.ZPersist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -486,4 +501,5 @@ func init() {
 	register("zexpire", zexpireCommand)
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
+	register("zpersist", zpersistCommand)
 }

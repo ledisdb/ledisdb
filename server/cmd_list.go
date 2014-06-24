@@ -198,6 +198,21 @@ func lttlCommand(c *client) error {
 	return nil
 }
 
+func lpersistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.LPersist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
@@ -213,4 +228,5 @@ func init() {
 	register("lexpire", lexpireCommand)
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
+	register("lpersist", lpersistCommand)
 }

@@ -262,6 +262,21 @@ func httlCommand(c *client) error {
 	return nil
 }
 
+func hpersistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.HPersist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("hdel", hdelCommand)
 	register("hexists", hexistsCommand)
@@ -281,4 +296,5 @@ func init() {
 	register("hexpire", hexpireCommand)
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
+	register("hpersist", hpersistCommand)
 }

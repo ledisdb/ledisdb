@@ -258,6 +258,21 @@ func ttlCommand(c *client) error {
 	return nil
 }
 
+func persistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.Persist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 // func (db *DB) Expire(key []byte, duration int6
 // func (db *DB) ExpireAt(key []byte, when int64)
 // func (db *DB) TTL(key []byte) (int64, error)
@@ -278,4 +293,5 @@ func init() {
 	register("expire", expireCommand)
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)
+	register("persist", persistCommand)
 }
