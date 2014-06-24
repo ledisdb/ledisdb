@@ -14,8 +14,13 @@ const (
 )
 
 const (
-	segWidth uint32 = 9
-	segSize  uint32 = uint32(1 << segWidth) // byte
+	// byte
+	segByteWidth uint32 = 9
+	segByteSize  uint32 = 1 << segByteWidth
+
+	// bit
+	segBitWidth uint32 = segByteWidth + 3
+	segBitSize  uint32 = segByteSize << 3
 
 	minSeq uint32 = 0
 	maxSeq uint32 = uint32((1 << 31) - 1)
@@ -69,6 +74,7 @@ func (db *DB) bEncodeBinKey(key []byte, seq uint32) []byte {
 	bk[pos] = db.index
 	pos++
 	bk[pos] = binType
+	pos++
 
 	binary.BigEndian.PutUint16(bk[pos:], uint16(len(key)))
 	pos += 2
@@ -94,8 +100,17 @@ func (db *DB) bDecodeBinKey(bkey []byte) (key []byte, seq uint32, err error) {
 	}
 
 	key = bkey[4 : 4+keyLen]
-	seq = uint32(binary.BigEndian.Uint16(bkey[4+keyLen:]))
+	seq = uint32(binary.BigEndian.Uint32(bkey[4+keyLen:]))
 	return
+}
+
+func (db *DB) bCapByteSize(seq uint32, off uint32) uint32 {
+	var offByteSize uint32 = (off >> 3) + 1
+	if offByteSize > segByteSize {
+		offByteSize = segByteSize
+	}
+
+	return seq<<segByteWidth + offByteSize
 }
 
 func (db *DB) bParseOffset(key []byte, offset int32) (seq uint32, off uint32, err error) {
@@ -104,7 +119,7 @@ func (db *DB) bParseOffset(key []byte, offset int32) (seq uint32, off uint32, er
 			err = e
 			return
 		} else {
-			offset += int32(tailSeq<<segWidth | tailOff)
+			offset += int32(tailSeq<<segBitWidth | tailOff)
 			if offset < 0 {
 				err = errOffset
 				return
@@ -114,8 +129,8 @@ func (db *DB) bParseOffset(key []byte, offset int32) (seq uint32, off uint32, er
 
 	off = uint32(offset)
 
-	seq = off >> segWidth
-	off &= (segSize - 1)
+	seq = off >> segBitWidth
+	off &= (segBitSize - 1)
 	return
 }
 
@@ -177,25 +192,27 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 		return
 	}
 
-	var offByteLen uint32 = tailOff >> 3
-	if tailOff&7 > 0 {
-		offByteLen++
-	}
-
-	var dataCap uint32 = tailSeq<<3 + offByteLen
-	data = make([]byte, dataCap)
+	var capByteSize uint32 = db.bCapByteSize(tailSeq, tailOff)
+	data = make([]byte, capByteSize, capByteSize)
 
 	minKey := db.bEncodeBinKey(key, minSeq)
 	maxKey := db.bEncodeBinKey(key, tailSeq)
 	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeClose, 0, -1)
-	for pos, end := uint32(0), uint32(0); it.Valid(); it.Next() {
-		end = pos + segSize
-		if end >= offByteLen {
-			end = offByteLen
+
+	var seq, s, e uint32
+	for ; it.Valid(); it.Next() {
+		if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
+			data = nil
+			break
 		}
 
-		copy(data[pos:end], it.Value())
-		pos = end
+		s = seq << segByteWidth
+		e = s + segByteSize
+		if e > capByteSize {
+			e = capByteSize
+		}
+
+		copy(data[s:e], it.Value())
 	}
 	it.Close()
 
@@ -218,7 +235,7 @@ func (db *DB) getSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 func (db *DB) allocateSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 	bk, segment, err := db.getSegment(key, seq)
 	if err == nil && segment == nil {
-		segment = make([]byte, segSize, segSize) // can be optimize ?
+		segment = make([]byte, segByteSize, segByteSize) // can be optimize ?
 	}
 	return bk, segment, err
 }
@@ -307,9 +324,15 @@ func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) 
 	return
 }
 
-// func (db *DB) BLen(key []) (uint32, error) {
+func (db *DB) BTail(key []byte) (uint32, error) {
+	// effective length of data, the highest bit-pos set in history
+	tailSeq, tailOff, err := db.bGetMeta(key)
+	if err != nil {
+		return 0, err
+	}
 
-// }
+	return tailSeq<<segBitWidth | tailOff, nil
+}
 
 // func (db *DB) BOperation(op byte, dstkey []byte, srckeys ...[]byte) (int32, error) {
 // 	//	return :
