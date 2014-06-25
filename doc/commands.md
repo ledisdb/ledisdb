@@ -2,7 +2,7 @@
 
 ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
 
-ledisdb all commands return RESP fomrat. Later I will use int64 refer RESP integer, string refer RESP simple string, bulk string refer RESP bulk string, and array refer RESP arrays.
+ledisdb all commands return RESP fomrat and it will use int64 instead of  RESP integer, string instead of RESP simple string, bulk string instead of RESP bulk string, and array instead of RESP arrays below.
 
 ## KV 
 
@@ -44,7 +44,7 @@ ledis> decrby mykey “5“
 (integer) 5
 ```
 
-### del
+### del key [key ...]
 
 Removes the specified keys.
 
@@ -63,7 +63,7 @@ ledis> del key1 key2
 (integer) 2
 ```
 
-### exists
+### exists key
 
 Returns if key exists
 
@@ -84,7 +84,7 @@ ledis> exists key2
 (integer) 0
 ```
 
-### get
+### get key
 
 Get the value of key. If the key does not exists, it returns nil value.
 
@@ -96,55 +96,240 @@ bulk: the value of key, or nil when key does not exist.
 **Examples**
 
 ```
-
+ledis> get nonexisting
+(nil)
+ledis> set mykey "hello"
+OK
+ledis> get mykey
+"hello"
 ```
 
-### getset
+### getset key value
+
+Atomically sets key to value and returns the old value stored at key.
+
 **Return value**
+
+bulk: the old value stored at key, or nil when key did not exists.
 
 **Examples**
 
-### incr
+```
+ledis> set mykey "hello"
+OK
+ledis> getset mykey "world"
+"hello"
+ledis> get mykey
+"world"
+```
+
+### incr key
+
+Increments the number stored at key by one. If the key does not exists, it is set to 0 before incrementing.
+
 **Return value**
+
+int64: the value of key after the increment
 
 **Examples**
 
-### incrby
+```
+ledis> set mykey "10"
+OK
+ledis> incr mykey
+(integer) 11
+ledis> get mykey
+"11"
+```
+
+### incrby key increment
+
+Increments the number stored at key by increment. If the key does not exists, it is set to 0 before incrementing.
+
 **Return value**
 
-**Examples**
-### mget
-**Return value**
+int64: the value of key after the increment
 
 **Examples**
-### mset
+
+```
+ledis> set mykey "10"
+OK
+ledis> incrby mykey 5
+(integer) 15
+```
+
+### mget key [key ...]
+
+Returns the values of all specified keys. If the key does not exists, a nil will return.
+
 **Return value**
 
-**Examples**
-### set
-**Return value**
+array: list of values at the specified keys
 
 **Examples**
-### setnx
+
+```
+ledis> set key1 "hello"
+OK
+ledis> set key2 "world"
+OK
+ledis> mget key1 key2 nonexisting
+1) "hello"
+2) "world"
+3) (nil)
+```
+
+### mset key value [key value ...]
+
+Sets the given keys to their respective values.
+
 **Return value**
 
-**Examples**
-### expire
-**Return value**
+string: always OK
 
 **Examples**
-### expireat
+
+```
+ledis> mset key1 "hello" key2 "world"
+OK
+ledis> get key1
+"hello"
+ledis> get key2
+"world"
+```
+
+### set key value
+
+Set key to the value.
+
 **Return value**
 
-**Examples**
-### ttl
-**Return value**
+string: OK
 
 **Examples**
-### persist
+
+```
+ledis> set mykey "hello"
+OK
+ledis> get mykey
+"hello"
+```
+
+### setnx key value
+
+Set key to the value if key does not exist. If key already holds a value, no operation is performed.
+
 **Return value**
 
+int64:
+
+- 1 if the key was set
+- 0 if the key was not set
+
 **Examples**
+
+```
+ledis> setnx mykey "hello"
+(integer) 1
+ledis> setnx mykey "world"
+(integer) 0
+ledis> get mykey
+"hello"
+```
+
+### expire key seconds
+
+Set a timeout on key. After the timeout has expired, the key will be deleted.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis> set mykey "hello"
+OK
+ledis> expire mykey 60
+(integer) 1
+ledis> expire mykey 60
+(integer) 1
+ledis> ttl mykey
+(integer) 58
+ledis> persist mykey
+(integer) 1
+```
+
+### expireat key timestamp
+
+Set an expired unix timestamp on key. 
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis> SET mykey "Hello"
+OK
+ledis> EXPIREAT mykey 1293840000
+(integer) 1
+ledis> EXISTS mykey
+(integer) 0
+```
+
+### ttl key
+
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+
+**Return value**
+
+int64: TTL in seconds
+
+**Examples**
+
+```
+ledis> set mykey "hello"
+OK
+ledis> expire mykey 10
+(integer) 1
+ledis> ttl mykey
+(integer) 8
+```
+
+### persist key
+
+Remove the existing timeout on key
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was removed
+- 0 if key does not exist or does not have an timeout
+
+**Examples**
+
+```
+ledis> set mykey "hello"
+OK
+ledis> expire mykey 60
+(integer) 1
+ledis> ttl mykey
+(integer) 57
+ledis> persist mykey
+(integer) 1
+ledis> ttl mykey
+(integer) -1
+```
 
 ## Hash
 
