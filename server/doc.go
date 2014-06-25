@@ -5,6 +5,8 @@
 // You can use ledis with many available redis clients directly, for example, redis-cli.
 // But I also supply some ledis client at client folder, and have been adding more for other languages.
 //
+// Usage
+//
 // Start a ledis server is very simple:
 //
 //  cfg := new(Config)
@@ -14,6 +16,7 @@
 //  app.Run()
 //
 // Replication
+//
 // You can start a slave ledis server for replication, open slave is simple too, you can set slaveof in config or run slaveof command in shell.
 //
 // For example, if you start a slave server, and the master server's address is 127.0.0.1:6380, you can start replication in shell:
@@ -22,4 +25,5 @@
 //  ledis 127.0.0.1:6381 > slaveof 127.0.0.1 6380
 //
 // After you send slaveof command, the slave will start to sync master's binlog and replicate from binlog.
+//
 package server
