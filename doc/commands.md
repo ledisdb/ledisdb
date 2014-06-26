@@ -278,11 +278,11 @@ int64:
 **Examples**
 
 ```
-ledis> SET mykey "Hello"
+ledis> set mykey "Hello"
 OK
-ledis> EXPIREAT mykey 1293840000
+ledis> expireat mykey 1293840000
 (integer) 1
-ledis> EXISTS mykey
+ledis> exists mykey
 (integer) 0
 ```
 
@@ -333,50 +333,262 @@ ledis> ttl mykey
 
 ## Hash
 
-### hdel
+### hdel key field [field ...]
+
+Removes the specified fiedls from the hash stored at key.
+
 **Return value**
 
-**Examples**
-### hexists
-**Return value**
+int64: the number of fields that were removed from the hash.
 
 **Examples**
-### hget
+
+```
+ledis> hset myhash field1 "foo"
+(integer) 1
+ledis> hdel myhash field1 field2
+(integer) 1
+```
+
+### hexists key field
+
+Returns if field is an existing field in the hash stored at key.
+
 **Return value**
 
-**Examples**
-### hgetall
-**Return value**
+int64:
+
+- 1 if the hash contains field
+- 0 if the hash does not contain field, or key does not exist.
 
 **Examples**
-### hincrby
+
+```
+ledis> hset myhash field1 "foo"
+(integer) 1
+ledis> hexists myhash field1 
+(integer) 1
+ledis> hexists myhash field2
+(integer) 0
+```
+
+### hget key field
+
+Returns the value associated with field in the hash stored at key.
+
 **Return value**
 
-**Examples**
-### hkeys
-**Return value**
+bulk: the value associated with field, or nil.
 
 **Examples**
-### hlen
+
+```
+ledis> hset myhash field1 "foo"
+(integer) 1
+ledis> hget myhash field1
+"foo"
+ledis> hget myhash field2
+(nil)
+```
+
+### hgetall key
+
+Returns all fields and values of the hash stored at key.
+
 **Return value**
 
-**Examples**
-### hmget
-**Return value**
+array: list of fields and their values stored in the hash, or an empty list (using nil in ledis-cli)
 
 **Examples**
-### hmset
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hset myhash field2 "world"
+(integer) 1
+ledis> hgetall myhash
+1) "field1"
+2) "hello"
+3) "field2"
+4) "world"
+```
+
+### hincrby key field increment
+
+Increments the number stored at field in the hash stored at key by increment. If key does not exist, a new hash key is created. 
+If field does not exists the value is set to 0 before incrementing.
+
 **Return value**
 
-**Examples**
-### hset
-**Return value**
+int64: the value at field after the increment.
 
 **Examples**
-### hvals
+
+```
+ledis> hincrby myhash field 1
+(integer) 1
+ledis> hget myhash field
+"1"
+ledis> hincrby myhash field 5
+(integer) 6
+ledis> hincrby myhash field -10
+(integer) -4
+```
+
+### hkeys key
+
+Return all fields in the hash stored at key.
+
 **Return value**
 
+array: list of fields in the hash, or an empty list.
+
 **Examples**
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hset myhash field2 "world"
+(integer) 1
+ledis> hkeys myhash
+1) "field1"
+2) "field2"
+```
+
+### hlen key
+
+Returns the number of fields contained in the hash stored at key
+
+**Return value**
+
+int64: number of fields in the hash, or 0 when key does not exist.
+
+**Examples**
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hset myhash field2 "world"
+(integer) 1
+ledis> hlen myhash
+(integer) 2
+```
+
+### hmget key field [field ...]
+
+Returns the values associated with the specified fields in the hash stored at key. If field does not exist in the hash, a nil value is returned.
+
+**Return value**
+
+array: list of values associated with the given fields.
+
+**Examples**
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hset myhash field2 "world"
+(integer) 1
+ledis> hmget myhash field1 field2 nofield
+1) "hello"
+2) "world"
+3) (nil)
+```
+
+### hmset key field value [field value ...]
+
+Sets the specified fields to their respective values in the hash stored at key.
+
+**Return value**
+
+string: OK
+
+**Examples**
+
+```
+ledis> hmset myhash field1 "hello" field2 "world"
+OK
+ledis> hmget myhash field1 field2
+1) "hello"
+2) "world"
+```
+
+### hset key field value
+
+Sets field in the hash stored at key to value. If key does not exists, a new hash key is created.
+
+**Return value**
+
+int64:
+
+- 1 if field is a new field in the hash and value was set.
+- 0 if field already exists in the hash and the value was updated.
+
+**Examples**
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hget myhash field1
+"hello"
+ledis> hset myhash field1 "world"
+(integer) 0
+ledis> hget myhash field1
+"world"
+```
+
+### hvals key
+
+Returns all values in the hash stored at key.
+
+**Return value**
+
+array: list of values in the hash, or an empty list.
+
+**Examples**
+
+```
+ledis> hset myhash field1 "hello"
+(integer) 1
+ledis> hset myhash field2 "world"
+(integer) 1
+ledis> hvals myhash
+1) "hello"
+2) "world"
+```
+
+### hclear key
+
+Deletes the hash key
+
+**Return value**
+
+int64: the number of fields in the hash stored at key.
+
+**Examples**
+
+```
+ledis> hmset myhash field1 "hello" field2 "world"
+OK
+ledis> hclear myhash
+(integer) 2
+```
+
+### hexpire key seconds
+
+Sets a hash key's time to live in seconds, like expire similarly.
+
+### hexpireat key timestamp
+
+Sets the expiration for a hash key as a unix timestamp, like expireat similarly.
+
+### httl key
+
+Gets the tiem to live for a hash key in seconds, like ttl similarly.
+
+### hpersist key
+
+Remove the expiration from a hash key, like persist similarly.
 
 ## List
 
