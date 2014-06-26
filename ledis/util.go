@@ -65,3 +65,27 @@ func StrInt64(v []byte, err error) (int64, error) {
 func StrPutInt64(v int64) []byte {
 	return strconv.AppendInt(nil, v, 10)
 }
+
+func MinUInt32(a uint32, b uint32) uint32 {
+	if a > b {
+		return b
+	} else {
+		return a
+	}
+}
+
+func MaxUInt32(a uint32, b uint32) uint32 {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func MaxInt32(a int32, b int32) int32 {
+	if a > b {
+		return a
+	} else {
+		return b
+	}
+}
