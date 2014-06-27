@@ -14,7 +14,12 @@ var fileName = flag.String("config", "/etc/ledis.config", "ledisdb config file")
 func main() {
 	flag.Parse()
 
-	data, err := ioutil.ReadFile(fileName)
+	if len(*fileName) == 0 {
+		println("need ledis config file")
+		return
+	}
+
+	data, err := ioutil.ReadFile(*fileName)
 	if err != nil {
 		println(err.Error())
 		return
