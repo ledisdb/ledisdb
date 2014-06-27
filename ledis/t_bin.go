@@ -455,28 +455,40 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		return
 	}
 
+	blen = -1
+
 	t := db.binTx
 	t.Lock()
 	defer t.Unlock()
-
-	var seq, off uint32
-	var segments = make([][]byte, maxSegCount) // todo : init count also can be optimize while 'and' / 'or'
 
 	// init - meta info
 	var maxDstSeq, maxDstOff uint32
 	var nowSeq, nowOff int32
 
-	if nowSeq, nowOff, err = db.bGetMeta(srckeys[0]); err != nil { // todo : if key not exists ....
+	var keyNum int = len(srckeys)
+	var iniIdx int = 0
+	for ; iniIdx < keyNum; iniIdx++ {
+		if nowSeq, nowOff, err = db.bGetMeta(srckeys[iniIdx]); err != nil { // todo : if key not exists ....
+			return
+		}
+
+		if nowSeq >= 0 {
+			maxDstSeq = uint32(nowSeq)
+			maxDstOff = uint32(nowOff)
+			break
+		}
+	}
+
+	if iniIdx+1 >= keyNum { //	todo ... while operation is 'not'
+		//	msg("lack of arguments")
 		return
-	} else if nowSeq < 0 {
-		return // incorrect ...
-	} else {
-		maxDstSeq = uint32(nowSeq)
-		maxDstOff = uint32(nowOff)
 	}
 
 	// init - data
-	it := db.bIterator(srckeys[0])
+	var seq, off uint32
+	var segments = make([][]byte, maxSegCount) // todo : init count also can be optimize while 'and' / 'or'
+
+	it := db.bIterator(srckeys[iniIdx])
 	for ; it.Valid(); it.Next() {
 		if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
 			// to do ...
@@ -488,8 +500,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	it.Close()
 
 	//	operation with following keys
-	var keyNum int = len(srckeys)
-	for i := 1; i < keyNum; i++ {
+	for i := iniIdx + 1; i < keyNum; i++ {
 		if nowSeq, nowOff, err = db.bGetMeta(srckeys[i]); err != nil {
 			return
 		}
@@ -546,12 +557,12 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	db.rmExpire(t, bExpType, dstkey)
 
 	//	set data and meta
-	if op == OPand || op == OPor {
-		// for i := maxDstSeq; i >= 0; i-- {
-		//
-		// }
-		db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
-	}
+	// if op == OPand || op == OPor {
+	//	for i := maxDstSeq; i >= 0; i-- {
+	//
+	//	}
+	// }
+	db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
 
 	var bk []byte
 	for seq, seg := range segments {
@@ -565,6 +576,10 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	}
 
 	err = t.Commit()
+	if err != nil {
+		blen = int32(maxDstSeq<<segBitWidth | maxDstOff)
+	}
+
 	return
 }
 

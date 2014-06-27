@@ -11,10 +11,6 @@ func cmpBytes(a []byte, b []byte) bool {
 
 	for i, n := range a {
 		if n != b[i] {
-			println("diff !")
-			println(i)
-			println(n)
-			println(b[i])
 			return true
 		}
 	}
@@ -82,7 +78,9 @@ func testSimple(t *testing.T) {
 
 func testSimpleII(t *testing.T) {
 	db := getTestDB()
-	key := []byte("test_bin_2")
+	db.FlushAll()
+
+	key := []byte("test_bin")
 
 	pos := int32(1234567)
 	if ori, _ := db.BSetBit(key, pos, 1); ori != 0 {
@@ -124,13 +122,15 @@ func testSimpleII(t *testing.T) {
 
 func testOp(t *testing.T) {
 	db := getTestDB()
+	db.FlushAll()
 
 	dstKey := []byte("test_bin_op")
 
 	k0 := []byte("op_0")
-	k1 := []byte("op_10")
-	//k2 := []byte("op_11")
-	srcKeys := [][]byte{k0, k1}
+	k1 := []byte("op_01")
+	k2 := []byte("op_10")
+	k3 := []byte("op_11")
+	srcKeys := [][]byte{k2, k0, k1, k3}
 
 	/*
 		<k0>
