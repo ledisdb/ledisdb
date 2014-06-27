@@ -133,13 +133,15 @@ func testOp(t *testing.T) {
 	srcKeys := [][]byte{k0, k1}
 
 	/*
-		<seg> - <high> ... <low>
-		0 - [10000000] ... [00000001]
-		1 - nil
-		2 - [00000000] ... [11111111] ... [00000000]
-		3 - [01010101] ... [10000001] [10101010]
-		4 - [10000000] ... [00000000]
-		...
+		<k0>
+			<seg> - <high> ... <low>
+			0 - [10000000] ... [00000001]
+			1 - nil
+			2 - [00000000] ... [11111111] ... [00000000]
+			3 - [01010101] ... [10000001] [10101010]
+			4 - [10000000] ... [00000000]
+			5 - [00000000] ... [00000011] [00000001]
+			...
 	*/
 	// (k0 - seg:0)
 	db.BSetBit(k0, int32(0), 1)
@@ -160,20 +162,25 @@ func testOp(t *testing.T) {
 	for i := uint32(0); i < 8; i += 2 {
 		db.BSetBit(k0, int32(pos+i), 1)
 	}
-	// (k0 - seg:3)
+	// (k0 - seg:4)
 	db.BSetBit(k0, int32(segBitSize*5-1), 1)
+	// (k0 - seg:5)
+	db.BSetBit(k0, int32(segBitSize*5), 1)
+	db.BSetBit(k0, int32(segBitSize*5+8), 1)
+	db.BSetBit(k0, int32(segBitSize*5+9), 1)
 
 	/*
-		0 - nil
-		1 - [00000001] ... [10000000]
-		2 - nil
-		3 - [10101010] ... [10000001] [01010101]
-		...
+		<k1>
+			0 - nil
+			1 - [00000001] ... [10000000]
+			2 - nil
+			3 - [10101010] ... [10000001] [01010101]
+			...
 	*/
 	// (k1 - seg:1)
 	db.BSetBit(k1, int32(segBitSize+7), 1)
 	db.BSetBit(k1, int32(segBitSize*2-8), 1)
-	// (k0 - seg:3)
+	// (k1 - seg:3)
 	pos = segBitSize * 3
 	db.BSetBit(k1, int32(pos+8), 1)
 	db.BSetBit(k1, int32(pos+15), 1)
@@ -192,7 +199,7 @@ func testOp(t *testing.T) {
 	//	op - or
 	db.BOperation(OPor, dstKey, srcKeys...)
 
-	stdData = make([]byte, 5*segByteSize)
+	stdData = make([]byte, 5*segByteSize+2)
 	stdData[0] = uint8(0x01)
 	stdData[segByteSize-1] = uint8(0x80)
 	stdData[segByteSize] = uint8(0x80)
@@ -202,6 +209,8 @@ func testOp(t *testing.T) {
 	stdData[segByteSize*3+1] = uint8(0x81)
 	stdData[segByteSize*4-1] = uint8(0xff)
 	stdData[segByteSize*5-1] = uint8(0x80)
+	stdData[segByteSize*5] = uint8(0x01)
+	stdData[segByteSize*5+1] = uint8(0x03)
 
 	data, _ = db.BGet(dstKey)
 	if cmpBytes(data, stdData) {
@@ -219,7 +228,7 @@ func testOp(t *testing.T) {
 	//	op - and
 	db.BOperation(OPand, dstKey, srcKeys...)
 
-	stdData = make([]byte, 5*segByteSize)
+	stdData = make([]byte, 5*segByteSize+2)
 	stdData[segByteSize*3+1] = uint8(0x81)
 
 	data, _ = db.BGet(dstKey)

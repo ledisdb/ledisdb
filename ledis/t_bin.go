@@ -42,8 +42,6 @@ var bitsInByte = [256]int32{0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3,
 	6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5,
 	6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}
 
-var emptySegment []byte = make([]byte, segByteSize, segByteSize)
-
 var fillSegment []byte = func() []byte {
 	data := make([]byte, segByteSize, segByteSize)
 	for i := uint32(0); i < segByteSize; i++ {
@@ -391,44 +389,46 @@ func (db *DB) BTail(key []byte) (int32, error) {
 	return tail, nil
 }
 
-func (db *DB) bSegAnd(a []byte, b []byte, res **[]byte) {
+func (db *DB) bSegAnd(a []byte, b []byte, res *[]byte) {
 	if a == nil || b == nil {
-		*res = &emptySegment
+		*res = nil
 		return
 	}
 
-	data := **res
+	data := *res
 	if data == nil {
 		data = make([]byte, segByteSize, segByteSize)
-		*res = &data
+		*res = data
 	}
 
 	for i := uint32(0); i < segByteSize; i++ {
 		data[i] = a[i] & b[i]
 	}
+	return
 }
 
-func (db *DB) bSegOr(a []byte, b []byte, res **[]byte) {
+func (db *DB) bSegOr(a []byte, b []byte, res *[]byte) {
 	if a == nil || b == nil {
 		if a == nil && b == nil {
-			*res = &emptySegment // should not be here
+			*res = nil
 		} else if a == nil {
-			*res = &b
+			*res = b
 		} else {
-			*res = &a
+			*res = a
 		}
 		return
 	}
 
-	data := **res
+	data := *res
 	if data == nil {
 		data = make([]byte, segByteSize, segByteSize)
-		*res = &data
+		*res = data
 	}
 
 	for i := uint32(0); i < segByteSize; i++ {
 		data[i] = a[i] | b[i]
 	}
+	return
 }
 
 func (db *DB) bIterator(key []byte) *leveldb.RangeLimitIterator {
@@ -441,7 +441,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	//	return :
 	//		The size of the string stored in the destination key,
 	//		that is equal to the size of the longest input string.
-	var exeOp func([]byte, []byte, **[]byte)
+	var exeOp func([]byte, []byte, *[]byte)
 	switch op {
 	case OPand:
 		exeOp = db.bSegAnd
@@ -460,19 +460,19 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	defer t.Unlock()
 
 	var seq, off uint32
-	var segments = make([][]byte, maxSegCount) // todo : limit 8mb, to config ...
+	var segments = make([][]byte, maxSegCount) // todo : init count also can be optimize while 'and' / 'or'
 
 	// init - meta info
-	var dstSeq, dstOff uint32
+	var maxDstSeq, maxDstOff uint32
 	var nowSeq, nowOff int32
 
 	if nowSeq, nowOff, err = db.bGetMeta(srckeys[0]); err != nil { // todo : if key not exists ....
 		return
 	} else if nowSeq < 0 {
-		return
+		return // incorrect ...
 	} else {
-		dstSeq = uint32(nowSeq)
-		dstOff = uint32(nowOff)
+		maxDstSeq = uint32(nowSeq)
+		maxDstOff = uint32(nowOff)
 	}
 
 	// init - data
@@ -489,8 +489,6 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 
 	//	operation with following keys
 	var keyNum int = len(srckeys)
-	var pSeg *[]byte
-
 	for i := 1; i < keyNum; i++ {
 		if nowSeq, nowOff, err = db.bGetMeta(srckeys[i]); err != nil {
 			return
@@ -501,9 +499,9 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		} else {
 			seq = uint32(nowSeq)
 			off = uint32(nowOff)
-			if seq > dstSeq || (seq == dstSeq && off > dstOff) {
-				dstSeq = seq
-				dstOff = off
+			if seq > maxDstSeq || (seq == maxDstSeq && off > maxDstOff) {
+				maxDstSeq = seq
+				maxDstOff = off
 			}
 		}
 
@@ -530,18 +528,13 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 			if op == OPand || op == OPor {
 				for ; segIdx < seq; segIdx++ {
 					if segments[segIdx] != nil {
-						pSeg = &segments[segIdx]
-						exeOp(segments[segIdx], nil, &pSeg)
-						segments[segIdx] = *pSeg
+						exeOp(segments[segIdx], nil, &segments[segIdx])
 					}
 				}
-			}
-			// else {...}
+			} // else {...}
 
 			if !end {
-				pSeg = &segments[seq]
-				exeOp(segments[seq], it.Value(), &pSeg)
-				segments[seq] = *pSeg
+				exeOp(segments[seq], it.Value(), &segments[segIdx])
 				segIdx++
 			}
 		}
@@ -553,7 +546,12 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	db.rmExpire(t, bExpType, dstkey)
 
 	//	set data and meta
-	db.bSetMeta(t, dstkey, dstSeq, dstOff)
+	if op == OPand || op == OPor {
+		// for i := maxDstSeq; i >= 0; i-- {
+		//
+		// }
+		db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
+	}
 
 	var bk []byte
 	for seq, seg := range segments {
