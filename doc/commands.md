@@ -557,13 +557,13 @@ ledis> hvals myhash
 2) "world"
 ```
 
-### hclear key
+### hclear key 
 
-Deletes the hash key
+Deletes the specified hash keys
 
 **Return value**
 
-int64: the number of fields in the hash stored at key.
+int64: the number of fields in the hash stored at key
 
 **Examples**
 
@@ -572,6 +572,23 @@ ledis> hmset myhash field1 "hello" field2 "world"
 OK
 ledis> hclear myhash
 (integer) 2
+```
+
+### hmclear key [key...]
+
+Deletes the specified hash keys
+
+**Return value**
+
+int64: the number of input keys
+
+**Examples**
+
+```
+ledis> hmset myhash field1 "hello" field2 "world"
+OK
+ledis> hclear myhash
+(integer) 1
 ```
 
 ### hexpire key seconds

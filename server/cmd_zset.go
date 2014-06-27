@@ -409,6 +409,21 @@ func zclearCommand(c *client) error {
 	return nil
 }
 
+func zmclearCommand(c *client) error {
+	args := c.args
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.ZMclear(args...); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func zexpireCommand(c *client) error {
 	args := c.args
 	if len(args) == 0 {
@@ -498,6 +513,7 @@ func init() {
 	//ledisdb special command
 
 	register("zclear", zclearCommand)
+	register("zmclear", zmclearCommand)
 	register("zexpire", zexpireCommand)
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)

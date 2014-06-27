@@ -395,6 +395,25 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	return num, err
 }
 
+func (db *DB) LMclear(keys ...[]byte) (int64, error) {
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
+
+	for _, key := range keys {
+		if err := checkKeySize(key); err != nil {
+			return 0, err
+		}
+
+		db.lDelete(t, key)
+		db.rmExpire(t, lExpType, key)
+
+	}
+
+	err := t.Commit()
+	return int64(len(keys)), err
+}
+
 func (db *DB) lFlush() (drop int64, err error) {
 	t := db.listTx
 	t.Lock()

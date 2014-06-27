@@ -143,6 +143,21 @@ func lclearCommand(c *client) error {
 	return nil
 }
 
+func lmclearCommand(c *client) error {
+	args := c.args
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.LMclear(args...); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func lexpireCommand(c *client) error {
 	args := c.args
 	if len(args) == 0 {
@@ -225,6 +240,7 @@ func init() {
 	//ledisdb special command
 
 	register("lclear", lclearCommand)
+	register("lmclear", lmclearCommand)
 	register("lexpire", lexpireCommand)
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)

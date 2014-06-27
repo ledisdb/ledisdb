@@ -207,6 +207,21 @@ func hclearCommand(c *client) error {
 	return nil
 }
 
+func hmclearCommand(c *client) error {
+	args := c.args
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.HMclear(args...); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func hexpireCommand(c *client) error {
 	args := c.args
 	if len(args) == 0 {
@@ -293,6 +308,7 @@ func init() {
 	//ledisdb special command
 
 	register("hclear", hclearCommand)
+	register("hmclear", hmclearCommand)
 	register("hexpire", hexpireCommand)
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)

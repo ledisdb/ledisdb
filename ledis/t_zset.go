@@ -631,6 +631,22 @@ func (db *DB) ZClear(key []byte) (int64, error) {
 	return rmCnt, err
 }
 
+func (db *DB) ZMclear(keys ...[]byte) (int64, error) {
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	for _, key := range keys {
+		if _, err := db.zRemRange(t, key, MinScore, MaxScore, 0, -1); err != nil {
+			return 0, err
+		}
+	}
+
+	err := t.Commit()
+
+	return int64(len(keys)), err
+}
+
 func (db *DB) ZRange(key []byte, start int, stop int) ([]ScorePair, error) {
 	return db.ZRangeGeneric(key, start, stop, false)
 }

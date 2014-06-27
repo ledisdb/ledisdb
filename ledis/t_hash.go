@@ -434,6 +434,24 @@ func (db *DB) HClear(key []byte) (int64, error) {
 	return num, err
 }
 
+func (db *DB) HMclear(keys ...[]byte) (int64, error) {
+	t := db.hashTx
+	t.Lock()
+	defer t.Unlock()
+
+	for _, key := range keys {
+		if err := checkKeySize(key); err != nil {
+			return 0, err
+		}
+
+		db.hDelete(t, key)
+		db.rmExpire(t, hExpType, key)
+	}
+
+	err := t.Commit()
+	return int64(len(keys)), err
+}
+
 func (db *DB) hFlush() (drop int64, err error) {
 	t := db.kvTx
 	t.Lock()
