@@ -60,4 +60,22 @@ func TestKVExpire(t *testing.T) {
 		t.Fatal(false)
 	}
 
+	if n, err := ledis.Int(c.Do("persist", k)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("expire", k, 10)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("persist", k)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
 }

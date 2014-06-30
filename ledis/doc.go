@@ -3,6 +3,8 @@
 //
 // Other features include binlog replication, data with a limited time-to-live.
 //
+// Usage
+//
 // First create a ledis instance before use:
 //
 //  l := ledis.OpenWithConfig(cfg)
@@ -52,5 +54,7 @@
 //  ay, err := db.ZRangeByScore(key, minScore, maxScore, 0, -1)
 //
 // Binlog
+//
 // ledis supports binlog, so you can sync binlog to another server for replication. If you want to open binlog support, set UseBinLog to true in config.
+//
 package ledis

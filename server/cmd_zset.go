@@ -409,9 +409,24 @@ func zclearCommand(c *client) error {
 	return nil
 }
 
+func zmclearCommand(c *client) error {
+	args := c.args
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.ZMclear(args...); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func zexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -431,7 +446,7 @@ func zexpireCommand(c *client) error {
 
 func zexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -451,7 +466,7 @@ func zexpireAtCommand(c *client) error {
 
 func zttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
@@ -459,6 +474,21 @@ func zttlCommand(c *client) error {
 		return err
 	} else {
 		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func zpersistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.ZPersist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
 	}
 
 	return nil
@@ -483,7 +513,9 @@ func init() {
 	//ledisdb special command
 
 	register("zclear", zclearCommand)
+	register("zmclear", zmclearCommand)
 	register("zexpire", zexpireCommand)
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
+	register("zpersist", zpersistCommand)
 }

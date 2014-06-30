@@ -69,6 +69,14 @@ See benchmark.md for more.
 
 + Admin
 
+## GoDoc
+
+[![GoDoc](https://godoc.org/github.com/siddontang/ledisdb?status.png)](https://godoc.org/github.com/siddontang/ledisdb)
+
+## Commands
+
+Some server commands explaintions are [here](https://github.com/siddontang/ledisdb/wiki/Commands), others will add continuate.
+
 ## Thanks
 
 Gamil: cenqichao@gmail.com

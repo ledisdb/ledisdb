@@ -22,6 +22,11 @@ const (
 	hExpMetaType
 	zExpType
 	zExpMetaType
+
+	binType
+	binMetaType
+	bExpType
+	bExpMetaType
 )
 
 const (

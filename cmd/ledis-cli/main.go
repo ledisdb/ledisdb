@@ -40,13 +40,13 @@ func main() {
 		} else {
 			args := make([]interface{}, len(cmds[1:]))
 			for i := range args {
-				args[i] = cmds[1+i]
+				args[i] = strings.Trim(string(cmds[1+i]), "\"")
 			}
 			r, err := c.Do(cmds[0], args...)
 			if err != nil {
 				fmt.Printf("%s", err.Error())
 			} else {
-				printReply(r)
+				printReply(cmd, r)
 			}
 
 			fmt.Printf("\n")
@@ -54,16 +54,16 @@ func main() {
 	}
 }
 
-func printReply(reply interface{}) {
+func printReply(cmd string, reply interface{}) {
 	switch reply := reply.(type) {
 	case int64:
 		fmt.Printf("(integer) %d", reply)
 	case string:
-		fmt.Printf("%q", reply)
+		fmt.Printf("%s", reply)
 	case []byte:
-		fmt.Printf("%q", reply)
+		fmt.Printf("%s", string(reply))
 	case nil:
-		fmt.Printf("(empty list or set)")
+		fmt.Printf("(nil)")
 	case ledis.Error:
 		fmt.Printf("%s", string(reply))
 	case []interface{}:

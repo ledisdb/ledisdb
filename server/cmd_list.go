@@ -143,9 +143,24 @@ func lclearCommand(c *client) error {
 	return nil
 }
 
+func lmclearCommand(c *client) error {
+	args := c.args
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.LMclear(args...); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
+	}
+
+	return nil
+}
+
 func lexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -165,7 +180,7 @@ func lexpireCommand(c *client) error {
 
 func lexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -185,7 +200,7 @@ func lexpireAtCommand(c *client) error {
 
 func lttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
@@ -193,6 +208,21 @@ func lttlCommand(c *client) error {
 		return err
 	} else {
 		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func lpersistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.LPersist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
 	}
 
 	return nil
@@ -210,7 +240,9 @@ func init() {
 	//ledisdb special command
 
 	register("lclear", lclearCommand)
+	register("lmclear", lmclearCommand)
 	register("lexpire", lexpireCommand)
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
+	register("lpersist", lpersistCommand)
 }

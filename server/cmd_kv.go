@@ -205,7 +205,7 @@ func mgetCommand(c *client) error {
 
 func expireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -225,7 +225,7 @@ func expireCommand(c *client) error {
 
 func expireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -245,7 +245,7 @@ func expireAtCommand(c *client) error {
 
 func ttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
@@ -253,6 +253,21 @@ func ttlCommand(c *client) error {
 		return err
 	} else {
 		c.writeInteger(v)
+	}
+
+	return nil
+}
+
+func persistCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.Persist(args[0]); err != nil {
+		return err
+	} else {
+		c.writeInteger(n)
 	}
 
 	return nil
@@ -278,4 +293,5 @@ func init() {
 	register("expire", expireCommand)
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)
+	register("persist", persistCommand)
 }

@@ -241,3 +241,26 @@ func TestDBZScan(t *testing.T) {
 		t.Fatal(len(v))
 	}
 }
+
+func TestZSetPersist(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("persist")
+	db.ZAdd(key, ScorePair{1, []byte("a")})
+
+	if n, err := db.ZPersist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
+	if _, err := db.ZExpire(key, 10); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := db.ZPersist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+}

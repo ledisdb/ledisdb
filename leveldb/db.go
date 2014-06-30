@@ -69,16 +69,7 @@ func OpenWithConfig(cfg *Config) (*DB, error) {
 }
 
 func (db *DB) open() error {
-	db.opts = db.initOptions(db.cfg)
-
-	db.readOpts = NewReadOptions()
-	db.writeOpts = NewWriteOptions()
-
-	db.iteratorOpts = NewReadOptions()
-	db.iteratorOpts.SetFillCache(false)
-
-	db.syncWriteOpts = NewWriteOptions()
-	db.syncWriteOpts.SetSync(true)
+	db.initOptions(db.cfg)
 
 	var errStr *C.char
 	ldbname := C.CString(db.cfg.Path)
@@ -86,12 +77,37 @@ func (db *DB) open() error {
 
 	db.db = C.leveldb_open(db.opts.Opt, ldbname, &errStr)
 	if errStr != nil {
+		db.db = nil
 		return saveError(errStr)
 	}
 	return nil
 }
 
-func (db *DB) initOptions(cfg *Config) *Options {
+func Repair(cfg *Config) error {
+	db := new(DB)
+	db.cfg = cfg
+
+	err := db.open()
+
+	db.Close()
+
+	//open ok, do not need repair
+	if err == nil {
+		return nil
+	}
+
+	var errStr *C.char
+	ldbname := C.CString(db.cfg.Path)
+	defer C.leveldb_free(unsafe.Pointer(ldbname))
+
+	C.leveldb_repair_db(db.opts.Opt, ldbname, &errStr)
+	if errStr != nil {
+		return saveError(errStr)
+	}
+	return nil
+}
+
+func (db *DB) initOptions(cfg *Config) {
 	opts := NewOptions()
 
 	opts.SetCreateIfMissing(true)
@@ -129,12 +145,23 @@ func (db *DB) initOptions(cfg *Config) *Options {
 
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 
-	return opts
+	db.opts = opts
+
+	db.readOpts = NewReadOptions()
+	db.writeOpts = NewWriteOptions()
+
+	db.iteratorOpts = NewReadOptions()
+	db.iteratorOpts.SetFillCache(false)
+
+	db.syncWriteOpts = NewWriteOptions()
+	db.syncWriteOpts.SetSync(true)
 }
 
 func (db *DB) Close() {
-	C.leveldb_close(db.db)
-	db.db = nil
+	if db.db != nil {
+		C.leveldb_close(db.db)
+		db.db = nil
+	}
 
 	db.opts.Close()
 

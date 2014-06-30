@@ -65,3 +65,26 @@ func TestDBList(t *testing.T) {
 		t.Fatal(llen)
 	}
 }
+
+func TestListPersist(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("persist")
+	db.LPush(key, []byte("a"))
+
+	if n, err := db.LPersist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
+	if _, err := db.LExpire(key, 10); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := db.LPersist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+}

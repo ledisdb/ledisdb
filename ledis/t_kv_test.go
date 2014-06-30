@@ -76,3 +76,26 @@ func TestDBScan(t *testing.T) {
 		t.Fatal(len(v))
 	}
 }
+
+func TestKVPersist(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("persist")
+	db.Set(key, []byte{})
+
+	if n, err := db.Persist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
+	if _, err := db.Expire(key, 10); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := db.Persist(key); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+}
