@@ -75,6 +75,14 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 
 + Admin
 
+## GoDoc
+
+[![GoDoc](https://godoc.org/github.com/siddontang/ledisdb?status.png)](https://godoc.org/github.com/siddontang/ledisdb)
+
+## Commands
+
+一些命令的解释在[这里](https://github.com/siddontang/ledisdb/wiki/Commands), 后续会不断加入。
+
 ## 感谢
 
 Gamil: cenqichao@gmail.com
