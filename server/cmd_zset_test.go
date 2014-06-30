@@ -264,7 +264,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -272,7 +272,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores", "limit", 1, 2)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", 3, "b", 2); err != nil {
@@ -280,7 +280,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "+inf", "-inf", "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -288,7 +288,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "(1", "(4")); err != nil {
+	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "(4", "(1")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", "b"); err != nil {
