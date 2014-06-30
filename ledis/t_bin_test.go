@@ -6,11 +6,18 @@ import (
 
 func cmpBytes(a []byte, b []byte) bool {
 	if len(a) != len(b) {
+		println("len diff")
+		println(len(a))
+		println(len(b))
 		return true
 	}
 
 	for i, n := range a {
 		if n != b[i] {
+			println("diff !")
+			println(i)
+			println(n)
+			println(b[i])
 			return true
 		}
 	}
@@ -27,9 +34,11 @@ func newBytes(bitLen int32) []byte {
 }
 
 func TestBinary(t *testing.T) {
-	testSimple(t)
-	testSimpleII(t)
-	testOp(t)
+	// testSimple(t)
+	// testSimpleII(t)
+	// testOpAndOr(t)
+	// testOpXor(t)
+	testOpNot(t)
 }
 
 func testSimple(t *testing.T) {
@@ -80,7 +89,7 @@ func testSimpleII(t *testing.T) {
 	db := getTestDB()
 	db.FlushAll()
 
-	key := []byte("test_bin")
+	key := []byte("test_bin_2")
 
 	pos := int32(1234567)
 	if ori, _ := db.BSetBit(key, pos, 1); ori != 0 {
@@ -120,11 +129,11 @@ func testSimpleII(t *testing.T) {
 	}
 }
 
-func testOp(t *testing.T) {
+func testOpAndOr(t *testing.T) {
 	db := getTestDB()
 	db.FlushAll()
 
-	dstKey := []byte("test_bin_op")
+	dstKey := []byte("test_bin_op_and_or")
 
 	k0 := []byte("op_0")
 	k1 := []byte("op_01")
@@ -244,4 +253,76 @@ func testOp(t *testing.T) {
 		t.Fatal(false)
 	}
 
+}
+
+func testOpXor(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	dstKey := []byte("test_bin_op_xor")
+
+	k0 := []byte("op_2_00")
+	k1 := []byte("op_2_01")
+	srcKeys := [][]byte{k0, k1}
+
+	db.BSetBit(k0, int32(0), 1)
+	db.BSetBit(k0, int32(7), 1)
+	db.BSetBit(k0, int32(segBitSize-1), 1)
+	db.BSetBit(k0, int32(segBitSize-8), 1)
+
+	db.BSetBit(k1, int32(7), 1)
+	db.BSetBit(k1, int32(segBitSize-8), 1)
+
+	var stdData []byte
+	var data []byte
+
+	// op - xor
+	db.BOperation(OPxor, dstKey, srcKeys...)
+
+	stdData = make([]byte, segByteSize)
+	stdData[0] = uint8(0x01)
+	stdData[segByteSize-1] = uint8(0x80)
+
+	data, _ = db.BGet(dstKey)
+	if cmpBytes(data, stdData) {
+		t.Fatal(false)
+	}
+}
+
+func testOpNot(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	//	intputs
+	dstKey := []byte("test_bin_op_xor")
+
+	k0 := []byte("op_not_0")
+	srcKeys := [][]byte{k0}
+
+	db.BSetBit(k0, int32(0), 1)
+	db.BSetBit(k0, int32(7), 1)
+
+	pos := segBitSize
+	for i := uint32(8); i >= 1; i -= 2 {
+		db.BSetBit(k0, int32(pos-i), 1)
+	}
+
+	db.BSetBit(k0, int32(3*segBitSize-10), 1)
+
+	//	std
+	stdData := make([]byte, segByteSize*3-1)
+	for i, _ := range stdData {
+		stdData[i] = 255
+	}
+	stdData[0] = uint8(0x7e)
+	stdData[segByteSize-1] = uint8(0xaa)
+	stdData[segByteSize*3-2] = uint8(0x3f)
+
+	//	op - not
+	db.BOperation(OPnot, dstKey, srcKeys...)
+
+	data, _ := db.BGet(dstKey)
+	if cmpBytes(data, stdData) {
+		t.Fatal(false)
+	}
 }
