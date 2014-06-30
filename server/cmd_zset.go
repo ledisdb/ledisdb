@@ -426,7 +426,7 @@ func zmclearCommand(c *client) error {
 
 func zexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -446,7 +446,7 @@ func zexpireCommand(c *client) error {
 
 func zexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -466,7 +466,7 @@ func zexpireAtCommand(c *client) error {
 
 func zttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 

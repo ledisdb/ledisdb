@@ -205,7 +205,7 @@ func mgetCommand(c *client) error {
 
 func expireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -225,7 +225,7 @@ func expireCommand(c *client) error {
 
 func expireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -245,7 +245,7 @@ func expireAtCommand(c *client) error {
 
 func ttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 

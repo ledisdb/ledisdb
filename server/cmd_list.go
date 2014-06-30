@@ -160,7 +160,7 @@ func lmclearCommand(c *client) error {
 
 func lexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -180,7 +180,7 @@ func lexpireCommand(c *client) error {
 
 func lexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -200,7 +200,7 @@ func lexpireAtCommand(c *client) error {
 
 func lttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 

@@ -224,7 +224,7 @@ func hmclearCommand(c *client) error {
 
 func hexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -244,7 +244,7 @@ func hexpireCommand(c *client) error {
 
 func hexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -264,7 +264,7 @@ func hexpireAtCommand(c *client) error {
 
 func httlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
