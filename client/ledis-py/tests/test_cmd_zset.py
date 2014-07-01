@@ -1,5 +1,5 @@
 # coding: utf-8
-# Test Cases for list commands
+# Test Cases for zset commands
 
 import unittest
 import sys
@@ -10,171 +10,161 @@ import ledis
 from ledis._compat import b, iteritems
 from ledis import ResponseError
 
+l = ledis.Ledis(port=6380)
 
 def current_time():
     return datetime.datetime.now()
 
-
 class TestCmdZset(unittest.TestCase):
     def setUp(self):
-        self.l = ledis.Ledis(port=6666)
+        pass
 
     def tearDown(self):
-        self.l.zclear('a')
+        l.zclear('a')
 
     def test_zadd(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a2', 'a3']
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a2'), b('a3')]
 
     def test_zcard(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zcard('a') == 3
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zcard('a') == 3
 
     def test_zcount(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zcount('a', '-inf', '+inf') == 3
-        assert self.l.zcount('a', 1, 2) == 2
-        assert self.l.zcount('a', 10, 20) == 0
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zcount('a', '-inf', '+inf') == 3
+        assert l.zcount('a', 1, 2) == 2
+        assert l.zcount('a', 10, 20) == 0
 
     def test_zincrby(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zincrby('a', 'a2') == 3.0
-        assert self.l.zincrby('a', 'a3', amount=5) == 8.0
-        assert self.l.zscore('a', 'a2') == 3.0
-        assert self.l.zscore('a', 'a3') == 8.0
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zincrby('a', 'a2') == 3
+        assert l.zincrby('a', 'a3', amount=5) == 8
+        assert l.zscore('a', 'a2') == 3
+        assert l.zscore('a', 'a3') == 8
 
     def test_zrange(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zrange('a', 0, 1) == ['a1', 'a2']
-        assert self.l.zrange('a', 2, 3) == ['a3']
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zrange('a', 0, 1) == [b('a1'), b('a2')]
+        assert l.zrange('a', 2, 3) == [b('a3')]
 
         #withscores
-        assert self.l.zrange('a', 0, 1, withscores=True) == \
-            [('a1', 1.0), ('a2', 2.0)]
-        assert self.l.zrange('a', 2, 3, withscores=True) == \
-            [('a3', 3.0)]
+        assert l.zrange('a', 0, 1, withscores=True) == \
+            [(b('a1'), 1), (b('a2'), 2)]
+        assert l.zrange('a', 2, 3, withscores=True) == \
+            [(b('a3'), 3)]
 
     def test_zrangebyscore(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zrangebyscore('a', 2, 4) == ['a2', 'a3', 'a4']
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zrangebyscore('a', 2, 4) == [b('a2'), b('a3'), b('a4')]
 
         # slicing with start/num
-        assert self.l.zrangebyscore('a', 2, 4, start=1, num=2) == \
-            ['a3', 'a4']
+        assert l.zrangebyscore('a', 2, 4, start=1, num=2) == \
+            [b('a3'), b('a4')]
 
         # withscores 
-        assert self.l.zrangebyscore('a', 2, 4, withscores=True) == \
-            [('a2', 2.0), ('a3', 3.0), ('a4', 4.0)]
-
-        # custom score function
-        assert self.l.zrangebyscore('a', 2, 4, withscores=True,
-                                    score_cast_func=int) == \
+        assert l.zrangebyscore('a', 2, 4, withscores=True) == \
             [('a2', 2), ('a3', 3), ('a4', 4)]
 
     def test_rank(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zrank('a', 'a1') == 0
-        assert self.l.zrank('a', 'a3') == 2
-        assert self.l.zrank('a', 'a6') is None
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zrank('a', 'a1') == 0
+        assert l.zrank('a', 'a3') == 2
+        assert l.zrank('a', 'a6') is None
 
     def test_zrem(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zrem('a', 'a2') == 1
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a3']
-        assert self.l.zrem('a', 'b') == 0
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a3']
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zrem('a', 'a2') == 1
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a3')]
+        assert l.zrem('a', 'b') == 0
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a3')]
 
         # multiple keys
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zrem('a', 'a1', 'a2') == 2
-        assert self.l.zrange('a', 0, -1) == ['a3']
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zrem('a', 'a1', 'a2') == 2
+        assert l.zrange('a', 0, -1) == [b('a3')]
 
     def test_zremrangebyrank(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zremrangebyrank('a', 1, 3) == 3
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a5']
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zremrangebyrank('a', 1, 3) == 3
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a5')]
 
     def test_zremrangebyscore(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zremrangebyscore('a', 2, 4) == 3
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a5']
-        assert self.l.zremrangebyscore('a', 2, 4) == 0
-        assert self.l.zrange('a', 0, -1) == ['a1', 'a5']
- 
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zremrangebyscore('a', 2, 4) == 3
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a5')]
+        assert l.zremrangebyscore('a', 2, 4) == 0
+        assert l.zrange('a', 0, -1) == [b('a1'), b('a5')]
+
     def test_zrevrange(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zrevrange('a', 0, 1) == ['a3', 'a2']
-        assert self.l.zrevrange('a', 1, 2) == ['a2', 'a1']
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zrevrange('a', 0, 1) == [b('a3'), b('a2')]
+        assert l.zrevrange('a', 1, 2) == [b('a2'), b('a1')]
 
     def test_zrevrank(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zrevrank('a', 'a1') == 4
-        assert self.l.zrevrank('a', 'a2') == 3
-        assert self.l.zrevrank('a', 'a6') is None
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zrevrank('a', 'a1') == 4
+        assert l.zrevrank('a', 'a2') == 3
+        assert l.zrevrank('a', 'a6') is None
 
     def test_zrevrangebyscore(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zrevrangebyscore('a', 4, 2) == ['a4', 'a3', 'a2']
+        l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
+        assert l.zrevrangebyscore('a', 4, 2) == [b('a4'), b('a3'), b('a2')]
 
         # slicing with start/num
-        assert self.l.zrevrangebyscore('a', 4, 2, start=1, num=2) == \
-                ['a3', 'a2']
+        assert l.zrevrangebyscore('a', 4, 2, start=1, num=2) == \
+                [b('a3'), b('a2')]
 
         # withscores
-        assert self.l.zrevrangebyscore('a', 4, 2, withscores=True) == \
-                [('a4', 4.0), ('a3', 3.0), ('a2', 2.0)]
-
-        # custom score function
-        assert self.l.zrevrangebyscore('a', 4, 2, withscores=True,
-                            score_cast_func=int) == \
-            [('a4', 4), ('a3', 3), ('a2', 2)]
+        assert l.zrevrangebyscore('a', 4, 2, withscores=True) == \
+                [(b('a4'), 4), (b('a3'), 3), (b('a2'), 2)]
 
     def test_zscore(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zscore('a', 'a1') == 1.0
-        assert self.l.zscore('a', 'a2') == 2.0
-        assert self.l.zscore('a', 'a4') is None
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zscore('a', 'a1') == 1
+        assert l.zscore('a', 'a2') == 2
+        assert l.zscore('a', 'a4') is None
 
     def test_zclear(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zclear('a') == 3
-        assert self.l.zclear('a') == 0
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zclear('a') == 3
+        assert l.zclear('a') == 0
 
     def test_zmclear(self):
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        self.l.zadd('b', b1=1, b2=2, b3=3)
-        assert self.l.lmclear('a', 'b') == 2
-        assert self.l.lmclear('c', 'd') == 2
+        l.zadd('a', a1=1, a2=2, a3=3)
+        l.zadd('b', b1=1, b2=2, b3=3)
+        assert l.lmclear('a', 'b') == 2
+        assert l.lmclear('c', 'd') == 2
  
     def test_zexpire(self):
-        assert not self.l.zexpire('a', 100)
-        self.l.zadd('a', a1=1, a2=2, a3=3)
-        assert self.l.zexpire('a', 100)
-        assert 0 < self.l.zttl('a') <= 100
-        assert self.l.zpersist('a')
-        assert self.l.zttl('a') == -1
+        assert not l.zexpire('a', 100)
+        l.zadd('a', a1=1, a2=2, a3=3)
+        assert l.zexpire('a', 100)
+        assert 0 < l.zttl('a') <= 100
+        assert l.zpersist('a')
+        assert l.zttl('a') == -1
 
     def test_zexpireat_datetime(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        self.l.zadd('a', a1=1)
-        assert self.l.zexpireat('a', expire_at)
-        assert 0 < self.l.zttl('a') <= 61
+        l.zadd('a', a1=1)
+        assert l.zexpireat('a', expire_at)
+        assert 0 < l.zttl('a') <= 61
 
     def test_zexpireat_unixtime(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        self.l.zadd('a', a1=1)
+        l.zadd('a', a1=1)
         expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert self.l.zexpireat('a', expire_at_seconds)
-        assert 0 < self.l.zttl('a') <= 61
+        assert l.zexpireat('a', expire_at_seconds)
+        assert 0 < l.zttl('a') <= 61
 
     def test_zexpireat_no_key(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not self.l.zexpireat('a', expire_at)
+        assert not l.zexpireat('a', expire_at)
 
     def test_zttl_and_zpersist(self):
-        self.l.zadd('a', a1=1)
-        self.l.zexpire('a', 100)
-        assert 0 < self.l.zttl('a') <= 100
-        assert self.l.zpersist('a')
-        assert self.l.zttl('a') == -1
+        l.zadd('a', a1=1)
+        l.zexpire('a', 100)
+        assert 0 < l.zttl('a') <= 100
+        assert l.zpersist('a')
+        assert l.zttl('a') == -1
 

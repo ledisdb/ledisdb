@@ -1,5 +1,5 @@
 # coding: utf-8
-# Test Cases for list commands
+# Test Cases for hash commands
 
 import unittest
 import sys
@@ -11,133 +11,135 @@ from ledis._compat import b, iteritems, itervalues
 from ledis import ResponseError
 
 
+l = ledis.Ledis(port=6380)
+
 def current_time():
     return datetime.datetime.now()
 
 
 class TestCmdHash(unittest.TestCase):
     def setUp(self):
-        self.l = ledis.Ledis(port=6666)
+        pass
 
     def tearDown(self):
-        self.l.hmclear('myhash', 'a')
+        l.hmclear('myhash', 'a')
         
 
     def test_hdel(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hdel('myhash', 'field1') == 1
-        assert self.l.hdel('myhash', 'field1') == 0
-        assert self.l.hdel('myhash', 'field1', 'field2') == 0
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hdel('myhash', 'field1') == 1
+        assert l.hdel('myhash', 'field1') == 0
+        assert l.hdel('myhash', 'field1', 'field2') == 0
 
     def test_hexists(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        self.l.hdel('myhash', 'field2')
-        assert self.l.hexists('myhash', 'field1') == 1
-        assert self.l.hexists('myhash', 'field2') == 0      
+        l.hset('myhash', 'field1', 'foo')
+        l.hdel('myhash', 'field2')
+        assert l.hexists('myhash', 'field1') == 1
+        assert l.hexists('myhash', 'field2') == 0      
 
     def test_hget(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hget('myhash', 'field1') == 'foo'
-        self.assertIsNone(self.l.hget('myhash', 'field2'))
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hget('myhash', 'field1') == 'foo'
+        assert (l.hget('myhash', 'field2')) is None
 
     def test_hgetall(self):
         h = {'field1': 'foo', 'field2': 'bar'}
-        self.l.hmset('myhash', h)
-        assert self.l.hgetall('myhash') == h
+        l.hmset('myhash', h)
+        assert l.hgetall('myhash') == h
 
     def test_hincrby(self):
-        assert self.l.hincrby('myhash', 'field1') == 1
-        self.l.hclear('myhash')
-        assert self.l.hincrby('myhash', 'field1', 1) == 1
-        assert self.l.hincrby('myhash', 'field1', 5) == 6
-        assert self.l.hincrby('myhash', 'field1', -10) == -4
+        assert l.hincrby('myhash', 'field1') == 1
+        l.hclear('myhash')
+        assert l.hincrby('myhash', 'field1', 1) == 1
+        assert l.hincrby('myhash', 'field1', 5) == 6
+        assert l.hincrby('myhash', 'field1', -10) == -4
 
     def test_hkeys(self):
         h = {'field1': 'foo', 'field2': 'bar'}
-        self.l.hmset('myhash', h)
-        assert self.l.hkeys('myhash') == ['field1', 'field2'] 
+        l.hmset('myhash', h)
+        assert l.hkeys('myhash') == ['field1', 'field2'] 
 
     def test_hlen(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hlen('myhash') == 1
-        self.l.hset('myhash', 'field2', 'bar')
-        assert self.l.hlen('myhash') == 2
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hlen('myhash') == 1
+        l.hset('myhash', 'field2', 'bar')
+        assert l.hlen('myhash') == 2
 
 
     def test_hmget(self):
-        assert self.l.hmset('myhash', {'a': '1', 'b': '2', 'c': '3'})
-        assert self.l.hmget('myhash', 'a', 'b', 'c') == ['1', '2', '3']
+        assert l.hmset('myhash', {'a': '1', 'b': '2', 'c': '3'})
+        assert l.hmget('myhash', 'a', 'b', 'c') == ['1', '2', '3']
 
 
     def test_hmset(self):
         h = {'a': '1', 'b': '2', 'c': '3'}
-        assert self.l.hmset('myhash', h)
-        assert self.l.hgetall('myhash') == h
+        assert l.hmset('myhash', h)
+        assert l.hgetall('myhash') == h
 
     def test_hset(self):
-        self.l.hclear('myhash')
-        assert int(self.l.hset('myhash', 'field1', 'foo')) == 1
-        assert self.l.hset('myhash', 'field1', 'foo') == 0
+        l.hclear('myhash')
+        assert int(l.hset('myhash', 'field1', 'foo')) == 1
+        assert l.hset('myhash', 'field1', 'foo') == 0
 
     def test_hvals(self):
         h = {'a': '1', 'b': '2', 'c': '3'}
-        self.l.hmset('myhash', h)
+        l.hmset('myhash', h)
         local_vals = list(itervalues(h))
-        remote_vals = self.l.hvals('myhash')
+        remote_vals = l.hvals('myhash')
         assert sorted(local_vals) == sorted(remote_vals)
 
 
     def test_hclear(self):
         h = {'a': '1', 'b': '2', 'c': '3'}
-        self.l.hmset('myhash', h)
-        assert self.l.hclear('myhash') == 3
-        assert self.l.hclear('myhash') == 0
+        l.hmset('myhash', h)
+        assert l.hclear('myhash') == 3
+        assert l.hclear('myhash') == 0
 
 
     def test_hmclear(self):
         h = {'a': '1', 'b': '2', 'c': '3'}
-        self.l.hmset('myhash1', h)
-        self.l.hmset('myhash2', h)
-        assert self.l.hmclear('myhash1', 'myhash2') == 2
+        l.hmset('myhash1', h)
+        l.hmset('myhash2', h)
+        assert l.hmclear('myhash1', 'myhash2') == 2
 
 
     def test_hexpire(self):
-        assert self.l.hexpire('myhash', 100) == 0
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hexpire('myhash', 100) == 1
-        assert self.l.httl('myhash') <= 100
+        assert l.hexpire('myhash', 100) == 0
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hexpire('myhash', 100) == 1
+        assert l.httl('myhash') <= 100
 
     def test_hexpireat_datetime(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        self.l.hset('a', 'f', 'foo')
-        assert self.l.hexpireat('a', expire_at)
-        assert 0 < self.l.httl('a') <= 61
+        l.hset('a', 'f', 'foo')
+        assert l.hexpireat('a', expire_at)
+        assert 0 < l.httl('a') <= 61
 
     def test_hexpireat_unixtime(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        self.l.hset('a', 'f', 'foo')
+        l.hset('a', 'f', 'foo')
         expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert self.l.hexpireat('a', expire_at_seconds)
-        assert 0 < self.l.httl('a') <= 61
+        assert l.hexpireat('a', expire_at_seconds)
+        assert 0 < l.httl('a') <= 61
 
     def test_zexpireat_no_key(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not self.l.hexpireat('a', expire_at)
+        assert not l.hexpireat('a', expire_at)
 
     def test_hexpireat(self):
-        assert self.l.hexpireat('myhash', 1577808000) == 0
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hexpireat('myhash', 1577808000) == 1
+        assert l.hexpireat('myhash', 1577808000) == 0
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hexpireat('myhash', 1577808000) == 1
 
     def test_httl(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        assert self.l.hexpire('myhash', 100)
-        assert self.l.httl('myhash') <= 100
+        l.hset('myhash', 'field1', 'foo')
+        assert l.hexpire('myhash', 100)
+        assert l.httl('myhash') <= 100
 
     def test_hpersist(self):
-        self.l.hset('myhash', 'field1', 'foo')
-        self.l.hexpire('myhash', 100)
-        assert self.l.httl('myhash') <= 100
-        assert self.l.hpersist('myhash')
-        assert self.l.httl('myhash') == -1
+        l.hset('myhash', 'field1', 'foo')
+        l.hexpire('myhash', 100)
+        assert l.httl('myhash') <= 100
+        assert l.hpersist('myhash')
+        assert l.httl('myhash') == -1
 

@@ -64,12 +64,6 @@ def int_or_none(response):
     return int(response)
 
 
-def float_or_none(response):
-    if response is None:
-        return None
-    return float(response)
-
-
 class Ledis(object):
     """
     Implementation of the Redis protocol.
@@ -82,19 +76,20 @@ class Ledis(object):
     """
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
-            'EXISTS EXPIRE EXPIREAT HEXISTS HMSET SETNX',
+            'EXISTS EXPIRE EXPIREAT HEXISTS HMSET SETNX '
+            'PERSIST HPERSIST LPERSIST ZPERSIST',
             bool
         ),
         string_keys_to_dict(
             'DECRBY DEL HDEL HLEN INCRBY LLEN '
-            'ZADD ZCARD ZREM ZREMRANGEBYRANK ZREMRANGEBYSCORE',
+            'ZADD ZCARD ZREM ZREMRANGEBYRANK ZREMRANGEBYSCORE'
+            'LMCLEAR HMCLEAR ZMCLEAR',
             int
         ),
         string_keys_to_dict(
             'LPUSH RPUSH',
             lambda r: isinstance(r, long) and r or nativestr(r) == 'OK'
         ),
-        string_keys_to_dict('ZSCORE ZINCRBY', float_or_none),
         string_keys_to_dict(
             'MSET SELECT SLAVEOF',
             lambda r: nativestr(r) == 'OK'
@@ -103,7 +98,7 @@ class Ledis(object):
             'ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
             zset_score_pairs
         ),
-        string_keys_to_dict('ZRANK ZREVRANK', int_or_none),
+        string_keys_to_dict('ZRANK ZREVRANK ZSCORE ZINCRBY', int_or_none),
         {
             'HGETALL': lambda r: r and pairs_to_dict(r) or {},
             'PING': lambda r: nativestr(r) == 'PONG',
@@ -113,11 +108,11 @@ class Ledis(object):
     @classmethod
     def from_url(cls, url, db=None, **kwargs):
         """
-        Return a Redis client object configured from the given URL.
+        Return a Ledis client object configured from the given URL.
 
         For example::
 
-            redis://[:password]@localhost:6379/0
+            redis://[:password]@localhost:6380/0
             unix://[:password]@/path/to/socket.sock?db=0
 
         There are several ways to specify a database number. The parse function
@@ -136,15 +131,14 @@ class Ledis(object):
         connection_pool = ConnectionPool.from_url(url, db=db, **kwargs)
         return cls(connection_pool=connection_pool)
 
-    def __init__(self, host='localhost', port=6379,
-                 db=0, password=None, socket_timeout=None,
+    def __init__(self, host='localhost', port=6380,
+                 db=0, socket_timeout=None,
                  connection_pool=None, charset='utf-8',
                  errors='strict', decode_responses=False,
                  unix_socket_path=None):
         if not connection_pool:
             kwargs = {
                 'db': db,
-                'password': password,
                 'socket_timeout': socket_timeout,
                 'encoding': charset,
                 'encoding_errors': errors,
@@ -337,38 +331,11 @@ class Ledis(object):
             items.extend(pair)
         return self.execute_command('MSET', *items)
 
-    #TODO: remove ex, px, nx, xx params.
-    def set(self, name, value, ex=None, px=None, nx=False, xx=False):
+    def set(self, name, value):
         """
-        Set the value at key ``name`` to ``value``
-
-        ``ex`` sets an expire flag on key ``name`` for ``ex`` seconds.
-
-        ``px`` sets an expire flag on key ``name`` for ``px`` milliseconds.
-
-        ``nx`` if set to True, set the value at key ``name`` to ``value`` if it
-            does not already exist.
-
-        ``xx`` if set to True, set the value at key ``name`` to ``value`` if it
-            already exists.
+        Set a key.
         """
         pieces = [name, value]
-        if ex:
-            pieces.append('EX')
-            if isinstance(ex, datetime.timedelta):
-                ex = ex.seconds + ex.days * 24 * 3600
-            pieces.append(ex)
-        if px:
-            pieces.append('PX')
-            if isinstance(px, datetime.timedelta):
-                ms = int(px.microseconds / 1000)
-                px = (px.seconds + px.days * 24 * 3600) * 1000 + ms
-            pieces.append(px)
-
-        if nx:
-            pieces.append('NX')
-        if xx:
-            pieces.append('XX')
         return self.execute_command('SET', *pieces)
 
     def setnx(self, name, value):
@@ -381,8 +348,6 @@ class Ledis(object):
 
     def persist(self, name):
         return self.execute_command('PERSIST', name)
-
-
 
 
     #### LIST COMMANDS ####
@@ -457,7 +422,6 @@ class Ledis(object):
         return self.execute_command('LPERSIST', name)
 
 
-
     #### SORTED SET COMMANDS ####
     def zadd(self, name, *args, **kwargs):
         """
@@ -492,8 +456,7 @@ class Ledis(object):
         "Increment the score of ``value`` in sorted set ``name`` by ``amount``"
         return self.execute_command('ZINCRBY', name, amount, value)
 
-    def zrange(self, name, start, end, desc=False, withscores=False,
-               score_cast_func=float):
+    def zrange(self, name, start, end, desc=False, withscores=False):
         """
         Return a range of values from sorted set ``name`` between
         ``start`` and ``end`` sorted in ascending order.
@@ -514,7 +477,7 @@ class Ledis(object):
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': score_cast_func}
+            'withscores': withscores, 'score_cast_func': int}
         return self.execute_command(*pieces, **options)
 
     def zrangebyscore(self, name, min, max, start=None, num=None,
@@ -570,8 +533,7 @@ class Ledis(object):
         """
         return self.execute_command('ZREMRANGEBYSCORE', name, min, max)
 
-    def zrevrange(self, name, start, num, withscores=False,
-                  score_cast_func=float):
+    def zrevrange(self, name, start, num, withscores=False):
         """
         Return a range of values from sorted set ``name`` between
         ``start`` and ``num`` sorted in descending order.
@@ -587,11 +549,11 @@ class Ledis(object):
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': score_cast_func}
+            'withscores': withscores, 'score_cast_func': int}
         return self.execute_command(*pieces, **options)
 
     def zrevrangebyscore(self, name, min, max, start=None, num=None,
-                         withscores=False, score_cast_func=float):
+                         withscores=False):
         """
         Return a range of values from the sorted set ``name`` with scores
         between ``min`` and ``max`` in descending order.
@@ -613,7 +575,7 @@ class Ledis(object):
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': score_cast_func}
+            'withscores': withscores, 'score_cast_func': int}
         return self.execute_command(*pieces, **options)
 
     def zrevrank(self, name, value):
