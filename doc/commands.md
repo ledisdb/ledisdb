@@ -1491,20 +1491,33 @@ ledis> ZTTL mset
 
 ## Replication
 
-### SLAVEOF
-**Return value**
+### SLAVEOF host port
 
-**Examples**
+Changes the replication settings of a slave on the fly. If the server is already acting as slave, SLAVEOF NO ONE will turn off the replication.
+
+SLAVEOF host port will make the server a slave of another server listening at the specified host and port.
+
+If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, discarding the old dataset.
+
+
 ### FULLSYNC
+
+Inner command, starts a fullsync from the master set by SLAVEOF.
+
+FULLSYNC will first try to sync all data from the master, save in local disk, then discard old dataset and load new one.
+
 **Return value**
 
 **Examples**
-### SYNC
+
+
+### SYNC index offset
+
+Inner command, syncs the new changed from master set by SLAVEOF at offset in binlog.index file.
+
 **Return value**
 
 **Examples**
-
-
 
 ## Server
 
