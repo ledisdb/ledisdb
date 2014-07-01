@@ -2,13 +2,13 @@
 
 ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
 
-ledisdb all commands return RESP fomrat and it will use int64 instead of  RESP integer, string instead of RESP simple string, bulk string instead of RESP bulk string, and array instead of RESP arrays below.
+ledisdb all commands return RESP fomrat and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
 
 ## KV 
 
 ### DECR key
 Decrements the number stored at key by one. If the key does not exist, it is set to 0 before decrementing.
-An error returns if the value for the key is a wrong type that can not be represented as a signed 64 bit integer.
+An error returns if the value for the key is a wrong type that can not be represented as a `signed 64 bit integer`.
 
 **Return value**
 
@@ -30,7 +30,7 @@ ERR strconv.ParseInt: parsing "234293482390480948029348230948“: invalid syntax
 
 ### DECRBY key decrement
 
-Decrements the number stored at key by decrement. like DECR.
+Decrements the number stored at key by decrement. like `DECR`.
 
 **Return value**
 
@@ -88,7 +88,7 @@ ledis> EXISTS key2
 
 ### GET key
 
-Get the value of key. If the key does not exists, it returns nil value.
+Get the value of key. If the key does not exists, it returns `nil` value.
 
 **Return value**
 
@@ -127,7 +127,7 @@ ledis> GET mykey
 
 ### INCR key
 
-Increments the number stored at key by one. If the key does not exists, it is SET to 0 before incrementing.
+Increments the number stored at key by one. If the key does not exists, it is SET to `0` before incrementing.
 
 **Return value**
 
@@ -146,7 +146,7 @@ ledis> GET mykey
 
 ### INCRBY key increment
 
-Increments the number stored at key by increment. If the key does not exists, it is SET to 0 before incrementing.
+Increments the number stored at key by increment. If the key does not exists, it is SET to `0` before incrementing.
 
 **Return value**
 
@@ -163,7 +163,7 @@ ledis> INCRBY mykey 5
 
 ### MGET key [key ...]
 
-Returns the values of all specified keys. If the key does not exists, a nil will return.
+Returns the values of all specified keys. If the key does not exists, a `nil` will return.
 
 **Return value**
 
@@ -381,7 +381,7 @@ Returns the value associated with field in the hash stored at key.
 
 **Return value**
 
-bulk: the value associated with field, or nil.
+bulk: the value associated with field, or `nil`.
 
 **Examples**
 
@@ -479,7 +479,7 @@ ledis> HLEN myhash
 
 ### HMGET key field [field ...]
 
-Returns the values associated with the specified fields in the hash stored at key. If field does not exist in the hash, a nil value is returned.
+Returns the values associated with the specified fields in the hash stored at key. If field does not exist in the hash, a `nil` value is returned.
 
 **Return value**
 
@@ -579,7 +579,7 @@ ledis> HCLEAR myhash
 
 ### HMCLEAR key [key...]
 
-Deletes the specified hash keys
+Deletes the specified hash keys.
 
 **Return value**
 
@@ -651,7 +651,7 @@ ledis> HEXPIREAT not_exists_key  1404999999
 
 ### HTTL key
 
-Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, `-1` returns.
 
 **Return value**
 
@@ -673,7 +673,7 @@ ledis> HTTL not_set_timeout
 ### HPERSIST key
 
 Remove the expiration from a hash key, like persist similarly.
-Remove the existing timeout on key
+Remove the existing timeout on key.
 
 **Return value**
 
@@ -701,12 +701,12 @@ ledis> HPERSIST not_exists_key
 ## List
 
 ### LINDEX key index
-Returns the element at index index in the list stored at key. The index is zero-based, so 0 means the first element, 1 the second element and so on. Negative indices can be used to designate elements starting at the tail of the list. Here, -1 means the last element, -2 means the penultimate and so forth.
+Returns the element at index index in the list stored at key. The index is zero-based, so 0 means the first element, 1 the second element and so on. Negative indices can be used to designate elements starting at the tail of the list. Here, `-1` means the last element, `-2` means the penultimate and so forth.
 When the value at key is not a list, an error is returned.
 
 **Return value**
 
-string: the requested element, or nil when index is out of range.
+string: the requested element, or `nil` when index is out of range.
 
 **Examples**
 
@@ -726,7 +726,7 @@ ledis> LINDEX a -1
 ```
 
 ### LLEN key
-Returns the length of the list stored at key. If key does not exist, it is interpreted as an empty list and 0 is returned. An error is returned when the value stored at key is not a list.
+Returns the length of the list stored at key. If key does not exist, it is interpreted as an empty list and `0`is returned. An error is returned when the value stored at key is not a list.
 
 **Return value**
 
@@ -748,7 +748,7 @@ Removes and returns the first element of the list stored at key.
 
 **Return value**
 
-bulk: the value of the first element, or nil when key does not exist.
+bulk: the value of the first element, or `nil` when key does not exist.
 
 **Examples**
 
@@ -764,7 +764,7 @@ one
 ```
 
 ### LRANGE key start stop
-Returns the specified elements of the list stored at key. The offsets start and stop are zero-based indexes, with 0 being the first element of the list (the head of the list), 1 being the next element and so on.
+Returns the specified elements of the list stored at key. The offsets start and stop are zero-based indexes, with 0 being the first element of the list (the head of the list), `1` being the next element and so on.
 
 **Return value**
 
@@ -813,7 +813,7 @@ Removes and returns the last element of the list stored at key.
 
 **Return value**
 
-bulk: the value of the last element, or nil when key does not exist.
+bulk: the value of the last element, or `nil` when key does not exist.
 
 **Examples**
 
@@ -922,7 +922,7 @@ ledis>
 ```
 
 ### LTTL key
-Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, `-1` returns.
 
 **Return value**
 
@@ -974,17 +974,19 @@ ledis> LPERSIST b
 ## ZSet
 
 ### ZADD key score member [score member ...]
-Adds all the specified members with the specified scores to the sorted set stored at key. It is possible to specify multiple score / member pairs. If a specified member is already a member of the sorted set, the score is updated and the element reinserted at the right position to ensure the correct ordering.
+Adds all the specified members with the specified scores to the sorted set stored at key. It is possible to specify multiple `score / member` pairs. If a specified member is already a member of the sorted set, the score is updated and the element reinserted at the right position to ensure the correct ordering.
 
 If key does not exist, a new sorted set with the specified members as sole members is created, like if the sorted set was empty. If the key exists but does not hold a sorted set, an error is returned.
 
-The score values should be the string representation of a double precision floating point number. +inf and -inf values are valid values as well.
+The score values should be the string representation of an `int64` number. `+inf` and `-inf` values are valid values as well.
+
+**Currently, we only support int64 type, not double type.**
 
 **Return value**
 
 int64, specifically:
 
-The number of elements added to the sorted sets, ** not ** including elements already existing for which the score was updated.
+The number of elements added to the sorted sets, **not** including elements already existing for which the score was updated.
 
 
 **Examples**
@@ -1012,7 +1014,7 @@ Returns the sorted set cardinality (number of elements) of the sorted set stored
 
 **Return value**
 
-int64: the cardinality (number of elements) of the sorted set, or 0 if key does not exist.
+int64: the cardinality (number of elements) of the sorted set, or `0` if key does not exist.
 
 **Examples**
 
@@ -1037,8 +1039,8 @@ ledis> zcard myset
 ```
 
 ### ZCOUNT key min max
-Returns the number of elements in the sorted set at key with a score between min and max.
-The min and max arguments have the same semantic as described for ZRANGEBYSCORE.
+Returns the number of elements in the sorted set at key with a score between `min` and `max`.
+The `min` and `max` arguments have the same semantic as described for `ZRANGEBYSCORE`.
 
 **Return value**
 
@@ -1070,13 +1072,13 @@ ledis> zcount myset (1 3
 
 ### ZINCRBY key increment member
 
-Increments the score of member in the sorted set stored at key by increment. If member does not exist in the sorted set, it is added with increment as its score (as if its previous score was 0.0). If key does not exist, a new sorted set with the specified member as its sole member is created.
+Increments the score of member in the sorted set stored at key by increment. If member does not exist in the sorted set, it is added with increment as its score (as if its previous score was 0). If key does not exist, a new sorted set with the specified member as its sole member is created.
 An error is returned when key exists but does not hold a sorted set.
-The score value should be the string representation of a numeric value, and accepts double precision floating point numbers. It is possible to provide a negative value to decrement the score.
+The score value should be the string representation of a numeric value. It is possible to provide a negative value to decrement the score.
 
 **Return value**
 
-bulk: the new score of member (a double precision floating point number), represented as string.
+bulk: the new score of member (an int64 number), represented as string.
 
 **Examples**
 
@@ -1123,7 +1125,25 @@ ledis> ZRANGE myset -2 -1
 
 ### ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
 
-Returns all the elements in the sorted set at key with a score between min and max (including elements with score equal to min or max). The elements are considered to be ordered from low to high scores.
+Returns all the elements in the sorted set at key with a score between `min` and `max` (including elements with score equal to `min` or `max`). The elements are considered to be ordered from low to high scores.
+
+**Exclusive intervals and infinity**
+
+`min` and `max` can be `-inf` and `+inf`, so that you are not required to know the highest or lowest score in the sorted set to get all elements from or up to a certain score.
+By default, the interval specified by min and max is closed (inclusive). It is possible to specify an open interval (exclusive) by prefixing the score with the character (. For example:
+
+```
+ZRANGEBYSCORE zset (1 5
+```
+
+Will return all elements with 1 < score <= 5 while:
+
+```
+ZRANGEBYSCORE zset (5 (10
+```
+
+Will return all the elements with 5 < score < 10 (5 and 10 excluded).
+
 
 **Return value**
 
@@ -1155,7 +1175,7 @@ ledis> ZRANGEBYSCORE myzset (1 (2 WITHSCORES
 ```
 
 ### ZRANK key member
-Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
+Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high. The rank (or index) is `0-based`, which means that the member with the lowest score has rank 0.
 
 **Return value**
 
@@ -1232,7 +1252,7 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 
 
 ### ZREMRANGEBYSCORE key min max
-Removes all elements in the sorted set stored at key with a score between min and max (inclusive).
+Removes all elements in the sorted set stored at key with a score between `min` and `max` (inclusive). `Min` and `max` can be exclusive, following the syntax of `ZRANGEBYSCORE`.
 
 **Return value**
 
@@ -1256,7 +1276,7 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 
 ### ZREVRANGE key start stop [WITHSCORES]
 Returns the specified range of elements in the sorted set stored at key. The elements are considered to be ordered from the highest to the lowest score. Descending lexicographical order is used for elements with equal score.
-Apart from the reversed ordering, ZREVRANGE is similar to ZRANGE.
+Apart from the reversed ordering, ZREVRANGE is similar to `ZRANGE`.
 
 **Return value**
 
@@ -1309,11 +1329,11 @@ ledis> ZREVRANGEBYSCORE myset +inf -inf WITHSCORES LIMIT 1 2
 
 ### ZSCORE key member
 Returns the score of member in the sorted set at key.
-If member does not exist in the sorted set, or key does not exist, nil is returned.
+If member does not exist in the sorted set, or key does not exist, `nil` is returned.
 
 **Return value**
 
-bulk: the score of member (a double precision floating point number), represented as string.
+bulk: the score of member (an `int64` number), represented as string.
 
 **Examples**
 
@@ -1424,7 +1444,7 @@ ledis> ZEXPIREAT myset1 1404149999
 
 
 ### ZTTL key
-Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, `-1` returns.
 
 **Return value**
 
@@ -1521,7 +1541,7 @@ hello
 ```
 
 ### SELECT index
-Select the DB with having the specified zero-based numeric index. New connections always use DB 0. Currently, We support 16 DBs(0-15).
+Select the DB with having the specified zero-based numeric index. New connections always use DB `0`. Currently, We support `16` DBs(`0-15`).
 
 **Return value**
 
