@@ -114,18 +114,18 @@ class TestCmdZset(unittest.TestCase):
 
     def test_zrevrangebyscore(self):
         self.l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
-        assert self.l.zrevrangebyscore('a', 2, 4) == ['a4', 'a3', 'a2']
+        assert self.l.zrevrangebyscore('a', 4, 2) == ['a4', 'a3', 'a2']
 
         # slicing with start/num
-        assert self.l.zrevrangebyscore('a', 2, 4, start=1, num=2) == \
+        assert self.l.zrevrangebyscore('a', 4, 2, start=1, num=2) == \
                 ['a3', 'a2']
 
         # withscores
-        assert self.l.zrevrangebyscore('a', 2, 4, withscores=True) == \
+        assert self.l.zrevrangebyscore('a', 4, 2, withscores=True) == \
                 [('a4', 4.0), ('a3', 3.0), ('a2', 2.0)]
 
         # custom score function
-        assert self.l.zrevrangebyscore('a', 2, 4, withscores=True,
+        assert self.l.zrevrangebyscore('a', 4, 2, withscores=True,
                             score_cast_func=int) == \
             [('a4', 4), ('a3', 3), ('a2', 2)]
 

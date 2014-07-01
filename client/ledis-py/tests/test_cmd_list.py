@@ -41,19 +41,19 @@ class TestCmdList(unittest.TestCase):
         assert self.l.lpush('mylist', '1') == 1
         assert self.l.lpush('mylist', '2') == 2
         assert self.l.lpush('mylist', '3', '4', '5') == 5
-        assert self.l.lrange('mylist', 0, 5) == ['5', '4', '3', '2', '1']
+        assert self.l.lrange('mylist', 0, -1) == ['5', '4', '3', '2', '1']
 
     def test_lrange(self):
         self.l.rpush('mylist', '1', '2', '3', '4', '5')
         assert self.l.lrange('mylist', 0, 2) == ['1', '2', '3']
         assert self.l.lrange('mylist', 2, 10) == ['3', '4', '5']
-        assert self.l.lrange('mylist', 0, 5) == ['1', '2', '3', '4', '5']
+        assert self.l.lrange('mylist', 0, -1) == ['1', '2', '3', '4', '5']
 
     def test_rpush(self):
         assert self.l.rpush('mylist', '1') == 1
         assert self.l.rpush('mylist', '2') == 2
         assert self.l.rpush('mylist', '3', '4') == 4
-        assert self.l.lrange('mylist', 0, 5) == ['1', '2', '3', '4']
+        assert self.l.lrange('mylist', 0, -1) == ['1', '2', '3', '4']
 
     def test_rpop(self):
         self.l.rpush('mylist', '1', '2', '3')
