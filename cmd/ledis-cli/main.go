@@ -44,7 +44,7 @@ func main() {
 
 			args := make([]interface{}, len(cmds[1:]))
 			for i := range args {
-				args[i] = strings.Trim(string(cmds[1+i]), "\"")
+				args[i] = strings.Trim(string(cmds[1+i]), "\"'")
 			}
 			r, err := c.Do(cmds[0], args...)
 			if err != nil {
