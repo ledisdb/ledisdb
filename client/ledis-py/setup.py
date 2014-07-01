@@ -2,7 +2,7 @@
 import os
 import sys
 
-from redis import __version__
+from ledis import __version__
 
 try:
     from setuptools import setup
@@ -30,18 +30,14 @@ long_description = f.read()
 f.close()
 
 setup(
-    name='redis',
+    name='ledis',
     version=__version__,
-    description='Python client for Redis key-value store',
+    description='Python client for ledis key-value store',
     long_description=long_description,
-    url='http://github.com/andymccurdy/redis-py',
-    author='Andy McCurdy',
-    author_email='sedrik@gmail.com',
-    maintainer='Andy McCurdy',
-    maintainer_email='sedrik@gmail.com',
-    keywords=['Redis', 'key-value store'],
+    url='https://github.com/siddontang/ledisdb',
+    keywords=['ledis', 'key-value store'],
     license='MIT',
-    packages=['redis'],
+    packages=['ledis'],
     tests_require=['pytest>=2.5.0'],
     cmdclass={'test': PyTest},
     classifiers=[

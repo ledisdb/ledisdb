@@ -1,31 +1,27 @@
-from redis.client import Redis, StrictRedis
-from redis.connection import (
+from ledis.client import Ledis
+from ledis.connection import (
     BlockingConnectionPool,
     ConnectionPool,
     Connection,
     UnixDomainSocketConnection
 )
-from redis.utils import from_url
-from redis.exceptions import (
-    AuthenticationError,
+from ledis.utils import from_url
+from ledis.exceptions import (
     ConnectionError,
     BusyLoadingError,
     DataError,
     InvalidResponse,
-    PubSubError,
-    RedisError,
+    LedisError,
     ResponseError,
-    WatchError,
 )
 
 
-__version__ = '2.7.6'
+__version__ = '0.0.1'
 VERSION = tuple(map(int, __version__.split('.')))
 
 __all__ = [
-    'Redis', 'StrictRedis', 'ConnectionPool', 'BlockingConnectionPool',
+    'Ledis', 'ConnectionPool', 'BlockingConnectionPool',
     'Connection', 'UnixDomainSocketConnection',
-    'RedisError', 'ConnectionError', 'ResponseError', 'AuthenticationError',
-    'InvalidResponse', 'DataError', 'PubSubError', 'WatchError', 'from_url',
-    'BusyLoadingError'
+    'LedisError', 'ConnectionError', 'ResponseError', 
+    'InvalidResponse', 'DataError', 'from_url',  'BusyLoadingError',
 ]

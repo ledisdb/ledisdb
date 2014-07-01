@@ -3,22 +3,17 @@ import os
 import socket
 import sys
 
-from redis._compat import (b, xrange, imap, byte_to_chr, unicode, bytes, long,
-                           BytesIO, nativestr, basestring,
-                           LifoQueue, Empty, Full)
-from redis.exceptions import (
-    RedisError,
+from ledis._compat import (b, xrange, imap, byte_to_chr, unicode, bytes, long,
+                           BytesIO, nativestr, basestring, iteritems,
+                           LifoQueue, Empty, Full, urlparse, parse_qs)
+from ledis.exceptions import (
+    LedisError,
     ConnectionError,
     BusyLoadingError,
     ResponseError,
     InvalidResponse,
-    AuthenticationError,
-    NoScriptError,
     ExecAbortError,
-)
-from redis.utils import HIREDIS_AVAILABLE
-if HIREDIS_AVAILABLE:
-    import hiredis
+    )
 
 
 SYM_STAR = b('*')
@@ -36,7 +31,6 @@ class PythonParser(object):
         'ERR': ResponseError,
         'EXECABORT': ExecAbortError,
         'LOADING': BusyLoadingError,
-        'NOSCRIPT': NoScriptError,
     }
 
     def __init__(self):
@@ -146,61 +140,11 @@ class PythonParser(object):
         return response
 
 
-class HiredisParser(object):
-    "Parser class for connections using Hiredis"
-    def __init__(self):
-        if not HIREDIS_AVAILABLE:
-            raise RedisError("Hiredis is not installed")
-
-    def __del__(self):
-        try:
-            self.on_disconnect()
-        except Exception:
-            pass
-
-    def on_connect(self, connection):
-        self._sock = connection._sock
-        kwargs = {
-            'protocolError': InvalidResponse,
-            'replyError': ResponseError,
-        }
-        if connection.decode_responses:
-            kwargs['encoding'] = connection.encoding
-        self._reader = hiredis.Reader(**kwargs)
-
-    def on_disconnect(self):
-        self._sock = None
-        self._reader = None
-
-    def read_response(self):
-        if not self._reader:
-            raise ConnectionError("Socket closed on remote end")
-        response = self._reader.gets()
-        while response is False:
-            try:
-                buffer = self._sock.recv(4096)
-            except (socket.error, socket.timeout):
-                e = sys.exc_info()[1]
-                raise ConnectionError("Error while reading from socket: %s" %
-                                      (e.args,))
-            if not buffer:
-                raise ConnectionError("Socket closed on remote end")
-            self._reader.feed(buffer)
-            # proactively, but not conclusively, check if more data is in the
-            # buffer. if the data received doesn't end with \n, there's more.
-            if not buffer.endswith(SYM_LF):
-                continue
-            response = self._reader.gets()
-        return response
-
-if HIREDIS_AVAILABLE:
-    DefaultParser = HiredisParser
-else:
-    DefaultParser = PythonParser
+DefaultParser = PythonParser
 
 
 class Connection(object):
-    "Manages TCP communication to and from a Redis server"
+    "Manages TCP communication to and from a Ledis server"
     def __init__(self, host='localhost', port=6379, db=0, password=None,
                  socket_timeout=None, encoding='utf-8',
                  encoding_errors='strict', decode_responses=False,
@@ -224,7 +168,7 @@ class Connection(object):
             pass
 
     def connect(self):
-        "Connects to the Redis server if not already connected"
+        "Connects to the Ledis server if not already connected"
         if self._sock:
             return
         try:
@@ -270,7 +214,7 @@ class Connection(object):
                 raise ConnectionError('Invalid Database')
 
     def disconnect(self):
-        "Disconnects from the Redis server"
+        "Disconnects from the Ledis server"
         self._parser.on_disconnect()
         if self._sock is None:
             return
@@ -281,7 +225,7 @@ class Connection(object):
         self._sock = None
 
     def send_packed_command(self, command):
-        "Send an already packed command to the Redis server"
+        "Send an already packed command to the Ledis server"
         if not self._sock:
             self.connect()
         try:
@@ -300,7 +244,7 @@ class Connection(object):
             raise
 
     def send_command(self, *args):
-        "Pack and send a command to the Redis server"
+        "Pack and send a command to the Ledis server"
         self.send_packed_command(self.pack_command(*args))
 
     def read_response(self):
@@ -327,7 +271,7 @@ class Connection(object):
         return value
 
     def pack_command(self, *args):
-        "Pack a series of arguments into a value Redis command"
+        "Pack a series of arguments into a value Ledis command"
         output = SYM_STAR + b(str(len(args))) + SYM_CRLF
         for enc_value in imap(self.encode, args):
             output += SYM_DOLLAR
@@ -375,6 +319,88 @@ class UnixDomainSocketConnection(Connection):
 # TODO: add ability to block waiting on a connection to be released
 class ConnectionPool(object):
     "Generic connection pool"
+    @classmethod
+    def from_url(cls, url, db=None, **kwargs):
+        """
+        Return a connection pool configured from the given URL.
+
+        For example::
+
+            redis://[:password]@localhost:6379/0
+            rediss://[:password]@localhost:6379/0
+            unix://[:password]@/path/to/socket.sock?db=0
+
+        Three URL schemes are supported:
+            redis:// creates a normal TCP socket connection
+            rediss:// creates a SSL wrapped TCP socket connection
+            unix:// creates a Unix Domain Socket connection
+
+        There are several ways to specify a database number. The parse function
+        will return the first specified option:
+            1. A ``db`` querystring option, e.g. redis://localhost?db=0
+            2. If using the redis:// scheme, the path argument of the url, e.g.
+               redis://localhost/0
+            3. The ``db`` argument to this function.
+
+        If none of these options are specified, db=0 is used.
+
+        Any additional querystring arguments and keyword arguments will be
+        passed along to the ConnectionPool class's initializer. In the case
+        of conflicting arguments, querystring arguments always win.
+        """
+        url_string = url
+        url = urlparse(url)
+        qs = ''
+
+        # in python2.6, custom URL schemes don't recognize querystring values
+        # they're left as part of the url.path.
+        if '?' in url.path and not url.query:
+            # chop the querystring including the ? off the end of the url
+            # and reparse it.
+            qs = url.path.split('?', 1)[1]
+            url = urlparse(url_string[:-(len(qs) + 1)])
+        else:
+            qs = url.query
+
+        url_options = {}
+
+        for name, value in iteritems(parse_qs(qs)):
+            if value and len(value) > 0:
+                url_options[name] = value[0]
+
+        # We only support redis:// and unix:// schemes.
+        if url.scheme == 'unix':
+            url_options.update({
+                'password': url.password,
+                'path': url.path,
+                'connection_class': UnixDomainSocketConnection,
+            })
+
+        else:
+            url_options.update({
+                'host': url.hostname,
+                'port': int(url.port or 6379),
+                'password': url.password,
+            })
+
+            # If there's a path argument, use it as the db argument if a
+            # querystring value wasn't specified
+            if 'db' not in url_options and url.path:
+                try:
+                    url_options['db'] = int(url.path.replace('/', ''))
+                except (AttributeError, ValueError):
+                    pass
+
+            if url.scheme == 'lediss':
+                url_options['connection_class'] = SSLConnection
+
+        # last shot at the db value
+        url_options['db'] = int(url_options.get('db', db or 0))
+
+        # update the arguments from the URL values
+        kwargs.update(url_options)
+        return cls(**kwargs)
+
     def __init__(self, connection_class=Connection, max_connections=None,
                  **connection_kwargs):
         self.pid = os.getpid()

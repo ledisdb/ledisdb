@@ -1,15 +1,10 @@
-"Core exceptions raised by the Redis client"
+"Core exceptions raised by the LedisDB client"
 
 
-class RedisError(Exception):
+class LedisError(Exception):
     pass
 
-
-class AuthenticationError(RedisError):
-    pass
-
-
-class ServerError(RedisError):
+class ServerError(LedisError):
     pass
 
 
@@ -25,23 +20,11 @@ class InvalidResponse(ServerError):
     pass
 
 
-class ResponseError(RedisError):
+class ResponseError(LedisError):
     pass
 
 
-class DataError(RedisError):
-    pass
-
-
-class PubSubError(RedisError):
-    pass
-
-
-class WatchError(RedisError):
-    pass
-
-
-class NoScriptError(ResponseError):
+class DataError(LedisError):
     pass
 
 
