@@ -6,7 +6,7 @@ ledisdb all commands return RESP fomrat and it will use int64 instead of  RESP i
 
 ## KV 
 
-### decr key
+### DECR key
 Decrements the number stored at key by one. If the key does not exist, it is set to 0 before decrementing.
 An error returns if the value for the key is a wrong type that can not be represented as a signed 64 bit integer.
 
@@ -27,7 +27,8 @@ ledis> decr mykey
 ERR strconv.ParseInt: parsing "234293482390480948029348230948“: invalid syntax
 ```
 
-### decrby key decrement
+
+### DECRBY key decrement
 
 Decrements the number stored at key by decrement. like decr.
 
@@ -44,7 +45,7 @@ ledis> decrby mykey “5“
 (integer) 5
 ```
 
-### del key [key ...]
+### DEL key [key ...]
 
 Removes the specified keys.
 
@@ -63,13 +64,14 @@ ledis> del key1 key2
 (integer) 2
 ```
 
-### exists key
+### EXISTS key
 
 Returns if key exists
 
 **Return value**
 
 int64, specifically:
+
 - 1 if the key exists.
 - 0 if the key does not exists.
 
@@ -84,7 +86,7 @@ ledis> exists key2
 (integer) 0
 ```
 
-### get key
+### GET key
 
 Get the value of key. If the key does not exists, it returns nil value.
 
@@ -104,7 +106,7 @@ ledis> get mykey
 "hello"
 ```
 
-### getset key value
+### GETSET key value
 
 Atomically sets key to value and returns the old value stored at key.
 
@@ -123,7 +125,7 @@ ledis> get mykey
 "world"
 ```
 
-### incr key
+### INCR key
 
 Increments the number stored at key by one. If the key does not exists, it is set to 0 before incrementing.
 
@@ -142,7 +144,7 @@ ledis> get mykey
 "11"
 ```
 
-### incrby key increment
+### INCRBY key increment
 
 Increments the number stored at key by increment. If the key does not exists, it is set to 0 before incrementing.
 
@@ -159,7 +161,7 @@ ledis> incrby mykey 5
 (integer) 15
 ```
 
-### mget key [key ...]
+### MGET key [key ...]
 
 Returns the values of all specified keys. If the key does not exists, a nil will return.
 
@@ -180,7 +182,7 @@ ledis> mget key1 key2 nonexisting
 3) (nil)
 ```
 
-### mset key value [key value ...]
+### MSET key value [key value ...]
 
 Sets the given keys to their respective values.
 
@@ -199,7 +201,7 @@ ledis> get key2
 "world"
 ```
 
-### set key value
+### SET key value
 
 Set key to the value.
 
@@ -216,7 +218,7 @@ ledis> get mykey
 "hello"
 ```
 
-### setnx key value
+### SETNX key value
 
 Set key to the value if key does not exist. If key already holds a value, no operation is performed.
 
@@ -238,7 +240,7 @@ ledis> get mykey
 "hello"
 ```
 
-### expire key seconds
+### EXPIRE key seconds
 
 Set a timeout on key. After the timeout has expired, the key will be deleted.
 
@@ -264,7 +266,7 @@ ledis> persist mykey
 (integer) 1
 ```
 
-### expireat key timestamp
+### EXPIREAT key timestamp
 
 Set an expired unix timestamp on key. 
 
@@ -286,7 +288,7 @@ ledis> exists mykey
 (integer) 0
 ```
 
-### ttl key
+### TTL key
 
 Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
 
@@ -305,7 +307,7 @@ ledis> ttl mykey
 (integer) 8
 ```
 
-### persist key
+### PERSIST key
 
 Remove the existing timeout on key
 
@@ -331,9 +333,10 @@ ledis> ttl mykey
 (integer) -1
 ```
 
+
 ## Hash
 
-### hdel key field [field ...]
+### HDEL key field [field ...]
 
 Removes the specified fiedls from the hash stored at key.
 
@@ -350,7 +353,7 @@ ledis> hdel myhash field1 field2
 (integer) 1
 ```
 
-### hexists key field
+### HEXISTS key field
 
 Returns if field is an existing field in the hash stored at key.
 
@@ -372,7 +375,7 @@ ledis> hexists myhash field2
 (integer) 0
 ```
 
-### hget key field
+### HGET key field
 
 Returns the value associated with field in the hash stored at key.
 
@@ -391,7 +394,7 @@ ledis> hget myhash field2
 (nil)
 ```
 
-### hgetall key
+### HGETALL key
 
 Returns all fields and values of the hash stored at key.
 
@@ -413,7 +416,7 @@ ledis> hgetall myhash
 4) "world"
 ```
 
-### hincrby key field increment
+### HINCRBY key field increment
 
 Increments the number stored at field in the hash stored at key by increment. If key does not exist, a new hash key is created. 
 If field does not exists the value is set to 0 before incrementing.
@@ -435,7 +438,7 @@ ledis> hincrby myhash field -10
 (integer) -4
 ```
 
-### hkeys key
+### HKEYS key
 
 Return all fields in the hash stored at key.
 
@@ -455,7 +458,7 @@ ledis> hkeys myhash
 2) "field2"
 ```
 
-### hlen key
+### HLEN key
 
 Returns the number of fields contained in the hash stored at key
 
@@ -474,7 +477,7 @@ ledis> hlen myhash
 (integer) 2
 ```
 
-### hmget key field [field ...]
+### HMGET key field [field ...]
 
 Returns the values associated with the specified fields in the hash stored at key. If field does not exist in the hash, a nil value is returned.
 
@@ -495,7 +498,7 @@ ledis> hmget myhash field1 field2 nofield
 3) (nil)
 ```
 
-### hmset key field value [field value ...]
+### HMSET key field value [field value ...]
 
 Sets the specified fields to their respective values in the hash stored at key.
 
@@ -513,7 +516,7 @@ ledis> hmget myhash field1 field2
 2) "world"
 ```
 
-### hset key field value
+### HSET key field value
 
 Sets field in the hash stored at key to value. If key does not exists, a new hash key is created.
 
@@ -537,7 +540,7 @@ ledis> hget myhash field1
 "world"
 ```
 
-### hvals key
+### HVALS key
 
 Returns all values in the hash stored at key.
 
@@ -557,7 +560,7 @@ ledis> hvals myhash
 2) "world"
 ```
 
-### hclear key 
+### HCLEAR key 
 
 Deletes the specified hash keys
 
@@ -574,7 +577,7 @@ ledis> hclear myhash
 (integer) 2
 ```
 
-### hmclear key [key...]
+### HMCLEAR key [key...]
 
 Deletes the specified hash keys
 
@@ -587,178 +590,792 @@ int64: the number of input keys
 ```
 ledis> hmset myhash field1 "hello" field2 "world"
 OK
-ledis> hclear myhash
+ledis> hmclear myhash
 (integer) 1
 ```
 
-### hexpire key seconds
+### HEXPIRE key seconds
 
 Sets a hash key's time to live in seconds, like expire similarly.
 
-### hexpireat key timestamp
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+
+**Examples**
+
+```
+27.0.0.1:6666> hset myhash a  100
+(integer) 1
+127.0.0.1:6666> hget myhash a
+100
+127.0.0.1:6666> hexpire myhash 100
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) 94
+127.0.0.1:6666> hpersist myhash
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) -1
+127.0.0.1:6666> hexpire not_exists_key 100
+(integer) 0
+```
+
+### HEXPIREAT key timestamp
 
 Sets the expiration for a hash key as a unix timestamp, like expireat similarly.
 
-### httl key
+**Return value**
 
-Gets the tiem to live for a hash key in seconds, like ttl similarly.
+int64:
 
-### hpersist key
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+127.0.0.1:6666> hset myhash a  100
+(integer) 1
+127.0.0.1:6666> hexpireat myhash 1404999999
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) 802475
+127.0.0.1:6666> hexpireat not_exists_key  1404999999
+(integer) 0
+```
+
+### HTTL key
+
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+
+**Return value**
+
+int64: TTL in seconds
+
+**Examples**
+
+```
+127.0.0.1:6666> hset myhash a  100
+(integer) 1
+127.0.0.1:6666> hexpireat myhash 1404999999
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) 802475
+127.0.0.1:6666> httl not_set_timeout
+(integer) -1
+```
+
+### HPERSIST key
 
 Remove the expiration from a hash key, like persist similarly.
+Remove the existing timeout on key
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was removed
+- 0 if key does not exist or does not have an timeout
+
+```
+127.0.0.1:6666> hset myhash a  100
+(integer) 1
+127.0.0.1:6666> hexpireat myhash 1404999999
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) 802475
+127.0.0.1:6666> hpersist myhash
+(integer) 1
+127.0.0.1:6666> httl myhash
+(integer) -1
+127.0.0.1:6666> hpersist not_exists_key
+(integer) 0
+```
+
 
 ## List
 
-### lindex
+### LINDEX key index
+Returns the element at index index in the list stored at key. The index is zero-based, so 0 means the first element, 1 the second element and so on. Negative indices can be used to designate elements starting at the tail of the list. Here, -1 means the last element, -2 means the penultimate and so forth.
+When the value at key is not a list, an error is returned.
+
 **Return value**
 
-**Examples**
-### llen
-**Return value**
+string: the requested element, or nil when index is out of range.
 
 **Examples**
-### lpop
+
+```
+ledis > rpush a 1 2 3
+(integer) 3
+ledis > lindex a 0
+1
+ledis > lindex a 1
+2
+ledis > lindex a 2
+3
+ledis > lindex a 3
+(nil)
+ledis > lindex a -1
+3
+```
+
+### LLEN key
+Returns the length of the list stored at key. If key does not exist, it is interpreted as an empty list and 0 is returned. An error is returned when the value stored at key is not a list.
+
 **Return value**
 
-**Examples**
-### lrange
-**Return value**
+int64: the length of the list at key.
 
 **Examples**
-### lpush
+
+```
+ledis > rpush a 'foo'
+(integer) 1
+ledis > rpush a 'bar'
+(integer) 2
+ledis > llen a
+(integer) 2
+```
+
+### LPOP key
+Removes and returns the first element of the list stored at key.
+
 **Return value**
 
-**Examples**
-### rpop
-**Return value**
+bulk: the value of the first element, or nil when key does not exist.
 
 **Examples**
-### rpush
+
+```
+ledis > rpush a 'one'
+(integer) 1
+ledis > rpush a 'two'
+(integer) 2
+ledis > rpush a 'three'
+(integer) 3
+ledis > lpop a
+'one'
+```
+
+### LRANGE key start stop
+Returns the specified elements of the list stored at key. The offsets start and stop are zero-based indexes, with 0 being the first element of the list (the head of the list), 1 being the next element and so on.
+
 **Return value**
 
-**Examples**
-### lclear
-**Return value**
+array: list of elements in the specified range.
 
 **Examples**
-### lexpire
+
+```
+ledis > rpush a 'one' 'two' 'three'
+(integer) 3
+ledis > lrange a 0 0
+1) "'one'"
+ledis > lrange a -100 100
+1) "'one'"
+2) "'two'"
+3) "'three'"
+ledis > lrange a -3 2
+1) "'one'"
+2) "'two'"
+3) "'three'"
+ledis > lrange a 0 -1
+(empty list or set)
+```
+### LPUSH key value [value ...]
+Insert all the specified values at the head of the list stored at key. If key does not exist, it is created as empty list before performing the push operations. When key holds a value that is not a list, an error is returned.
+
 **Return value**
 
-**Examples**
-### lexpireat
-**Return value**
+int64: the length of the list after the push operations.
 
 **Examples**
-### lttl
+
+```
+ledis > lpush a 1
+(integer) 1
+ledis > lpush a 2
+(integer) 2
+ledis > lrange a 0 2
+1) "2"
+2) "1"
+```
+
+### RPOP key
+Removes and returns the last element of the list stored at key.
+
 **Return value**
 
-**Examples**
-### lpersist 
-**Return value**
+bulk: the value of the last element, or nil when key does not exist.
 
 **Examples**
+
+```
+edis > rpush a 1
+(integer) 1
+ledis > rpush a 2
+(integer) 2
+ledis > rpush a 3
+(integer) 3
+ledis > rpop a
+3
+ledis > lrange a 0 3
+1) "1"
+2) "2"
+```
+
+### RPUSH key value [value ...]
+Insert all the specified values at the tail of the list stored at key. If key does not exist, it is created as empty list before performing the push operation. When key holds a value that is not a list, an error is returned.
+
+**Return value**
+
+int64: the length of the list after the push operation.
+
+**Examples**
+
+```
+ledis >  rpush a 'hello'
+(integer) 1
+ledis > rpush a 'world'
+(integer) 2
+ledis > lrange a 0 2
+1) "'hello'"
+2) "'world'"
+```
+
+### LCLEAR key
+Deletes the specified list key
+
+**Return value**
+
+int64: the number of values in the list stored at key
+
+**Examples**
+
+```
+ledis > rpush a 1 2 3
+(integer) 3
+ledis > llen a
+(integer) 3
+ledis > lclear a
+(integer) 3
+ledis > llen a
+(integer) 0
+```
+
+### LEXPIRE key seconds
+Set a timeout on key. After the timeout has expired, the key will be deleted.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis > rpush a 1
+(integer) 1
+ledis > lexpire a 100
+(integer) 1
+ledis > lttl a
+(integer) 96
+ledis > lpersist a
+(integer) 1
+ledis > lttl a
+(integer) -1
+```
+
+### LEXPIREAT key timestamp
+Set an expired unix timestamp on key. 
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis > rpush a 1
+(integer) 1
+ledis > lexpireat a 1404140183
+(integer) 1
+ledis > lttl a
+(integer) 570
+ledis > lpersist a
+(integer) 1
+ledis > lttl a
+(integer) -1
+ledis >
+```
+
+### LTTL key
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+
+**Return value**
+
+int64: TTL in seconds
+
+**Examples**
+
+```
+ledis > rpush a 1
+(integer) 1
+ledis > lexpireat a 1404140183
+(integer) 1
+ledis > lttl a
+(integer) 570
+ledis > lpersist a
+(integer) 1
+ledis > lttl a
+(integer) -1
+```
+
+### LPERSIST key
+Remove the existing timeout on key
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was removed
+- 0 if key does not exist or does not have an timeout
+
+**Examples**
+
+```
+ledis > rpush a 1
+(integer) 1
+ledis > lexpireat a 1404140183
+(integer) 1
+ledis > lttl a
+(integer) 570
+ledis > lpersist a
+(integer) 1
+ledis > lttl a
+(integer) -1
+ledis > lpersist b
+(integer) 0
+```
+
 
 ## ZSet
 
-### zadd
+### ZADD key score member [score member ...]
+Adds all the specified members with the specified scores to the sorted set stored at key. It is possible to specify multiple score / member pairs. If a specified member is already a member of the sorted set, the score is updated and the element reinserted at the right position to ensure the correct ordering.
+
+If key does not exist, a new sorted set with the specified members as sole members is created, like if the sorted set was empty. If the key exists but does not hold a sorted set, an error is returned.
+
+The score values should be the string representation of a double precision floating point number. +inf and -inf values are valid values as well.
+
+**Return value**
+
+int64, specifically:
+
+The number of elements added to the sorted sets, ** not ** including elements already existing for which the score was updated.
+
+
+**Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 1 'uno'
+(integer) 1
+ledis > zadd myset 2 'two' 3 'three'
+(integer) 2
+ledis > zrange myset 0 -1 withscores
+1) "'one'"
+2) "1"
+3) "'uno'"
+4) "1"
+5) "'two'"
+6) "2"
+7) "'three'"
+8) "3"
+```
+
+### ZCARD key
+Returns the sorted set cardinality (number of elements) of the sorted set stored at key.
+
+**Return value**
+
+int64: the cardinality (number of elements) of the sorted set, or 0 if key does not exist.
+
+**Examples**
+
+```
+edis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 1 'uno'
+(integer) 1
+ledis > zadd myset 2 'two' 3 'three'
+(integer) 2
+ledis > zrange myset 0 -1 withscores
+1) "'one'"
+2) "1"
+3) "'uno'"
+4) "1"
+5) "'two'"
+6) "2"
+7) "'three'"
+8) "3"
+ledis > zcard myset
+(integer) 4
+```
+
+### ZCOUNT key min max
+Returns the number of elements in the sorted set at key with a score between min and max.
+The min and max arguments have the same semantic as described for ZRANGEBYSCORE.
+
+**Return value**
+
+int64: the number of elements in the specified score range.
+
+**Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 1 'uno'
+(integer) 1
+ledis > zadd myset 2 'two' 3 'three'
+(integer) 2
+ledis > zrange myset 0 -1 withscores
+1) "'one'"
+2) "1"
+3) "'uno'"
+4) "1"
+5) "'two'"
+6) "2"
+7) "'three'"
+8) "3"
+ledis > zcount myset -inf +inf
+(integer) 4
+ledis > zcount myset (1 3
+(integer) 2
+```
+
+### ZINCRBY
+
+Increments the score of member in the sorted set stored at key by increment. If member does not exist in the sorted set, it is added with increment as its score (as if its previous score was 0.0). If key does not exist, a new sorted set with the specified member as its sole member is created.
+An error is returned when key exists but does not hold a sorted set.
+The score value should be the string representation of a numeric value, and accepts double precision floating point numbers. It is possible to provide a negative value to decrement the score.
+
+**Return value**
+
+bulk: the new score of member (a double precision floating point number), represented as string.
+
+**Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 2 'two'
+(integer) 1
+ledis > zincrby myset 2 'one'
+3
+ledis > zrange myset 0 -1 withscores
+1) "'two'"
+2) "2"
+3) "'one'"
+4) "3"
+```
+
+### ZRANGE key start stop [WITHSCORES]
+Returns the specified range of elements in the sorted set stored at key. The elements are considered to be ordered from the lowest to the highest score. Lexicographical order is used for elements with equal score.
+
+**Return value**
+
+array: list of elements in the specified range (optionally with their scores).
+
+**Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 2 'two'
+(integer) 1
+ledis > zadd myset 3 'three'
+(integer) 1
+ledis > zrange myset 0 -1
+1) "'one'"
+2) "'two'"
+3) "'three'"
+ledis > zrange myset 2 3
+1) "'three'"
+ledis > zrange myset -2 -1
+1) "'two'"
+2) "'three'"
+```
+
+### ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT off]
 **Return value**
 
 **Examples**
-### zcard
+### ZRANK
 **Return value**
 
 **Examples**
-### zcount
+### ZREM
 **Return value**
 
 **Examples**
-### zincrby
+### ZREMRANGEBYRANK
 **Return value**
 
 **Examples**
-### zrange
+### ZREMRANGEBYSCORE
 **Return value**
 
 **Examples**
-### zrangebyscore
+### ZREVRANGE
 **Return value**
 
 **Examples**
-### zrank
+### ZREVRANGEBYSCORE
 **Return value**
 
 **Examples**
-### zrem
+
+### ZSCORE key member
+Returns the score of member in the sorted set at key.
+If member does not exist in the sorted set, or key does not exist, nil is returned.
+
 **Return value**
 
-**Examples**
-### zremrangebyrank
-**Return value**
+bulk: the score of member (a double precision floating point number), represented as string.
 
 **Examples**
-### zremrangebyscore
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zscore myset 'one'
+1
+```
+
+### ZCLEAR key
+Delete the specified  key
+
 **Return value**
 
-**Examples**
-### zrevrange
-**Return value**
+int64: the number of members in the zset stored at key
 
 **Examples**
-### zrevrangebyscore
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zadd myset 2 'two'
+(integer) 1
+ledis > zadd myset 3 'three'
+(integer) 1
+ledis > zrange myset 0 -1
+1) "'one'"
+2) "'two'"
+3) "'three'
+ledis > zclear myset
+(integer) 3
+```
+
+### ZMCLEAR key [key ...]
+Delte multiple keys one time.
+
 **Return value**
 
-**Examples**
-### zscore
-**Return value**
+int64: the number of input keys
 
 **Examples**
-### zclear
+
+```
+ledis > zadd myset1 1 'one'
+(integer) 1
+ledis > zadd myset2 2 'two'
+(integer) 1
+ledis > zmclear myset1 myset2
+(integer) 2
+```
+
+### ZEXPIRE key seconds
+
+Set a timeout on key. After the timeout has expired, the key will be deleted.
+
 **Return value**
 
-**Examples**
-### zexpire
-**Return value**
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
 
 **Examples**
-### zexpireat
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zexpire myset 100
+(integer) 1
+ledis > zttl myset
+(integer) 97
+ledis > zpersist myset
+(integer) 1
+ledis > zttl mset
+(integer) -1
+ledis > zexpire myset1 100
+(integer) 0
+```
+
+### ZEXPIREAT key timestamp
+Set an expired unix timestamp on key. Similar to ZEXPIRE.
+
 **Return value**
 
-**Examples**
-### zttl
-**Return value**
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
 
 **Examples**
-### zpersist
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zexpireat myset 1404149999
+(integer) 1
+ledis > zttl myset
+(integer) 7155
+ledis > zpersist myset
+(integer) 1
+ledis > zttl mset
+(integer) -1
+ledis > zexpireat myset1 1404149999
+(integer) 0
+```
+
+
+### ZTTL key
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+
 **Return value**
 
+int64: TTL in seconds
+
 **Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zexpire myset 100
+(integer) 1
+ledis > zttl myset
+(integer) 97
+ledis > zttl myset2
+(integer) -1
+```
+
+### ZPERSIST key
+Remove the existing timeout on key.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was removed
+- 0 if key does not exist or does not have an timeout
+
+**Examples**
+
+```
+ledis > zadd myset 1 'one'
+(integer) 1
+ledis > zexpire myset 100
+(integer) 1
+ledis > zttl myset
+(integer) 97
+ledis > zpersist myset
+(integer) 1
+ledis > zttl mset
+(integer) -1
+```
+
 
 ## Replication
 
-### slaveof
+### SLAVEOF
 **Return value**
 
 **Examples**
-### fullsync
+### FULLSYNC
 **Return value**
 
 **Examples**
-### sync
+### SYNC
 **Return value**
 
 **Examples**
+
+
 
 ## Server
 
-### ping
+### PING
+Returns PONG. This command is often used to test if a connection is still alive, or to measure latency.
+
 **Return value**
 
-**Examples**
-### echo
-**Return value**
+String
 
 **Examples**
-### select
+
+```
+ledis > ping
+PONG
+ledis > ping
+dial tcp 127.0.0.1:6665: connection refused
+ledis >
+```
+
+### ECHO message
+
+Returns message.
+
 **Return value**
 
+bulk string reply
+
 **Examples**
+
+```
+ledis > echo "hello"
+hello
+```
+
+### SELECT index
+Select the DB with having the specified zero-based numeric index. New connections always use DB 0. Currently, We support 16 dbs(0-15).
+
+**Return value**
+
+Simple string reply
+
+**Examples**
+
+```
+ledis > select 2
+OK
+ledis > select 15
+OK
+ledis > select 16
+ERR invalid db index 16
+```
