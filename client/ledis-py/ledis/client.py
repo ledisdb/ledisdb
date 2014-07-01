@@ -53,7 +53,7 @@ def zset_score_pairs(response, **options):
     """
     if not response or not options['withscores']:
         return response
-    score_cast_func = options.get('score_cast_func', float)
+    score_cast_func = options.get('score_cast_func', int)
     it = iter(response)
     return list(izip(it, imap(score_cast_func, it)))
 
@@ -253,12 +253,10 @@ class Ledis(object):
     def delete(self, *names):
         "Delete one or more keys specified by ``names``"
         return self.execute_command('DEL', *names)
-    __delitem__ = delete
 
     def exists(self, name):
         "Returns a boolean indicating whether key ``name`` exists"
         return self.execute_command('EXISTS', name)
-    __contains__ = exists
 
     def expire(self, name, time):
         """
@@ -339,6 +337,7 @@ class Ledis(object):
             items.extend(pair)
         return self.execute_command('MSET', *items)
 
+    #TODO: remove ex, px, nx, xx params.
     def set(self, name, value, ex=None, px=None, nx=False, xx=False):
         """
         Set the value at key ``name`` to ``value``
@@ -371,8 +370,6 @@ class Ledis(object):
         if xx:
             pieces.append('XX')
         return self.execute_command('SET', *pieces)
-    __setitem__ = set
-
 
     def setnx(self, name, value):
         "Set the value of key ``name`` to ``value`` if key doesn't exist"
@@ -521,7 +518,7 @@ class Ledis(object):
         return self.execute_command(*pieces, **options)
 
     def zrangebyscore(self, name, min, max, start=None, num=None,
-                      withscores=False, score_cast_func=float):
+                      withscores=False):
         """
         Return a range of values from the sorted set ``name`` with scores
         between ``min`` and ``max``.
@@ -543,7 +540,7 @@ class Ledis(object):
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': score_cast_func}
+            'withscores': withscores, 'score_cast_func': int}
         return self.execute_command(*pieces, **options)
 
     def zrank(self, name, value):
