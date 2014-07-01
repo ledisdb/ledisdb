@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
+	//	"bufio"
 	"flag"
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
-	"os"
+	//	"os"
 	"strings"
 )
 
@@ -27,17 +27,21 @@ func main() {
 
 	c := ledis.NewClient(cfg)
 
-	reader := bufio.NewReader(os.Stdin)
+	setHistoryCapacity(100)
 
 	for {
-		fmt.Printf("ledis %s > ", cfg.Addr)
-
-		cmd, _ := reader.ReadString('\n')
+		cmd, err := line(fmt.Sprintf("%s> ", cfg.Addr))
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			return
+		}
 
 		cmds := strings.Fields(cmd)
 		if len(cmds) == 0 {
 			continue
 		} else {
+			addHistory(cmd)
+
 			args := make([]interface{}, len(cmds[1:]))
 			for i := range args {
 				args[i] = strings.Trim(string(cmds[1+i]), "\"")
