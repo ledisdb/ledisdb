@@ -37,6 +37,18 @@ func TestDBList(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if ay, err := db.LRange(key, 0, -1); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 3 {
+		t.Fatal(len(ay))
+	} else {
+		for i := range ay {
+			if ay[i][0] != '1'+byte(i) {
+				t.Fatal(string(ay[i]))
+			}
+		}
+	}
+
 	if k, err := db.RPop(key); err != nil {
 		t.Fatal(err)
 	} else if string(k) != "3" {
