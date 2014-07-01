@@ -609,19 +609,19 @@ int64:
 **Examples**
 
 ```
-27.0.0.1:6666> HSET myhash a  100
+ledis> HSET myhash a  100
 (integer) 1
-127.0.0.1:6666> HGET myhash a
+ledis> HGET myhash a
 100
-127.0.0.1:6666> HEXPIRE myhash 100
+ledis> HEXPIRE myhash 100
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) 94
-127.0.0.1:6666> HPERSIST myhash
+ledis> HPERSIST myhash
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) -1
-127.0.0.1:6666> HEXPIRE not_exists_key 100
+ledis> HEXPIRE not_exists_key 100
 (integer) 0
 ```
 
@@ -639,13 +639,13 @@ int64:
 **Examples**
 
 ```
-127.0.0.1:6666> HSET myhash a  100
+ledis> HSET myhash a  100
 (integer) 1
-127.0.0.1:6666> HEXPIREAT myhash 1404999999
+ledis> HEXPIREAT myhash 1404999999
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) 802475
-127.0.0.1:6666> HEXPIREAT not_exists_key  1404999999
+ledis> HEXPIREAT not_exists_key  1404999999
 (integer) 0
 ```
 
@@ -660,13 +660,13 @@ int64: TTL in seconds
 **Examples**
 
 ```
-127.0.0.1:6666> HSET myhash a  100
+ledis> HSET myhash a  100
 (integer) 1
-127.0.0.1:6666> HEXPIREAT myhash 1404999999
+ledis> HEXPIREAT myhash 1404999999
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) 802475
-127.0.0.1:6666> HTTL not_set_timeout
+ledis> HTTL not_set_timeout
 (integer) -1
 ```
 
@@ -683,17 +683,17 @@ int64:
 - 0 if key does not exist or does not have an timeout
 
 ```
-127.0.0.1:6666> HSET myhash a  100
+ledis> HSET myhash a  100
 (integer) 1
-127.0.0.1:6666> HEXPIREAT myhash 1404999999
+ledis> HEXPIREAT myhash 1404999999
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) 802475
-127.0.0.1:6666> HPERSIST myhash
+ledis> HPERSIST myhash
 (integer) 1
-127.0.0.1:6666> HTTL myhash
+ledis> HTTL myhash
 (integer) -1
-127.0.0.1:6666> HPERSIST not_exists_key
+ledis> HPERSIST not_exists_key
 (integer) 0
 ```
 
@@ -711,17 +711,17 @@ string: the requested element, or nil when index is out of range.
 **Examples**
 
 ```
-ledis > RPUSH a 1 2 3
+ledis> RPUSH a 1 2 3
 (integer) 3
-ledis > LINDEX a 0
+ledis> LINDEX a 0
 1
-ledis > LINDEX a 1
+ledis> LINDEX a 1
 2
-ledis > LINDEX a 2
+ledis> LINDEX a 2
 3
-ledis > LINDEX a 3
+ledis> LINDEX a 3
 (nil)
-ledis > LINDEX a -1
+ledis> LINDEX a -1
 3
 ```
 
@@ -735,11 +735,11 @@ int64: the length of the list at key.
 **Examples**
 
 ```
-ledis > RPUSH a 'foo'
+ledis> RPUSH a 'foo'
 (integer) 1
-ledis > RPUSH a 'bar'
+ledis> RPUSH a 'bar'
 (integer) 2
-ledis > LLEN a
+ledis> LLEN a
 (integer) 2
 ```
 
@@ -753,13 +753,13 @@ bulk: the value of the first element, or nil when key does not exist.
 **Examples**
 
 ```
-ledis > RPUSH a 'one'
+ledis> RPUSH a 'one'
 (integer) 1
-ledis > RPUSH a 'two'
+ledis> RPUSH a 'two'
 (integer) 2
-ledis > RPUSH a 'three'
+ledis> RPUSH a 'three'
 (integer) 3
-ledis > LPOP a
+ledis> LPOP a
 one
 ```
 
@@ -773,19 +773,19 @@ array: list of elements in the specified range.
 **Examples**
 
 ```
-ledis > RPUSH a 'one' 'two' 'three'
+ledis> RPUSH a 'one' 'two' 'three'
 (integer) 3
-ledis > LRANGE a 0 0
+ledis> LRANGE a 0 0
 1) "one"
-ledis > LRANGE a -100 100
-1) "one"
-2) "two"
-3) "three"
-ledis > LRANGE a -3 2
+ledis> LRANGE a -100 100
 1) "one"
 2) "two"
 3) "three"
-ledis > LRANGE a 0 -1
+ledis> LRANGE a -3 2
+1) "one"
+2) "two"
+3) "three"
+ledis> LRANGE a 0 -1
 (empty list or set)
 ```
 
@@ -799,11 +799,11 @@ int64: the length of the list after the push operations.
 **Examples**
 
 ```
-ledis > LPUSH a 1
+ledis> LPUSH a 1
 (integer) 1
-ledis > LPUSH a 2
+ledis> LPUSH a 2
 (integer) 2
-ledis > LRANGE a 0 2
+ledis> LRANGE a 0 2
 1) "2"
 2) "1"
 ```
@@ -820,13 +820,13 @@ bulk: the value of the last element, or nil when key does not exist.
 ```
 edis > RPUSH a 1
 (integer) 1
-ledis > RPUSH a 2
+ledis> RPUSH a 2
 (integer) 2
-ledis > RPUSH a 3
+ledis> RPUSH a 3
 (integer) 3
-ledis > RPOP a
+ledis> RPOP a
 3
-ledis > LRANGE a 0 3
+ledis> LRANGE a 0 3
 1) "1"
 2) "2"
 ```
@@ -841,11 +841,11 @@ int64: the length of the list after the push operation.
 **Examples**
 
 ```
-ledis >  RPUSH a 'hello'
+ledis>  RPUSH a 'hello'
 (integer) 1
-ledis > RPUSH a 'world'
+ledis> RPUSH a 'world'
 (integer) 2
-ledis > LRANGE a 0 2
+ledis> LRANGE a 0 2
 1) "hello"
 2) "world"
 ```
@@ -860,13 +860,13 @@ int64: the number of values in the list stored at key
 **Examples**
 
 ```
-ledis > RPUSH a 1 2 3
+ledis> RPUSH a 1 2 3
 (integer) 3
-ledis > LLEN a
+ledis> LLEN a
 (integer) 3
-ledis > LCLEAR a
+ledis> LCLEAR a
 (integer) 3
-ledis > LLEN a
+ledis> LLEN a
 (integer) 0
 ```
 
@@ -883,15 +883,15 @@ int64:
 **Examples**
 
 ```
-ledis > RPUSH a 1
+ledis> RPUSH a 1
 (integer) 1
-ledis > LEXPIRE a 100
+ledis> LEXPIRE a 100
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) 96
-ledis > LPERSIST a
+ledis> LPERSIST a
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) -1
 ```
 
@@ -908,17 +908,17 @@ int64:
 **Examples**
 
 ```
-ledis > RPUSH a 1
+ledis> RPUSH a 1
 (integer) 1
-ledis > LEXPIREAT a 1404140183
+ledis> LEXPIREAT a 1404140183
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) 570
-ledis > LPERSIST a
+ledis> LPERSIST a
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) -1
-ledis >
+ledis>
 ```
 
 ### LTTL key
@@ -931,15 +931,15 @@ int64: TTL in seconds
 **Examples**
 
 ```
-ledis > RPUSH a 1
+ledis> RPUSH a 1
 (integer) 1
-ledis > LEXPIREAT a 1404140183
+ledis> LEXPIREAT a 1404140183
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) 570
-ledis > LPERSIST a
+ledis> LPERSIST a
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) -1
 ```
 
@@ -956,17 +956,17 @@ int64:
 **Examples**
 
 ```
-ledis > RPUSH a 1
+ledis> RPUSH a 1
 (integer) 1
-ledis > LEXPIREAT a 1404140183
+ledis> LEXPIREAT a 1404140183
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) 570
-ledis > LPERSIST a
+ledis> LPERSIST a
 (integer) 1
-ledis > LTTL a
+ledis> LTTL a
 (integer) -1
-ledis > LPERSIST b
+ledis> LPERSIST b
 (integer) 0
 ```
 
@@ -990,13 +990,13 @@ The number of elements added to the sorted sets, ** not ** including elements al
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 1 'uno'
+ledis> ZADD myset 1 'uno'
 (integer) 1
-ledis > ZADD myset 2 'two' 3 'three'
+ledis> ZADD myset 2 'two' 3 'three'
 (integer) 2
-ledis > ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1019,11 +1019,11 @@ int64: the cardinality (number of elements) of the sorted set, or 0 if key does 
 ```
 edis > ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 1 'uno'
+ledis> ZADD myset 1 'uno'
 (integer) 1
-ledis > ZADD myset 2 'two' 3 'three'
+ledis> ZADD myset 2 'two' 3 'three'
 (integer) 2
-ledis > ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1032,7 +1032,7 @@ ledis > ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis > zcard myset
+ledis> zcard myset
 (integer) 4
 ```
 
@@ -1047,13 +1047,13 @@ int64: the number of elements in the specified score range.
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 1 'uno'
+ledis> ZADD myset 1 'uno'
 (integer) 1
-ledis > ZADD myset 2 'two' 3 'three'
+ledis> ZADD myset 2 'two' 3 'three'
 (integer) 2
-ledis > ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1062,9 +1062,9 @@ ledis > ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis > zcount myset -inf +inf
+ledis> zcount myset -inf +inf
 (integer) 4
-ledis > zcount myset (1 3
+ledis> zcount myset (1 3
 (integer) 2
 ```
 
@@ -1081,13 +1081,13 @@ bulk: the new score of member (a double precision floating point number), repres
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 2 'two'
+ledis> ZADD myset 2 'two'
 (integer) 1
-ledis > ZINCRBY myset 2 'one'
+ledis> ZINCRBY myset 2 'one'
 3
-ledis > ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "two"
 2) "2"
 3) "one"
@@ -1104,19 +1104,19 @@ array: list of elements in the specified range (optionally with their scores).
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 2 'two'
+ledis> ZADD myset 2 'two'
 (integer) 1
-ledis > ZADD myset 3 'three'
+ledis> ZADD myset 3 'three'
 (integer) 1
-ledis > ZRANGE myset 0 -1
+ledis> ZRANGE myset 0 -1
 1) "one"
 2) "two"
 3) "three"
-ledis > ZRANGE myset 2 3
+ledis> ZRANGE myset 2 3
 1) "three"
-ledis > ZRANGE myset -2 -1
+ledis> ZRANGE myset -2 -1
 1) "two"
 2) "three"
 ```
@@ -1132,26 +1132,26 @@ array: list of elements in the specified score range (optionally with their scor
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myzset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-127.0.0.1:6666> ZADD myzset 2 'two'
+ledis> ZADD myzset 2 'two'
 (integer) 1
-127.0.0.1:6666> ZADD myzset 3 'three'
+ledis> ZADD myzset 3 'three'
 (integer) 1
-127.0.0.1:6666> ZRANGEBYSCORE myzset -inf +inf WITHSCORES
+ledis> ZRANGEBYSCORE myzset -inf +inf WITHSCORES
 1) "one"
 2) "1"
 3) "two"
 4) "2"
 5) "three"
 6) "3"
-127.0.0.1:6666> ZRANGEBYSCORE myzset -inf +inf WITHSCORES LIMIT  2 5
+ledis> ZRANGEBYSCORE myzset -inf +inf WITHSCORES LIMIT  2 5
 1) "three"
 2) "3"
-127.0.0.1:6666> ZRANGEBYSCORE myzset (1 2 WITHSCORES
+ledis> ZRANGEBYSCORE myzset (1 2 WITHSCORES
 1) "two"
 2) "2"
-127.0.0.1:6666> ZRANGEBYSCORE myzset (1 (2 WITHSCORES
+ledis> ZRANGEBYSCORE myzset (1 (2 WITHSCORES
 ```
 
 ### ZRANK key member
@@ -1167,20 +1167,20 @@ Return value
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myzset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-127.0.0.1:6666> ZADD myzset 2 'two'
+ledis> ZADD myzset 2 'two'
 (integer) 1
-127.0.0.1:6666> ZADD myzset 3 'three'
+ledis> ZADD myzset 3 'three'
 (integer) 1
-127.0.0.1:6666> ZRANGEBYSCORE  myzset -inf +inf WITHSCORES
+ledis> ZRANGEBYSCORE  myzset -inf +inf WITHSCORES
 1) "one"
 2) "1"
 3) "two"
 4) "2"
 5) "three"
 6) "3"
-127.0.0.1:6666> ZRANK myzset 'three'
+ledis> ZRANK myzset 'three'
 (integer) 2
 ```
 
@@ -1198,16 +1198,16 @@ The number of members removed from the sorted set, not including non existing me
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myset 1 one 2 two 3 three 4 four
 (integer) 3
-127.0.0.1:6666> ZRANGE myset 0 -1
+ledis> ZRANGE myset 0 -1
 1) "one"
 2) "two"
 3) "three"
 4) "four"
-127.0.0.1:6666> ZREM myset three
+ledis> ZREM myset three
 (integer) 1
-127.0.0.1:6666> ZREM myset one four three
+ledis> ZREM myset one four three
 (integer) 2
 ```
 
@@ -1221,11 +1221,11 @@ int64: the number of elements removed.
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myset 1 one 2 two 3 three 4 four
 (integer) 3
-127.0.0.1:6666> ZREMRANGEBYRANK myset 0 2
+ledis> ZREMRANGEBYRANK myset 0 2
 (integer) 3
-127.0.0.1:6666> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "four"
 2) "4"
 ```
@@ -1241,11 +1241,11 @@ int64: the number of elements removed.
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myset 1 one 2 two 3 three 4 four
 (integer) 4
-127.0.0.1:6666> ZREMRANGEBYSCORE myset -inf (2
+ledis> ZREMRANGEBYSCORE myset -inf (2
 (integer) 1
-127.0.0.1:6666> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myset 0 -1 WITHSCORES
 1) "two"
 2) "2"
 3) "three"
@@ -1265,9 +1265,9 @@ array: list of elements in the specified range (optionally with their scores).
 **Examples**
 
 ```
-127.0.0.1:6666> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myset 1 one 2 two 3 three 4 four
 (integer) 4
-127.0.0.1:6666> ZREVRANGE myset 0 -1
+ledis> ZREVRANGE myset 0 -1
 1) "four"
 2) "three"
 3) "two"
@@ -1286,21 +1286,21 @@ array: list of elements in the specified score range (optionally with their scor
 **Examples**
 
 ```
-127.0.0.1:6666>  ZADD myset 1 one 2 two 3 three 4 four
+ledis>  ZADD myset 1 one 2 two 3 three 4 four
 (integer) 4
-127.0.0.1:6666> ZREVRANGEBYSCORE myset +inf -inf
+ledis> ZREVRANGEBYSCORE myset +inf -inf
 1) "four"
 2) "three"
 3) "two"
 4) "one"
-127.0.0.1:6666> ZREVRANGEBYSCORE myset 2 1
+ledis> ZREVRANGEBYSCORE myset 2 1
 1) "two"
 2) "one"
-127.0.0.1:6666> ZREVRANGEBYSCORE myset 2 (1
+ledis> ZREVRANGEBYSCORE myset 2 (1
 1) "two"
-127.0.0.1:6666> ZREVRANGEBYSCORE myset (2 (1
+ledis> ZREVRANGEBYSCORE myset (2 (1
 (empty list or set)
-127.0.0.1:6666> ZREVRANGEBYSCORE myset +inf -inf WITHSCORES LIMIT 1 2
+ledis> ZREVRANGEBYSCORE myset +inf -inf WITHSCORES LIMIT 1 2
 1) "three"
 2) "3"
 3) "two"
@@ -1318,9 +1318,9 @@ bulk: the score of member (a double precision floating point number), represente
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZSCORE myset 'one'
+ledis> ZSCORE myset 'one'
 1
 ```
 
@@ -1334,17 +1334,17 @@ int64: the number of members in the zset stored at key
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZADD myset 2 'two'
+ledis> ZADD myset 2 'two'
 (integer) 1
-ledis > ZADD myset 3 'three'
+ledis> ZADD myset 3 'three'
 (integer) 1
-ledis > ZRANGE myset 0 -1
+ledis> ZRANGE myset 0 -1
 1) "one"
 2) "two"
 3) "three"
-ledis > ZCLEAR myset
+ledis> ZCLEAR myset
 (integer) 3
 ```
 
@@ -1358,11 +1358,11 @@ int64: the number of input keys
 **Examples**
 
 ```
-ledis > ZADD myset1 1 'one'
+ledis> ZADD myset1 1 'one'
 (integer) 1
-ledis > ZADD myset2 2 'two'
+ledis> ZADD myset2 2 'two'
 (integer) 1
-ledis > ZMCLEAR myset1 myset2
+ledis> ZMCLEAR myset1 myset2
 (integer) 2
 ```
 
@@ -1381,17 +1381,17 @@ int64:
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZEXPIRE myset 100
+ledis> ZEXPIRE myset 100
 (integer) 1
-ledis > ZTTL myset
+ledis> ZTTL myset
 (integer) 97
-ledis > ZPERSIST myset
+ledis> ZPERSIST myset
 (integer) 1
-ledis > ZTTL mset
+ledis> ZTTL mset
 (integer) -1
-ledis > ZEXPIRE myset1 100
+ledis> ZEXPIRE myset1 100
 (integer) 0
 ```
 
@@ -1408,17 +1408,17 @@ int64:
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZEXPIREAT myset 1404149999
+ledis> ZEXPIREAT myset 1404149999
 (integer) 1
-ledis > ZTTL myset
+ledis> ZTTL myset
 (integer) 7155
-ledis > ZPERSIST myset
+ledis> ZPERSIST myset
 (integer) 1
-ledis > ZTTL mset
+ledis> ZTTL mset
 (integer) -1
-ledis > ZEXPIREAT myset1 1404149999
+ledis> ZEXPIREAT myset1 1404149999
 (integer) 0
 ```
 
@@ -1433,13 +1433,13 @@ int64: TTL in seconds
 **Examples**
 
 ```
-ledis > zadd myset 1 'one'
+ledis> zadd myset 1 'one'
 (integer) 1
-ledis > zexpire myset 100
+ledis> zexpire myset 100
 (integer) 1
-ledis > zttl myset
+ledis> zttl myset
 (integer) 97
-ledis > zttl myset2
+ledis> zttl myset2
 (integer) -1
 ```
 
@@ -1456,15 +1456,15 @@ int64:
 **Examples**
 
 ```
-ledis > ZADD myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis > ZEXPIRE myset 100
+ledis> ZEXPIRE myset 100
 (integer) 1
-ledis > ZTTL myset
+ledis> ZTTL myset
 (integer) 97
-ledis > ZPERSIST myset
+ledis> ZPERSIST myset
 (integer) 1
-ledis > ZTTL mset
+ledis> ZTTL mset
 (integer) -1
 ```
 
@@ -1498,11 +1498,11 @@ String
 **Examples**
 
 ```
-ledis > PING
+ledis> PING
 PONG
-ledis > PING
+ledis> PING
 dial tcp 127.0.0.1:6665: connection refused
-ledis >
+ledis>
 ```
 
 ### ECHO message
@@ -1516,7 +1516,7 @@ bulk string reply
 **Examples**
 
 ```
-ledis > ECHO "hello"
+ledis> ECHO "hello"
 hello
 ```
 
@@ -1530,10 +1530,10 @@ Simple string reply
 **Examples**
 
 ```
-ledis > SELECT 2
+ledis> SELECT 2
 OK
-ledis > SELECT 15
+ledis> SELECT 15
 OK
-ledis > SELECT 16
+ledis> SELECT 16
 ERR invalid db index 16
 ```
