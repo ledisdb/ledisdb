@@ -322,46 +322,41 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 		return nil, err
 	}
 
-	var startSeq int32
-	var stopSeq int32
-
-	if start > stop {
-		return [][]byte{}, nil
-	}
-
-	v := make([][]byte, 0, 16)
-
 	var headSeq int32
-	var tailSeq int32
+	var llen int32
 	var err error
 
 	metaKey := db.lEncodeMetaKey(key)
 
-	if headSeq, tailSeq, _, err = db.lGetMeta(metaKey); err != nil {
+	if headSeq, _, llen, err = db.lGetMeta(metaKey); err != nil {
 		return nil, err
 	}
 
-	if start >= 0 && stop >= 0 {
-		startSeq = headSeq + start
-		stopSeq = headSeq + stop
-	} else if start < 0 && stop < 0 {
-		startSeq = tailSeq + start + 1
-		stopSeq = tailSeq + stop + 1
-	} else {
-		//start < 0 && stop > 0
-		startSeq = tailSeq + start + 1
-		stopSeq = headSeq + stop
+	if start < 0 {
+		start = llen + start
+	}
+	if stop < 0 {
+		stop = llen + stop
+	}
+	if start < 0 {
+		start = 0
 	}
 
-	if startSeq < listMinSeq {
-		startSeq = listMinSeq
-	} else if stopSeq > listMaxSeq {
-		stopSeq = listMaxSeq
+	if start > stop || start >= llen {
+		return [][]byte{}, nil
 	}
 
-	startKey := db.lEncodeListKey(key, startSeq)
-	stopKey := db.lEncodeListKey(key, stopSeq)
-	it := db.db.RangeLimitIterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
+	if stop >= llen {
+		stop = llen - 1
+	}
+
+	limit := (stop - start) + 1
+	headSeq += start
+
+	v := make([][]byte, 0, limit)
+
+	startKey := db.lEncodeListKey(key, headSeq)
+	it := db.db.RangeLimitIterator(startKey, nil, leveldb.RangeClose, 0, int(limit))
 	for ; it.Valid(); it.Next() {
 		v = append(v, it.Value())
 	}

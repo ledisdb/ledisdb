@@ -335,7 +335,17 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	}
 
 	key := args[0]
-	min, max, err := zparseScoreRange(args[1], args[2])
+
+	var minScore, maxScore []byte
+
+	if !reverse {
+		minScore, maxScore = args[1], args[2]
+	} else {
+		minScore, maxScore = args[2], args[1]
+	}
+
+	min, max, err := zparseScoreRange(minScore, maxScore)
+
 	if err != nil {
 		return err
 	}
