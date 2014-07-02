@@ -1,31 +1,32 @@
-## 测试环境搭建
+## Environment
 
 + Darwin karamatoMacBook-Air.local 13.1.0 Darwin Kernel Version 13.1.0: Thu Jan 16 19:40:37 PST 2014; root:xnu-2422.90.20~2/RELEASE_X86_64 x86_64
 + 2 CPU Intel Core i5 1.7GHz
 + 4GB
 + SSD 120G
 
-使用redis-benchmark命令进行压力测试，测试语句
+Using redis-benchmark below:
 
     redis-benchmark -n 10000 -t set,incr,get,lpush,lpop,lrange,mset -q
 
-redis只用内存模式，关闭持久化
-ssdb使用默认的配置，手动更改代码关闭了binlog的功能：
+## Config
 
-    void BinlogQueue::add_log(char type, char cmd, const leveldb::Slice &key){
-        tran_seq ++;
-        //Binlog log(tran_seq, type, cmd, key);
-        //batch.Put(encode_seq_key(tran_seq), log.repr());
-    }
++ redis: close save and aof
 
-ledisdb使用跟ssdb相同的leveldb配置
++ ssdb: close binlog manually below:
 
-leveldb配置：
+        void BinlogQueue::add_log(char type, char cmd, const leveldb::Slice &key){
+            tran_seq ++;
+            //Binlog log(tran_seq, type, cmd, key);
+            //batch.Put(encode_seq_key(tran_seq), log.repr());
+        }
+
++ leveldb：
     
-    compression       = false
-    block_size        = 32KB
-    write_buffer_size = 64MB
-    cache_size        = 500MB
+        compression       = false
+        block_size        = 32KB
+        write_buffer_size = 64MB
+        cache_size        = 500MB
 
 
 ## redis
@@ -70,7 +71,11 @@ leveldb配置：
     LRANGE_600 (first 600 elements): 1590.33 requests per second
     MSET (10 keys): 21881.84 requests per second
 
-可以看到，ledisdb的性能比redis以及ssdb略差，（至于为啥ssdb lrange性能这样差我感到比较困惑），但还不至于不可用，我觉得可能如下原因：
+## Conclusion
 
-+ go语言自身没有c，c++快
-+ ledisdb使用的cgo调用的leveldb相关函数，这块开销其实蛮大的，后续是优化重点。
+ledisdb is little slower than redis or ssdb, some reasons may cause it:
+
++ go is fast, but not faster than c/c++
++ ledisdb uses cgo to call leveldb, a big cost. 
+
+However, **ledisdb is still an alternative NoSQL in production for you**. 
