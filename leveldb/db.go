@@ -88,8 +88,7 @@ func Repair(cfg *Config) error {
 	db.cfg = cfg
 
 	err := db.open()
-
-	db.Close()
+	defer db.Close()
 
 	//open ok, do not need repair
 	if err == nil {

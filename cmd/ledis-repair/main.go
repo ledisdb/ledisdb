@@ -9,7 +9,7 @@ import (
 	"path"
 )
 
-var fileName = flag.String("config", "/etc/ledis.config", "ledisdb config file")
+var fileName = flag.String("config", "/etc/ledis.json", "ledisdb config file")
 
 func main() {
 	flag.Parse()
