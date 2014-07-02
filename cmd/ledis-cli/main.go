@@ -1,11 +1,10 @@
 package main
 
 import (
-	//	"bufio"
 	"flag"
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
-	//	"os"
+	"regexp"
 	"strings"
 )
 
@@ -29,6 +28,8 @@ func main() {
 
 	setHistoryCapacity(100)
 
+	reg, _ := regexp.Compile(`'.*?'|".*?"|\S+`)
+
 	for {
 		cmd, err := line(fmt.Sprintf("%s> ", cfg.Addr))
 		if err != nil {
@@ -36,7 +37,7 @@ func main() {
 			return
 		}
 
-		cmds := strings.Fields(cmd)
+		cmds := reg.FindAllString(cmd, -1)
 		if len(cmds) == 0 {
 			continue
 		} else {
