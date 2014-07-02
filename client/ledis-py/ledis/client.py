@@ -91,7 +91,7 @@ class Ledis(object):
             lambda r: isinstance(r, long) and r or nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
-            'MSET SELECT SLAVEOF',
+            'MSET SELECT ',
             lambda r: nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
@@ -206,30 +206,7 @@ class Ledis(object):
         return self.execute_command('SELECT', db)
 
 
-    # REPLICATION
-    def slaveof(self, host=None, port=None):
-        """
-        Set the server to be a replicated slave of the instance identified
-        by the ``host`` and ``port``. If called without arguements, the
-        instance is promoted to a master instead.
-        """
-        if host is None and port is None:
-            return self.execute_command("SLAVEOF", "NO", "ONE")
-        return self.execute_command("SLAVEOF", host, port)
-
-    def sync(self, index, pos):
-        try:
-            _index, _pos = int(index), int(pos)
-        except ValueError:
-            print "Use Int Type"
-        return self.execute_command('SYNC', _index, _pos)
-
-    def fullsync(self):
-        return self.execute_command('FULLSYNC')
-
-
     #### BASIC KEY COMMANDS ####
-
     def decr(self, name, amount=1):
         """
         Decrements the value of ``key`` by ``amount``.  If no key exists,
