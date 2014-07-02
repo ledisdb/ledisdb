@@ -17,18 +17,21 @@ func main() {
 	flag.Parse()
 
 	if len(*configFile) == 0 {
-		panic("must use a config file")
+		println("must use a config file")
+		return
 	}
 
 	cfg, err := server.NewConfigWithFile(*configFile)
 	if err != nil {
-		panic(err)
+		println(err.Error())
+		return
 	}
 
 	var app *server.App
 	app, err = server.NewApp(cfg)
 	if err != nil {
-		panic(err)
+		println(err.Error())
+		return
 	}
 
 	sc := make(chan os.Signal, 1)
