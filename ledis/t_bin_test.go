@@ -34,11 +34,12 @@ func newBytes(bitLen int32) []byte {
 }
 
 func TestBinary(t *testing.T) {
-	// testSimple(t)
-	// testSimpleII(t)
-	// testOpAndOr(t)
-	// testOpXor(t)
+	testSimple(t)
+	testSimpleII(t)
+	testOpAndOr(t)
+	testOpXor(t)
 	testOpNot(t)
+	testMSetBit(t)
 }
 
 func testSimple(t *testing.T) {
@@ -325,4 +326,54 @@ func testOpNot(t *testing.T) {
 	if cmpBytes(data, stdData) {
 		t.Fatal(false)
 	}
+}
+
+func testMSetBit(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	key := []byte("test_mset")
+
+	var datas = make([]BitPair, 8)
+
+	//	1st
+	datas[0] = BitPair{1000, 1}
+	datas[1] = BitPair{11, 1}
+	datas[2] = BitPair{10, 1}
+	datas[3] = BitPair{2, 1}
+	datas[4] = BitPair{int32(segBitSize - 1), 1}
+	datas[5] = BitPair{int32(segBitSize), 1}
+	datas[6] = BitPair{int32(segBitSize + 1), 1}
+	datas[7] = BitPair{int32(segBitSize) + 10, 0}
+
+	db.BMSetBit(key, datas...)
+
+	if sum, _ := db.BCount(key, 0, -1); sum != 7 {
+		t.Error(sum)
+	}
+
+	if tail, _ := db.BTail(key); tail != int32(segBitSize+10) {
+		t.Error(tail)
+	}
+
+	//	2nd
+	datas = make([]BitPair, 5)
+
+	datas[0] = BitPair{1000, 0}
+	datas[1] = BitPair{int32(segBitSize + 1), 0}
+	datas[2] = BitPair{int32(segBitSize * 10), 1}
+	datas[3] = BitPair{10, 0}
+	datas[4] = BitPair{99, 0}
+
+	db.BMSetBit(key, datas...)
+
+	if sum, _ := db.BCount(key, 0, -1); sum != 7-3+1 {
+		t.Error(sum)
+	}
+
+	if tail, _ := db.BTail(key); tail != int32(segBitSize*10) {
+		t.Error(tail)
+	}
+
+	return
 }

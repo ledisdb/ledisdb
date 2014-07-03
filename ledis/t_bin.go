@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/ledisdb/leveldb"
+	"sort"
 	"time"
 )
 
@@ -18,6 +19,14 @@ type BitPair struct {
 	Pos int32
 	Val uint8
 }
+
+type segBitInfo struct {
+	Seq uint32
+	Off uint32
+	Val uint8
+}
+
+type segBitInfoArray []segBitInfo
 
 const (
 	// byte
@@ -62,6 +71,7 @@ var fillSegment []byte = func() []byte {
 
 var errBinKey = errors.New("invalid bin key")
 var errOffset = errors.New("invalid offset")
+var errDuplicatePos = errors.New("duplicate bit pos")
 
 func getBit(sz []byte, offset uint32) uint8 {
 	index := offset >> 3
@@ -88,6 +98,22 @@ func setBit(sz []byte, offset uint32, val uint8) bool {
 		sz[index] ^= (1 << offset)
 	}
 	return true
+}
+
+func (datas *segBitInfoArray) Len() int {
+	return len(*datas)
+}
+
+func (datas *segBitInfoArray) Less(i, j int) bool {
+	res := (*datas)[i].Seq < (*datas)[j].Seq
+	if !res && (*datas)[i].Seq == (*datas)[j].Seq {
+		res = (*datas)[i].Off < (*datas)[j].Off
+	}
+	return res
+}
+
+func (datas *segBitInfoArray) Swap(i, j int) {
+	(*datas)[i], (*datas)[j] = (*datas)[j], (*datas)[i]
 }
 
 func (db *DB) bEncodeMetaKey(key []byte) []byte {
@@ -151,7 +177,7 @@ func (db *DB) bParseOffset(key []byte, offset int32) (seq uint32, off uint32, er
 			err = e
 			return
 		} else if tailSeq >= 0 {
-			offset += int32(uint32(tailSeq)<<segBitWidth | uint32(tailOff))
+			offset += int32((uint32(tailSeq)<<segBitWidth | uint32(tailOff)) + 1)
 			if offset < 0 {
 				err = errOffset
 				return
@@ -409,48 +435,105 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 
 	if segment != nil {
 		ori = getBit(segment, off)
-		setBit(segment, off, val)
+		if setBit(segment, off, val) {
+			t := db.binTx
+			t.Lock()
 
-		t := db.binTx
-		t.Lock()
-		t.Put(bk, segment)
-		if _, _, e := db.bUpdateMeta(t, key, seq, off); e != nil {
-			err = e
-			return
+			t.Put(bk, segment)
+			if _, _, e := db.bUpdateMeta(t, key, seq, off); e != nil {
+				err = e
+				return
+			}
+
+			err = t.Commit()
+			t.Unlock()
 		}
-		err = t.Commit()
-		t.Unlock()
 	}
 
 	return
 }
 
-// func (db *DB) BMSetBit(key []byte, args ...BitPair) (err error) {
-// 	if err = checkKeySize(key); err != nil {
-// 		return
-// 	}
+func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int32, err error) {
+	if err = checkKeySize(key); err != nil {
+		return
+	}
 
-// 	//	todo ... optimize by sort the args by 'pos', and merge it ...
+	//	(ps : so as to aviod wasting the mem copy while calling db.Get() and batch.Put(),
+	//		  here we sequence the request pos in order, so that we can execute diff pos
+	//		  set on the same segment by justing calling db.Get() and batch.Put() one time
+	//		  either.)
 
-// 	t := db.binTx
-// 	t.Lock()
-// 	defer t.Unlock()
+	//	sort the requesting data by set pos
+	var argCnt = len(args)
+	var bInfos segBitInfoArray = make(segBitInfoArray, argCnt)
+	var seq, off uint32
 
-// 	var bk, segment []byte
-// 	var seq, off uint32
+	for i, info := range args {
+		if seq, off, err = db.bParseOffset(key, info.Pos); err != nil {
+			return
+		}
 
-// 	for _, bitInfo := range args {
-// 		if seq, off, err = db.bParseOffset(key, bitInfo.Pos); err != nil {
-// 			return
-// 		}
+		bInfos[i].Seq = seq
+		bInfos[i].Off = off
+		bInfos[i].Val = info.Val
+	}
 
-// 		if bk, segment, err = db.bAllocateSegment(key, seq); err != nil {
-// 			return
-// 		}
-// 	}
+	sort.Sort(&bInfos)
 
-// 	return t.Commit()
-// }
+	for i := 1; i < argCnt; i++ {
+		if bInfos[i].Seq == bInfos[i-1].Seq && bInfos[i].Off == bInfos[i-1].Off {
+			return 0, errDuplicatePos
+		}
+	}
+
+	//	set data
+	t := db.binTx
+	t.Lock()
+	defer t.Unlock()
+
+	var bk, segment []byte
+	var lastSeq, maxSeq, maxOff uint32
+
+	for _, info := range bInfos {
+		if segment != nil && info.Seq != lastSeq {
+			t.Put(bk, segment)
+			segment = nil
+		}
+
+		if segment == nil {
+			if bk, segment, err = db.bAllocateSegment(key, info.Seq); err != nil {
+				return
+			}
+
+			if segment == nil {
+				continue
+			} else {
+				lastSeq = info.Seq
+			}
+		}
+
+		if setBit(segment, info.Off, info.Val) {
+			maxSeq = info.Seq
+			maxOff = info.Off
+			place++
+		}
+	}
+
+	if segment != nil {
+		t.Put(bk, segment)
+	}
+
+	//	finally, update meta
+	if place > 0 {
+		if _, _, err = db.bUpdateMeta(t, key, maxSeq, maxOff); err != nil {
+			return
+		}
+
+		err = t.Commit()
+	}
+
+	return
+}
 
 func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
 	if seq, off, err := db.bParseOffset(key, offset); err != nil {
