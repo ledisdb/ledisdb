@@ -453,10 +453,6 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) hFlush() (drop int64, err error) {
-	t := db.kvTx
-	t.Lock()
-	defer t.Unlock()
-
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
 	minKey[1] = hashType
@@ -465,19 +461,12 @@ func (db *DB) hFlush() (drop int64, err error) {
 	maxKey[0] = db.index
 	maxKey[1] = hSizeType + 1
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-	it.Close()
+	t := db.kvTx
+	t.Lock()
+	defer t.Unlock()
 
-	db.expFlush(t, hExpType)
+	drop, err = db.flushRegion(t, minKey, maxKey)
+	err = db.expFlush(t, hExpType)
 
 	err = t.Commit()
 	return

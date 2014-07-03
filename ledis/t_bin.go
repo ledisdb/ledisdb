@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/ledisdb/leveldb"
+	"time"
 )
 
 const (
@@ -12,6 +13,11 @@ const (
 	OPxor
 	OPnot
 )
+
+type BitPair struct {
+	Pos int32
+	Val uint8
+}
 
 const (
 	// byte
@@ -227,57 +233,7 @@ func (db *DB) bDelete(t *tx, key []byte) (drop int64) {
 	return drop
 }
 
-func (db *DB) BGet(key []byte) (data []byte, err error) {
-	if err = checkKeySize(key); err != nil {
-		return
-	}
-
-	var ts, to int32
-	if ts, to, err = db.bGetMeta(key); err != nil || ts < 0 {
-		return
-	}
-
-	var tailSeq, tailOff = uint32(ts), uint32(to)
-	var capByteSize uint32 = db.bCapByteSize(tailSeq, tailOff)
-	data = make([]byte, capByteSize, capByteSize)
-
-	minKey := db.bEncodeBinKey(key, minSeq)
-	maxKey := db.bEncodeBinKey(key, tailSeq)
-	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeClose)
-
-	var seq, s, e uint32
-	for ; it.Valid(); it.Next() {
-		if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
-			data = nil
-			break
-		}
-
-		s = seq << segByteWidth
-		e = MinUInt32(s+segByteSize, capByteSize)
-		copy(data[s:e], it.Value())
-	}
-	it.Close()
-
-	return
-}
-
-func (db *DB) BDelete(key []byte) (drop int64, err error) {
-	if err = checkKeySize(key); err != nil {
-		return
-	}
-
-	t := db.binTx
-	t.Lock()
-	defer t.Unlock()
-
-	drop = db.bDelete(t, key)
-	db.rmExpire(t, bExpType, key)
-
-	err = t.Commit()
-	return
-}
-
-func (db *DB) getSegment(key []byte, seq uint32) ([]byte, []byte, error) {
+func (db *DB) bGetSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 	bk := db.bEncodeBinKey(key, seq)
 	segment, err := db.db.Get(bk)
 	if err != nil {
@@ -286,111 +242,12 @@ func (db *DB) getSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 	return bk, segment, nil
 }
 
-func (db *DB) allocateSegment(key []byte, seq uint32) ([]byte, []byte, error) {
-	bk, segment, err := db.getSegment(key, seq)
+func (db *DB) bAllocateSegment(key []byte, seq uint32) ([]byte, []byte, error) {
+	bk, segment, err := db.bGetSegment(key, seq)
 	if err == nil && segment == nil {
 		segment = make([]byte, segByteSize, segByteSize)
 	}
 	return bk, segment, err
-}
-
-func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error) {
-	if err = checkKeySize(key); err != nil {
-		return
-	}
-
-	//	todo : check offset
-	var seq, off uint32
-	if seq, off, err = db.bParseOffset(key, offset); err != nil {
-		return 0, err
-	}
-
-	var bk, segment []byte
-	if bk, segment, err = db.allocateSegment(key, seq); err != nil {
-		return 0, err
-	}
-
-	if segment != nil {
-		ori = getBit(segment, off)
-		setBit(segment, off, val)
-
-		t := db.binTx
-		t.Lock()
-		t.Put(bk, segment)
-		if _, _, e := db.bUpdateMeta(t, key, seq, off); e != nil {
-			err = e
-			return
-		}
-		err = t.Commit()
-		t.Unlock()
-	}
-
-	return
-}
-
-func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
-	if seq, off, err := db.bParseOffset(key, offset); err != nil {
-		return 0, err
-	} else {
-		_, segment, err := db.getSegment(key, seq)
-		if err != nil {
-			return 0, err
-		}
-
-		if segment == nil {
-			return 0, nil
-		} else {
-			return getBit(segment, off), nil
-		}
-	}
-}
-
-// func (db *DB) BGetRange(key []byte, start int32, end int32) ([]byte, error) {
-// 	section := make([]byte)
-
-// 	return
-// }
-
-func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) {
-	var sseq uint32
-	if sseq, _, err = db.bParseOffset(key, start); err != nil {
-		return
-	}
-
-	var eseq uint32
-	if eseq, _, err = db.bParseOffset(key, end); err != nil {
-		return
-	}
-
-	var segment []byte
-	skey := db.bEncodeBinKey(key, sseq)
-	ekey := db.bEncodeBinKey(key, eseq)
-
-	it := db.db.RangeIterator(skey, ekey, leveldb.RangeClose)
-	for ; it.Valid(); it.Next() {
-		segment = it.Value()
-		for _, bit := range segment {
-			cnt += bitsInByte[bit]
-		}
-	}
-	it.Close()
-
-	return
-}
-
-func (db *DB) BTail(key []byte) (int32, error) {
-	// effective length of data, the highest bit-pos set in history
-	tailSeq, tailOff, err := db.bGetMeta(key)
-	if err != nil {
-		return 0, err
-	}
-
-	tail := int32(-1)
-	if tailSeq >= 0 {
-		tail = int32(uint32(tailSeq)<<segBitWidth | uint32(tailOff))
-	}
-
-	return tail, nil
 }
 
 func (db *DB) bIterator(key []byte) *leveldb.RangeLimitIterator {
@@ -466,6 +323,198 @@ func (db *DB) bSegXor(a []byte, b []byte, res *[]byte) {
 	}
 
 	return
+}
+
+func (db *DB) bExpireAt(key []byte, when int64) (int64, error) {
+	t := db.binTx
+	t.Lock()
+	defer t.Unlock()
+
+	if seq, _, err := db.bGetMeta(key); err != nil || seq < 0 {
+		return 0, err
+	} else {
+		db.expireAt(t, bExpType, key, when)
+		if err := t.Commit(); err != nil {
+			return 0, err
+		}
+	}
+	return 1, nil
+}
+
+func (db *DB) BGet(key []byte) (data []byte, err error) {
+	if err = checkKeySize(key); err != nil {
+		return
+	}
+
+	var ts, to int32
+	if ts, to, err = db.bGetMeta(key); err != nil || ts < 0 {
+		return
+	}
+
+	var tailSeq, tailOff = uint32(ts), uint32(to)
+	var capByteSize uint32 = db.bCapByteSize(tailSeq, tailOff)
+	data = make([]byte, capByteSize, capByteSize)
+
+	minKey := db.bEncodeBinKey(key, minSeq)
+	maxKey := db.bEncodeBinKey(key, tailSeq)
+	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeClose)
+
+	var seq, s, e uint32
+	for ; it.Valid(); it.Next() {
+		if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
+			data = nil
+			break
+		}
+
+		s = seq << segByteWidth
+		e = MinUInt32(s+segByteSize, capByteSize)
+		copy(data[s:e], it.Value())
+	}
+	it.Close()
+
+	return
+}
+
+func (db *DB) BDelete(key []byte) (drop int64, err error) {
+	if err = checkKeySize(key); err != nil {
+		return
+	}
+
+	t := db.binTx
+	t.Lock()
+	defer t.Unlock()
+
+	drop = db.bDelete(t, key)
+	db.rmExpire(t, bExpType, key)
+
+	err = t.Commit()
+	return
+}
+
+func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error) {
+	if err = checkKeySize(key); err != nil {
+		return
+	}
+
+	//	todo : check offset
+	var seq, off uint32
+	if seq, off, err = db.bParseOffset(key, offset); err != nil {
+		return 0, err
+	}
+
+	var bk, segment []byte
+	if bk, segment, err = db.bAllocateSegment(key, seq); err != nil {
+		return 0, err
+	}
+
+	if segment != nil {
+		ori = getBit(segment, off)
+		setBit(segment, off, val)
+
+		t := db.binTx
+		t.Lock()
+		t.Put(bk, segment)
+		if _, _, e := db.bUpdateMeta(t, key, seq, off); e != nil {
+			err = e
+			return
+		}
+		err = t.Commit()
+		t.Unlock()
+	}
+
+	return
+}
+
+// func (db *DB) BMSetBit(key []byte, args ...BitPair) (err error) {
+// 	if err = checkKeySize(key); err != nil {
+// 		return
+// 	}
+
+// 	//	todo ... optimize by sort the args by 'pos', and merge it ...
+
+// 	t := db.binTx
+// 	t.Lock()
+// 	defer t.Unlock()
+
+// 	var bk, segment []byte
+// 	var seq, off uint32
+
+// 	for _, bitInfo := range args {
+// 		if seq, off, err = db.bParseOffset(key, bitInfo.Pos); err != nil {
+// 			return
+// 		}
+
+// 		if bk, segment, err = db.bAllocateSegment(key, seq); err != nil {
+// 			return
+// 		}
+// 	}
+
+// 	return t.Commit()
+// }
+
+func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
+	if seq, off, err := db.bParseOffset(key, offset); err != nil {
+		return 0, err
+	} else {
+		_, segment, err := db.bGetSegment(key, seq)
+		if err != nil {
+			return 0, err
+		}
+
+		if segment == nil {
+			return 0, nil
+		} else {
+			return getBit(segment, off), nil
+		}
+	}
+}
+
+// func (db *DB) BGetRange(key []byte, start int32, end int32) ([]byte, error) {
+// 	section := make([]byte)
+
+// 	return
+// }
+
+func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) {
+	var sseq uint32
+	if sseq, _, err = db.bParseOffset(key, start); err != nil {
+		return
+	}
+
+	var eseq uint32
+	if eseq, _, err = db.bParseOffset(key, end); err != nil {
+		return
+	}
+
+	var segment []byte
+	skey := db.bEncodeBinKey(key, sseq)
+	ekey := db.bEncodeBinKey(key, eseq)
+
+	it := db.db.RangeIterator(skey, ekey, leveldb.RangeClose)
+	for ; it.Valid(); it.Next() {
+		segment = it.Value()
+		for _, bit := range segment {
+			cnt += bitsInByte[bit]
+		}
+	}
+	it.Close()
+
+	return
+}
+
+func (db *DB) BTail(key []byte) (int32, error) {
+	// effective length of data, the highest bit-pos set in history
+	tailSeq, tailOff, err := db.bGetMeta(key)
+	if err != nil {
+		return 0, err
+	}
+
+	tail := int32(-1)
+	if tailSeq >= 0 {
+		tail = int32(uint32(tailSeq)<<segBitWidth | uint32(tailOff))
+	}
+
+	return tail, nil
 }
 
 func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32, err error) {
@@ -634,26 +683,76 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	return
 }
 
-// func (db *DB) BExpire(key []byte, duration int64) (int64, error) {
+func (db *DB) BExpire(key []byte, duration int64) (int64, error) {
+	if duration <= 0 {
+		return 0, errExpireValue
+	}
 
-// }
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
 
-// func (db *DB) BExpireAt(key []byte, when int64) (int64, error) {
+	return db.bExpireAt(key, time.Now().Unix()+duration)
+}
 
-// }
+func (db *DB) BExpireAt(key []byte, when int64) (int64, error) {
+	if when <= time.Now().Unix() {
+		return 0, errExpireValue
+	}
 
-// func (db *DB) BTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
 
-// }
+	return db.bExpireAt(key, when)
+}
 
-// func (db *DB) BPersist(key []byte) (int64, error) {
+func (db *DB) BTTL(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return -1, err
+	}
 
-// }
+	return db.ttl(bExpType, key)
+}
+
+func (db *DB) BPersist(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	t := db.binTx
+	t.Lock()
+	defer t.Unlock()
+
+	n, err := db.rmExpire(t, bExpType, key)
+	if err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
+	return n, err
+}
 
 // func (db *DB) BScan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 
 // }
 
-// func (db *DB) bFlush() (drop int64, err error) {
+func (db *DB) bFlush() (drop int64, err error) {
+	t := db.binTx
+	t.Lock()
+	defer t.Unlock()
 
-// }
+	minKey := make([]byte, 2)
+	minKey[0] = db.index
+	minKey[1] = binType
+
+	maxKey := make([]byte, 2)
+	maxKey[0] = db.index
+	maxKey[1] = binMetaType + 1
+
+	drop, err = db.flushRegion(t, minKey, maxKey)
+	err = db.expFlush(t, bExpType)
+
+	err = t.Commit()
+	return
+}
