@@ -3,8 +3,8 @@ package ledis
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/leveldb"
-	"github.com/siddontang/ledisdb/log"
 	"path"
 	"sync"
 	"time"

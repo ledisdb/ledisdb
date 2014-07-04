@@ -1,3 +1,4 @@
+//a wrapper for c++ leveldb 
 package leveldb
 
 /*
@@ -156,7 +157,7 @@ func (db *DB) initOptions(cfg *Config) {
 	db.syncWriteOpts.SetSync(true)
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	if db.db != nil {
 		C.leveldb_close(db.db)
 		db.db = nil
@@ -176,6 +177,8 @@ func (db *DB) Close() {
 	db.writeOpts.Close()
 	db.iteratorOpts.Close()
 	db.syncWriteOpts.Close()
+
+	return nil
 }
 
 func (db *DB) Destroy() error {
@@ -274,23 +277,23 @@ func (db *DB) NewIterator() *Iterator {
 }
 
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, 0, -1, IteratorForward)
+	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
 func (db *DB) RevRangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, 0, -1, IteratorBackward)
+	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
-//limit < 0, unlimit
+//count < 0, unlimit
 //offset must >= 0, if < 0, will get nothing
-func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, limit int) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, offset, limit, IteratorForward)
+func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
+	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-//limit < 0, unlimit
+//count < 0, unlimit
 //offset must >= 0, if < 0, will get nothing
-func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, limit int) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, offset, limit, IteratorBackward)
+func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
+	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
 func (db *DB) put(wo *WriteOptions, key, value []byte) error {

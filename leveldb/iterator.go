@@ -35,6 +35,11 @@ type Range struct {
 	Type uint8
 }
 
+type Limit struct {
+	Offset int
+	Count  int
+}
+
 type Iterator struct {
 	it *C.leveldb_iterator_t
 }
@@ -107,9 +112,7 @@ type RangeLimitIterator struct {
 	it *Iterator
 
 	r *Range
-
-	offset int
-	limit  int
+	l *Limit
 
 	step int
 
@@ -126,11 +129,11 @@ func (it *RangeLimitIterator) Value() []byte {
 }
 
 func (it *RangeLimitIterator) Valid() bool {
-	if it.offset < 0 {
+	if it.l.Offset < 0 {
 		return false
 	} else if !it.it.Valid() {
 		return false
-	} else if it.limit >= 0 && it.step >= it.limit {
+	} else if it.l.Count >= 0 && it.step >= it.l.Count {
 		return false
 	}
 
@@ -171,19 +174,26 @@ func (it *RangeLimitIterator) Close() {
 	it.it.Close()
 }
 
-func newRangeLimitIterator(i *Iterator, r *Range, offset int, limit int, direction uint8) *RangeLimitIterator {
+func NewRangeLimitIterator(i *Iterator, r *Range, l *Limit) *RangeLimitIterator {
+	return rangeLimitIterator(i, r, l, IteratorForward)
+}
+
+func NewRevRangeLimitIterator(i *Iterator, r *Range, l *Limit) *RangeLimitIterator {
+	return rangeLimitIterator(i, r, l, IteratorBackward)
+}
+
+func rangeLimitIterator(i *Iterator, r *Range, l *Limit, direction uint8) *RangeLimitIterator {
 	it := new(RangeLimitIterator)
 
 	it.it = i
 
 	it.r = r
-	it.offset = offset
-	it.limit = limit
+	it.l = l
 	it.direction = direction
 
 	it.step = 0
 
-	if offset < 0 {
+	if l.Offset < 0 {
 		return it
 	}
 
@@ -221,7 +231,7 @@ func newRangeLimitIterator(i *Iterator, r *Range, offset int, limit int, directi
 		}
 	}
 
-	for i := 0; i < offset; i++ {
+	for i := 0; i < l.Offset; i++ {
 		if it.it.Valid() {
 			if it.direction == IteratorForward {
 				it.it.Next()

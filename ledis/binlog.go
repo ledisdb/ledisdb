@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/siddontang/ledisdb/log"
+	"github.com/siddontang/go-log/log"
 	"io/ioutil"
 	"os"
 	"path"
