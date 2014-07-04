@@ -51,7 +51,7 @@ ledisdb是一个用go实现的类似redis的高性能nosql数据库，底层基�
 ## 嵌入库
     
     import "github.com/siddontang/ledisdb/ledis"
-    l, _ := ledis.OpenWithConfig(cfg)
+    l, _ := ledis.Open(cfg)
     db, _ := l.Select(0)
 
     db.Set(key, value)

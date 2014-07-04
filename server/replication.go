@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go-snappy/snappy"
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"net"
@@ -42,6 +43,8 @@ type master struct {
 	wg sync.WaitGroup
 
 	syncBuf bytes.Buffer
+
+	compressBuf []byte
 }
 
 func newMaster(app *App) *master {
@@ -52,6 +55,8 @@ func newMaster(app *App) *master {
 	m.infoNameBak = fmt.Sprintf("%s.bak", m.infoName)
 
 	m.quit = make(chan struct{}, 1)
+
+	m.compressBuf = make([]byte, 256)
 
 	//if load error, we will start a fullsync later
 	m.loadInfo()
@@ -86,8 +91,6 @@ func (m *master) loadInfo() error {
 	if err = json.Unmarshal(data, m); err != nil {
 		return err
 	}
-
-	println(m.addr, m.logFileIndex, m.logPos)
 
 	return nil
 }
@@ -293,15 +296,20 @@ func (m *master) sync() error {
 		return err
 	}
 
-	err = binary.Read(&m.syncBuf, binary.BigEndian, &m.logFileIndex)
+	var buf []byte
+	buf, err = snappy.Decode(m.compressBuf, m.syncBuf.Bytes())
 	if err != nil {
 		return err
+	} else if len(buf) > len(m.compressBuf) {
+		m.compressBuf = buf
 	}
 
-	err = binary.Read(&m.syncBuf, binary.BigEndian, &m.logPos)
-	if err != nil {
-		return err
+	if len(buf) < 16 {
+		return fmt.Errorf("invalid sync data len %d", len(buf))
 	}
+
+	m.logFileIndex = int64(binary.BigEndian.Uint64(buf[0:8]))
+	m.logPos = int64(binary.BigEndian.Uint64(buf[8:16]))
 
 	if m.logFileIndex == 0 {
 		//master now not support binlog, stop replication
@@ -312,7 +320,7 @@ func (m *master) sync() error {
 		return m.fullSync()
 	}
 
-	err = m.app.ldb.ReplicateFromReader(&m.syncBuf)
+	err = m.app.ldb.ReplicateFromData(buf[16:])
 	if err != nil {
 		return err
 	}

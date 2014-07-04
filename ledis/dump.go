@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"github.com/siddontang/go-snappy/snappy"
 	"github.com/siddontang/ledisdb/leveldb"
 	"io"
 	"os"
@@ -12,7 +13,8 @@ import (
 //dump format
 // fileIndex(bigendian int64)|filePos(bigendian int64)
 // |keylen(bigendian int32)|key|valuelen(bigendian int32)|value......
-
+//
+//key and value are both compressed for fast transfer dump on network using snappy
 type MasterInfo struct {
 	LogFileIndex int64
 	LogPos       int64
@@ -76,17 +78,27 @@ func (l *Ledis) Dump(w io.Writer) error {
 	it := sp.NewIterator()
 	it.SeekToFirst()
 
+	compressBuf := make([]byte, 4096)
+
 	var key []byte
 	var value []byte
 	for ; it.Valid(); it.Next() {
 		key = it.Key()
 		value = it.Value()
 
+		if key, err = snappy.Encode(compressBuf, key); err != nil {
+			return err
+		}
+
 		if err = binary.Write(wb, binary.BigEndian, uint16(len(key))); err != nil {
 			return err
 		}
 
 		if _, err = wb.Write(key); err != nil {
+			return err
+		}
+
+		if value, err = snappy.Encode(compressBuf, value); err != nil {
 			return err
 		}
 
@@ -102,6 +114,8 @@ func (l *Ledis) Dump(w io.Writer) error {
 	if err = wb.Flush(); err != nil {
 		return err
 	}
+
+	compressBuf = nil
 
 	return nil
 }
@@ -134,6 +148,12 @@ func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
 
 	var keyBuf bytes.Buffer
 	var valueBuf bytes.Buffer
+
+	deKeyBuf := make([]byte, 4096)
+	deValueBuf := make([]byte, 4096)
+
+	var key, value []byte
+
 	for {
 		if err = binary.Read(rb, binary.BigEndian, &keyLen); err != nil && err != io.EOF {
 			return nil, err
@@ -145,6 +165,10 @@ func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
 			return nil, err
 		}
 
+		if key, err = snappy.Decode(deKeyBuf, keyBuf.Bytes()); err != nil {
+			return nil, err
+		}
+
 		if err = binary.Read(rb, binary.BigEndian, &valueLen); err != nil {
 			return nil, err
 		}
@@ -153,17 +177,24 @@ func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
 			return nil, err
 		}
 
-		if err = l.ldb.Put(keyBuf.Bytes(), valueBuf.Bytes()); err != nil {
+		if value, err = snappy.Decode(deValueBuf, valueBuf.Bytes()); err != nil {
+			return nil, err
+		}
+
+		if err = l.ldb.Put(key, value); err != nil {
 			return nil, err
 		}
 
 		if l.binlog != nil {
-			err = l.binlog.Log(encodeBinLogPut(keyBuf.Bytes(), valueBuf.Bytes()))
+			err = l.binlog.Log(encodeBinLogPut(key, value))
 		}
 
 		keyBuf.Reset()
 		valueBuf.Reset()
 	}
+
+	deKeyBuf = nil
+	deValueBuf = nil
 
 	return info, nil
 }

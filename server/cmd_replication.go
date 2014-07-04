@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/siddontang/go-snappy/snappy"
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"os"
@@ -102,6 +103,14 @@ func syncCommand(c *client) error {
 
 		binary.BigEndian.PutUint64(buf[0:], uint64(m.LogFileIndex))
 		binary.BigEndian.PutUint64(buf[8:], uint64(m.LogPos))
+
+		if len(c.compressBuf) < snappy.MaxEncodedLen(len(buf)) {
+			c.compressBuf = make([]byte, snappy.MaxEncodedLen(len(buf)))
+		}
+
+		if buf, err = snappy.Encode(c.compressBuf, buf); err != nil {
+			return err
+		}
 
 		c.writeBulk(buf)
 	}
