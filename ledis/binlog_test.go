@@ -15,7 +15,7 @@ func TestBinLog(t *testing.T) {
 
 	os.RemoveAll(cfg.Path)
 
-	b, err := NewBinLogWithConfig(cfg)
+	b, err := NewBinLog(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,7 +7,7 @@
 //
 // First create a ledis instance before use:
 //
-//  l := ledis.OpenWithConfig(cfg)
+//  l := ledis.Open(cfg)
 //
 // cfg is a Config instance which contains configuration for ledis use,
 // like DataDir (root directory for ledis working to store data).

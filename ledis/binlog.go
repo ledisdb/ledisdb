@@ -66,17 +66,17 @@ type BinLog struct {
 	lastLogIndex int64
 }
 
-func NewBinLog(data json.RawMessage) (*BinLog, error) {
+func NewBinLogWithJsonConfig(data json.RawMessage) (*BinLog, error) {
 	var cfg BinLogConfig
 
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 
-	return NewBinLogWithConfig(&cfg)
+	return NewBinLog(&cfg)
 }
 
-func NewBinLogWithConfig(cfg *BinLogConfig) (*BinLog, error) {
+func NewBinLog(cfg *BinLogConfig) (*BinLog, error) {
 	cfg.adjust()
 
 	l := new(BinLog)

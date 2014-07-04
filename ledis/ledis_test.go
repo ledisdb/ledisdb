@@ -31,7 +31,7 @@ func getTestDB() *DB {
 		os.RemoveAll("/tmp/test_ledis")
 
 		var err error
-		testLedis, err = Open(d)
+		testLedis, err = OpenWithJsonConfig(d)
 		if err != nil {
 			println(err.Error())
 			panic(err)

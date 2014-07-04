@@ -24,7 +24,7 @@ var testDB *DB
 func getTestDB() *DB {
 	f := func() {
 		var err error
-		testDB, err = Open(testConfigJson)
+		testDB, err = OpenWithJsonConfig(testConfigJson)
 		if err != nil {
 			println(err.Error())
 			panic(err)
@@ -247,7 +247,7 @@ func TestCloseMore(t *testing.T) {
 	cfg.CacheSize = 4 * 1024 * 1024
 	os.RemoveAll(cfg.Path)
 	for i := 0; i < 100; i++ {
-		db, err := OpenWithConfig(cfg)
+		db, err := Open(cfg)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -1,4 +1,4 @@
-//a wrapper for c++ leveldb 
+//a wrapper for c++ leveldb
 package leveldb
 
 /*
@@ -44,17 +44,17 @@ type DB struct {
 	filter *FilterPolicy
 }
 
-func Open(configJson json.RawMessage) (*DB, error) {
+func OpenWithJsonConfig(configJson json.RawMessage) (*DB, error) {
 	cfg := new(Config)
 	err := json.Unmarshal(configJson, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return OpenWithConfig(cfg)
+	return Open(cfg)
 }
 
-func OpenWithConfig(cfg *Config) (*DB, error) {
+func Open(cfg *Config) (*DB, error) {
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
 		return nil, err
 	}

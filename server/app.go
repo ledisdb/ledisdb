@@ -66,7 +66,7 @@ func NewApp(cfg *Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.OpenWithConfig(&cfg.DB); err != nil {
+	if app.ldb, err = ledis.Open(&cfg.DB); err != nil {
 		return nil, err
 	}
 

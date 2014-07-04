@@ -23,7 +23,7 @@ func TestDump(t *testing.T) {
     }
     `)
 
-	master, err := Open(masterConfig)
+	master, err := OpenWithJsonConfig(masterConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestDump(t *testing.T) {
     `)
 
 	var slave *Ledis
-	if slave, err = Open(slaveConfig); err != nil {
+	if slave, err = OpenWithJsonConfig(slaveConfig); err != nil {
 		t.Fatal(err)
 	}
 
