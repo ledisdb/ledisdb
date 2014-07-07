@@ -165,12 +165,17 @@ func (l *Ledis) activeExpireCycle() {
 	go func() {
 		tick := time.NewTicker(1 * time.Second)
 		end := false
+		done := make(chan struct{})
 		for !end {
 			select {
 			case <-tick.C:
-				for _, eli := range executors {
-					eli.active()
-				}
+				go func() {
+					for _, eli := range executors {
+						eli.active()
+					}
+					done <- struct{}{}
+				}()
+				<-done
 			case <-l.quit:
 				end = true
 				break
