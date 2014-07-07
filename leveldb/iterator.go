@@ -98,7 +98,7 @@ func (it *Iterator) BufKey(b []byte) []byte {
 	if k == nil {
 		return nil
 	}
-	if len(k) > len(b) {
+	if b == nil || len(k) > len(b) {
 		b = make([]byte, len(k))
 	}
 
@@ -112,7 +112,7 @@ func (it *Iterator) BufValue(b []byte) []byte {
 	if v == nil {
 		return nil
 	}
-	if len(v) > len(b) {
+	if b == nil || len(v) > len(b) {
 		b = make([]byte, len(v))
 	}
 
@@ -206,6 +206,14 @@ func (it *RangeLimitIterator) RawKey() []byte {
 
 func (it *RangeLimitIterator) RawValue() []byte {
 	return it.it.RawValue()
+}
+
+func (it *RangeLimitIterator) BufKey(b []byte) []byte {
+	return it.it.BufKey(b)
+}
+
+func (it *RangeLimitIterator) BufValue(b []byte) []byte {
+	return it.it.BufValue(b)
 }
 
 func (it *RangeLimitIterator) Valid() bool {

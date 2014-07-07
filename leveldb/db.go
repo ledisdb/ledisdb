@@ -345,7 +345,7 @@ func (db *DB) get(r []byte, ro *ReadOptions, key []byte) ([]byte, error) {
 
 	defer C.leveldb_get_free_ext(unsafe.Pointer(c))
 
-	if int(C.int(vallen)) > len(r) {
+	if r == nil || int(C.int(vallen)) > len(r) {
 		return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
 	} else {
 		b := slice(unsafe.Pointer(value), int(C.int(vallen)))
