@@ -345,13 +345,13 @@ func (db *DB) get(r []byte, ro *ReadOptions, key []byte) ([]byte, error) {
 
 	defer C.leveldb_get_free_ext(unsafe.Pointer(c))
 
-	if r == nil || int(C.int(vallen)) > len(r) {
-		return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
-	} else {
-		b := slice(unsafe.Pointer(value), int(C.int(vallen)))
-		n := copy(r, b)
-		return r[0:n], nil
+	if r == nil {
+		r = []byte{}
 	}
+
+	r = r[0:0]
+	b := slice(unsafe.Pointer(value), int(C.int(vallen)))
+	return append(r, b...), nil
 }
 
 func (db *DB) delete(wo *WriteOptions, key []byte) error {

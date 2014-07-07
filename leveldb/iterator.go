@@ -98,12 +98,12 @@ func (it *Iterator) BufKey(b []byte) []byte {
 	if k == nil {
 		return nil
 	}
-	if b == nil || len(k) > len(b) {
-		b = make([]byte, len(k))
+	if b == nil {
+		b = []byte{}
 	}
 
-	n := copy(b, k)
-	return b[0:n]
+	b = b[0:0]
+	return append(b, k...)
 }
 
 //Copy value to b, if b len is small or nil, returns a new one
@@ -112,12 +112,13 @@ func (it *Iterator) BufValue(b []byte) []byte {
 	if v == nil {
 		return nil
 	}
-	if b == nil || len(v) > len(b) {
-		b = make([]byte, len(v))
+
+	if b == nil {
+		b = []byte{}
 	}
 
-	n := copy(b, v)
-	return b[0:n]
+	b = b[0:0]
+	return append(b, v...)
 }
 
 func (it *Iterator) Close() {
