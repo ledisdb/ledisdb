@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/log"
 	"io"
 	"net"
 	"runtime"
@@ -33,6 +33,8 @@ type client struct {
 
 	syncBuf bytes.Buffer
 
+	compressBuf []byte
+
 	logBuf bytes.Buffer
 }
 
@@ -49,6 +51,8 @@ func newClient(c net.Conn, app *App) {
 	co.wb = bufio.NewWriterSize(c, 256)
 
 	co.reqC = make(chan error, 1)
+
+	co.compressBuf = make([]byte, 256)
 
 	go co.run()
 }

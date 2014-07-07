@@ -44,7 +44,7 @@ Ledisdb is a high performance nosql like redis based on leveldb written by go. I
 ## Lib
     
     import "github.com/siddontang/ledisdb/ledis"
-    l, _ := ledis.OpenWithConfig(cfg)
+    l, _ := ledis.Open(cfg)
     db, _ := l.Select(0)
 
     db.Set(key, value)
@@ -79,7 +79,8 @@ Some server commands explaintions are [here](https://github.com/siddontang/ledis
 
 ## Thanks
 
-Gamil: cenqichao@gmail.com
+Gmail: cenqichao@gmail.com
+Gmail: chendahui007@gmail.com
 
 ## Feedback
 

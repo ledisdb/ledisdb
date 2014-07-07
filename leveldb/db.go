@@ -1,8 +1,10 @@
+//a wrapper for c++ leveldb
 package leveldb
 
 /*
 #cgo LDFLAGS: -lleveldb
 #include <leveldb/c.h>
+#include "leveldb_ext.h"
 */
 import "C"
 
@@ -43,17 +45,17 @@ type DB struct {
 	filter *FilterPolicy
 }
 
-func Open(configJson json.RawMessage) (*DB, error) {
+func OpenWithJsonConfig(configJson json.RawMessage) (*DB, error) {
 	cfg := new(Config)
 	err := json.Unmarshal(configJson, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return OpenWithConfig(cfg)
+	return Open(cfg)
 }
 
-func OpenWithConfig(cfg *Config) (*DB, error) {
+func Open(cfg *Config) (*DB, error) {
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
 		return nil, err
 	}
@@ -156,7 +158,7 @@ func (db *DB) initOptions(cfg *Config) {
 	db.syncWriteOpts.SetSync(true)
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	if db.db != nil {
 		C.leveldb_close(db.db)
 		db.db = nil
@@ -176,6 +178,8 @@ func (db *DB) Close() {
 	db.writeOpts.Close()
 	db.iteratorOpts.Close()
 	db.syncWriteOpts.Close()
+
+	return nil
 }
 
 func (db *DB) Destroy() error {
@@ -207,7 +211,7 @@ func (db *DB) Clear() error {
 
 	num := 0
 	for ; it.Valid(); it.Next() {
-		bc.Delete(it.Key())
+		bc.Delete(it.RawKey())
 		num++
 		if num == 1000 {
 			num = 0
@@ -231,7 +235,11 @@ func (db *DB) SyncPut(key, value []byte) error {
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
-	return db.get(db.readOpts, key)
+	return db.get(nil, db.readOpts, key)
+}
+
+func (db *DB) BufGet(r []byte, key []byte) ([]byte, error) {
+	return db.get(r, db.readOpts, key)
 }
 
 func (db *DB) Delete(key []byte) error {
@@ -274,23 +282,23 @@ func (db *DB) NewIterator() *Iterator {
 }
 
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, 0, -1, IteratorForward)
+	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
 func (db *DB) RevRangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, 0, -1, IteratorBackward)
+	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
-//limit < 0, unlimit
+//count < 0, unlimit
 //offset must >= 0, if < 0, will get nothing
-func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, limit int) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, offset, limit, IteratorForward)
+func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
+	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-//limit < 0, unlimit
+//count < 0, unlimit
 //offset must >= 0, if < 0, will get nothing
-func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, limit int) *RangeLimitIterator {
-	return newRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, offset, limit, IteratorBackward)
+func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
+	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
 func (db *DB) put(wo *WriteOptions, key, value []byte) error {
@@ -314,7 +322,7 @@ func (db *DB) put(wo *WriteOptions, key, value []byte) error {
 	return nil
 }
 
-func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
+func (db *DB) get(r []byte, ro *ReadOptions, key []byte) ([]byte, error) {
 	var errStr *C.char
 	var vallen C.size_t
 	var k *C.char
@@ -322,8 +330,10 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	value := C.leveldb_get(
-		db.db, ro.Opt, k, C.size_t(len(key)), &vallen, &errStr)
+	var value *C.char
+
+	c := C.leveldb_get_ext(
+		db.db, ro.Opt, k, C.size_t(len(key)), &value, &vallen, &errStr)
 
 	if errStr != nil {
 		return nil, saveError(errStr)
@@ -333,8 +343,15 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	defer C.leveldb_free(unsafe.Pointer(value))
-	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
+	defer C.leveldb_get_free_ext(unsafe.Pointer(c))
+
+	if r == nil {
+		r = []byte{}
+	}
+
+	r = r[0:0]
+	b := slice(unsafe.Pointer(value), int(C.int(vallen)))
+	return append(r, b...), nil
 }
 
 func (db *DB) delete(wo *WriteOptions, key []byte) error {

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/log"
+	"github.com/siddontang/go-log/log"
 	"io"
 	"os"
 )

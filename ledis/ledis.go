@@ -3,8 +3,8 @@ package ledis
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/leveldb"
-	"github.com/siddontang/ledisdb/log"
 	"path"
 	"sync"
 	"time"
@@ -50,17 +50,17 @@ type Ledis struct {
 	jobs *sync.WaitGroup
 }
 
-func Open(configJson json.RawMessage) (*Ledis, error) {
+func OpenWithJsonConfig(configJson json.RawMessage) (*Ledis, error) {
 	var cfg Config
 
 	if err := json.Unmarshal(configJson, &cfg); err != nil {
 		return nil, err
 	}
 
-	return OpenWithConfig(&cfg)
+	return Open(&cfg)
 }
 
-func OpenWithConfig(cfg *Config) (*Ledis, error) {
+func Open(cfg *Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		return nil, fmt.Errorf("must set correct data_dir")
 	}
@@ -69,7 +69,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 		cfg.DataDB.Path = path.Join(cfg.DataDir, "data")
 	}
 
-	ldb, err := leveldb.OpenWithConfig(&cfg.DataDB)
+	ldb, err := leveldb.Open(&cfg.DataDB)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func OpenWithConfig(cfg *Config) (*Ledis, error) {
 		if len(cfg.BinLog.Path) == 0 {
 			cfg.BinLog.Path = path.Join(cfg.DataDir, "bin_log")
 		}
-		l.binlog, err = NewBinLogWithConfig(&cfg.BinLog)
+		l.binlog, err = NewBinLog(&cfg.BinLog)
 		if err != nil {
 			return nil, err
 		}
@@ -165,12 +165,17 @@ func (l *Ledis) activeExpireCycle() {
 	go func() {
 		tick := time.NewTicker(1 * time.Second)
 		end := false
+		done := make(chan struct{})
 		for !end {
 			select {
 			case <-tick.C:
-				for _, eli := range executors {
-					eli.active()
-				}
+				go func() {
+					for _, eli := range executors {
+						eli.active()
+					}
+					done <- struct{}{}
+				}()
+				<-done
 			case <-l.quit:
 				end = true
 				break

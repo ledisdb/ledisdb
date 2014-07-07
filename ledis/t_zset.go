@@ -477,7 +477,7 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 			for ; it.Valid(); it.Next() {
 				n++
 
-				lastKey = it.Key()
+				lastKey = it.BufKey(lastKey)
 			}
 
 			it.Close()
@@ -492,26 +492,26 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 	return -1, nil
 }
 
-func (db *DB) zIterator(key []byte, min int64, max int64, offset int, limit int, reverse bool) *leveldb.RangeLimitIterator {
+func (db *DB) zIterator(key []byte, min int64, max int64, offset int, count int, reverse bool) *leveldb.RangeLimitIterator {
 	minKey := db.zEncodeStartScoreKey(key, min)
 	maxKey := db.zEncodeStopScoreKey(key, max)
 
 	if !reverse {
-		return db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
+		return db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, count)
 	} else {
-		return db.db.RevRangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, limit)
+		return db.db.RevRangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, count)
 	}
 }
 
-func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, limit int) (int64, error) {
+func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, count int) (int64, error) {
 	if len(key) > MaxKeySize {
 		return 0, errKeySize
 	}
 
-	it := db.zIterator(key, min, max, offset, limit, false)
+	it := db.zIterator(key, min, max, offset, count, false)
 	var num int64 = 0
 	for ; it.Valid(); it.Next() {
-		sk := it.Key()
+		sk := it.RawKey()
 		_, m, _, err := db.zDecodeScoreKey(sk)
 		if err != nil {
 			continue
@@ -534,7 +534,7 @@ func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, lim
 	return num, nil
 }
 
-func (db *DB) zRange(key []byte, min int64, max int64, offset int, limit int, reverse bool) ([]ScorePair, error) {
+func (db *DB) zRange(key []byte, min int64, max int64, offset int, count int, reverse bool) ([]ScorePair, error) {
 	if len(key) > MaxKeySize {
 		return nil, errKeySize
 	}
@@ -544,20 +544,20 @@ func (db *DB) zRange(key []byte, min int64, max int64, offset int, limit int, re
 	}
 
 	nv := 64
-	if limit > 0 {
-		nv = limit
+	if count > 0 {
+		nv = count
 	}
 
 	v := make([]ScorePair, 0, nv)
 
 	var it *leveldb.RangeLimitIterator
 
-	//if reverse and offset is 0, limit < 0, we may use forward iterator then reverse
+	//if reverse and offset is 0, count < 0, we may use forward iterator then reverse
 	//because leveldb iterator prev is slower than next
-	if !reverse || (offset == 0 && limit < 0) {
-		it = db.zIterator(key, min, max, offset, limit, false)
+	if !reverse || (offset == 0 && count < 0) {
+		it = db.zIterator(key, min, max, offset, count, false)
 	} else {
-		it = db.zIterator(key, min, max, offset, limit, true)
+		it = db.zIterator(key, min, max, offset, count, true)
 	}
 
 	for ; it.Valid(); it.Next() {
@@ -571,7 +571,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, offset int, limit int, re
 	}
 	it.Close()
 
-	if reverse && (offset == 0 && limit < 0) {
+	if reverse && (offset == 0 && count < 0) {
 		for i, j := 0, len(v)-1; i < j; i, j = i+1, j-1 {
 			v[i], v[j] = v[j], v[i]
 		}
@@ -580,7 +580,7 @@ func (db *DB) zRange(key []byte, min int64, max int64, offset int, limit int, re
 	return v, nil
 }
 
-func (db *DB) zParseLimit(key []byte, start int, stop int) (offset int, limit int, err error) {
+func (db *DB) zParseLimit(key []byte, start int, stop int) (offset int, count int, err error) {
 	if start < 0 || stop < 0 {
 		//refer redis implementation
 		var size int64
@@ -614,7 +614,7 @@ func (db *DB) zParseLimit(key []byte, start int, stop int) (offset int, limit in
 	}
 
 	offset = start
-	limit = (stop - start) + 1
+	count = (stop - start) + 1
 	return
 }
 
@@ -663,7 +663,7 @@ func (db *DB) ZRank(key []byte, member []byte) (int64, error) {
 }
 
 func (db *DB) ZRemRangeByRank(key []byte, start int, stop int) (int64, error) {
-	offset, limit, err := db.zParseLimit(key, start, stop)
+	offset, count, err := db.zParseLimit(key, start, stop)
 	if err != nil {
 		return 0, err
 	}
@@ -674,7 +674,7 @@ func (db *DB) ZRemRangeByRank(key []byte, start int, stop int) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	rmCnt, err = db.zRemRange(t, key, MinScore, MaxScore, offset, limit)
+	rmCnt, err = db.zRemRange(t, key, MinScore, MaxScore, offset, count)
 	if err == nil {
 		err = t.Commit()
 	}
@@ -711,12 +711,12 @@ func (db *DB) ZRevRangeByScore(key []byte, min int64, max int64, offset int, cou
 }
 
 func (db *DB) ZRangeGeneric(key []byte, start int, stop int, reverse bool) ([]ScorePair, error) {
-	offset, limit, err := db.zParseLimit(key, start, stop)
+	offset, count, err := db.zParseLimit(key, start, stop)
 	if err != nil {
 		return nil, err
 	}
 
-	return db.zRange(key, MinScore, MaxScore, offset, limit, reverse)
+	return db.zRange(key, MinScore, MaxScore, offset, count, reverse)
 }
 
 //min and max must be inclusive

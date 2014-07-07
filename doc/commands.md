@@ -1,8 +1,91 @@
-## Total
+## Summary
 
 ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
 
 ledisdb all commands return RESP fomrat and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
+
+Table of Contents
+=================
+
+
+- [Summary](#summary)
+- [KV](#kv)
+	- [DECR key](#decr-key)
+	- [DECRBY key decrement](#decrby-key-decrement)
+	- [DEL key [key ...]](#del-key-key-)
+	- [EXISTS key](#exists-key)
+	- [GET key](#get-key)
+	- [GETSET key value](#getset-key-value)
+	- [INCR key](#incr-key)
+	- [INCRBY key increment](#incrby-key-increment)
+	- [MGET key [key ...]](#mget-key-key-)
+	- [MSET key value [key value ...]](#mset-key-value-key-value-)
+	- [SET key value](#set-key-value)
+	- [SETNX key value](#setnx-key-value)
+	- [EXPIRE key seconds](#expire-key-seconds)
+	- [EXPIREAT key timestamp](#expireat-key-timestamp)
+	- [TTL key](#ttl-key)
+	- [PERSIST key](#persist-key)
+- [Hash](#hash)
+	- [HDEL key field [field ...]](#hdel-key-field-field-)
+	- [HEXISTS key field](#hexists-key-field)
+	- [HGET key field](#hget-key-field)
+	- [HGETALL key](#hgetall-key)
+	- [HINCRBY key field increment](#hincrby-key-field-increment)
+	- [HKEYS key](#hkeys-key)
+	- [HLEN key](#hlen-key)
+	- [HMGET key field [field ...]](#hmget-key-field-field-)
+	- [HMSET key field value [field value ...]](#hmset-key-field-value-field-value-)
+	- [HSET key field value](#hset-key-field-value)
+	- [HVALS key](#hvals-key)
+	- [HCLEAR key](#hclear-key)
+	- [HMCLEAR key [key...]](#hmclear-key-key)
+	- [HEXPIRE key seconds](#hexpire-key-seconds)
+	- [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
+	- [HTTL key](#httl-key)
+	- [HPERSIST key](#hpersist-key)
+- [List](#list)
+	- [LINDEX key index](#lindex-key-index)
+	- [LLEN key](#llen-key)
+	- [LPOP key](#lpop-key)
+	- [LRANGE key start stop](#lrange-key-start-stop)
+	- [LPUSH key value [value ...]](#lpush-key-value-value-)
+	- [RPOP key](#rpop-keuser-content-y)
+	- [RPUSH key value [value ...]](#rpush-key-value-value-)
+	- [LCLEAR key](#lclear-key)
+	- [LEXPIRE key seconds](#lexpire-key-seconds)
+	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
+	- [LTTL key](#lttl-key)
+	- [LPERSIST key](#lpersist-key)
+- [ZSet](#zset)
+	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
+	- [ZCARD key](#zcard-key)
+	- [ZCOUNT key min max](#zcount-key-min-max)
+	- [ZINCRBY key increment member](#zincrby-key-increment-member)
+	- [ZRANGE key start stop [WITHSCORES]](#zrange-key-start-stop-withscores)
+	- [ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]](#zrangebyscore-key-min-max-withscores-limit-offset-count)
+	- [ZRANK key member](#zrank-key-member)
+	- [ZREM key member [member ...]](#zrem-key-member-member-)
+	- [ZREMRANGEBYRANK key start stop](#zremrangebyrank-key-start-stop)
+	- [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
+	- [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
+	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
+	- [ZSCORE key member](#zscore-key-member)
+	- [ZCLEAR key](#zclear-key)
+	- [ZMCLEAR key [key ...]](#zmclear-key-key-)
+	- [ZEXPIRE key seconds](#zexpire-key-seconds)
+	- [ZEXPIREAT key timestamp](#zexpireat-key-timestamp)
+	- [ZTTL key](#zttl-key)
+	- [ZPERSIST key](#zpersist-key)
+- [Replication](#replication)
+	- [SLAVEOF host port](#slaveof-host-port)
+	- [FULLSYNC](#fullsync)
+	- [SYNC index offset](#sync-index-offset)
+- [Server](#server)
+	- [PING](#ping)
+	- [ECHO message](#echo-message)
+	- [SELECT index](#select-index)
+
 
 ## KV 
 
@@ -1570,3 +1653,5 @@ OK
 ledis> SELECT 16
 ERR invalid db index 16
 ```
+
+Thanks [doctoc](http://doctoc.herokuapp.com/)

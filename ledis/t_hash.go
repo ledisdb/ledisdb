@@ -273,7 +273,7 @@ func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 
 		ek = db.hEncodeHashKey(key, args[i])
 
-		v = it.Find(ek)
+		v = it.RawFind(ek)
 		if v == nil {
 			continue
 		} else {

@@ -32,7 +32,7 @@ func TestReplication(t *testing.T) {
 
 	os.RemoveAll("/tmp/test_repl")
 
-	master, err = Open([]byte(`
+	master, err = OpenWithJsonConfig([]byte(`
         {
             "data_dir" : "/tmp/test_repl/master",
             "use_bin_log" : true,
@@ -45,7 +45,7 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	slave, err = Open([]byte(`
+	slave, err = OpenWithJsonConfig([]byte(`
         {
             "data_dir" : "/tmp/test_repl/slave"
         }

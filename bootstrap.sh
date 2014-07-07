@@ -2,4 +2,5 @@
 
 . ./dev.sh
 
-#nothing to do now
+go get -u github.com/siddontang/go-log/log
+go get -u githbu.com/siddontang/go-snappy/snappy
