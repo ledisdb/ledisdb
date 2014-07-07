@@ -22,7 +22,11 @@ func (s *Snapshot) Close() {
 }
 
 func (s *Snapshot) Get(key []byte) ([]byte, error) {
-	return s.db.get(s.readOpts, key)
+	return s.db.get(nil, s.readOpts, key)
+}
+
+func (s *Snapshot) BufGet(r []byte, key []byte) ([]byte, error) {
+	return s.db.get(r, s.readOpts, key)
 }
 
 func (s *Snapshot) NewIterator() *Iterator {

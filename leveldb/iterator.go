@@ -3,6 +3,7 @@ package leveldb
 // #cgo LDFLAGS: -lleveldb
 // #include <stdlib.h>
 // #include "leveldb/c.h"
+// #include "leveldb_ext.h"
 import "C"
 
 import (
@@ -41,9 +42,11 @@ type Limit struct {
 }
 
 type Iterator struct {
-	it *C.leveldb_iterator_t
+	it      *C.leveldb_iterator_t
+	isValid C.uchar
 }
 
+//Returns a copy of key.
 func (it *Iterator) Key() []byte {
 	var klen C.size_t
 	kdata := C.leveldb_iter_key(it.it, &klen)
@@ -54,6 +57,7 @@ func (it *Iterator) Key() []byte {
 	return C.GoBytes(unsafe.Pointer(kdata), C.int(klen))
 }
 
+//Returns a copy of value.
 func (it *Iterator) Value() []byte {
 	var vlen C.size_t
 	vdata := C.leveldb_iter_value(it.it, &vlen)
@@ -64,44 +68,112 @@ func (it *Iterator) Value() []byte {
 	return C.GoBytes(unsafe.Pointer(vdata), C.int(vlen))
 }
 
+//Returns a reference of key.
+//you must be careful that it will be changed after next iterate.
+func (it *Iterator) RawKey() []byte {
+	var klen C.size_t
+	kdata := C.leveldb_iter_key(it.it, &klen)
+	if kdata == nil {
+		return nil
+	}
+
+	return slice(unsafe.Pointer(kdata), int(C.int(klen)))
+}
+
+//Returns a reference of value.
+//you must be careful that it will be changed after next iterate.
+func (it *Iterator) RawValue() []byte {
+	var vlen C.size_t
+	vdata := C.leveldb_iter_value(it.it, &vlen)
+	if vdata == nil {
+		return nil
+	}
+
+	return slice(unsafe.Pointer(vdata), int(C.int(vlen)))
+}
+
+//Copy key to b, if b len is small or nil, returns a new one
+func (it *Iterator) BufKey(b []byte) []byte {
+	k := it.RawKey()
+	if k == nil {
+		return nil
+	}
+	if len(k) > len(b) {
+		b = make([]byte, len(k))
+	}
+
+	n := copy(b, k)
+	return b[0:n]
+}
+
+//Copy value to b, if b len is small or nil, returns a new one
+func (it *Iterator) BufValue(b []byte) []byte {
+	v := it.RawValue()
+	if v == nil {
+		return nil
+	}
+	if len(v) > len(b) {
+		b = make([]byte, len(v))
+	}
+
+	n := copy(b, v)
+	return b[0:n]
+}
+
 func (it *Iterator) Close() {
 	C.leveldb_iter_destroy(it.it)
 	it.it = nil
 }
 
 func (it *Iterator) Valid() bool {
-	return ucharToBool(C.leveldb_iter_valid(it.it))
+	return ucharToBool(it.isValid)
 }
 
 func (it *Iterator) Next() {
-	C.leveldb_iter_next(it.it)
+	it.isValid = C.leveldb_iter_next_ext(it.it)
 }
 
 func (it *Iterator) Prev() {
-	C.leveldb_iter_prev(it.it)
+	it.isValid = C.leveldb_iter_prev_ext(it.it)
 }
 
 func (it *Iterator) SeekToFirst() {
-	C.leveldb_iter_seek_to_first(it.it)
+	it.isValid = C.leveldb_iter_seek_to_first_ext(it.it)
 }
 
 func (it *Iterator) SeekToLast() {
-	C.leveldb_iter_seek_to_last(it.it)
+	it.isValid = C.leveldb_iter_seek_to_last_ext(it.it)
 }
 
 func (it *Iterator) Seek(key []byte) {
-	C.leveldb_iter_seek(it.it, (*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
+	it.isValid = C.leveldb_iter_seek_ext(it.it, (*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
 
+//Finds by key, if not found, nil returns
 func (it *Iterator) Find(key []byte) []byte {
 	it.Seek(key)
 	if it.Valid() {
-		var klen C.size_t
-		kdata := C.leveldb_iter_key(it.it, &klen)
-		if kdata == nil {
+		k := it.RawKey()
+		if k == nil {
 			return nil
-		} else if bytes.Equal(slice(unsafe.Pointer(kdata), int(C.int(klen))), key) {
+		} else if bytes.Equal(k, key) {
 			return it.Value()
+		}
+	}
+
+	return nil
+}
+
+//Finds by key, if not found, nil returns, else a reference of value returns
+//you must be careful that it will be changed after next iterate.
+func (it *Iterator) RawFind(key []byte) []byte {
+	it.Seek(key)
+	if it.Valid() {
+		k := it.RawKey()
+		if k == nil {
+			return nil
+		} else if bytes.Equal(k, key) {
+			return it.RawValue()
 		}
 	}
 
@@ -128,6 +200,14 @@ func (it *RangeLimitIterator) Value() []byte {
 	return it.it.Value()
 }
 
+func (it *RangeLimitIterator) RawKey() []byte {
+	return it.it.RawKey()
+}
+
+func (it *RangeLimitIterator) RawValue() []byte {
+	return it.it.RawValue()
+}
+
 func (it *RangeLimitIterator) Valid() bool {
 	if it.l.Offset < 0 {
 		return false
@@ -139,7 +219,7 @@ func (it *RangeLimitIterator) Valid() bool {
 
 	if it.direction == IteratorForward {
 		if it.r.Max != nil {
-			r := bytes.Compare(it.it.Key(), it.r.Max)
+			r := bytes.Compare(it.it.RawKey(), it.r.Max)
 			if it.r.Type&RangeROpen > 0 {
 				return !(r >= 0)
 			} else {
@@ -148,7 +228,7 @@ func (it *RangeLimitIterator) Valid() bool {
 		}
 	} else {
 		if it.r.Min != nil {
-			r := bytes.Compare(it.it.Key(), it.r.Min)
+			r := bytes.Compare(it.it.RawKey(), it.r.Min)
 			if it.r.Type&RangeLOpen > 0 {
 				return !(r <= 0)
 			} else {
@@ -204,7 +284,7 @@ func rangeLimitIterator(i *Iterator, r *Range, l *Limit, direction uint8) *Range
 			it.it.Seek(r.Min)
 
 			if r.Type&RangeLOpen > 0 {
-				if it.it.Valid() && bytes.Equal(it.it.Key(), r.Min) {
+				if it.it.Valid() && bytes.Equal(it.it.RawKey(), r.Min) {
 					it.it.Next()
 				}
 			}
@@ -218,13 +298,13 @@ func rangeLimitIterator(i *Iterator, r *Range, l *Limit, direction uint8) *Range
 			if !it.it.Valid() {
 				it.it.SeekToLast()
 			} else {
-				if !bytes.Equal(it.it.Key(), r.Max) {
+				if !bytes.Equal(it.it.RawKey(), r.Max) {
 					it.it.Prev()
 				}
 			}
 
 			if r.Type&RangeROpen > 0 {
-				if it.it.Valid() && bytes.Equal(it.it.Key(), r.Max) {
+				if it.it.Valid() && bytes.Equal(it.it.RawKey(), r.Max) {
 					it.it.Prev()
 				}
 			}
