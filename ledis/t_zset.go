@@ -477,7 +477,7 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 			for ; it.Valid(); it.Next() {
 				n++
 
-				lastKey = it.Key()
+				lastKey = it.BufKey(lastKey)
 			}
 
 			it.Close()
@@ -511,7 +511,7 @@ func (db *DB) zRemRange(t *tx, key []byte, min int64, max int64, offset int, cou
 	it := db.zIterator(key, min, max, offset, count, false)
 	var num int64 = 0
 	for ; it.Valid(); it.Next() {
-		sk := it.Key()
+		sk := it.RawKey()
 		_, m, _, err := db.zDecodeScoreKey(sk)
 		if err != nil {
 			continue
