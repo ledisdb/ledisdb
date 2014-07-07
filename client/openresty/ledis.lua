@@ -36,6 +36,10 @@ local commands = {
     "mset",
     "set",
     "setnx",
+    "ttl",
+    "expire",
+    "expireat",
+    "persist",
 
     --[[hash]]
     "hdel", 
@@ -48,18 +52,30 @@ local commands = {
     "hmget", 
     --[["hmset",]] 
     "hset", 
-    "hvals", 
+    "hvals",
+    --[[ledisdb special commands]] 
     "hclear", 
+    "hmclear",
+    "hexpire",
+    "hexpireat",
+    "httl",
+    "hpersist",
 
     --[[list]]
     "lindex", 
     "llen", 
     "lpop", 
-    "lrange", 
     "lpush", 
+    "lrange", 
     "rpop", 
     "rpush", 
+    --[[ledisdb special commands]]
     "lclear", 
+    "lmclear",
+    "lexpire",
+    "lexpireat",
+    "lttl",
+    "lpersist",
 
     --[[zset]]
     "zadd", 
@@ -76,14 +92,19 @@ local commands = {
     "zrevrank", 
     "zrevrangebyscore", 
     "zscore", 
+    --[[ledisdb special commands]]
     "zclear", 
+    "zmclear",
+    "zexpire",
+    "zexpireat",
+    "zttl",
+    "zpersist",
 
     --[[server]]
     "ping",
     "echo",
     "select"
 }
-
 
 
 local mt = { __index = _M }
