@@ -40,7 +40,7 @@ True
 
 ## API Reference
 
-See [ledis wiki](https://github.com/siddontang/ledisdb/wiki/Commands) for more informations.
+For full API reference, please visit [rtfd](http://ledis-py.readthedocs.org/).
 
 
 ## Connection
