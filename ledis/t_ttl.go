@@ -11,7 +11,8 @@ var mapExpMetaType = map[byte]byte{
 	kvExpType: kvExpMetaType,
 	lExpType:  lExpMetaType,
 	hExpType:  hExpMetaType,
-	zExpType:  zExpMetaType}
+	zExpType:  zExpMetaType,
+	bExpType:  bExpMetaType}
 
 type retireCallback func(*tx, []byte) int64
 
@@ -138,6 +139,9 @@ func newEliminator(db *DB) *elimination {
 }
 
 func (eli *elimination) regRetireContext(expType byte, t *tx, onRetire retireCallback) {
+
+	//	todo .. need to ensure exist - mapExpMetaType[expType]
+
 	eli.exp2Tx[expType] = t
 	eli.exp2Retire[expType] = onRetire
 }

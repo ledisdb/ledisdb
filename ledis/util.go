@@ -62,6 +62,28 @@ func StrInt64(v []byte, err error) (int64, error) {
 	}
 }
 
+func StrInt32(v []byte, err error) (int32, error) {
+	if err != nil {
+		return 0, err
+	} else if v == nil {
+		return 0, nil
+	} else {
+		res, err := strconv.ParseInt(String(v), 10, 32)
+		return int32(res), err
+	}
+}
+
+func StrInt8(v []byte, err error) (int8, error) {
+	if err != nil {
+		return 0, err
+	} else if v == nil {
+		return 0, nil
+	} else {
+		res, err := strconv.ParseInt(String(v), 10, 32)
+		return int8(res), err
+	}
+}
+
 func StrPutInt64(v int64) []byte {
 	return strconv.AppendInt(nil, v, 10)
 }

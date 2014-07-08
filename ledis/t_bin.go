@@ -100,20 +100,20 @@ func setBit(sz []byte, offset uint32, val uint8) bool {
 	return true
 }
 
-func (datas *segBitInfoArray) Len() int {
-	return len(*datas)
+func (datas segBitInfoArray) Len() int {
+	return len(datas)
 }
 
-func (datas *segBitInfoArray) Less(i, j int) bool {
-	res := (*datas)[i].Seq < (*datas)[j].Seq
-	if !res && (*datas)[i].Seq == (*datas)[j].Seq {
-		res = (*datas)[i].Off < (*datas)[j].Off
+func (datas segBitInfoArray) Less(i, j int) bool {
+	res := (datas)[i].Seq < (datas)[j].Seq
+	if !res && (datas)[i].Seq == (datas)[j].Seq {
+		res = (datas)[i].Off < (datas)[j].Off
 	}
 	return res
 }
 
-func (datas *segBitInfoArray) Swap(i, j int) {
-	(*datas)[i], (*datas)[j] = (*datas)[j], (*datas)[i]
+func (datas segBitInfoArray) Swap(i, j int) {
+	datas[i], datas[j] = datas[j], datas[i]
 }
 
 func (db *DB) bEncodeMetaKey(key []byte) []byte {
@@ -213,10 +213,6 @@ func (db *DB) bGetMeta(key []byte) (tailSeq int32, tailOff int32, err error) {
 
 func (db *DB) bSetMeta(t *tx, key []byte, tailSeq uint32, tailOff uint32) {
 	ek := db.bEncodeMetaKey(key)
-
-	//	todo ..
-	//	if size == 0 // headSeq == tailSeq
-	//		t.Delete(ek)
 
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint32(buf[0:4], tailSeq)
@@ -453,19 +449,18 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 	return
 }
 
-func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int32, err error) {
+func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int64, err error) {
 	if err = checkKeySize(key); err != nil {
 		return
 	}
 
-	//	(ps : so as to aviod wasting the mem copy while calling db.Get() and batch.Put(),
-	//		  here we sequence the request pos in order, so that we can execute diff pos
-	//		  set on the same segment by justing calling db.Get() and batch.Put() one time
-	//		  either.)
+	//	(ps : so as to aviod wasting memory copy while calling db.Get() and batch.Put(),
+	//		  here we sequence the params by pos, so that we can merge the execution of
+	//		  diff pos setting which targets on the same segment respectively. )
 
-	//	sort the requesting data by set pos
+	//	#1 : sequence request data
 	var argCnt = len(args)
-	var bInfos segBitInfoArray = make(segBitInfoArray, argCnt)
+	var bitInfos segBitInfoArray = make(segBitInfoArray, argCnt)
 	var seq, off uint32
 
 	for i, info := range args {
@@ -473,54 +468,53 @@ func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int32, err error) {
 			return
 		}
 
-		bInfos[i].Seq = seq
-		bInfos[i].Off = off
-		bInfos[i].Val = info.Val
+		bitInfos[i].Seq = seq
+		bitInfos[i].Off = off
+		bitInfos[i].Val = info.Val
 	}
 
-	sort.Sort(&bInfos)
+	sort.Sort(bitInfos)
 
 	for i := 1; i < argCnt; i++ {
-		if bInfos[i].Seq == bInfos[i-1].Seq && bInfos[i].Off == bInfos[i-1].Off {
+		if bitInfos[i].Seq == bitInfos[i-1].Seq && bitInfos[i].Off == bitInfos[i-1].Off {
 			return 0, errDuplicatePos
 		}
 	}
 
-	//	set data
+	//	#2 : execute bit set in order
 	t := db.binTx
 	t.Lock()
 	defer t.Unlock()
 
-	var bk, segment []byte
-	var lastSeq, maxSeq, maxOff uint32
+	var curBinKey, curSeg []byte
+	var curSeq, maxSeq, maxOff uint32
 
-	for _, info := range bInfos {
-		if segment != nil && info.Seq != lastSeq {
-			t.Put(bk, segment)
-			segment = nil
+	for _, info := range bitInfos {
+		if curSeg != nil && info.Seq != curSeq {
+			t.Put(curBinKey, curSeg)
+			curSeg = nil
 		}
 
-		if segment == nil {
-			if bk, segment, err = db.bAllocateSegment(key, info.Seq); err != nil {
+		if curSeg == nil {
+			curSeq = info.Seq
+			if curBinKey, curSeg, err = db.bAllocateSegment(key, info.Seq); err != nil {
 				return
 			}
 
-			if segment == nil {
+			if curSeg == nil {
 				continue
-			} else {
-				lastSeq = info.Seq
 			}
 		}
 
-		if setBit(segment, info.Off, info.Val) {
+		if setBit(curSeg, info.Off, info.Val) {
 			maxSeq = info.Seq
 			maxOff = info.Off
 			place++
 		}
 	}
 
-	if segment != nil {
-		t.Put(bk, segment)
+	if curSeg != nil {
+		t.Put(curBinKey, curSeg)
 	}
 
 	//	finally, update meta
@@ -601,10 +595,9 @@ func (db *DB) BTail(key []byte) (int32, error) {
 }
 
 func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32, err error) {
-	//	return :
-	//		The size of the string stored in the destination key,
+	//	blen -
+	//		the size of the string stored in the destination key,
 	//		that is equal to the size of the longest input string.
-	blen = -1
 
 	var exeOp func([]byte, []byte, *[]byte)
 	switch op {
@@ -622,58 +615,71 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		return
 	}
 
-	if (op == OPnot && len(srckeys) != 1) ||
-		(op != OPnot && len(srckeys) < 2) {
-		//	msg("lack of arguments")
-		return
-	}
-
 	t := db.binTx
 	t.Lock()
 	defer t.Unlock()
 
-	// init - meta info
-	var maxDstSeq, maxDstOff uint32
-	var nowSeq, nowOff int32
+	var srcKseq, srcKoff int32
+	var seq, off, maxDstSeq, maxDstOff uint32
 
 	var keyNum int = len(srckeys)
-	var srcIdx int = 0
-	for ; srcIdx < keyNum; srcIdx++ {
-		if nowSeq, nowOff, err = db.bGetMeta(srckeys[srcIdx]); err != nil { // todo : if key not exists ....
+	var validKeyNum int
+	for i := 0; i < keyNum; i++ {
+		if srcKseq, srcKoff, err = db.bGetMeta(srckeys[i]); err != nil {
 			return
+		} else if srcKseq < 0 {
+			srckeys[i] = nil
+			continue
 		}
 
-		if nowSeq >= 0 {
-			maxDstSeq = uint32(nowSeq)
-			maxDstOff = uint32(nowOff)
+		validKeyNum++
+
+		seq = uint32(srcKseq)
+		off = uint32(srcKoff)
+		if seq > maxDstSeq || (seq == maxDstSeq && off > maxDstOff) {
+			maxDstSeq = seq
+			maxDstOff = off
+		}
+	}
+
+	if (op == OPnot && validKeyNum != 1) ||
+		(op != OPnot && validKeyNum < 2) {
+		return // with not enough existing source key
+	}
+
+	var srcIdx int
+	for srcIdx = 0; srcIdx < keyNum; srcIdx++ {
+		if srckeys[srcIdx] != nil {
 			break
 		}
 	}
 
-	if srcIdx == keyNum {
-		//	none existing src key
-		return
-	}
-
 	// init - data
-	var seq, off uint32
-	var segments = make([][]byte, maxSegCount) // todo : init count also can be optimize while 'and' / 'or'
+	var segments = make([][]byte, maxDstSeq+1)
 
 	if op == OPnot {
+		//	ps :
+		//		( ~num == num ^ 0x11111111 )
+		//		we init the result segments with all bit set,
+		//		then we can calculate through the way of 'xor'.
+
+		//	ahead segments bin format : 1111 ... 1111
 		for i := uint32(0); i < maxDstSeq; i++ {
 			segments[i] = fillSegment
 		}
 
+		//	last segment bin format : 1111..1100..0000
 		var tailSeg = make([]byte, segByteSize, segByteSize)
 		var fillByte = fillBits[7]
-		var cnt = db.bCapByteSize(uint32(0), maxDstOff)
-		for i := uint32(0); i < cnt-1; i++ {
+		var tailSegLen = db.bCapByteSize(uint32(0), maxDstOff)
+		for i := uint32(0); i < tailSegLen-1; i++ {
 			tailSeg[i] = fillByte
 		}
-		tailSeg[cnt-1] = fillBits[maxDstOff-(cnt-1)<<3]
+		tailSeg[tailSegLen-1] = fillBits[maxDstOff-(tailSegLen-1)<<3]
 		segments[maxDstSeq] = tailSeg
 
 	} else {
+		// ps : init segments by data corresponding to the 1st valid source key
 		it := db.bIterator(srckeys[srcIdx])
 		for ; it.Valid(); it.Next() {
 			if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
@@ -689,21 +695,9 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 
 	//	operation with following keys
 	var res []byte
-
 	for i := srcIdx; i < keyNum; i++ {
-		if nowSeq, nowOff, err = db.bGetMeta(srckeys[i]); err != nil {
-			return
-		}
-
-		if nowSeq < 0 {
+		if srckeys[i] == nil {
 			continue
-		} else {
-			seq = uint32(nowSeq)
-			off = uint32(nowOff)
-			if seq > maxDstSeq || (seq == maxDstSeq && off > maxDstOff) {
-				maxDstSeq = seq
-				maxDstOff = off
-			}
 		}
 
 		it := db.bIterator(srckeys[i])
@@ -716,13 +710,14 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 					return
 				}
 			} else {
-				seq = maxSegCount
+				seq = maxDstSeq + 1
 			}
 
 			// todo :
 			// 		operation 'and' can be optimize here :
 			//		if seq > max_segments_idx, this loop can be break,
-			//		which can avoid cost from Key() and decode key
+			//		which can avoid cost from Key() and bDecodeBinKey()
+
 			for ; idx < seq; idx++ {
 				res = nil
 				exeOp(segments[idx], nil, &res)
@@ -743,23 +738,19 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 	db.bDelete(t, dstkey)
 	db.rmExpire(t, bExpType, dstkey)
 
-	//	set data and meta
+	//	set data
 	db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
 
-	//	set data
 	var bk []byte
-	for seq, seg := range segments {
-		if seg != nil {
-			//	todo:
-			//		here can be optimize, like 'updateBinKeySeq',
-			//		avoid allocate too many mem
+	for seq, segt := range segments {
+		if segt != nil {
 			bk = db.bEncodeBinKey(dstkey, uint32(seq))
-			t.Put(bk, seg)
+			t.Put(bk, segt)
 		}
 	}
 
 	err = t.Commit()
-	if err != nil {
+	if err == nil {
 		blen = int32(maxDstSeq<<segBitWidth | maxDstOff)
 	}
 

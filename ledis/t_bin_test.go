@@ -262,17 +262,21 @@ func testOpXor(t *testing.T) {
 
 	dstKey := []byte("test_bin_op_xor")
 
-	k0 := []byte("op_2_00")
-	k1 := []byte("op_2_01")
+	k0 := []byte("op_xor_00")
+	k1 := []byte("op_xor_01")
 	srcKeys := [][]byte{k0, k1}
 
-	db.BSetBit(k0, int32(0), 1)
-	db.BSetBit(k0, int32(7), 1)
-	db.BSetBit(k0, int32(segBitSize-1), 1)
-	db.BSetBit(k0, int32(segBitSize-8), 1)
+	reqs := make([]BitPair, 4)
+	reqs[0] = BitPair{0, 1}
+	reqs[1] = BitPair{7, 1}
+	reqs[2] = BitPair{int32(segBitSize - 1), 1}
+	reqs[3] = BitPair{int32(segBitSize - 8), 1}
+	db.BMSetBit(k0, reqs...)
 
-	db.BSetBit(k1, int32(7), 1)
-	db.BSetBit(k1, int32(segBitSize-8), 1)
+	reqs = make([]BitPair, 2)
+	reqs[0] = BitPair{7, 1}
+	reqs[1] = BitPair{int32(segBitSize - 8), 1}
+	db.BMSetBit(k1, reqs...)
 
 	var stdData []byte
 	var data []byte
@@ -295,7 +299,7 @@ func testOpNot(t *testing.T) {
 	db.FlushAll()
 
 	//	intputs
-	dstKey := []byte("test_bin_op_xor")
+	dstKey := []byte("test_bin_op_not")
 
 	k0 := []byte("op_not_0")
 	srcKeys := [][]byte{k0}
