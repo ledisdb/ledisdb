@@ -310,7 +310,7 @@ class Ledis(object):
 
     def set(self, name, value):
         """
-        Set a key.
+        Set the value of key ``name`` to ``value``.
         """
         pieces = [name, value]
         return self.execute_command('SET', *pieces)
@@ -324,6 +324,7 @@ class Ledis(object):
         return self.execute_command('TTL', name)
 
     def persist(self, name):
+        "Removes an expiration on name"
         return self.execute_command('PERSIST', name)
 
 
@@ -369,9 +370,11 @@ class Ledis(object):
 
     # SPECIAL COMMANDS SUPPORTED BY LEDISDB
     def lclear(self, name):
+        "Delete the key of ``name``"
         return self.execute_command("LCLEAR", name)
 
     def lmclear(self, *names):
+        "Delete multiple keys of ``name``"
         return self.execute_command('LMCLEAR', *names)
 
     def lexpire(self, name, time):
@@ -393,9 +396,11 @@ class Ledis(object):
         return self.execute_command('LEXPIREAT', name, when)
 
     def lttl(self, name):
+        "Returns the number of seconds until the key ``name`` will expire"
         return self.execute_command('LTTL', name)
 
     def lpersist(self, name):
+        "Removes an expiration on ``name``"
         return self.execute_command('LPERSIST', name)
 
 
@@ -427,6 +432,11 @@ class Ledis(object):
         return self.execute_command('ZCARD', name)
 
     def zcount(self, name, min, max):
+        """
+        Return the number of elements in the sorted set at key ``name`` with a score 
+        between ``min`` and ``max``. 
+        The min and max arguments have the same semantic as described for ZRANGEBYSCORE.
+        """
         return self.execute_command('ZCOUNT', name, min, max)
 
     def zincrby(self, name, value, amount=1):
@@ -568,25 +578,35 @@ class Ledis(object):
 
     # SPECIAL COMMANDS SUPPORTED BY LEDISDB
     def zclear(self, name):
+        "Delete key of ``name`` from sorted set"
         return self.execute_command('ZCLEAR', name)
 
     def zmclear(self, *names):
+        "Delete multiple keys of ``names`` from sorted set"
         return self.execute_command('ZMCLEAR', *names)
 
     def zexpire(self, name, time):
+        "Set timeout on key ``name`` with ``time``"
         if isinstance(time, datetime.timedelta):
             time = time.seconds + time.days * 24 * 3600
         return self.execute_command('ZEXPIRE', name, time)
 
     def zexpireat(self, name, when):
+        """
+        Set an expire flag on key name for time seconds. time can be represented by
+         an integer or a Python timedelta object.
+        """
+
         if isinstance(when, datetime.datetime):
             when = int(mod_time.mktime(when.timetuple()))
         return self.execute_command('ZEXPIREAT', name, when)
 
     def zttl(self, name):
+        "Returns the number of seconds until the key name will expire"
         return self.execute_command('ZTTL', name)
 
     def zpersist(self, name):
+        "Removes an expiration on name"
         return self.execute_command('ZPERSIST', name)
 
 
@@ -650,24 +670,36 @@ class Ledis(object):
 
     # SPECIAL COMMANDS SUPPORTED BY LEDISDB
     def hclear(self, name):
+        "Delete key ``name`` from hash"
         return self.execute_command('HCLEAR', name)
 
     def hmclear(self, *names):
+        "Delete multiple keys ``names`` from hash"
         return self.execute_command('HMCLEAR', *names)
 
     def hexpire(self, name, time):
+        """
+        Set an expire flag on key name for time milliseconds. 
+        time can be represented by an integer or a Python timedelta object.
+        """
         if isinstance(time, datetime.timedelta):
             time = time.seconds + time.days * 24 * 3600
         return self.execute_command('HEXPIRE', name, time)
 
     def hexpireat(self, name, when):
+        """
+        Set an expire flag on key name. when can be represented as an integer representing 
+        unix time in milliseconds (unix time * 1000) or a Python datetime object.
+        """
         if isinstance(when, datetime.datetime):
             when = int(mod_time.mktime(when.timetuple()))
         return self.execute_command('HEXPIREAT', name, when)
 
     def httl(self, name):
+        "Returns the number of seconds until the key name will expire"
         return self.execute_command('HTTL', name)
 
     def hpersist(self, name):
+        "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
 

@@ -145,7 +145,7 @@ DefaultParser = PythonParser
 
 class Connection(object):
     "Manages TCP communication to and from a Ledis server"
-    def __init__(self, host='localhost', port=6379, db=0, password=None,
+    def __init__(self, host='localhost', port=6380, db=0, password=None,
                  socket_timeout=None, encoding='utf-8',
                  encoding_errors='strict', decode_responses=False,
                  parser_class=DefaultParser):
@@ -379,7 +379,7 @@ class ConnectionPool(object):
         else:
             url_options.update({
                 'host': url.hostname,
-                'port': int(url.port or 6379),
+                'port': int(url.port or 6380),
                 'password': url.password,
             })
 
