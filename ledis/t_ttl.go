@@ -11,7 +11,8 @@ var mapExpMetaType = map[byte]byte{
 	kvExpType: kvExpMetaType,
 	lExpType:  lExpMetaType,
 	hExpType:  hExpMetaType,
-	zExpType:  zExpMetaType}
+	zExpType:  zExpMetaType,
+	bExpType:  bExpMetaType}
 
 type retireCallback func(*tx, []byte) int64
 
@@ -112,8 +113,6 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 		return errExpType
 	}
 
-	drop := 0
-
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
 	minKey[1] = expType
@@ -122,18 +121,7 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 	maxKey[0] = db.index
 	maxKey[1] = expMetaType + 1
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-	it.Close()
-
+	_, err = db.flushRegion(t, minKey, maxKey)
 	err = t.Commit()
 	return
 }
@@ -151,6 +139,9 @@ func newEliminator(db *DB) *elimination {
 }
 
 func (eli *elimination) regRetireContext(expType byte, t *tx, onRetire retireCallback) {
+
+	//	todo .. need to ensure exist - mapExpMetaType[expType]
+
 	eli.exp2Tx[expType] = t
 	eli.exp2Retire[expType] = onRetire
 }
