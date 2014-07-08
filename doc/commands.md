@@ -53,7 +53,7 @@ Table of Contents
 	- [RPOP key](#rpop-keuser-content-y)
 	- [RPUSH key value [value ...]](#rpush-key-value-value-)
 	- [LCLEAR key](#lclear-key)
-	- [LMCLEAR key [key...]](#lmclear-key-key)
+	- [LMCLEAR key [key...]](#lmclear-key-key-)
 	- [LEXPIRE key seconds](#lexpire-key-seconds)
 	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
 	- [LTTL key](#lttl-key)
@@ -955,7 +955,7 @@ ledis> LLEN a
 (integer) 0
 ```
 
-### LMCLEAR key
+### LMCLEAR key [key ...]
 Delete multiple keys from list
 
 
