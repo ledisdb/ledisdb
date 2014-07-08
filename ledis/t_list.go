@@ -410,10 +410,6 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) lFlush() (drop int64, err error) {
-	t := db.listTx
-	t.Lock()
-	defer t.Unlock()
-
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
 	minKey[1] = listType
@@ -422,19 +418,12 @@ func (db *DB) lFlush() (drop int64, err error) {
 	maxKey[0] = db.index
 	maxKey[1] = lMetaType + 1
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-	it.Close()
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
 
-	db.expFlush(t, lExpType)
+	drop, err = db.flushRegion(t, minKey, maxKey)
+	err = db.expFlush(t, lExpType)
 
 	err = t.Commit()
 	return

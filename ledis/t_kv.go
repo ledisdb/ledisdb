@@ -309,28 +309,17 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 }
 
 func (db *DB) flush() (drop int64, err error) {
+	minKey := db.encodeKVMinKey()
+	maxKey := db.encodeKVMaxKey()
+
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
 
-	minKey := db.encodeKVMinKey()
-	maxKey := db.encodeKVMaxKey()
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
-		drop++
-
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-	it.Close()
+	drop, err = db.flushRegion(t, minKey, maxKey)
+	err = db.expFlush(t, kvExpType)
 
 	err = t.Commit()
-	err = db.expFlush(t, kvExpType)
 	return
 }
 
