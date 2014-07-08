@@ -1,5 +1,16 @@
+--[[
+	Stupid test codes for ledis.lua. Running based on openresty configuration file.
+	Remember setting up your `lua_package_path`.
+
+	location = /test {
+            default_type "application/json";
+            content_by_lua_file /path/to/ledis_test.lua;
+        }
+
+	Then use `curl` or other http clients to see the output.
+--]]
+
 local ledis = require "ledis"
-local cjson = require "cjson"
 local lds = ledis:new()
 
 lds:set_timeout(1000)
@@ -11,7 +22,6 @@ if not ok then
 	return
 end
 
-
 function cleanUp()
 	lds:del("mykey", "key1", "key2", "key3", "non_exists_key")
 	lds:hmclear("myhash", "myhash1", "myhash2")
@@ -21,7 +31,6 @@ function cleanUp()
 end
 
 cleanUp()
-
 
 ngx.say("======================= K/V =====================\n")
 
@@ -39,7 +48,6 @@ ngx.say("DECR, should be: -1 <=> ", res)
 lds:del("mykey")
 
 -- decrby
-
 local res, err = lds:decrby("mykey", 10)
 if not res then
 	ngx.say("failed to decrby:", err)
@@ -50,7 +58,6 @@ ngx.say("DECRBY, should be: -10 <=> ", res)
 lds:del("mykey")
 
 -- del 
-
 lds:set("key1", "foo")
 lds:set("key2", "bar")
 local res, err = lds:del("key1", "key2")
@@ -62,7 +69,6 @@ end
 ngx.say("DEL, should be: 2 <=> 2")
 
 --exists
-
 lds:set("mykey", "foo")
 res, err = lds:exists("mykey")
 if not res then
@@ -81,9 +87,7 @@ end
 ngx.say("EXISTS, should be 0 <=>", res)
 lds:del("non_exists_key")
 
-
 -- get
-
 lds:set("mykey", "foo")
 res, err = lds:get("mykey")
 if not res then
@@ -94,9 +98,7 @@ end
 ngx.say("GET, should be foo <=> ", res)
 lds:del("mykey")
 
-
 -- getset
-
 lds:set("mykey", "foo")
 res, err = lds:getset("mykey", "bar")
 if not res then
@@ -110,7 +112,6 @@ ngx.say("GET, should be bar <=>", res)
 lds:del("mykey")
 
 -- incr
-
 lds:set("mykey", "10")
 res, err = lds:incr("mykey")
 if not res then
@@ -122,7 +123,6 @@ ngx.say("INCR should be 11 <=>", res)
 lds:del("mykey")
 
 -- incrby
-
 lds:set("mykey", "10")
 res, err = lds:incrby("mykey", 10)
 if not res then
@@ -146,7 +146,6 @@ ngx.say("MGET should be foobar <=>", res)
 lds:del("key1", "key2")
 		
 -- mset
-
 res, err = lds:mset("key1", "foo", "key2", "bar")
 if not res then
 	ngx.say("failed to command ", err)
@@ -181,7 +180,6 @@ ngx.say("setnx should be 0 <=>", res)
 lds:del("mykey")
 
 -- expire
-
 lds:set("mykey", "foo")
 res, err = lds:expire("mykey", 60)
 if not res then
@@ -191,7 +189,6 @@ end
 
 ngx.say("EXPIRE should be 1 <=> ", res)
 lds:del("mykey")
-
 
 -- expireat
 lds:set("mykey", "foo")
@@ -205,7 +202,6 @@ ngx.say("EXPIREAT 1 <=>", res)
 lds:del("mykey")
 
 -- ttl
-
 lds:set("mykey", "foo")
 lds:expire("mykey", 100)
 res, err = lds:ttl("mykey")
@@ -222,7 +218,6 @@ ngx.say("TTL ",  res)
 lds:del("mykey")
 
 -- persist
-
 lds:set("mykey", "foo")
 lds:expire("mykey", 100)
 res, err = lds:persist("mykey")
@@ -235,12 +230,11 @@ end
 ngx.say("PERSIST should be 1 <=>", res)
 lds:del("mykey")
 
--- [[ HASH ]]
-
 ngx.say("\n=================== HASH =====================\n")
 
--- hdel
+-- [[ HASH ]]
 
+-- hdel
 res, err = lds:hset("myhash", "field", "foo")
 if not res then
 	ngx.say("failed to HDEL", err)
@@ -294,7 +288,6 @@ ngx.say("HINCRBY should be 1 <=>", res)
 lds:hclear("myhash")
 
 -- hkeys
-
 lds:hmset("myhash", "field1", "foo", "field2", "bar")
 res, err = lds:hkeys("myhash")
 if not res then
@@ -305,9 +298,7 @@ end
 ngx.say("HKEYS should be field1field2 <=> ", res)
 lds:hclear("myhash")
 
-
 -- hlen 
-
 lds:hset("myhash", "field", "foo")
 res, err = lds:hlen("myhash")
 if not res then
@@ -318,9 +309,7 @@ end
 ngx.say("HLEN should be 1 <=>", res)
 lds:hclear("myhash")
 
-
 -- hmget
-
 lds:hmset("myhash", "field1", "foo", "field2", "bar")
 res, err = lds:hmget("myhash", "field1", "field2")
 if not res then
@@ -331,10 +320,7 @@ end
 ngx.say("HMGET 	should be foobar <=>", res)
 lds:hclear("myhash")
 
-
-
 -- hmset
-
 res, err = lds:hmset("myhash", "field1", "foo", "field2", "bar")
 if not res then
 	ngx.say("failed to HMSET ", err)
@@ -350,8 +336,7 @@ end
 
 res, err = lds:hclear("myhash")
 
-
---hset
+-- hset
 res, err = lds:hset("myhash", "field", "foo")
 if not res then
 	ngx.say("failed to HSET", err)
@@ -361,7 +346,7 @@ end
 ngx.say("HSET should be 1 <=> ", res)
 lds:hclear("myhash")
 
---hvals
+-- hvals
 lds:hset("myhash", "field", "foo")
 res, err = lds:hvals("myhash")
 if not res then
@@ -370,26 +355,19 @@ if not res then
 end
 
 ngx.say("HVALS should  be foo <=>", res)
-lds:hvals("myhash")
+lds:hclear("myhash")
 
 -- hclear
-
---FIXME: why 3?
-
-lds:hset("myhash", "field", "foo")
+lds:hmset("myhash", "field1", "foo", "field2", "bar")
 res, err = lds:hclear("myhash")
-
 if not res then
 	ngx.say("failed to HCLEAR", err)
 	return
 end
 
-ngx.say("HCLEAR should be 1 <=>", res)
-lds:hclear("myhash")
-
+ngx.say("HCLEAR should be 2 <=>", res)
 
 -- hmclear
-
 lds:hset("myhash1", "field1", "foo")
 lds:hset("myhash2", "field2", "bar")
 res, err = lds:hmclear("myhash1", "myhash2")
@@ -399,7 +377,6 @@ if not res then
 end
 
 ngx.say("HMCLEAR should be 2 <=>", res)
-
 
 -- hexpire
 lds:hset("myhash", "field", "foo")
@@ -412,9 +389,7 @@ end
 ngx.say("HEXPIRE should be 1 <=>", res)
 lds:hclear("myhash")
 
-
 -- hexpireat
-
 lds:hset("myhash", "field", "foo")
 res, err = lds:hexpireat("myhash", 14366666666)
 if not res then
@@ -424,7 +399,6 @@ end
 
 ngx.say("HEXPIREAT should be 1 <=>", res)
 lds:hclear("myhash")
-
 
 -- hpersist
 lds:hset("myhash", "field", "foo")
@@ -504,11 +478,8 @@ end
 	
 ngx.say("LRANGE should be one <=>", res)
 lds:lclear("mylist")
-		
-
 
 -- lpush
-
 res, err = lds:lpush("mylist", "one", "two")
 if not res then
 	ngx.say("failed to LPUSH ", err)
@@ -520,7 +491,6 @@ lds:lclear("mylist")
 		
 
 -- rpop
-
 lds:rpush("mylist", "one", "two")
 res, err = lds:rpop("mylist")
 if not res then
@@ -563,9 +533,7 @@ end
 ngx.say("LEXPIRE should be 1 <=>", res)
 lds:lclear("mylist")
 
-
 -- lexpireat
-
 lds:rpush("mylist", "one")
 res, err = lds:lexpireat("mylist", 14366666666)
 if not res then
@@ -575,7 +543,6 @@ end
 
 ngx.say("LEXPIREAT should be 1 <=>", res)
 lds:lclear("mylist")
-
 
 -- lpersist
 lds:rpush("mylist", "one", "two")
@@ -589,7 +556,6 @@ end
 
 ngx.say("LPERSIST should be 1 <=>", res)
 lds:hclear("mylist")
-
 
 --lttl
 lds:rpush("mylist", "field", "foo")
@@ -605,6 +571,7 @@ lds:lclear("mylist")
 
 
 ngx.say("\n==================== ZSET =====================\n")
+
 
 -- [[ ZSET ]]
 
@@ -630,7 +597,6 @@ end
 ngx.say("ZCARD should be 2 <=>", res)
 lds:zclear("myset")
 		
-
 -- zcount
 lds:zadd("myset", 1, "one", 2, "two")
 res, err = lds:zcount("myset", "-inf", "+inf")
@@ -642,7 +608,7 @@ end
 ngx.say("ZCOUNT should be 2 <=>", res)
 lds:zclear("myset")
 		
---zincrby
+-- zincrby
 lds:zadd("myset", 1, "one")
 res, err = lds:zincrby("myset", 2, "one")
 if not res then
@@ -653,8 +619,7 @@ end
 ngx.say("ZINCRBY should be 3 <=>", res)
 lds:zclear("myset")
 		
-
---zrange
+-- zrange
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zrange("myset", 0, -1, "WITHSCORES")
 if not res then
@@ -665,8 +630,7 @@ end
 ngx.say("ZRANGE should be one1two2three3<=>", res)
 lds:zclear("myset")
 		
-
---zrangebyscore
+-- zrangebyscore
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zrangebyscore("myset", 1, 2)
 if not res then
@@ -676,7 +640,6 @@ end
 
 ngx.say("ZRANGEBYSCORE should be onetwo <=>", res)
 lds:zclear("myset")
-
 
 -- zrank
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
@@ -689,7 +652,7 @@ end
 ngx.say("ZRANK should be 2 <=>", res)
 lds:zclear("myset")
 
---zrem
+-- zrem
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zrem("myset", "two", "three")
 if not res then
@@ -700,8 +663,7 @@ end
 ngx.say("ZREM should be 2 <=>", res)
 lds:zclear("myset")
 
-
---zremrangebyrank
+-- zremrangebyrank
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err= lds:zremrangebyrank("myset", 0, 2)
 if not res then
@@ -713,7 +675,7 @@ ngx.say("ZREMRANGEBYRANK should be 3 <=>", res)
 lds:zclear("myset")
 
 
---zremrangebyscore
+-- zremrangebyscore
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zremrangebyscore("myset", 0, 2)
 if not res then
@@ -736,9 +698,6 @@ end
 ngx.say("ZREVRANGE should be threetwoone <=>", res)
 lds:zclear("myset")
 
-
-
-
 -- zrevrangebyscore
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zrevrangebyscore("myset", "+inf", "-inf")
@@ -749,8 +708,6 @@ end
 
 ngx.say("ZREVRANGEBYSCORE should be threetwoone <=>", res)
 lds:zclear("myset")
-
-
 
 -- zscore
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
@@ -763,7 +720,6 @@ end
 ngx.say("ZSCORE should be 2 <=>", res)
 lds.zclear("myset")
 
-
 -- zclear
 lds:zadd("myset", 1, "one", 2, "two", 3, "three")
 res, err = lds:zclear("myset")
@@ -773,7 +729,6 @@ if not res then
 end
 
 ngx.say("ZCLEAR should be 3 <=>", res)
-
 
 -- zmclear
 lds:zadd("myset1", 1, "one", 2, "two", 3, "three")
@@ -786,17 +741,7 @@ end
 
 ngx.say("ZMCLEAR should be 2 <=>", res)
 
---zexpire
-
---zexpireat
-
---zpersist
-
---zttl
-
-
 -- zexpire
-
 lds:zadd("myset", 1, "one")
 res, err = lds:zexpire("myset", 60)
 if not res then
@@ -806,7 +751,6 @@ end
 
 ngx.say("ZEXPIRE should be 1 <=> ", res)
 lds:zclear("myset")
-
 
 -- zexpireat
 lds:zadd("myset", 1, "one")
@@ -820,7 +764,6 @@ ngx.say("ZEXPIREAT 1 <=>", res)
 lds:zclear("myset")
 
 -- zttl
-
 lds:zadd("myset", 1, "one")
 lds:zexpire("myset", 100)
 res, err = lds:zttl("myset")
@@ -837,7 +780,6 @@ ngx.say("ZTTL ",  res)
 lds:zclear("myset")
 
 -- zpersist
-
 lds:zadd("myset", 1, "one")
 lds:zexpire("myset", 100)
 res, err = lds:zpersist("myset")
@@ -873,9 +815,7 @@ end
 
 ngx.say("ECHO should be hello, lua <=>", res)
 
-
 -- select
-
 res, err = lds:select(5)
 if not res then
 	ngx.say("failed to SELECT ", err)
@@ -883,5 +823,3 @@ if not res then
 end
 
 ngx.say("SELECT should be OK <=>", res)
-
-
