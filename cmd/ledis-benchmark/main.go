@@ -10,7 +10,7 @@ import (
 )
 
 var ip = flag.String("ip", "127.0.0.1", "redis/ledis/ssdb server ip")
-var port = flag.Int("port", 6379, "redis/ledis/ssdb server port")
+var port = flag.Int("port", 6380, "redis/ledis/ssdb server port")
 var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 
