@@ -25,15 +25,12 @@ except ImportError:
     from distutils.core import setup
     PyTest = lambda x: x
 
-f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
-long_description = f.read()
-f.close()
 
 setup(
     name='ledis',
     version=__version__,
-    description='Python client for ledis key-value store',
-    long_description=long_description,
+    description='Python client for ledisdb key-value database',
+    long_description='Python client for ledisdb key-value database',
     url='https://github.com/siddontang/ledisdb',
     keywords=['ledis', 'key-value store'],
     license='MIT',
@@ -49,9 +46,5 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ]
 )

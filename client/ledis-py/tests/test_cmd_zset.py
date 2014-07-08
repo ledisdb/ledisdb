@@ -66,7 +66,7 @@ class TestCmdZset(unittest.TestCase):
         assert l.zrangebyscore('a', 2, 4, withscores=True) == \
             [('a2', 2), ('a3', 3), ('a4', 4)]
 
-    def test_rank(self):
+    def test_zrank(self):
         l.zadd('a', a1=1, a2=2, a3=3, a4=4, a5=5)
         assert l.zrank('a', 'a1') == 0
         assert l.zrank('a', 'a3') == 2
@@ -167,4 +167,3 @@ class TestCmdZset(unittest.TestCase):
         assert 0 < l.zttl('a') <= 100
         assert l.zpersist('a')
         assert l.zttl('a') == -1
-
