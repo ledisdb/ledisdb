@@ -151,7 +151,7 @@ func (db *DB) hExpireAt(key []byte, when int64) (int64, error) {
 	if hlen, err := db.HLen(key); err != nil || hlen == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, hExpType, key, when)
+		db.expireAt(t, hashType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -304,7 +304,7 @@ func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
-			db.rmExpire(t, hExpType, key)
+			db.rmExpire(t, hashType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -428,7 +428,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 	defer t.Unlock()
 
 	num := db.hDelete(t, key)
-	db.rmExpire(t, hExpType, key)
+	db.rmExpire(t, hashType, key)
 
 	err := t.Commit()
 	return num, err
@@ -445,7 +445,7 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 		}
 
 		db.hDelete(t, key)
-		db.rmExpire(t, hExpType, key)
+		db.rmExpire(t, hashType, key)
 	}
 
 	err := t.Commit()
@@ -466,7 +466,7 @@ func (db *DB) hFlush() (drop int64, err error) {
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, hExpType)
+	err = db.expFlush(t, hashType)
 
 	err = t.Commit()
 	return
@@ -530,7 +530,7 @@ func (db *DB) HTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(hExpType, key)
+	return db.ttl(hashType, key)
 }
 
 func (db *DB) HPersist(key []byte) (int64, error) {
@@ -542,7 +542,7 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, hExpType, key)
+	n, err := db.rmExpire(t, hashType, key)
 	if err != nil {
 		return 0, err
 	}

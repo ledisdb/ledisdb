@@ -260,7 +260,7 @@ func (db *DB) zExpireAt(key []byte, when int64) (int64, error) {
 	if zcnt, err := db.ZCard(key); err != nil || zcnt == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, zExpType, key, when)
+		db.expireAt(t, zsetType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -314,7 +314,7 @@ func (db *DB) zIncrSize(t *tx, key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
-			db.rmExpire(t, zExpType, key)
+			db.rmExpire(t, zsetType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -752,7 +752,7 @@ func (db *DB) zFlush() (drop int64, err error) {
 	}
 	it.Close()
 
-	db.expFlush(t, zExpType)
+	db.expFlush(t, zsetType)
 
 	err = t.Commit()
 	return
@@ -818,7 +818,7 @@ func (db *DB) ZTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(zExpType, key)
+	return db.ttl(zsetType, key)
 }
 
 func (db *DB) ZPersist(key []byte) (int64, error) {
@@ -830,7 +830,7 @@ func (db *DB) ZPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, zExpType, key)
+	n, err := db.rmExpire(t, zsetType, key)
 	if err != nil {
 		return 0, err
 	}

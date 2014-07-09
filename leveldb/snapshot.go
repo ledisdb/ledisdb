@@ -45,14 +45,16 @@ func (s *Snapshot) RevRangeIterator(min []byte, max []byte, rangeType uint8) *Ra
 	return NewRevRangeLimitIterator(s.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
-//count < 0, unlimit
-//offset must >= 0, if < 0, will get nothing
+//count < 0, unlimit.
+//
+//offset must >= 0, if < 0, will get nothing.
 func (s *Snapshot) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
 	return NewRangeLimitIterator(s.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-//count < 0, unlimit
-//offset must >= 0, if < 0, will get nothing
+//count < 0, unlimit.
+//
+//offset must >= 0, if < 0, will get nothing.
 func (s *Snapshot) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
 	return NewRevRangeLimitIterator(s.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }

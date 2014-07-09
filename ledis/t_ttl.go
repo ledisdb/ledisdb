@@ -7,30 +7,28 @@ import (
 	"time"
 )
 
-var mapExpMetaType = map[byte]byte{
-	kvExpType: kvExpMetaType,
-	lExpType:  lExpMetaType,
-	hExpType:  hExpMetaType,
-	zExpType:  zExpMetaType,
-	bExpType:  bExpMetaType}
+var (
+	errExpMetaKey = errors.New("invalid expire meta key")
+	errExpTimeKey = errors.New("invalid expire time key")
+)
 
 type retireCallback func(*tx, []byte) int64
 
 type elimination struct {
 	db         *DB
-	exp2Tx     map[byte]*tx
-	exp2Retire map[byte]retireCallback
+	exp2Tx     []*tx
+	exp2Retire []retireCallback
 }
 
 var errExpType = errors.New("invalid expire type")
 
-func (db *DB) expEncodeTimeKey(expType byte, key []byte, when int64) []byte {
-	// format : db[8] / expType[8] / when[64] / key[...]
-	buf := make([]byte, len(key)+10)
+func (db *DB) expEncodeTimeKey(dataType byte, key []byte, when int64) []byte {
+	buf := make([]byte, len(key)+11)
 
 	buf[0] = db.index
-	buf[1] = expType
-	pos := 2
+	buf[1] = expTimeType
+	buf[2] = dataType
+	pos := 3
 
 	binary.BigEndian.PutUint64(buf[pos:], uint64(when))
 	pos += 8
@@ -40,43 +38,49 @@ func (db *DB) expEncodeTimeKey(expType byte, key []byte, when int64) []byte {
 	return buf
 }
 
-func (db *DB) expEncodeMetaKey(expType byte, key []byte) []byte {
-	// format : db[8] / expType[8] / key[...]
-	buf := make([]byte, len(key)+2)
+func (db *DB) expEncodeMetaKey(dataType byte, key []byte) []byte {
+	buf := make([]byte, len(key)+3)
 
 	buf[0] = db.index
-	buf[1] = expType
-	pos := 2
+	buf[1] = expMetaType
+	buf[2] = dataType
+	pos := 3
 
 	copy(buf[pos:], key)
 
 	return buf
 }
 
-// usage : separate out the original key
-func (db *DB) expDecodeMetaKey(mk []byte) []byte {
-	if len(mk) <= 2 {
-		//	check db ? check type ?
-		return nil
+func (db *DB) expDecodeMetaKey(mk []byte) (byte, []byte, error) {
+	if len(mk) <= 3 || mk[0] != db.index || mk[1] != expMetaType {
+		return 0, nil, errExpMetaKey
 	}
 
-	return mk[2:]
+	return mk[2], mk[3:], nil
 }
 
-func (db *DB) expire(t *tx, expType byte, key []byte, duration int64) {
-	db.expireAt(t, expType, key, time.Now().Unix()+duration)
+func (db *DB) expDecodeTimeKey(tk []byte) (byte, []byte, int64, error) {
+	if len(tk) < 11 || tk[0] != db.index || tk[1] != expTimeType {
+		return 0, nil, 0, errExpTimeKey
+	}
+
+	return tk[2], tk[11:], int64(binary.BigEndian.Uint64(tk[3:])), nil
 }
 
-func (db *DB) expireAt(t *tx, expType byte, key []byte, when int64) {
-	mk := db.expEncodeMetaKey(expType+1, key)
-	tk := db.expEncodeTimeKey(expType, key, when)
+func (db *DB) expire(t *tx, dataType byte, key []byte, duration int64) {
+	db.expireAt(t, dataType, key, time.Now().Unix()+duration)
+}
+
+func (db *DB) expireAt(t *tx, dataType byte, key []byte, when int64) {
+	mk := db.expEncodeMetaKey(dataType, key)
+	tk := db.expEncodeTimeKey(dataType, key, when)
 
 	t.Put(tk, mk)
 	t.Put(mk, PutInt64(when))
 }
 
-func (db *DB) ttl(expType byte, key []byte) (t int64, err error) {
-	mk := db.expEncodeMetaKey(expType+1, key)
+func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
+	mk := db.expEncodeMetaKey(dataType, key)
 
 	if t, err = Int64(db.db.Get(mk)); err != nil || t == 0 {
 		t = -1
@@ -91,8 +95,8 @@ func (db *DB) ttl(expType byte, key []byte) (t int64, err error) {
 	return t, err
 }
 
-func (db *DB) rmExpire(t *tx, expType byte, key []byte) (int64, error) {
-	mk := db.expEncodeMetaKey(expType+1, key)
+func (db *DB) rmExpire(t *tx, dataType byte, key []byte) (int64, error) {
+	mk := db.expEncodeMetaKey(dataType, key)
 	if v, err := db.db.Get(mk); err != nil {
 		return 0, err
 	} else if v == nil {
@@ -100,26 +104,23 @@ func (db *DB) rmExpire(t *tx, expType byte, key []byte) (int64, error) {
 	} else if when, err2 := Int64(v, nil); err2 != nil {
 		return 0, err2
 	} else {
-		tk := db.expEncodeTimeKey(expType, key, when)
+		tk := db.expEncodeTimeKey(dataType, key, when)
 		t.Delete(mk)
 		t.Delete(tk)
 		return 1, nil
 	}
 }
 
-func (db *DB) expFlush(t *tx, expType byte) (err error) {
-	expMetaType, ok := mapExpMetaType[expType]
-	if !ok {
-		return errExpType
-	}
-
-	minKey := make([]byte, 2)
+func (db *DB) expFlush(t *tx, dataType byte) (err error) {
+	minKey := make([]byte, 3)
 	minKey[0] = db.index
-	minKey[1] = expType
+	minKey[1] = expTimeType
+	minKey[2] = dataType
 
-	maxKey := make([]byte, 2)
+	maxKey := make([]byte, 3)
 	maxKey[0] = db.index
-	maxKey[1] = expMetaType + 1
+	maxKey[1] = expMetaType
+	maxKey[2] = dataType + 1
 
 	_, err = db.flushRegion(t, minKey, maxKey)
 	err = t.Commit()
@@ -133,17 +134,17 @@ func (db *DB) expFlush(t *tx, expType byte) (err error) {
 func newEliminator(db *DB) *elimination {
 	eli := new(elimination)
 	eli.db = db
-	eli.exp2Tx = make(map[byte]*tx)
-	eli.exp2Retire = make(map[byte]retireCallback)
+	eli.exp2Tx = make([]*tx, maxDataType)
+	eli.exp2Retire = make([]retireCallback, maxDataType)
 	return eli
 }
 
-func (eli *elimination) regRetireContext(expType byte, t *tx, onRetire retireCallback) {
+func (eli *elimination) regRetireContext(dataType byte, t *tx, onRetire retireCallback) {
 
 	//	todo .. need to ensure exist - mapExpMetaType[expType]
 
-	eli.exp2Tx[expType] = t
-	eli.exp2Retire[expType] = onRetire
+	eli.exp2Tx[dataType] = t
+	eli.exp2Retire[dataType] = onRetire
 }
 
 //	call by outside ... (from *db to another *db)
@@ -151,56 +152,43 @@ func (eli *elimination) active() {
 	now := time.Now().Unix()
 	db := eli.db
 	dbGet := db.db.Get
-	expKeys := make([][]byte, 0, 1024)
-	expTypes := [...]byte{kvExpType, lExpType, hExpType, zExpType}
 
-	for _, et := range expTypes {
-		//	search those keys' which expire till the moment
-		minKey := db.expEncodeTimeKey(et, nil, 0)
-		maxKey := db.expEncodeTimeKey(et, nil, now+1)
-		expKeys = expKeys[0:0]
+	minKey := db.expEncodeTimeKey(noneType, nil, 0)
+	maxKey := db.expEncodeTimeKey(maxDataType, nil, now)
 
-		t, _ := eli.exp2Tx[et]
-		onRetire, _ := eli.exp2Retire[et]
-		if t == nil || onRetire == nil {
-			// todo : log error
+	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	for ; it.Valid(); it.Next() {
+		tk := it.RawKey()
+		mk := it.RawValue()
+
+		dt, k, _, err := db.expDecodeTimeKey(tk)
+		if err != nil {
 			continue
 		}
 
-		it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
-		for it.Valid() {
-			for i := 1; i < 512 && it.Valid(); i++ {
-				expKeys = append(expKeys, it.Key(), it.Value())
-				it.Next()
+		t := eli.exp2Tx[dt]
+		onRetire := eli.exp2Retire[dt]
+		if tk == nil || onRetire == nil {
+			continue
+		}
+
+		t.Lock()
+
+		if exp, err := Int64(dbGet(mk)); err == nil {
+			// check expire again
+			if exp <= now {
+				onRetire(t, k)
+				t.Delete(tk)
+				t.Delete(mk)
+
+				t.Commit()
 			}
 
-			var cnt int = len(expKeys)
-			if cnt == 0 {
-				continue
-			}
+		}
 
-			t.Lock()
-			var mk, ek, k []byte
-			for i := 0; i < cnt; i += 2 {
-				ek, mk = expKeys[i], expKeys[i+1]
-				if exp, err := Int64(dbGet(mk)); err == nil {
-					// check expire again
-					if exp > now {
-						continue
-					}
-
-					// delete keys
-					k = db.expDecodeMetaKey(mk)
-					onRetire(t, k)
-					t.Delete(ek)
-					t.Delete(mk)
-				}
-			}
-			t.Commit()
-			t.Unlock()
-		} // end : it
-		it.Close()
-	} // end : expType
+		t.Unlock()
+	}
+	it.Close()
 
 	return
 }

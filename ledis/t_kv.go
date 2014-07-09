@@ -100,7 +100,7 @@ func (db *DB) setExpireAt(key []byte, when int64) (int64, error) {
 	if exist, err := db.Exists(key); err != nil || exist == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, kvExpType, key, when)
+		db.expireAt(t, kvType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -132,7 +132,7 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 
 	for i, k := range keys {
 		t.Delete(codedKeys[i])
-		db.rmExpire(t, kvExpType, k)
+		db.rmExpire(t, kvType, k)
 	}
 
 	err := t.Commit()
@@ -317,7 +317,7 @@ func (db *DB) flush() (drop int64, err error) {
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, kvExpType)
+	err = db.expFlush(t, kvType)
 
 	err = t.Commit()
 	return
@@ -382,7 +382,7 @@ func (db *DB) TTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(kvExpType, key)
+	return db.ttl(kvType, key)
 }
 
 func (db *DB) Persist(key []byte) (int64, error) {
@@ -393,7 +393,7 @@ func (db *DB) Persist(key []byte) (int64, error) {
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
-	n, err := db.rmExpire(t, kvExpType, key)
+	n, err := db.rmExpire(t, kvType, key)
 	if err != nil {
 		return 0, err
 	}
