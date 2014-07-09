@@ -11,6 +11,13 @@
 --]]
 
 local ledis = require "ledis"
+
+-- if you want to test add_commands, remove the command from 
+-- `local commands `, e.g.: ``get``, then use ``add_commands`` to add
+-- command ``get``
+
+--ledis.add_commands("get")
+
 local lds = ledis:new()
 
 lds:set_timeout(1000)
@@ -823,3 +830,30 @@ if not res then
 end
 
 ngx.say("SELECT should be OK <=>", res)
+
+-- get_reused_times
+
+times, err = lds:get_reused_times()
+if not times then
+	ngx.say("failed to get_reused_times", err)
+	return
+end
+
+ngx.say("time is", times)
+
+-- local ok, err = lds:set_keepalive(10000, 100)
+-- if not ok then
+--     ngx.say("failed to set keepalive: ", err)
+--     return
+-- end
+-- ngx.say("set_keepalive success")
+-- or just close the connection right away:
+
+
+
+local ok, err = lds:close()
+if not ok then
+    ngx.say("failed to close: ", err)
+    return
+end
+ngx.say("close success")
