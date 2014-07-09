@@ -307,19 +307,6 @@ end
 
 
 
-
-function _M.read_reply(self)
-    local sock = self.sock
-    if not sock then
-        return nil, "not initialized"
-    end
-
-    local res, err = _read_reply(self, sock)
-
-    return res, err
-end
-
-
 for i = 1, #commands do
     local cmd = commands[i]
 
