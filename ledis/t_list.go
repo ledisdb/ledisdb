@@ -175,7 +175,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	t.Delete(itemKey)
 	size := db.lSetMeta(metaKey, headSeq, tailSeq)
 	if size == 0 {
-		db.rmExpire(t, hExpType, key)
+		db.rmExpire(t, hashType, key)
 	}
 
 	err = t.Commit()
@@ -264,7 +264,7 @@ func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
 	if llen, err := db.LLen(key); err != nil || llen == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, lExpType, key, when)
+		db.expireAt(t, listType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -384,7 +384,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	defer t.Unlock()
 
 	num := db.lDelete(t, key)
-	db.rmExpire(t, lExpType, key)
+	db.rmExpire(t, listType, key)
 
 	err := t.Commit()
 	return num, err
@@ -401,7 +401,7 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 		}
 
 		db.lDelete(t, key)
-		db.rmExpire(t, lExpType, key)
+		db.rmExpire(t, listType, key)
 
 	}
 
@@ -423,7 +423,7 @@ func (db *DB) lFlush() (drop int64, err error) {
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, lExpType)
+	err = db.expFlush(t, listType)
 
 	err = t.Commit()
 	return
@@ -450,7 +450,7 @@ func (db *DB) LTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(lExpType, key)
+	return db.ttl(listType, key)
 }
 
 func (db *DB) LPersist(key []byte) (int64, error) {
@@ -462,7 +462,7 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, lExpType, key)
+	n, err := db.rmExpire(t, listType, key)
 	if err != nil {
 		return 0, err
 	}

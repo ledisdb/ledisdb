@@ -26,11 +26,11 @@ func (db *DB) FlushAll() (drop int64, err error) {
 
 func (db *DB) newEliminator() *elimination {
 	eliminator := newEliminator(db)
-	eliminator.regRetireContext(kvExpType, db.kvTx, db.delete)
-	eliminator.regRetireContext(lExpType, db.listTx, db.lDelete)
-	eliminator.regRetireContext(hExpType, db.hashTx, db.hDelete)
-	eliminator.regRetireContext(zExpType, db.zsetTx, db.zDelete)
-	eliminator.regRetireContext(bExpType, db.binTx, db.bDelete)
+	eliminator.regRetireContext(kvType, db.kvTx, db.delete)
+	eliminator.regRetireContext(listType, db.listTx, db.lDelete)
+	eliminator.regRetireContext(hashType, db.hashTx, db.hDelete)
+	eliminator.regRetireContext(zsetType, db.zsetTx, db.zDelete)
+	eliminator.regRetireContext(binType, db.binTx, db.bDelete)
 
 	return eliminator
 }
@@ -38,7 +38,7 @@ func (db *DB) newEliminator() *elimination {
 func (db *DB) flushRegion(t *tx, minKey []byte, maxKey []byte) (drop int64, err error) {
 	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeROpen)
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+		t.Delete(it.RawKey())
 		drop++
 		if drop&1023 == 0 {
 			if err = t.Commit(); err != nil {

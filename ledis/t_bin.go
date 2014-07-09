@@ -355,7 +355,7 @@ func (db *DB) bExpireAt(key []byte, when int64) (int64, error) {
 	if seq, _, err := db.bGetMeta(key); err != nil || seq < 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, bExpType, key, when)
+		db.expireAt(t, binType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -407,7 +407,7 @@ func (db *DB) BDelete(key []byte) (drop int64, err error) {
 	defer t.Unlock()
 
 	drop = db.bDelete(t, key)
-	db.rmExpire(t, bExpType, key)
+	db.rmExpire(t, binType, key)
 
 	err = t.Commit()
 	return
@@ -736,7 +736,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 
 	// clear the old data in case
 	db.bDelete(t, dstkey)
-	db.rmExpire(t, bExpType, dstkey)
+	db.rmExpire(t, binType, dstkey)
 
 	//	set data
 	db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
@@ -786,7 +786,7 @@ func (db *DB) BTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(bExpType, key)
+	return db.ttl(binType, key)
 }
 
 func (db *DB) BPersist(key []byte) (int64, error) {
@@ -798,7 +798,7 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, bExpType, key)
+	n, err := db.rmExpire(t, binType, key)
 	if err != nil {
 		return 0, err
 	}
@@ -825,7 +825,7 @@ func (db *DB) bFlush() (drop int64, err error) {
 	maxKey[1] = binMetaType + 1
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, bExpType)
+	err = db.expFlush(t, binType)
 
 	err = t.Commit()
 	return

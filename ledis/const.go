@@ -5,28 +5,22 @@ import (
 )
 
 const (
-	kvType byte = iota + 1
-	hashType
-	hSizeType
-	listType
-	lMetaType
-	zsetType
-	zSizeType
-	zScoreType
+	noneType    byte = 0
+	kvType      byte = 1
+	hashType    byte = 2
+	hSizeType   byte = 3
+	listType    byte = 4
+	lMetaType   byte = 5
+	zsetType    byte = 6
+	zSizeType   byte = 7
+	zScoreType  byte = 8
+	binType     byte = 9
+	binMetaType byte = 10
 
-	kvExpType
-	kvExpMetaType
-	lExpType
-	lExpMetaType
-	hExpType
-	hExpMetaType
-	zExpType
-	zExpMetaType
+	maxDataType byte = 100
 
-	binType
-	binMetaType
-	bExpType
-	bExpMetaType
+	expTimeType byte = 101
+	expMetaType byte = 102
 )
 
 const (
