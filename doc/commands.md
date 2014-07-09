@@ -53,6 +53,7 @@ Table of Contents
 	- [RPOP key](#rpop-keuser-content-y)
 	- [RPUSH key value [value ...]](#rpush-key-value-value-)
 	- [LCLEAR key](#lclear-key)
+	- [LMCLEAR key [key...]](#lmclear-key-key-)
 	- [LEXPIRE key seconds](#lexpire-key-seconds)
 	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
 	- [LTTL key](#lttl-key)
@@ -70,6 +71,7 @@ Table of Contents
 	- [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
 	- [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
 	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
+	- [ZREVRANK key member](#zrevrank-key-member)
 	- [ZSCORE key member](#zscore-key-member)
 	- [ZCLEAR key](#zclear-key)
 	- [ZMCLEAR key [key ...]](#zmclear-key-key-)
@@ -953,6 +955,25 @@ ledis> LLEN a
 (integer) 0
 ```
 
+### LMCLEAR key [key ...]
+Delete multiple keys from list
+
+
+**Return value**
+
+int64: the number of input keys
+
+**Examples**
+
+```
+ledis> rpush a 1
+(integer) 1
+ledis> rpush b 2
+(integer) 1
+ledis> lmclear a b
+(integer) 2
+```
+
 ### LEXPIRE key seconds
 Set a timeout on key. After the timeout has expired, the key will be deleted.
 
@@ -1409,6 +1430,30 @@ ledis> ZREVRANGEBYSCORE myset +inf -inf WITHSCORES LIMIT 1 2
 3) "two"
 4) "2"
 ```
+
+### ZREVRANK key member
+Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low. The rank (or index) is 0-based, which means that the member with the highest score has rank 0.
+Use ZRANK to get the rank of an element with the scores ordered from low to high.
+
+**Return value**
+
+- If member exists in the sorted set, Integer reply: the rank of member.
+- If member does not exist in the sorted set or key does not exist, Bulk string reply: nil.
+
+
+**Examples**
+
+```
+127.0.0.1:6380> zadd myset 1 one
+(integer) 1
+127.0.0.1:6380> zadd myset 2 two
+(integer) 1
+127.0.0.1:6380> zrevrank myset one
+(integer) 1
+127.0.0.1:6380> zrevrank myset three
+(nil)
+```
+
 
 ### ZSCORE key member
 Returns the score of member in the sorted set at key.

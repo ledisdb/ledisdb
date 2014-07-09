@@ -1,4 +1,4 @@
-//a wrapper for c++ leveldb
+// Package leveldb is a wrapper for c++ leveldb
 package leveldb
 
 /*

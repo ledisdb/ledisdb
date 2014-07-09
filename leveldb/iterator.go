@@ -23,12 +23,12 @@ const (
 	RangeOpen  uint8 = 0x11
 )
 
-//min must less or equal than max
-//range type:
-//close: [min, max]
-//open: (min, max)
-//lopen: (min, max]
-//ropen: [min, max)
+// min must less or equal than max
+// range type:
+// close: [min, max]
+// open: (min, max)
+// lopen: (min, max]
+// ropen: [min, max)
 type Range struct {
 	Min []byte
 	Max []byte
@@ -46,7 +46,7 @@ type Iterator struct {
 	isValid C.uchar
 }
 
-//Returns a copy of key.
+// Returns a copy of key.
 func (it *Iterator) Key() []byte {
 	var klen C.size_t
 	kdata := C.leveldb_iter_key(it.it, &klen)
@@ -57,7 +57,7 @@ func (it *Iterator) Key() []byte {
 	return C.GoBytes(unsafe.Pointer(kdata), C.int(klen))
 }
 
-//Returns a copy of value.
+// Returns a copy of value.
 func (it *Iterator) Value() []byte {
 	var vlen C.size_t
 	vdata := C.leveldb_iter_value(it.it, &vlen)
@@ -68,8 +68,8 @@ func (it *Iterator) Value() []byte {
 	return C.GoBytes(unsafe.Pointer(vdata), C.int(vlen))
 }
 
-//Returns a reference of key.
-//you must be careful that it will be changed after next iterate.
+// Returns a reference of key.
+// you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawKey() []byte {
 	var klen C.size_t
 	kdata := C.leveldb_iter_key(it.it, &klen)
@@ -80,8 +80,8 @@ func (it *Iterator) RawKey() []byte {
 	return slice(unsafe.Pointer(kdata), int(C.int(klen)))
 }
 
-//Returns a reference of value.
-//you must be careful that it will be changed after next iterate.
+// Returns a reference of value.
+// you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawValue() []byte {
 	var vlen C.size_t
 	vdata := C.leveldb_iter_value(it.it, &vlen)
@@ -92,7 +92,7 @@ func (it *Iterator) RawValue() []byte {
 	return slice(unsafe.Pointer(vdata), int(C.int(vlen)))
 }
 
-//Copy key to b, if b len is small or nil, returns a new one
+// Copy key to b, if b len is small or nil, returns a new one
 func (it *Iterator) BufKey(b []byte) []byte {
 	k := it.RawKey()
 	if k == nil {
@@ -106,7 +106,7 @@ func (it *Iterator) BufKey(b []byte) []byte {
 	return append(b, k...)
 }
 
-//Copy value to b, if b len is small or nil, returns a new one
+// Copy value to b, if b len is small or nil, returns a new one
 func (it *Iterator) BufValue(b []byte) []byte {
 	v := it.RawValue()
 	if v == nil {
@@ -150,7 +150,7 @@ func (it *Iterator) Seek(key []byte) {
 	it.isValid = C.leveldb_iter_seek_ext(it.it, (*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
 
-//Finds by key, if not found, nil returns
+// Finds by key, if not found, nil returns
 func (it *Iterator) Find(key []byte) []byte {
 	it.Seek(key)
 	if it.Valid() {
@@ -165,8 +165,8 @@ func (it *Iterator) Find(key []byte) []byte {
 	return nil
 }
 
-//Finds by key, if not found, nil returns, else a reference of value returns
-//you must be careful that it will be changed after next iterate.
+// Finds by key, if not found, nil returns, else a reference of value returns
+// you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawFind(key []byte) []byte {
 	it.Seek(key)
 	if it.Valid() {
