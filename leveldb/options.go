@@ -55,14 +55,6 @@ func (o *Options) SetCache(cache *Cache) {
 	C.leveldb_options_set_cache(o.Opt, cache.Cache)
 }
 
-// func (o *Options) SetEnv(env *Env) {
-// 	C.leveldb_options_set_env(o.Opt, env.Env)
-// }
-
-func (o *Options) SetInfoLog(log *C.leveldb_logger_t) {
-	C.leveldb_options_set_info_log(o.Opt, log)
-}
-
 func (o *Options) SetWriteBufferSize(s int) {
 	C.leveldb_options_set_write_buffer_size(o.Opt, C.size_t(s))
 }

@@ -289,14 +289,16 @@ func (db *DB) RevRangeIterator(min []byte, max []byte, rangeType uint8) *RangeLi
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
-//count < 0, unlimit
-//offset must >= 0, if < 0, will get nothing
+//count < 0, unlimit.
+//
+//offset must >= 0, if < 0, will get nothing.
 func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
 	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-//count < 0, unlimit
-//offset must >= 0, if < 0, will get nothing
+//count < 0, unlimit.
+//
+//offset must >= 0, if < 0, will get nothing.
 func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
