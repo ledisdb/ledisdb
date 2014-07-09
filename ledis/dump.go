@@ -15,6 +15,7 @@ import (
 // |keylen(bigendian int32)|key|valuelen(bigendian int32)|value......
 //
 //key and value are both compressed for fast transfer dump on network using snappy
+
 type MasterInfo struct {
 	LogFileIndex int64
 	LogPos       int64
