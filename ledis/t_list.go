@@ -84,8 +84,12 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	var size int32
 	var err error
 
+	t := db.listTx
+	t.Lock()
+	defer t.Unlock()
+
 	metaKey := db.lEncodeMetaKey(key)
-	headSeq, tailSeq, size, err = db.lGetMeta(metaKey)
+	headSeq, tailSeq, size, err = db.lGetMeta(nil, metaKey)
 	if err != nil {
 		return 0, err
 	}
@@ -101,10 +105,6 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 		seq = tailSeq
 		delta = 1
 	}
-
-	t := db.listTx
-	t.Lock()
-	defer t.Unlock()
 
 	//	append elements
 	if size > 0 {
@@ -148,7 +148,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	var err error
 
 	metaKey := db.lEncodeMetaKey(key)
-	headSeq, tailSeq, _, err = db.lGetMeta(metaKey)
+	headSeq, tailSeq, _, err = db.lGetMeta(nil, metaKey)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,10 @@ func (db *DB) lDelete(t *tx, key []byte) int64 {
 	var tailSeq int32
 	var err error
 
-	headSeq, tailSeq, _, err = db.lGetMeta(mk)
+	it := db.db.NewIterator()
+	defer it.Close()
+
+	headSeq, tailSeq, _, err = db.lGetMeta(it, mk)
 	if err != nil {
 		return 0
 	}
@@ -200,27 +203,24 @@ func (db *DB) lDelete(t *tx, key []byte) int64 {
 	startKey := db.lEncodeListKey(key, headSeq)
 	stopKey := db.lEncodeListKey(key, tailSeq)
 
-	it := db.db.RangeLimitIterator(startKey, stopKey, leveldb.RangeClose, 0, -1)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+	rit := leveldb.NewRangeIterator(it, &leveldb.Range{startKey, stopKey, leveldb.RangeClose})
+	for ; rit.Valid(); rit.Next() {
+		t.Delete(rit.RawKey())
 		num++
 	}
-	it.Close()
 
 	t.Delete(mk)
 
 	return num
 }
 
-func (db *DB) lGetSeq(key []byte, whereSeq int32) (int64, error) {
-	ek := db.lEncodeListKey(key, whereSeq)
-
-	return Int64(db.db.Get(ek))
-}
-
-func (db *DB) lGetMeta(ek []byte) (headSeq int32, tailSeq int32, size int32, err error) {
+func (db *DB) lGetMeta(it *leveldb.Iterator, ek []byte) (headSeq int32, tailSeq int32, size int32, err error) {
 	var v []byte
-	v, err = db.db.Get(ek)
+	if it != nil {
+		v = it.Find(ek)
+	} else {
+		v, err = db.db.Get(ek)
+	}
 	if err != nil {
 		return
 	} else if v == nil {
@@ -284,7 +284,10 @@ func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 
 	metaKey := db.lEncodeMetaKey(key)
 
-	headSeq, tailSeq, _, err = db.lGetMeta(metaKey)
+	it := db.db.NewIterator()
+	defer it.Close()
+
+	headSeq, tailSeq, _, err = db.lGetMeta(it, metaKey)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +299,9 @@ func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 	}
 
 	sk := db.lEncodeListKey(key, seq)
-	return db.db.Get(sk)
+	v := it.Find(sk)
+
+	return v, nil
 }
 
 func (db *DB) LLen(key []byte) (int64, error) {
@@ -305,7 +310,7 @@ func (db *DB) LLen(key []byte) (int64, error) {
 	}
 
 	ek := db.lEncodeMetaKey(key)
-	_, _, size, err := db.lGetMeta(ek)
+	_, _, size, err := db.lGetMeta(nil, ek)
 	return int64(size), err
 }
 
@@ -328,7 +333,10 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 
 	metaKey := db.lEncodeMetaKey(key)
 
-	if headSeq, _, llen, err = db.lGetMeta(metaKey); err != nil {
+	it := db.db.NewIterator()
+	defer it.Close()
+
+	if headSeq, _, llen, err = db.lGetMeta(it, metaKey); err != nil {
 		return nil, err
 	}
 
@@ -356,12 +364,18 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	v := make([][]byte, 0, limit)
 
 	startKey := db.lEncodeListKey(key, headSeq)
-	it := db.db.RangeLimitIterator(startKey, nil, leveldb.RangeClose, 0, int(limit))
-	for ; it.Valid(); it.Next() {
-		v = append(v, it.Value())
-	}
+	rit := leveldb.NewRangeLimitIterator(it,
+		&leveldb.Range{
+			Min:  startKey,
+			Max:  nil,
+			Type: leveldb.RangeClose},
+		&leveldb.Limit{
+			Offset: 0,
+			Count:  int(limit)})
 
-	it.Close()
+	for ; rit.Valid(); rit.Next() {
+		v = append(v, rit.Value())
+	}
 
 	return v, nil
 }

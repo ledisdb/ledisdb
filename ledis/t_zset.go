@@ -451,36 +451,36 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 
 	k := db.zEncodeSetKey(key, member)
 
-	if v, err := db.db.Get(k); err != nil {
-		return 0, err
-	} else if v == nil {
+	it := db.db.NewIterator()
+	defer it.Close()
+
+	if v := it.Find(k); v == nil {
 		return -1, nil
 	} else {
-		if s, err := Int64(v, err); err != nil {
+		if s, err := Int64(v, nil); err != nil {
 			return 0, err
 		} else {
-			var it *leveldb.RangeLimitIterator
+			var rit *leveldb.RangeLimitIterator
 
 			sk := db.zEncodeScoreKey(key, member, s)
 
 			if !reverse {
 				minKey := db.zEncodeStartScoreKey(key, MinScore)
-				it = db.db.RangeLimitIterator(minKey, sk, leveldb.RangeClose, 0, -1)
+
+				rit = leveldb.NewRangeIterator(it, &leveldb.Range{minKey, sk, leveldb.RangeClose})
 			} else {
 				maxKey := db.zEncodeStopScoreKey(key, MaxScore)
-				it = db.db.RevRangeLimitIterator(sk, maxKey, leveldb.RangeClose, 0, -1)
+				rit = leveldb.NewRevRangeIterator(it, &leveldb.Range{sk, maxKey, leveldb.RangeClose})
 			}
 
 			var lastKey []byte = nil
 			var n int64 = 0
 
-			for ; it.Valid(); it.Next() {
+			for ; rit.Valid(); rit.Next() {
 				n++
 
-				lastKey = it.BufKey(lastKey)
+				lastKey = rit.BufKey(lastKey)
 			}
-
-			it.Close()
 
 			if _, m, _, err := db.zDecodeScoreKey(lastKey); err == nil && bytes.Equal(m, member) {
 				n--
@@ -741,8 +741,10 @@ func (db *DB) zFlush() (drop int64, err error) {
 	maxKey[1] = zScoreType + 1
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+		t.Delete(it.RawKey())
 		drop++
 		if drop&1023 == 0 {
 			if err = t.Commit(); err != nil {
@@ -750,7 +752,6 @@ func (db *DB) zFlush() (drop int64, err error) {
 			}
 		}
 	}
-	it.Close()
 
 	db.expFlush(t, zsetType)
 
