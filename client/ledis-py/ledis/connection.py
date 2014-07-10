@@ -317,18 +317,18 @@ class ConnectionPool(object):
 
         For example::
 
-            redis://localhost:6380/0
+            ledis://localhost:6380/0
             unix:///path/to/socket.sock?db=0
 
         Three URL schemes are supported:
-            redis:// creates a normal TCP socket connection
+            ledis:// creates a normal TCP socket connection
             unix:// creates a Unix Domain Socket connection
 
         There are several ways to specify a database number. The parse function
         will return the first specified option:
-            1. A ``db`` querystring option, e.g. redis://localhost?db=0
-            2. If using the redis:// scheme, the path argument of the url, e.g.
-               redis://localhost/0
+            1. A ``db`` querystring option, e.g. ledis://localhost?db=0
+            2. If using the ledis:// scheme, the path argument of the url, e.g.
+               ledis://localhost/0
             3. The ``db`` argument to this function.
 
         If none of these options are specified, db=0 is used.
@@ -357,7 +357,7 @@ class ConnectionPool(object):
             if value and len(value) > 0:
                 url_options[name] = value[0]
 
-        # We only support redis:// and unix:// schemes.
+        # We only support ledis:// and unix:// schemes.
         if url.scheme == 'unix':
             url_options.update({
                 'path': url.path,
@@ -437,18 +437,18 @@ class BlockingConnectionPool(object):
     """
     Thread-safe blocking connection pool::
 
-        >>> from redis.client import Redis
-        >>> client = Redis(connection_pool=BlockingConnectionPool())
+        >>> from ledis.client import Ledis
+        >>> client = Ledis(connection_pool=BlockingConnectionPool())
 
     It performs the same function as the default
-    ``:py:class: ~redis.connection.ConnectionPool`` implementation, in that,
+    ``:py:class: ~ledis.connection.ConnectionPool`` implementation, in that,
     it maintains a pool of reusable connections that can be shared by
-    multiple redis clients (safely across threads if required).
+    multiple ledis clients (safely across threads if required).
 
     The difference is that, in the event that a client tries to get a
     connection from the pool when all of connections are in use, rather than
-    raising a ``:py:class: ~redis.exceptions.ConnectionError`` (as the default
-    ``:py:class: ~redis.connection.ConnectionPool`` implementation does), it
+    raising a ``:py:class: ~ledis.exceptions.ConnectionError`` (as the default
+    ``:py:class: ~ledis.connection.ConnectionPool`` implementation does), it
     makes the client wait ("blocks") for a specified number of seconds until
     a connection becomes available.
 
@@ -548,7 +548,7 @@ class BlockingConnectionPool(object):
         try:
             connection = self.pool.get(block=True, timeout=self.timeout)
         except Empty:
-            # Note that this is not caught by the redis client and will be
+            # Note that this is not caught by the ledis client and will be
             # raised unless handled by application code. If you want never to
             raise ConnectionError("No connection available.")
 
