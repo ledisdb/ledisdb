@@ -145,7 +145,7 @@ DefaultParser = PythonParser
 
 class Connection(object):
     "Manages TCP communication to and from a Ledis server"
-    def __init__(self, host='localhost', port=6380, db=0, password=None,
+    def __init__(self, host='localhost', port=6380, db=0,
                  socket_timeout=None, encoding='utf-8',
                  encoding_errors='strict', decode_responses=False,
                  parser_class=DefaultParser):
@@ -153,7 +153,6 @@ class Connection(object):
         self.host = host
         self.port = port
         self.db = db
-        self.password = password
         self.socket_timeout = socket_timeout
         self.encoding = encoding
         self.encoding_errors = encoding_errors
@@ -200,12 +199,6 @@ class Connection(object):
     def on_connect(self):
         "Initialize the connection, authenticate and select a database"
         self._parser.on_connect(self)
-
-        # if a password is specified, authenticate
-        if self.password:
-            self.send_command('AUTH', self.password)
-            if nativestr(self.read_response()) != 'OK':
-                raise AuthenticationError('Invalid Password')
 
         # if a database is specified, switch to it
         if self.db:
@@ -283,14 +276,12 @@ class Connection(object):
 
 
 class UnixDomainSocketConnection(Connection):
-    def __init__(self, path='', db=0, password=None,
-                 socket_timeout=None, encoding='utf-8',
+    def __init__(self, path='', db=0, socket_timeout=None, encoding='utf-8',
                  encoding_errors='strict', decode_responses=False,
                  parser_class=DefaultParser):
         self.pid = os.getpid()
         self.path = path
         self.db = db
-        self.password = password
         self.socket_timeout = socket_timeout
         self.encoding = encoding
         self.encoding_errors = encoding_errors
@@ -326,13 +317,11 @@ class ConnectionPool(object):
 
         For example::
 
-            redis://[:password]@localhost:6379/0
-            rediss://[:password]@localhost:6379/0
-            unix://[:password]@/path/to/socket.sock?db=0
+            redis://localhost:6380/0
+            unix:///path/to/socket.sock?db=0
 
         Three URL schemes are supported:
             redis:// creates a normal TCP socket connection
-            rediss:// creates a SSL wrapped TCP socket connection
             unix:// creates a Unix Domain Socket connection
 
         There are several ways to specify a database number. The parse function
@@ -371,7 +360,6 @@ class ConnectionPool(object):
         # We only support redis:// and unix:// schemes.
         if url.scheme == 'unix':
             url_options.update({
-                'password': url.password,
                 'path': url.path,
                 'connection_class': UnixDomainSocketConnection,
             })
@@ -380,7 +368,6 @@ class ConnectionPool(object):
             url_options.update({
                 'host': url.hostname,
                 'port': int(url.port or 6380),
-                'password': url.password,
             })
 
             # If there's a path argument, use it as the db argument if a
@@ -390,9 +377,6 @@ class ConnectionPool(object):
                     url_options['db'] = int(url.path.replace('/', ''))
                 except (AttributeError, ValueError):
                     pass
-
-            if url.scheme == 'lediss':
-                url_options['connection_class'] = SSLConnection
 
         # last shot at the db value
         url_options['db'] = int(url_options.get('db', db or 0))
