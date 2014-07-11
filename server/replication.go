@@ -23,12 +23,54 @@ var (
 	errConnectMaster = errors.New("connect master error")
 )
 
+type MasterInfo struct {
+	Addr         string `json:"addr"`
+	LogFileIndex int64  `json:"log_file_index"`
+	LogPos       int64  `json:"log_pos"`
+}
+
+func (m *MasterInfo) Save(filePath string) error {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	filePathBak := fmt.Sprintf("%s.bak", filePath)
+
+	var fd *os.File
+	fd, err = os.OpenFile(filePathBak, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	if _, err = fd.Write(data); err != nil {
+		fd.Close()
+		return err
+	}
+
+	fd.Close()
+	return os.Rename(filePathBak, filePath)
+}
+
+func (m *MasterInfo) Load(filePath string) error {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if err = json.Unmarshal(data, m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type master struct {
 	sync.Mutex
-
-	addr         string `json:"addr"`
-	logFileIndex int64  `json:"log_file_index"`
-	logPos       int64  `json:"log_pos"`
 
 	c  net.Conn
 	rb *bufio.Reader
@@ -37,8 +79,9 @@ type master struct {
 
 	quit chan struct{}
 
-	infoName    string
-	infoNameBak string
+	infoName string
+
+	info *MasterInfo
 
 	wg sync.WaitGroup
 
@@ -52,11 +95,12 @@ func newMaster(app *App) *master {
 	m.app = app
 
 	m.infoName = path.Join(m.app.cfg.DataDir, "master.info")
-	m.infoNameBak = fmt.Sprintf("%s.bak", m.infoName)
 
 	m.quit = make(chan struct{}, 1)
 
 	m.compressBuf = make([]byte, 256)
+
+	m.info = new(MasterInfo)
 
 	//if load error, we will start a fullsync later
 	m.loadInfo()
@@ -79,53 +123,15 @@ func (m *master) Close() {
 }
 
 func (m *master) loadInfo() error {
-	data, err := ioutil.ReadFile(m.infoName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		} else {
-			return err
-		}
-	}
-
-	if err = json.Unmarshal(data, m); err != nil {
-		return err
-	}
-
-	return nil
+	return m.info.Load(m.infoName)
 }
 
 func (m *master) saveInfo() error {
-	data, err := json.Marshal(struct {
-		Addr         string `json:"addr"`
-		LogFileIndex int64  `json:"log_file_index"`
-		LogPos       int64  `json:"log_pos"`
-	}{
-		m.addr,
-		m.logFileIndex,
-		m.logPos,
-	})
-	if err != nil {
-		return err
-	}
-
-	var fd *os.File
-	fd, err = os.OpenFile(m.infoNameBak, os.O_CREATE|os.O_WRONLY, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	if _, err = fd.Write(data); err != nil {
-		fd.Close()
-		return err
-	}
-
-	fd.Close()
-	return os.Rename(m.infoNameBak, m.infoName)
+	return m.info.Save(m.infoName)
 }
 
 func (m *master) connect() error {
-	if len(m.addr) == 0 {
+	if len(m.info.Addr) == 0 {
 		return fmt.Errorf("no assign master addr")
 	}
 
@@ -134,7 +140,7 @@ func (m *master) connect() error {
 		m.c = nil
 	}
 
-	if c, err := net.Dial("tcp", m.addr); err != nil {
+	if c, err := net.Dial("tcp", m.info.Addr); err != nil {
 		return err
 	} else {
 		m.c = c
@@ -145,9 +151,9 @@ func (m *master) connect() error {
 }
 
 func (m *master) resetInfo(addr string) {
-	m.addr = addr
-	m.logFileIndex = 0
-	m.logPos = 0
+	m.info.Addr = addr
+	m.info.LogFileIndex = 0
+	m.info.LogPos = 0
 }
 
 func (m *master) stopReplication() error {
@@ -165,7 +171,7 @@ func (m *master) startReplication(masterAddr string) error {
 	//stop last replcation, if avaliable
 	m.Close()
 
-	if masterAddr != m.addr {
+	if masterAddr != m.info.Addr {
 		m.resetInfo(masterAddr)
 		if err := m.saveInfo(); err != nil {
 			log.Error("save master info error %s", err.Error())
@@ -189,20 +195,20 @@ func (m *master) runReplication() {
 			return
 		default:
 			if err := m.connect(); err != nil {
-				log.Error("connect master %s error %s, try 2s later", m.addr, err.Error())
+				log.Error("connect master %s error %s, try 2s later", m.info.Addr, err.Error())
 				time.Sleep(2 * time.Second)
 				continue
 			}
 		}
 
-		if m.logFileIndex == 0 {
+		if m.info.LogFileIndex == 0 {
 			//try a fullsync
 			if err := m.fullSync(); err != nil {
 				log.Warn("full sync error %s", err.Error())
 				return
 			}
 
-			if m.logFileIndex == 0 {
+			if m.info.LogFileIndex == 0 {
 				//master not support binlog, we cannot sync, so stop replication
 				m.stopReplication()
 				return
@@ -211,14 +217,14 @@ func (m *master) runReplication() {
 
 		for {
 			for {
-				lastIndex := m.logFileIndex
-				lastPos := m.logPos
+				lastIndex := m.info.LogFileIndex
+				lastPos := m.info.LogPos
 				if err := m.sync(); err != nil {
 					log.Warn("sync error %s", err.Error())
 					return
 				}
 
-				if m.logFileIndex == lastIndex && m.logPos == lastPos {
+				if m.info.LogFileIndex == lastIndex && m.info.LogPos == lastPos {
 					//sync no data, wait 1s and retry
 					break
 				}
@@ -273,15 +279,15 @@ func (m *master) fullSync() error {
 		return err
 	}
 
-	m.logFileIndex = head.LogFileIndex
-	m.logPos = head.LogPos
+	m.info.LogFileIndex = head.LogFileIndex
+	m.info.LogPos = head.LogPos
 
 	return m.saveInfo()
 }
 
 func (m *master) sync() error {
-	logIndexStr := strconv.FormatInt(m.logFileIndex, 10)
-	logPosStr := strconv.FormatInt(m.logPos, 10)
+	logIndexStr := strconv.FormatInt(m.info.LogFileIndex, 10)
+	logPosStr := strconv.FormatInt(m.info.LogPos, 10)
 
 	cmd := ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIndexStr),
 		logIndexStr, len(logPosStr), logPosStr))
@@ -308,14 +314,14 @@ func (m *master) sync() error {
 		return fmt.Errorf("invalid sync data len %d", len(buf))
 	}
 
-	m.logFileIndex = int64(binary.BigEndian.Uint64(buf[0:8]))
-	m.logPos = int64(binary.BigEndian.Uint64(buf[8:16]))
+	m.info.LogFileIndex = int64(binary.BigEndian.Uint64(buf[0:8]))
+	m.info.LogPos = int64(binary.BigEndian.Uint64(buf[8:16]))
 
-	if m.logFileIndex == 0 {
+	if m.info.LogFileIndex == 0 {
 		//master now not support binlog, stop replication
 		m.stopReplication()
 		return nil
-	} else if m.logFileIndex == -1 {
+	} else if m.info.LogFileIndex == -1 {
 		//-1 means than binlog index and pos are lost, we must start a full sync instead
 		return m.fullSync()
 	}
