@@ -81,7 +81,7 @@ func (c *client) run() {
 }
 
 func (c *client) readLine() ([]byte, error) {
-	return readLine(c.rb)
+	return ReadLine(c.rb)
 }
 
 //A client sends to the Redis server a RESP Array consisting of just Bulk Strings.

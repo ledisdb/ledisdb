@@ -125,8 +125,10 @@ func (it *Iterator) BufValue(b []byte) []byte {
 }
 
 func (it *Iterator) Close() {
-	C.leveldb_iter_destroy(it.it)
-	it.it = nil
+	if it.it != nil {
+		C.leveldb_iter_destroy(it.it)
+		it.it = nil
+	}
 }
 
 func (it *Iterator) Valid() bool {
@@ -272,6 +274,14 @@ func NewRangeLimitIterator(i *Iterator, r *Range, l *Limit) *RangeLimitIterator 
 
 func NewRevRangeLimitIterator(i *Iterator, r *Range, l *Limit) *RangeLimitIterator {
 	return rangeLimitIterator(i, r, l, IteratorBackward)
+}
+
+func NewRangeIterator(i *Iterator, r *Range) *RangeLimitIterator {
+	return rangeLimitIterator(i, r, &Limit{0, -1}, IteratorForward)
+}
+
+func NewRevRangeIterator(i *Iterator, r *Range) *RangeLimitIterator {
+	return rangeLimitIterator(i, r, &Limit{0, -1}, IteratorBackward)
 }
 
 func rangeLimitIterator(i *Iterator, r *Range, l *Limit, direction uint8) *RangeLimitIterator {

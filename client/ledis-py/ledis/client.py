@@ -112,14 +112,14 @@ class Ledis(object):
 
         For example::
 
-            redis://[:password]@localhost:6380/0
-            unix://[:password]@/path/to/socket.sock?db=0
+            ledis://localhost:6380/0
+            unix:///path/to/socket.sock?db=0
 
         There are several ways to specify a database number. The parse function
         will return the first specified option:
-            1. A ``db`` querystring option, e.g. redis://localhost?db=0
-            2. If using the redis:// scheme, the path argument of the url, e.g.
-               redis://localhost/0
+            1. A ``db`` querystring option, e.g. ledis://localhost?db=0
+            2. If using the ledis:// scheme, the path argument of the url, e.g.
+               ledis://localhost/0
             3. The ``db`` argument to this function.
 
         If none of these options are specified, db=0 is used.

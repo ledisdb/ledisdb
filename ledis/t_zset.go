@@ -45,14 +45,14 @@ func checkZSetKMSize(key []byte, member []byte) error {
 func (db *DB) zEncodeSizeKey(key []byte) []byte {
 	buf := make([]byte, len(key)+2)
 	buf[0] = db.index
-	buf[1] = zSizeType
+	buf[1] = ZSizeType
 
 	copy(buf[2:], key)
 	return buf
 }
 
 func (db *DB) zDecodeSizeKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != zSizeType {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != ZSizeType {
 		return nil, errZSizeKey
 	}
 
@@ -66,7 +66,7 @@ func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
 	buf[pos] = db.index
 	pos++
 
-	buf[pos] = zsetType
+	buf[pos] = ZSetType
 	pos++
 
 	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
@@ -84,7 +84,7 @@ func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
 }
 
 func (db *DB) zDecodeSetKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != db.index || ek[1] != zsetType {
+	if len(ek) < 5 || ek[0] != db.index || ek[1] != ZSetType {
 		return nil, nil, errZSetKey
 	}
 
@@ -121,7 +121,7 @@ func (db *DB) zEncodeScoreKey(key []byte, member []byte, score int64) []byte {
 	buf[pos] = db.index
 	pos++
 
-	buf[pos] = zScoreType
+	buf[pos] = ZScoreType
 	pos++
 
 	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
@@ -158,7 +158,7 @@ func (db *DB) zEncodeStopScoreKey(key []byte, score int64) []byte {
 }
 
 func (db *DB) zDecodeScoreKey(ek []byte) (key []byte, member []byte, score int64, err error) {
-	if len(ek) < 14 || ek[0] != db.index || ek[1] != zScoreType {
+	if len(ek) < 14 || ek[0] != db.index || ek[1] != ZScoreType {
 		err = errZScoreKey
 		return
 	}
@@ -260,7 +260,7 @@ func (db *DB) zExpireAt(key []byte, when int64) (int64, error) {
 	if zcnt, err := db.ZCard(key); err != nil || zcnt == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, zsetType, key, when)
+		db.expireAt(t, ZSetType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -314,7 +314,7 @@ func (db *DB) zIncrSize(t *tx, key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
-			db.rmExpire(t, zsetType, key)
+			db.rmExpire(t, ZSetType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -451,36 +451,36 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 
 	k := db.zEncodeSetKey(key, member)
 
-	if v, err := db.db.Get(k); err != nil {
-		return 0, err
-	} else if v == nil {
+	it := db.db.NewIterator()
+	defer it.Close()
+
+	if v := it.Find(k); v == nil {
 		return -1, nil
 	} else {
-		if s, err := Int64(v, err); err != nil {
+		if s, err := Int64(v, nil); err != nil {
 			return 0, err
 		} else {
-			var it *leveldb.RangeLimitIterator
+			var rit *leveldb.RangeLimitIterator
 
 			sk := db.zEncodeScoreKey(key, member, s)
 
 			if !reverse {
 				minKey := db.zEncodeStartScoreKey(key, MinScore)
-				it = db.db.RangeLimitIterator(minKey, sk, leveldb.RangeClose, 0, -1)
+
+				rit = leveldb.NewRangeIterator(it, &leveldb.Range{minKey, sk, leveldb.RangeClose})
 			} else {
 				maxKey := db.zEncodeStopScoreKey(key, MaxScore)
-				it = db.db.RevRangeLimitIterator(sk, maxKey, leveldb.RangeClose, 0, -1)
+				rit = leveldb.NewRevRangeIterator(it, &leveldb.Range{sk, maxKey, leveldb.RangeClose})
 			}
 
 			var lastKey []byte = nil
 			var n int64 = 0
 
-			for ; it.Valid(); it.Next() {
+			for ; rit.Valid(); rit.Next() {
 				n++
 
-				lastKey = it.BufKey(lastKey)
+				lastKey = rit.BufKey(lastKey)
 			}
-
-			it.Close()
 
 			if _, m, _, err := db.zDecodeScoreKey(lastKey); err == nil && bytes.Equal(m, member) {
 				n--
@@ -734,15 +734,17 @@ func (db *DB) zFlush() (drop int64, err error) {
 
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
-	minKey[1] = zsetType
+	minKey[1] = ZSetType
 
 	maxKey := make([]byte, 2)
 	maxKey[0] = db.index
-	maxKey[1] = zScoreType + 1
+	maxKey[1] = ZScoreType + 1
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+		t.Delete(it.RawKey())
 		drop++
 		if drop&1023 == 0 {
 			if err = t.Commit(); err != nil {
@@ -750,9 +752,8 @@ func (db *DB) zFlush() (drop int64, err error) {
 			}
 		}
 	}
-	it.Close()
 
-	db.expFlush(t, zsetType)
+	db.expFlush(t, ZSetType)
 
 	err = t.Commit()
 	return
@@ -818,7 +819,7 @@ func (db *DB) ZTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(zsetType, key)
+	return db.ttl(ZSetType, key)
 }
 
 func (db *DB) ZPersist(key []byte) (int64, error) {
@@ -830,7 +831,7 @@ func (db *DB) ZPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, zsetType, key)
+	n, err := db.rmExpire(t, ZSetType, key)
 	if err != nil {
 		return 0, err
 	}

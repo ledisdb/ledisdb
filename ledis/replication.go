@@ -11,6 +11,10 @@ import (
 )
 
 var (
+	ErrSkipEvent = errors.New("skip to next event")
+)
+
+var (
 	errInvalidBinLogEvent = errors.New("invalid binglog event")
 	errInvalidBinLogFile  = errors.New("invalid binlog file")
 )
@@ -71,7 +75,7 @@ func (l *Ledis) replicateCommandEvent(event []byte) error {
 	return errors.New("command event not supported now")
 }
 
-func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
+func ReadEventFromReader(rb io.Reader, f func(createTime uint32, event []byte) error) error {
 	var createTime uint32
 	var dataLen uint32
 	var dataBuf bytes.Buffer
@@ -94,15 +98,28 @@ func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
 			return err
 		}
 
-		err = l.ReplicateEvent(dataBuf.Bytes())
-		if err != nil {
-			log.Fatal("replication error %s, skip to next", err.Error())
+		err = f(createTime, dataBuf.Bytes())
+		if err != nil && err != ErrSkipEvent {
+			return err
 		}
 
 		dataBuf.Reset()
 	}
 
 	return nil
+}
+
+func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
+	f := func(createTime uint32, event []byte) error {
+		err := l.ReplicateEvent(event)
+		if err != nil {
+			log.Fatal("replication error %s, skip to next", err.Error())
+			return ErrSkipEvent
+		}
+		return nil
+	}
+
+	return ReadEventFromReader(rb, f)
 }
 
 func (l *Ledis) ReplicateFromData(data []byte) error {
