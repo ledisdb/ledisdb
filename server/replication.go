@@ -254,7 +254,7 @@ func (m *master) fullSync() error {
 
 	defer os.Remove(dumpPath)
 
-	err = readBulkTo(m.rb, f)
+	err = ReadBulkTo(m.rb, f)
 	f.Close()
 	if err != nil {
 		log.Error("read dump data error %s", err.Error())
@@ -291,7 +291,7 @@ func (m *master) sync() error {
 
 	m.syncBuf.Reset()
 
-	err := readBulkTo(m.rb, &m.syncBuf)
+	err := ReadBulkTo(m.rb, &m.syncBuf)
 	if err != nil {
 		return err
 	}

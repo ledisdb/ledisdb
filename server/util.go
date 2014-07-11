@@ -14,7 +14,7 @@ var (
 	errLineFormat  = errors.New("bad response line format")
 )
 
-func readLine(rb *bufio.Reader) ([]byte, error) {
+func ReadLine(rb *bufio.Reader) ([]byte, error) {
 	p, err := rb.ReadSlice('\n')
 
 	if err != nil {
@@ -27,8 +27,8 @@ func readLine(rb *bufio.Reader) ([]byte, error) {
 	return p[:i], nil
 }
 
-func readBulkTo(rb *bufio.Reader, w io.Writer) error {
-	l, err := readLine(rb)
+func ReadBulkTo(rb *bufio.Reader, w io.Writer) error {
+	l, err := ReadLine(rb)
 	if len(l) == 0 {
 		return errBulkFormat
 	} else if l[0] == '$' {
@@ -43,7 +43,7 @@ func readBulkTo(rb *bufio.Reader, w io.Writer) error {
 				return err
 			}
 
-			if l, err = readLine(rb); err != nil {
+			if l, err = ReadLine(rb); err != nil {
 				return err
 			} else if len(l) != 0 {
 				return errBulkFormat
