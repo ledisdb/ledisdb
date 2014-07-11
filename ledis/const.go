@@ -5,22 +5,39 @@ import (
 )
 
 const (
-	noneType    byte = 0
-	kvType      byte = 1
-	hashType    byte = 2
-	hSizeType   byte = 3
-	listType    byte = 4
-	lMetaType   byte = 5
-	zsetType    byte = 6
-	zSizeType   byte = 7
-	zScoreType  byte = 8
-	binType     byte = 9
-	binMetaType byte = 10
+	NoneType    byte = 0
+	KVType      byte = 1
+	HashType    byte = 2
+	HSizeType   byte = 3
+	ListType    byte = 4
+	LMetaType   byte = 5
+	ZSetType    byte = 6
+	ZSizeType   byte = 7
+	ZScoreType  byte = 8
+	BitType     byte = 9
+	BitMetaType byte = 10
 
 	maxDataType byte = 100
 
-	expTimeType byte = 101
-	expMetaType byte = 102
+	ExpTimeType byte = 101
+	ExpMetaType byte = 102
+)
+
+var (
+	TypeName = map[byte]string{
+		KVType:      "kv",
+		HashType:    "hash",
+		HSizeType:   "hsize",
+		ListType:    "list",
+		LMetaType:   "lmeta",
+		ZSetType:    "zset",
+		ZSizeType:   "zsize",
+		ZScoreType:  "zscore",
+		BitType:     "bit",
+		BitMetaType: "bitmeta",
+		ExpTimeType: "exptime",
+		ExpMetaType: "expmeta",
+	}
 )
 
 const (

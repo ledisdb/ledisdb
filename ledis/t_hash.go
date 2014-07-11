@@ -33,14 +33,14 @@ func (db *DB) hEncodeSizeKey(key []byte) []byte {
 	buf := make([]byte, len(key)+2)
 
 	buf[0] = db.index
-	buf[1] = hSizeType
+	buf[1] = HSizeType
 
 	copy(buf[2:], key)
 	return buf
 }
 
 func (db *DB) hDecodeSizeKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != hSizeType {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != HSizeType {
 		return nil, errHSizeKey
 	}
 
@@ -53,7 +53,7 @@ func (db *DB) hEncodeHashKey(key []byte, field []byte) []byte {
 	pos := 0
 	buf[pos] = db.index
 	pos++
-	buf[pos] = hashType
+	buf[pos] = HashType
 	pos++
 
 	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
@@ -70,7 +70,7 @@ func (db *DB) hEncodeHashKey(key []byte, field []byte) []byte {
 }
 
 func (db *DB) hDecodeHashKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != db.index || ek[1] != hashType {
+	if len(ek) < 5 || ek[0] != db.index || ek[1] != HashType {
 		return nil, nil, errHashKey
 	}
 
@@ -151,7 +151,7 @@ func (db *DB) hExpireAt(key []byte, when int64) (int64, error) {
 	if hlen, err := db.HLen(key); err != nil || hlen == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, hashType, key, when)
+		db.expireAt(t, HashType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -304,7 +304,7 @@ func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
 		if size <= 0 {
 			size = 0
 			t.Delete(sk)
-			db.rmExpire(t, hashType, key)
+			db.rmExpire(t, HashType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
 		}
@@ -428,7 +428,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 	defer t.Unlock()
 
 	num := db.hDelete(t, key)
-	db.rmExpire(t, hashType, key)
+	db.rmExpire(t, HashType, key)
 
 	err := t.Commit()
 	return num, err
@@ -445,7 +445,7 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 		}
 
 		db.hDelete(t, key)
-		db.rmExpire(t, hashType, key)
+		db.rmExpire(t, HashType, key)
 	}
 
 	err := t.Commit()
@@ -455,18 +455,18 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 func (db *DB) hFlush() (drop int64, err error) {
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
-	minKey[1] = hashType
+	minKey[1] = HashType
 
 	maxKey := make([]byte, 2)
 	maxKey[0] = db.index
-	maxKey[1] = hSizeType + 1
+	maxKey[1] = HSizeType + 1
 
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, hashType)
+	err = db.expFlush(t, HashType)
 
 	err = t.Commit()
 	return
@@ -530,7 +530,7 @@ func (db *DB) HTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(hashType, key)
+	return db.ttl(HashType, key)
 }
 
 func (db *DB) HPersist(key []byte) (int64, error) {
@@ -542,7 +542,7 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, hashType, key)
+	n, err := db.rmExpire(t, HashType, key)
 	if err != nil {
 		return 0, err
 	}

@@ -31,13 +31,13 @@ func checkValueSize(value []byte) error {
 func (db *DB) encodeKVKey(key []byte) []byte {
 	ek := make([]byte, len(key)+2)
 	ek[0] = db.index
-	ek[1] = kvType
+	ek[1] = KVType
 	copy(ek[2:], key)
 	return ek
 }
 
 func (db *DB) decodeKVKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != kvType {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != KVType {
 		return nil, errKVKey
 	}
 
@@ -51,7 +51,7 @@ func (db *DB) encodeKVMinKey() []byte {
 
 func (db *DB) encodeKVMaxKey() []byte {
 	ek := db.encodeKVKey(nil)
-	ek[len(ek)-1] = kvType + 1
+	ek[len(ek)-1] = KVType + 1
 	return ek
 }
 
@@ -100,7 +100,7 @@ func (db *DB) setExpireAt(key []byte, when int64) (int64, error) {
 	if exist, err := db.Exists(key); err != nil || exist == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, kvType, key, when)
+		db.expireAt(t, KVType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -132,7 +132,7 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 
 	for i, k := range keys {
 		t.Delete(codedKeys[i])
-		db.rmExpire(t, kvType, k)
+		db.rmExpire(t, KVType, k)
 	}
 
 	err := t.Commit()
@@ -317,7 +317,7 @@ func (db *DB) flush() (drop int64, err error) {
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, kvType)
+	err = db.expFlush(t, KVType)
 
 	err = t.Commit()
 	return
@@ -382,7 +382,7 @@ func (db *DB) TTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(kvType, key)
+	return db.ttl(KVType, key)
 }
 
 func (db *DB) Persist(key []byte) (int64, error) {
@@ -393,7 +393,7 @@ func (db *DB) Persist(key []byte) (int64, error) {
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
-	n, err := db.rmExpire(t, kvType, key)
+	n, err := db.rmExpire(t, KVType, key)
 	if err != nil {
 		return 0, err
 	}

@@ -26,7 +26,7 @@ func (db *DB) expEncodeTimeKey(dataType byte, key []byte, when int64) []byte {
 	buf := make([]byte, len(key)+11)
 
 	buf[0] = db.index
-	buf[1] = expTimeType
+	buf[1] = ExpTimeType
 	buf[2] = dataType
 	pos := 3
 
@@ -42,7 +42,7 @@ func (db *DB) expEncodeMetaKey(dataType byte, key []byte) []byte {
 	buf := make([]byte, len(key)+3)
 
 	buf[0] = db.index
-	buf[1] = expMetaType
+	buf[1] = ExpMetaType
 	buf[2] = dataType
 	pos := 3
 
@@ -52,7 +52,7 @@ func (db *DB) expEncodeMetaKey(dataType byte, key []byte) []byte {
 }
 
 func (db *DB) expDecodeMetaKey(mk []byte) (byte, []byte, error) {
-	if len(mk) <= 3 || mk[0] != db.index || mk[1] != expMetaType {
+	if len(mk) <= 3 || mk[0] != db.index || mk[1] != ExpMetaType {
 		return 0, nil, errExpMetaKey
 	}
 
@@ -60,7 +60,7 @@ func (db *DB) expDecodeMetaKey(mk []byte) (byte, []byte, error) {
 }
 
 func (db *DB) expDecodeTimeKey(tk []byte) (byte, []byte, int64, error) {
-	if len(tk) < 11 || tk[0] != db.index || tk[1] != expTimeType {
+	if len(tk) < 11 || tk[0] != db.index || tk[1] != ExpTimeType {
 		return 0, nil, 0, errExpTimeKey
 	}
 
@@ -114,12 +114,12 @@ func (db *DB) rmExpire(t *tx, dataType byte, key []byte) (int64, error) {
 func (db *DB) expFlush(t *tx, dataType byte) (err error) {
 	minKey := make([]byte, 3)
 	minKey[0] = db.index
-	minKey[1] = expTimeType
+	minKey[1] = ExpTimeType
 	minKey[2] = dataType
 
 	maxKey := make([]byte, 3)
 	maxKey[0] = db.index
-	maxKey[1] = expMetaType
+	maxKey[1] = ExpMetaType
 	maxKey[2] = dataType + 1
 
 	_, err = db.flushRegion(t, minKey, maxKey)
@@ -153,7 +153,7 @@ func (eli *elimination) active() {
 	db := eli.db
 	dbGet := db.db.Get
 
-	minKey := db.expEncodeTimeKey(noneType, nil, 0)
+	minKey := db.expEncodeTimeKey(NoneType, nil, 0)
 	maxKey := db.expEncodeTimeKey(maxDataType, nil, now)
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)

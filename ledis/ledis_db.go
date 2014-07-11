@@ -26,11 +26,11 @@ func (db *DB) FlushAll() (drop int64, err error) {
 
 func (db *DB) newEliminator() *elimination {
 	eliminator := newEliminator(db)
-	eliminator.regRetireContext(kvType, db.kvTx, db.delete)
-	eliminator.regRetireContext(listType, db.listTx, db.lDelete)
-	eliminator.regRetireContext(hashType, db.hashTx, db.hDelete)
-	eliminator.regRetireContext(zsetType, db.zsetTx, db.zDelete)
-	eliminator.regRetireContext(binType, db.binTx, db.bDelete)
+	eliminator.regRetireContext(KVType, db.kvTx, db.delete)
+	eliminator.regRetireContext(ListType, db.listTx, db.lDelete)
+	eliminator.regRetireContext(HashType, db.hashTx, db.hDelete)
+	eliminator.regRetireContext(ZSetType, db.zsetTx, db.zDelete)
+	eliminator.regRetireContext(BitType, db.binTx, db.bDelete)
 
 	return eliminator
 }

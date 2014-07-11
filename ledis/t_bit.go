@@ -119,10 +119,18 @@ func (datas segBitInfoArray) Swap(i, j int) {
 func (db *DB) bEncodeMetaKey(key []byte) []byte {
 	mk := make([]byte, len(key)+2)
 	mk[0] = db.index
-	mk[1] = binMetaType
+	mk[1] = BitMetaType
 
 	copy(mk, key)
 	return mk
+}
+
+func (db *DB) bDecodeMetaKey(bkey []byte) ([]byte, error) {
+	if len(bkey) < 2 || bkey[0] != db.index || bkey[1] != BitMetaType {
+		return nil, errBinKey
+	}
+
+	return bkey[2:], nil
 }
 
 func (db *DB) bEncodeBinKey(key []byte, seq uint32) []byte {
@@ -131,7 +139,7 @@ func (db *DB) bEncodeBinKey(key []byte, seq uint32) []byte {
 	pos := 0
 	bk[pos] = db.index
 	pos++
-	bk[pos] = binType
+	bk[pos] = BitType
 	pos++
 
 	binary.BigEndian.PutUint16(bk[pos:], uint16(len(key)))
@@ -355,7 +363,7 @@ func (db *DB) bExpireAt(key []byte, when int64) (int64, error) {
 	if seq, _, err := db.bGetMeta(key); err != nil || seq < 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, binType, key, when)
+		db.expireAt(t, BitType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -407,7 +415,7 @@ func (db *DB) BDelete(key []byte) (drop int64, err error) {
 	defer t.Unlock()
 
 	drop = db.bDelete(t, key)
-	db.rmExpire(t, binType, key)
+	db.rmExpire(t, BitType, key)
 
 	err = t.Commit()
 	return
@@ -736,7 +744,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 
 	// clear the old data in case
 	db.bDelete(t, dstkey)
-	db.rmExpire(t, binType, dstkey)
+	db.rmExpire(t, BitType, dstkey)
 
 	//	set data
 	db.bSetMeta(t, dstkey, maxDstSeq, maxDstOff)
@@ -786,7 +794,7 @@ func (db *DB) BTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(binType, key)
+	return db.ttl(BitType, key)
 }
 
 func (db *DB) BPersist(key []byte) (int64, error) {
@@ -798,7 +806,7 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, binType, key)
+	n, err := db.rmExpire(t, BitType, key)
 	if err != nil {
 		return 0, err
 	}
@@ -818,14 +826,14 @@ func (db *DB) bFlush() (drop int64, err error) {
 
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
-	minKey[1] = binType
+	minKey[1] = BitType
 
 	maxKey := make([]byte, 2)
 	maxKey[0] = db.index
-	maxKey[1] = binMetaType + 1
+	maxKey[1] = BitMetaType + 1
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, binType)
+	err = db.expFlush(t, BitType)
 
 	err = t.Commit()
 	return

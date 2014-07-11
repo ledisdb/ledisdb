@@ -23,14 +23,14 @@ var errListSeq = errors.New("invalid list sequence, overflow")
 func (db *DB) lEncodeMetaKey(key []byte) []byte {
 	buf := make([]byte, len(key)+2)
 	buf[0] = db.index
-	buf[1] = lMetaType
+	buf[1] = LMetaType
 
 	copy(buf[2:], key)
 	return buf
 }
 
 func (db *DB) lDecodeMetaKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != lMetaType {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != LMetaType {
 		return nil, errLMetaKey
 	}
 
@@ -43,7 +43,7 @@ func (db *DB) lEncodeListKey(key []byte, seq int32) []byte {
 	pos := 0
 	buf[pos] = db.index
 	pos++
-	buf[pos] = listType
+	buf[pos] = ListType
 	pos++
 
 	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
@@ -58,7 +58,7 @@ func (db *DB) lEncodeListKey(key []byte, seq int32) []byte {
 }
 
 func (db *DB) lDecodeListKey(ek []byte) (key []byte, seq int32, err error) {
-	if len(ek) < 8 || ek[0] != db.index || ek[1] != listType {
+	if len(ek) < 8 || ek[0] != db.index || ek[1] != ListType {
 		err = errListKey
 		return
 	}
@@ -175,7 +175,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	t.Delete(itemKey)
 	size := db.lSetMeta(metaKey, headSeq, tailSeq)
 	if size == 0 {
-		db.rmExpire(t, hashType, key)
+		db.rmExpire(t, HashType, key)
 	}
 
 	err = t.Commit()
@@ -264,7 +264,7 @@ func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
 	if llen, err := db.LLen(key); err != nil || llen == 0 {
 		return 0, err
 	} else {
-		db.expireAt(t, listType, key, when)
+		db.expireAt(t, ListType, key, when)
 		if err := t.Commit(); err != nil {
 			return 0, err
 		}
@@ -398,7 +398,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	defer t.Unlock()
 
 	num := db.lDelete(t, key)
-	db.rmExpire(t, listType, key)
+	db.rmExpire(t, ListType, key)
 
 	err := t.Commit()
 	return num, err
@@ -415,7 +415,7 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 		}
 
 		db.lDelete(t, key)
-		db.rmExpire(t, listType, key)
+		db.rmExpire(t, ListType, key)
 
 	}
 
@@ -426,18 +426,18 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 func (db *DB) lFlush() (drop int64, err error) {
 	minKey := make([]byte, 2)
 	minKey[0] = db.index
-	minKey[1] = listType
+	minKey[1] = ListType
 
 	maxKey := make([]byte, 2)
 	maxKey[0] = db.index
-	maxKey[1] = lMetaType + 1
+	maxKey[1] = LMetaType + 1
 
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
 
 	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, listType)
+	err = db.expFlush(t, ListType)
 
 	err = t.Commit()
 	return
@@ -464,7 +464,7 @@ func (db *DB) LTTL(key []byte) (int64, error) {
 		return -1, err
 	}
 
-	return db.ttl(listType, key)
+	return db.ttl(ListType, key)
 }
 
 func (db *DB) LPersist(key []byte) (int64, error) {
@@ -476,7 +476,7 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	n, err := db.rmExpire(t, listType, key)
+	n, err := db.rmExpire(t, ListType, key)
 	if err != nil {
 		return 0, err
 	}
