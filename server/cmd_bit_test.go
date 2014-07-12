@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestBin(t *testing.T) {
-	testBinGetSet(t)
-	testBinMset(t)
-	testBinCount(t)
-	testBinOpt(t)
+func TestBit(t *testing.T) {
+	testBitGetSet(t)
+	testBitMset(t)
+	testBitCount(t)
+	testBitOpt(t)
 }
 
-func testBinGetSet(t *testing.T) {
+func testBitGetSet(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
@@ -66,7 +66,7 @@ func testBinGetSet(t *testing.T) {
 	}
 }
 
-func testBinMset(t *testing.T) {
+func testBitMset(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
@@ -103,7 +103,7 @@ func testBinMset(t *testing.T) {
 	}
 }
 
-func testBinCount(t *testing.T) {
+func testBitCount(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
@@ -121,7 +121,7 @@ func testBinCount(t *testing.T) {
 	}
 }
 
-func testBinOpt(t *testing.T) {
+func testBitOpt(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
