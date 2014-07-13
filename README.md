@@ -9,7 +9,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
-+ Easily to embed in Golang application. 
++ Easy to embed in Golang application. 
 + Replication to guarantee data safe.
 + Supplies tools to load, dump, repair database. 
 
