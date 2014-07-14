@@ -122,7 +122,7 @@ class TestCmdHash(unittest.TestCase):
         assert l.hexpireat('a', expire_at_seconds)
         assert 0 < l.httl('a') <= 61
 
-    def test_zexpireat_no_key(self):
+    def test_hexpireat_no_key(self):
         expire_at = current_time() + datetime.timedelta(minutes=1)
         assert not l.hexpireat('a', expire_at)
 
