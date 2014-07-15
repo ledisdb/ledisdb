@@ -1148,7 +1148,7 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> zcard myset
+ledis> ZCARD myset
 (integer) 4
 ```
 
@@ -1178,9 +1178,9 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> zcount myset -inf +inf
+ledis> ZCOUNT myset -inf +inf
 (integer) 4
-ledis> zcount myset (1 3
+ledis> ZCOUNT myset (1 3
 (integer) 2
 ```
 
@@ -1454,13 +1454,13 @@ Use ZRANK to get the rank of an element with the scores ordered from low to high
 **Examples**
 
 ```
-127.0.0.1:6380> zadd myset 1 one
+127.0.0.1:6380> ZADD myset 1 one
 (integer) 1
-127.0.0.1:6380> zadd myset 2 two
+127.0.0.1:6380> ZADD myset 2 two
 (integer) 1
-127.0.0.1:6380> zrevrank myset one
+127.0.0.1:6380> ZREVRANK myset one
 (integer) 1
-127.0.0.1:6380> zrevrank myset three
+127.0.0.1:6380> ZREVRANK myset three
 (nil)
 ```
 
@@ -1591,13 +1591,13 @@ int64: TTL in seconds
 **Examples**
 
 ```
-ledis> zadd myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis> zexpire myset 100
+ledis> ZEXPIRE myset 100
 (integer) 1
-ledis> zttl myset
+ledis> ZTTL myset
 (integer) 97
-ledis> zttl myset2
+ledis> ZTTL myset2
 (integer) -1
 ```
 
@@ -1627,7 +1627,7 @@ ledis> ZTTL mset
 ```
 
 
-## bitmap
+## Bitmap
 
 ### BSETBIT key offset value
 
@@ -1707,22 +1707,22 @@ bulk: the raw value of key, or nil when key does not exist.
 
 ### BEXPIRE key seconds
 
-(refer to `expire` api for other types)
+(refer to [EXPIRE](#expire-key-seconds) api for other types)
 
 
 ### BEXPIREAT key timestamp
 
-(refer to `expireat` api for other types)
+(refer to [EXPIREAT](#expireat-key-timestamp) api for other types)
 
 
 ### BTTL key
 
-(refer to `ttl` api for other types)
+(refer to [TTL](#ttl-key) api for other types)
 
 
 ### PERSIST key
 
-(refer to `persist` api for other types)
+(refer to [PERSIST](#persist-key) api for other types)
 
 
 ## Replication
