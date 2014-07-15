@@ -70,7 +70,7 @@ Table of Contents
 	- [ZREMRANGEBYRANK key start stop](#zremrangebyrank-key-start-stop)
 	- [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
 	- [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
-	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
+	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore-key-max-min-withscores-limit-offset-count)
 	- [ZREVRANK key member](#zrevrank-key-member)
 	- [ZSCORE key member](#zscore-key-member)
 	- [ZCLEAR key](#zclear-key)
@@ -79,6 +79,16 @@ Table of Contents
 	- [ZEXPIREAT key timestamp](#zexpireat-key-timestamp)
 	- [ZTTL key](#zttl-key)
 	- [ZPERSIST key](#zpersist-key)
+- [Bitmap](#bitmap)
+	- [BSETBIT key offset value](#bsetbit-key-offset-value)
+	- [BGETBIT key offset](#bsetbit-key-offset)
+	- [BGET key](#bget-key)
+	- [BCOUNT key [start, end]](#bcount-key-start-end)
+	- [BEXPIRE key seconds](#bexpire-key-seconds)
+	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
+	- [BTTL key](#bttl-key)
+	- [BPERSIST key](#bpersist-key)
+
 - [Replication](#replication)
 	- [SLAVEOF host port](#slaveof-host-port)
 	- [FULLSYNC](#fullsync)
@@ -1615,6 +1625,104 @@ ledis> ZPERSIST myset
 ledis> ZTTL mset
 (integer) -1
 ```
+
+
+## bitmap
+
+### BSETBIT key offset value
+
+Sets or clear the bit at `offset` in the binary data sotred at `key`.
+The bit is either set or cleared depending on `value`, which can be either `0` or `1`.
+The *offset* argument is required to be qual to 0, and smaller than
+2^23 (this means bitmap limits to 8MB).
+
+**Return value**
+
+int64 : the original bit value stored at offset.
+
+**Examples**
+
+```
+ledis> BSETBIT flag 0 1
+(integer) 0
+ledis> BSETBIT flag 0 0
+(integer) 1
+ledis> BGETBIT flag 0 99
+ERR invalid command param
+```
+
+
+### BGETBIT key offset
+
+Returns the bit value at `offset` in the string value stored at `key`.
+When *offset* beyond the data length, ot the target data is not exist, the bit value will be 0 always.
+
+**Return value**
+
+int64 : the bit value stored at offset.
+
+**Examples**
+
+```
+ledis> BSETBIT flag 1024 1
+(integer) 0
+ledis> BGETBIT flag 0
+(integer) 0
+ledis> BGETBIT flag 1024
+(integer) 1
+ledis> BGETBIT flag 65535
+(integer) 0
+```
+
+
+### BCOUNT key [start end]
+
+Count the number of set bits in a bitmap.
+
+**Return value**
+
+int64 : The number of bits set to 1.
+
+**Examples**
+
+```
+
+```
+
+
+### BGET key
+
+Returns the whole binary data stored at `key`.
+
+**Return value**
+
+bulk: the raw value of key, or nil when key does not exist.
+
+**Examples**
+
+```
+
+```
+
+
+### BEXPIRE key seconds
+
+(refer to `expire` api for other types)
+
+
+### BEXPIREAT key timestamp
+
+(refer to `expireat` api for other types)
+
+
+### BTTL key
+
+(refer to `ttl` api for other types)
+
+
+### PERSIST key
+
+(refer to `persist` api for other types)
 
 
 ## Replication
