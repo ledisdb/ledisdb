@@ -100,6 +100,19 @@ local commands = {
     "zttl",
     "zpersist",
 
+    --[[bit]]
+    "bget",
+    "bdelete",
+    "bsetbit",
+    "bgetbit",
+    "bmsetbit",
+    "bcount",
+    "bopt",
+    "bexpire",
+    "bexpireat",
+    "bttl",
+    "bpersist",
+
     --[[server]]
     "ping",
     "echo",
