@@ -80,13 +80,14 @@ See benchmark.md for more.
 
 + Admin
 
-## GoDoc
 
-[![GoDoc](https://godoc.org/github.com/siddontang/ledisdb?status.png)](https://godoc.org/github.com/siddontang/ledisdb)
+## Links
 
-## Commands
++ [Official Website](http://ledisdb.com)
++ [Author's Blog](http://blog.csdn.net/siddontang/article/category/2264003)
++ [![GoDoc](https://godoc.org/github.com/siddontang/ledisdb?status.png)](https://godoc.org/github.com/siddontang/ledisdb)
++ [Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands).
 
-[Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands).
 
 ## Thanks
 
