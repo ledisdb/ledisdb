@@ -79,7 +79,7 @@ func StrInt8(v []byte, err error) (int8, error) {
 	} else if v == nil {
 		return 0, nil
 	} else {
-		res, err := strconv.ParseInt(String(v), 10, 32)
+		res, err := strconv.ParseInt(String(v), 10, 8)
 		return int8(res), err
 	}
 }
