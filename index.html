@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Ledisdb by siddontang</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Ledisdb</h1>
+          <h2>a high performance NoSQL powered by  golang</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/siddontang/ledisdb/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/siddontang/ledisdb/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/siddontang/ledisdb" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a name="ledisdb" class="anchor" href="#ledisdb"><span class="octicon octicon-link"></span></a>LedisDB</h1>
+
+<p>Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. It supports some advanced data structure like kv, list, hash and zset, and may be alternative for Redis.</p>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Rich advanced data structure: KV, List, Hash, ZSet, Bit.</li>
+<li>Uses leveldb to store lots of data, over the memory limit. </li>
+<li>Supports expiration and ttl.</li>
+<li>Redis clients, like redis-cli, are supported directly.</li>
+<li>Multi client API supports, including Golang, Python, Lua(Openresty). </li>
+<li>Easily to embed in Golang application. </li>
+<li>Replication to guarantee data safe.</li>
+<li>Supplies tools to load, dump, repair database. </li>
+</ul><h2>
+<a name="build-and-install" class="anchor" href="#build-and-install"><span class="octicon octicon-link"></span></a>Build and Install</h2>
+
+<ul>
+<li>
+<p>Create a workspace and checkout ledisdb source</p>
+
+<pre><code>mkdir $WORKSPACE
+cd $WORKSPACE
+git clone git@github.com:siddontang/ledisdb.git src/github.com/siddontang/ledisdb
+
+cd src/github.com/siddontang/ledisdb
+</code></pre>
+</li>
+<li>
+<p>Install leveldb and snappy, if you have installed, skip.</p>
+
+<p>I supply a simple shell to install leveldb and snappy, you can use: </p>
+
+<pre><code>sh build_leveldb.sh
+</code></pre>
+
+<p>It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy</p>
+</li>
+<li><p>Change LEVELDB_DIR and SNAPPY_DIR to real install path in dev.sh.</p></li>
+<li>
+<p>Then:</p>
+
+<pre><code>. ./bootstap.sh 
+. ./dev.sh
+
+go install ./...
+</code></pre>
+</li>
+</ul><h2>
+<a name="run" class="anchor" href="#run"><span class="octicon octicon-link"></span></a>Run</h2>
+
+<pre><code>./ledis-server -config=/etc/ledis.json
+
+//another shell
+ledis-cli -p 6380
+
+ledis 127.0.0.1:6380&gt; set a 1
+OK
+ledis 127.0.0.1:6380&gt; get a
+"1"
+</code></pre>
+
+<h2>
+<a name="lib" class="anchor" href="#lib"><span class="octicon octicon-link"></span></a>Lib</h2>
+
+<pre><code>import "github.com/siddontang/ledisdb/ledis"
+l, _ := ledis.Open(cfg)
+db, _ := l.Select(0)
+
+db.Set(key, value)
+
+db.Get(key)
+</code></pre>
+
+<h2>
+<a name="replication" class="anchor" href="#replication"><span class="octicon octicon-link"></span></a>Replication</h2>
+
+<p>set slaveof in config or dynamiclly</p>
+
+<pre><code>ledis-cli -p 6381 
+
+ledis 127.0.0.1:6381&gt; slaveof 127.0.0.1:6380
+OK
+</code></pre>
+
+<h2>
+<a name="benchmark" class="anchor" href="#benchmark"><span class="octicon octicon-link"></span></a>Benchmark</h2>
+
+<p>See benchmark.md for more.</p>
+
+<h2>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>Todo</h2>
+
+<ul>
+<li>Admin</li>
+</ul><h2>
+<a name="godoc" class="anchor" href="#godoc"><span class="octicon octicon-link"></span></a>GoDoc</h2>
+
+<p><a href="https://godoc.org/github.com/siddontang/ledisdb"><img src="https://godoc.org/github.com/siddontang/ledisdb?status.png" alt="GoDoc"></a></p>
+
+<h2>
+<a name="commands" class="anchor" href="#commands"><span class="octicon octicon-link"></span></a>Commands</h2>
+
+<p>Some server commands explaintions are <a href="https://github.com/siddontang/ledisdb/wiki/Commands">here</a>, others will add continuate.</p>
+
+<h2>
+<a name="thanks" class="anchor" href="#thanks"><span class="octicon octicon-link"></span></a>Thanks</h2>
+
+<p>Gmail: <a href="mailto:cenqichao@gmail.com">cenqichao@gmail.com</a></p>
+
+<p>Gmail: <a href="mailto:chendahui007@gmail.com">chendahui007@gmail.com</a></p>
+
+<h2>
+<a name="feedback" class="anchor" href="#feedback"><span class="octicon octicon-link"></span></a>Feedback</h2>
+
+<p>Gmail: <a href="mailto:siddontang@gmail.com">siddontang@gmail.com</a></p>
+        </section>
+
+        <footer>
+          Ledisdb is maintained by <a href="https://github.com/siddontang">siddontang</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
