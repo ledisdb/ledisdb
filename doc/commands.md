@@ -80,9 +80,12 @@ Table of Contents
 	- [ZTTL key](#zttl-key)
 	- [ZPERSIST key](#zpersist-key)
 - [Bitmap](#bitmap)
-	- [BSETBIT key offset value](#bsetbit-key-offset-value)
-	- [BGETBIT key offset](#bsetbit-key-offset)
+
 	- [BGET key](#bget-key)
+	- [BGETBIT key offset](#bgetbit-key-offset)
+	- [BSETBIT key offset value](#bsetbit-key-offset-value)
+	- [BMSETBIT key offset value[offset value ...]](#bmsetbit-key-offset-value-offset-value-)
+	- [BOPT operation destkey key [key ...]](#bopt-operation-destkey-key-key-)
 	- [BCOUNT key [start, end]](#bcount-key-start-end)
 	- [BEXPIRE key seconds](#bexpire-key-seconds)
 	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
@@ -1454,13 +1457,13 @@ Use ZRANK to get the rank of an element with the scores ordered from low to high
 **Examples**
 
 ```
-127.0.0.1:6380> ZADD myset 1 one
+ledis> ZADD myset 1 one
 (integer) 1
-127.0.0.1:6380> ZADD myset 2 two
+ledis> ZADD myset 2 two
 (integer) 1
-127.0.0.1:6380> ZREVRANK myset one
+ledis> ZREVRANK myset one
 (integer) 1
-127.0.0.1:6380> ZREVRANK myset three
+ledis> ZREVRANK myset three
 (nil)
 ```
 
@@ -1627,28 +1630,25 @@ ledis> ZTTL mset
 ```
 
 
+
 ## Bitmap
 
-### BSETBIT key offset value
 
-Sets or clear the bit at `offset` in the binary data sotred at `key`.
-The bit is either set or cleared depending on `value`, which can be either `0` or `1`.
-The *offset* argument is required to be qual to 0, and smaller than
-2^23 (this means bitmap limits to 8MB).
+### BGET key
+
+Returns the whole binary data stored at `key`.
 
 **Return value**
 
-int64 : the original bit value stored at offset.
+bulk: the raw value of key, or nil when key does not exist.
 
 **Examples**
 
 ```
-ledis> BSETBIT flag 0 1
-(integer) 0
-ledis> BSETBIT flag 0 0
-(integer) 1
-ledis> BGETBIT flag 0 99
-ERR invalid command param
+ledis> BMSETBIT flag 0 1 5 1 6 1
+(integer) 3
+ledis> BGET flag
+a
 ```
 
 
@@ -1675,6 +1675,73 @@ ledis> BGETBIT flag 65535
 ```
 
 
+### BSETBIT key offset value
+
+Sets or clear the bit at `offset` in the binary data sotred at `key`.
+The bit is either set or cleared depending on `value`, which can be either `0` or `1`.
+The *offset* argument is required to be qual to 0, and smaller than
+2^23 (this means bitmap limits to 8MB).
+
+**Return value**
+
+int64 : the original bit value stored at offset.
+
+**Examples**
+
+```
+ledis> BSETBIT flag 0 1
+(integer) 0
+ledis> BSETBIT flag 0 0
+(integer) 1
+ledis> BGETBIT flag 0 99
+ERR invalid command param
+```
+
+### BMSETBIT key offset value [offset value ...]
+Sets the given *offset* to their respective values.
+
+**Return value**
+
+int64 : The number of input *offset*
+
+**Examples**
+
+```
+ledis> BMSETBIT flag 0 1 1 1 2 0 3 1
+(integer) 4
+ledis> BCOUNT flag
+(integer) 3
+```
+
+
+### BOPT operation destkey key [key ...]
+Perform a bitwise operation between multiple keys (containing string values) and store the result in the destination key.
+
+**Return value**
+
+Int64:
+The size of the string stored in the destination key, that is equal to the size of the longest input string.
+**Examples**
+
+```
+ledis> BMSETBIT a 0 1 2 1
+(integer) 2
+ledis> BMSETBIT b 1 1 
+(integer) 1
+ledis> BOPT AND res a b    
+(integer) 3
+ledis> BCOUNT res
+(integer) 0
+ledis> BOPT OR res2 a b
+(integer) 3
+ledis> BCOUNT res2
+(integer) 3
+ledis> BOPT XOR res3 a b
+(integer) 3
+ledis> BCOUNT res3
+(integer) 3
+```
+
 ### BCOUNT key [start end]
 
 Count the number of set bits in a bitmap.
@@ -1686,22 +1753,20 @@ int64 : The number of bits set to 1.
 **Examples**
 
 ```
-
-```
-
-
-### BGET key
-
-Returns the whole binary data stored at `key`.
-
-**Return value**
-
-bulk: the raw value of key, or nil when key does not exist.
-
-**Examples**
-
-```
-
+ledis> BMSETBIT flag 0 1 5 1 6 1
+(integer) 3
+ledis> BGET flag
+a
+ledis> BCOUNT flag
+(integer) 3
+ledis> BCOUNT flag 0 0s
+(integer) 1
+ledis> BCOUNT flag 0 4
+(integer) 1
+ledis> BCOUNT flag 0 5
+(integer) 2
+ledis> BCOUNT flag 5 6
+(integer) 2
 ```
 
 
