@@ -66,7 +66,7 @@ func printReply(cmd string, reply interface{}) {
 	case string:
 		fmt.Printf("%s", reply)
 	case []byte:
-		fmt.Printf("%s", string(reply))
+		fmt.Printf("%q", reply)
 	case nil:
 		fmt.Printf("(nil)")
 	case ledis.Error:
