@@ -135,7 +135,7 @@ func testCount(t *testing.T) {
 	db := getTestDB()
 	db.FlushAll()
 
-	dstKey := []byte("test_bin_count")
+	key := []byte("test_bin_count")
 
 	if ori, _ := db.BSetBit(key, 0, 1); ori != 0 {
 		t.Error(ori)
@@ -191,6 +191,40 @@ func testCount(t *testing.T) {
 		t.Error(sum)
 	}
 
+	key = []byte("test_bin_count_2")
+
+	db.BSetBit(key, 1, 1)
+	db.BSetBit(key, 2, 1)
+	db.BSetBit(key, 4, 1)
+	db.BSetBit(key, 6, 1)
+
+	if sum, _ := db.BCount(key, 0, -1); sum != 4 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 1, 1); sum != 1 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 7); sum != 4 {
+		t.Error(sum)
+	}
+
+	if ori, _ := db.BSetBit(key, 8, 1); ori != 0 {
+		t.Error(ori)
+	}
+
+	if ori, _ := db.BSetBit(key, 11, 1); ori != 0 {
+		t.Error(ori)
+	}
+
+	if sum, _ := db.BCount(key, 0, -1); sum != 6 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 16); sum != 6 {
+		t.Error(sum)
+	}
 }
 
 func testOpAndOr(t *testing.T) {
@@ -319,6 +353,30 @@ func testOpAndOr(t *testing.T) {
 
 }
 
+func testOpAnd(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	dstKey := []byte("test_bin_or")
+
+	k0 := []byte("op_or_0")
+	k1 := []byte("op_or_01")
+	srcKeys := [][]byte{k0, k1}
+
+	db.BSetBit(k0, 0, 1)
+	db.BSetBit(k0, 2, 1)
+
+	db.BSetBit(k1, 1, 1)
+
+	if blen, _ := db.BOperation(OPand, dstKey, srcKeys...); blen != 3 {
+		t.Fatal(blen)
+	}
+
+	if cnt, _ := db.BCount(dstKey, 0, -1); cnt != 1 {
+		t.Fatal(1)
+	}
+}
+
 func testOpXor(t *testing.T) {
 	db := getTestDB()
 	db.FlushAll()
@@ -392,6 +450,22 @@ func testOpNot(t *testing.T) {
 	data, _ := db.BGet(dstKey)
 	if cmpBytes(data, stdData) {
 		t.Fatal(false)
+	}
+
+	k1 := []byte("op_not_2")
+	srcKeys = [][]byte{k1}
+
+	db.BSetBit(k1, 0, 1)
+	db.BSetBit(k1, 2, 1)
+	db.BSetBit(k1, 4, 1)
+	db.BSetBit(k1, 6, 1)
+
+	if blen, _ := db.BOperation(OPnot, dstKey, srcKeys...); blen != 7 {
+		t.Fatal(blen)
+	}
+
+	if cnt, _ := db.BCount(dstKey, 0, -1); cnt != 3 {
+		t.Fatal(cnt)
 	}
 }
 
