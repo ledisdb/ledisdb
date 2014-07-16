@@ -1720,7 +1720,7 @@ bulk: the raw value of key, or nil when key does not exist.
 (refer to [TTL](#ttl-key) api for other types)
 
 
-### PERSIST key
+### BPERSIST key
 
 (refer to [PERSIST](#persist-key) api for other types)
 
