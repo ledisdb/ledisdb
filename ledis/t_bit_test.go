@@ -36,6 +36,7 @@ func newBytes(bitLen int32) []byte {
 func TestBinary(t *testing.T) {
 	testSimple(t)
 	testSimpleII(t)
+	testCount(t)
 	testOpAndOr(t)
 	testOpXor(t)
 	testOpNot(t)
@@ -128,6 +129,68 @@ func testSimpleII(t *testing.T) {
 	if data, _ := db.BGet(key); data != nil {
 		t.Error(data)
 	}
+}
+
+func testCount(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	dstKey := []byte("test_bin_count")
+
+	if ori, _ := db.BSetBit(key, 0, 1); ori != 0 {
+		t.Error(ori)
+	}
+
+	if ori, _ := db.BSetBit(key, 10, 1); ori != 0 {
+		t.Error(ori)
+	}
+
+	if ori, _ := db.BSetBit(key, 262140, 1); ori != 0 {
+		t.Error(ori)
+	}
+
+	// count
+
+	if sum, _ := db.BCount(key, 0, -1); sum != 3 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 9); sum != 1 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 10); sum != 2 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 11); sum != 2 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 262139); sum != 2 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 262140); sum != 3 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 0, 262141); sum != 3 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 10, 262140); sum != 2 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 11, 262140); sum != 1 {
+		t.Error(sum)
+	}
+
+	if sum, _ := db.BCount(key, 11, 262139); sum != 0 {
+		t.Error(sum)
+	}
+
 }
 
 func testOpAndOr(t *testing.T) {

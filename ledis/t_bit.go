@@ -371,6 +371,65 @@ func (db *DB) bExpireAt(key []byte, when int64) (int64, error) {
 	return 1, nil
 }
 
+func (db *DB) bCountByte(val byte, soff uint32, eoff uint32) int32 {
+	if soff > eoff {
+		soff, eoff = eoff, soff
+	}
+
+	mask := uint8(0)
+	if soff > 0 {
+		mask |= fillBits[soff-1]
+	}
+	if eoff < 7 {
+		mask |= (fillBits[7] ^ fillBits[eoff])
+	}
+	mask = fillBits[7] ^ mask
+
+	return bitsInByte[val&mask]
+}
+
+func (db *DB) bCountSeg(key []byte, seq uint32, soff uint32, eoff uint32) (cnt int32, err error) {
+	if soff >= segBitSize || soff < 0 ||
+		eoff >= segBitSize || eoff < 0 {
+		return
+	}
+
+	var segment []byte
+	if _, segment, err = db.bGetSegment(key, seq); err != nil {
+		return
+	}
+
+	if segment == nil {
+		return
+	}
+
+	if soff > eoff {
+		soff, eoff = eoff, soff
+	}
+
+	headIdx := int(soff >> 3)
+	endIdx := int(eoff >> 3)
+	sByteOff := soff - ((soff >> 3) << 3)
+	eByteOff := eoff - ((eoff >> 3) << 3)
+
+	if headIdx == endIdx {
+		cnt = db.bCountByte(segment[headIdx], sByteOff, eByteOff)
+	} else {
+		cnt = db.bCountByte(segment[headIdx], sByteOff, 7) +
+			db.bCountByte(segment[endIdx], 0, eByteOff)
+	}
+
+	// sum up following bytes
+	for idx, end := headIdx+1, endIdx-1; idx <= end; idx += 1 {
+		cnt += bitsInByte[segment[idx]]
+		if idx == end {
+			break
+		}
+	}
+
+	return
+}
+
 func (db *DB) BGet(key []byte) (data []byte, err error) {
 	if err = checkKeySize(key); err != nil {
 		return
@@ -561,25 +620,53 @@ func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
 // }
 
 func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) {
-	var sseq uint32
-	if sseq, _, err = db.bParseOffset(key, start); err != nil {
+	var sseq, soff uint32
+	if sseq, soff, err = db.bParseOffset(key, start); err != nil {
 		return
 	}
 
-	var eseq uint32
-	if eseq, _, err = db.bParseOffset(key, end); err != nil {
+	var eseq, eoff uint32
+	if eseq, eoff, err = db.bParseOffset(key, end); err != nil {
 		return
 	}
 
+	if sseq > eseq || (sseq == eseq && soff > eoff) {
+		sseq, eseq = eseq, sseq
+		soff, eoff = eoff, soff
+	}
+
+	var segCnt int32
+	if eseq == sseq {
+		if segCnt, err = db.bCountSeg(key, sseq, soff, eoff); err != nil {
+			return 0, err
+		}
+
+		cnt = segCnt
+
+	} else {
+		if segCnt, err = db.bCountSeg(key, sseq, soff, segBitSize-1); err != nil {
+			return 0, err
+		} else {
+			cnt += segCnt
+		}
+
+		if segCnt, err = db.bCountSeg(key, eseq, 0, eoff); err != nil {
+			return 0, err
+		} else {
+			cnt += segCnt
+		}
+	}
+
+	//	middle segs
 	var segment []byte
 	skey := db.bEncodeBinKey(key, sseq)
 	ekey := db.bEncodeBinKey(key, eseq)
 
-	it := db.db.RangeIterator(skey, ekey, leveldb.RangeClose)
+	it := db.db.RangeIterator(skey, ekey, leveldb.RangeOpen)
 	for ; it.Valid(); it.Next() {
 		segment = it.Value()
-		for _, bit := range segment {
-			cnt += bitsInByte[bit]
+		for _, bt := range segment {
+			cnt += bitsInByte[bt]
 		}
 	}
 	it.Close()
@@ -604,7 +691,7 @@ func (db *DB) BTail(key []byte) (int32, error) {
 
 func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32, err error) {
 	//	blen -
-	//		the size of the string stored in the destination key,
+	//		the total bit size of data stored in destination key,
 	//		that is equal to the size of the longest input string.
 
 	var exeOp func([]byte, []byte, *[]byte)
@@ -759,7 +846,8 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 
 	err = t.Commit()
 	if err == nil {
-		blen = int32(maxDstSeq<<segBitWidth | maxDstOff)
+		// blen = int32(db.bCapByteSize(maxDstOff, maxDstOff))
+		blen = int32(maxDstSeq<<segBitWidth | maxDstOff + 1)
 	}
 
 	return
