@@ -163,7 +163,7 @@ func testBitOpt(t *testing.T) {
 	if blen, err := ledis.Int(
 		c.Do("bopt", "and", dstk, k0, k1)); err != nil {
 		t.Fatal(err)
-	} else if blen != 100 {
+	} else if blen != 101 {
 		t.Fatal(blen)
 	}
 
@@ -183,7 +183,7 @@ func testBitOpt(t *testing.T) {
 	if blen, err := ledis.Int(
 		c.Do("bopt", "or", dstk, k0, k1)); err != nil {
 		t.Fatal(err)
-	} else if blen != 100 {
+	} else if blen != 101 {
 		t.Fatal(blen)
 	}
 
@@ -203,7 +203,7 @@ func testBitOpt(t *testing.T) {
 	if blen, err := ledis.Int(
 		c.Do("bopt", "xor", dstk, k0, k1)); err != nil {
 		t.Fatal(err)
-	} else if blen != 100 {
+	} else if blen != 101 {
 		t.Fatal(blen)
 	}
 
