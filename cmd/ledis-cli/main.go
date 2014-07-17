@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 var ip = flag.String("h", "127.0.0.1", "ledisdb server ip (default 127.0.0.1)")
 var port = flag.Int("p", 6380, "ledisdb server port (default 6380)")
 var socket = flag.String("s", "", "ledisdb server socket, overwrite ip and port")
+var dbnum = flag.Int("n", 0, "ledisdb database number(default 0)")
 
 func main() {
 	flag.Parse()
@@ -30,8 +32,16 @@ func main() {
 
 	reg, _ := regexp.Compile(`'.*?'|".*?"|\S+`)
 
+	prompt := ""
+
 	for {
-		cmd, err := line(fmt.Sprintf("%s> ", cfg.Addr))
+		if *dbnum != 0 {
+			prompt = fmt.Sprintf("%s[%d]>", cfg.Addr, *dbnum)
+		} else {
+			prompt = fmt.Sprintf("%s>", cfg.Addr)
+		}
+
+		cmd, err := line(prompt)
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 			return
@@ -48,6 +58,9 @@ func main() {
 				args[i] = strings.Trim(string(cmds[1+i]), "\"'")
 			}
 			r, err := c.Do(cmds[0], args...)
+			if strings.ToLower(cmds[0]) == "select" {
+				*dbnum, _ = strconv.Atoi(cmds[1])
+			}
 			if err != nil {
 				fmt.Printf("%s", err.Error())
 			} else {
