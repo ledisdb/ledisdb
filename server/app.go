@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
+	"net/http"
 	"path"
 	"strings"
 )
@@ -11,7 +12,8 @@ import (
 type App struct {
 	cfg *Config
 
-	listener net.Listener
+	listener     net.Listener
+	httpListener net.Listener
 
 	ldb *ledis.Ledis
 
@@ -23,6 +25,14 @@ type App struct {
 
 	//for slave replication
 	m *master
+}
+
+func netType(s string) string {
+	if strings.Contains(s, "/") {
+		return "unix"
+	} else {
+		return "tcp"
+	}
 }
 
 func NewApp(cfg *Config) (*App, error) {
@@ -44,14 +54,14 @@ func NewApp(cfg *Config) (*App, error) {
 
 	var err error
 
-	if strings.Contains(cfg.Addr, "/") {
-		app.listener, err = net.Listen("unix", cfg.Addr)
-	} else {
-		app.listener, err = net.Listen("tcp", cfg.Addr)
+	if app.listener, err = net.Listen(netType(cfg.Addr), cfg.Addr); err != nil {
+		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
+	if len(cfg.HttpAddr) > 0 {
+		if app.httpListener, err = net.Listen(netType(cfg.HttpAddr), cfg.HttpAddr); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(cfg.AccessLog) > 0 {
@@ -86,6 +96,10 @@ func (app *App) Close() {
 
 	app.listener.Close()
 
+	if app.httpListener != nil {
+		app.httpListener.Close()
+	}
+
 	app.m.Close()
 
 	if app.access != nil {
@@ -100,6 +114,8 @@ func (app *App) Run() {
 		app.slaveof(app.cfg.SlaveOf)
 	}
 
+	go app.httpServe()
+
 	for !app.closed {
 		conn, err := app.listener.Accept()
 		if err != nil {
@@ -108,6 +124,20 @@ func (app *App) Run() {
 
 		newClient(conn, app)
 	}
+}
+
+func (app *App) httpServe() {
+	if app.httpListener == nil {
+		return
+	}
+
+	mux := http.NewServeMux()
+
+	mux.Handle("/ws", &wsHandler{app})
+	mux.Handle("/", &cmdHandler{app})
+
+	svr := http.Server{Handler: mux}
+	svr.Serve(app.httpListener)
 }
 
 func (app *App) Ledis() *ledis.Ledis {

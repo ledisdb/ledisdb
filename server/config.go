@@ -9,6 +9,8 @@ import (
 type Config struct {
 	Addr string `json:"addr"`
 
+	HttpAddr string `json:"http_addr"`
+
 	DataDir string `json:"data_dir"`
 
 	//if you not set db path, use data_dir
