@@ -58,21 +58,29 @@ func main() {
 			addHistory(cmd)
 
 			args := make([]interface{}, len(cmds[1:]))
+
 			for i := range args {
 				args[i] = strings.Trim(string(cmds[1+i]), "\"'")
 			}
-			r, err := c.Do(cmds[0], args...)
 
-			if err != nil {
-				fmt.Printf("%s", err.Error())
-			} else if nb, _ := strconv.Atoi(cmds[1]); strings.ToLower(cmds[0]) == "select" && nb < 16 {
-				*dbn = nb
-				printReply(cmd, r)
+			cmd := cmds[0]
+			if strings.ToLower(cmd) == "help" || cmd == "?" {
+				printHelp(cmds)
 			} else {
-				printReply(cmd, r)
+				r, err := c.Do(cmds[0], args...)
+
+				if err != nil {
+					fmt.Printf("%s", err.Error())
+				} else if nb, _ := strconv.Atoi(cmds[1]); strings.ToLower(cmds[0]) == "select" && nb < 16 {
+					*dbn = nb
+					printReply(cmd, r)
+				} else {
+					printReply(cmd, r)
+				}
+
+				fmt.Printf("\n")
 			}
 
-			fmt.Printf("\n")
 		}
 	}
 }
@@ -103,5 +111,36 @@ func printReply(cmd string, reply interface{}) {
 		}
 	default:
 		fmt.Printf("invalid ledis reply")
+	}
+}
+
+func printGenericHelp() {
+	msg :=
+		`ledis-cli
+Type:	"help <command>" for help on <command>
+	`
+	fmt.Println(msg)
+}
+
+func printCommandHelp(arr []string) {
+	fmt.Println()
+	fmt.Printf("\t%s %s \n", arr[0], arr[1])
+	fmt.Printf("\tGroup: %s \n", arr[2])
+	fmt.Println()
+}
+
+func printHelp(cmds []string) {
+	args := cmds[1:]
+	if len(args) == 0 {
+		printGenericHelp()
+	} else if len(args) > 1 {
+		fmt.Println()
+	} else {
+		cmd := strings.ToUpper(args[0])
+		for i := 0; i < len(helpCommands); i++ {
+			if helpCommands[i][0] == cmd {
+				printCommandHelp(helpCommands[i])
+			}
+		}
 	}
 }
