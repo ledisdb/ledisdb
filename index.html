@@ -35,56 +35,24 @@
           <h1>
 <a name="ledisdb" class="anchor" href="#ledisdb"><span class="octicon octicon-link"></span></a>LedisDB</h1>
 
-<p>Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. It supports some advanced data structure like kv, list, hash and zset, and may be alternative for Redis.</p>
+<p>Ledisdb is a high performance NoSQL like Redis based on LevelDB written by Golang. It supports some advanced data structure like kv, list, hash, zset and bitmap, and may be alternative for Redis.</p>
 
 <h2>
 <a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
 
 <ul>
-<li>Rich advanced data structure: KV, List, Hash, ZSet, Bit.</li>
-<li>Uses leveldb to store lots of data, over the memory limit. </li>
+<li>Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.</li>
+<li>Uses leveldb to store lots of data, over the memory limit.</li>
 <li>Supports expiration and ttl.</li>
 <li>Redis clients, like redis-cli, are supported directly.</li>
-<li>Multi client API supports, including Golang, Python, Lua(Openresty). </li>
-<li>Easily to embed in Golang application. </li>
+<li>Multi client API supports, including Golang, Python, Lua(Openresty).</li>
+<li>Easy to embed in Golang application.</li>
 <li>Replication to guarantee data safe.</li>
-<li>Supplies tools to load, dump, repair database. </li>
-</ul><h2>
-<a name="build-and-install" class="anchor" href="#build-and-install"><span class="octicon octicon-link"></span></a>Build and Install</h2>
+<li>Supplies tools to load, dump, repair database.</li>
+</ul>
 
-<ul>
-<li>
-<p>Create a workspace and checkout ledisdb source</p>
-
-<pre><code>mkdir $WORKSPACE
-cd $WORKSPACE
-git clone git@github.com:siddontang/ledisdb.git src/github.com/siddontang/ledisdb
-
-cd src/github.com/siddontang/ledisdb
-</code></pre>
-</li>
-<li>
-<p>Install leveldb and snappy, if you have installed, skip.</p>
-
-<p>I supply a simple shell to install leveldb and snappy, you can use: </p>
-
-<pre><code>sh build_leveldb.sh
-</code></pre>
-
-<p>It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy</p>
-</li>
-<li><p>Change LEVELDB_DIR and SNAPPY_DIR to real install path in dev.sh.</p></li>
-<li>
-<p>Then:</p>
-
-<pre><code>. ./bootstap.sh 
-. ./dev.sh
-
-go install ./...
-</code></pre>
-</li>
-</ul><h2>
-<a name="run" class="anchor" href="#run"><span class="octicon octicon-link"></span></a>Run</h2>
+<h2>
+<a name="eample" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
 
 <pre><code>./ledis-server -config=/etc/ledis.json
 
@@ -98,7 +66,7 @@ ledis 127.0.0.1:6380&gt; get a
 </code></pre>
 
 <h2>
-<a name="lib" class="anchor" href="#lib"><span class="octicon octicon-link"></span></a>Lib</h2>
+<a name="lib" class="anchor" href="#lib"><span class="octicon octicon-link"></span></a>Lib Example</h2>
 
 <pre><code>import "github.com/siddontang/ledisdb/ledis"
 l, _ := ledis.Open(cfg)
@@ -109,43 +77,15 @@ db.Set(key, value)
 db.Get(key)
 </code></pre>
 
-<h2>
-<a name="replication" class="anchor" href="#replication"><span class="octicon octicon-link"></span></a>Replication</h2>
-
-<p>set slaveof in config or dynamiclly</p>
-
-<pre><code>ledis-cli -p 6381 
-
-ledis 127.0.0.1:6381&gt; slaveof 127.0.0.1:6380
-OK
-</code></pre>
 
 <h2>
-<a name="benchmark" class="anchor" href="#benchmark"><span class="octicon octicon-link"></span></a>Benchmark</h2>
-
-<p>See benchmark.md for more.</p>
-
-<h2>
-<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>Todo</h2>
+<a name="links" class="anchor" href="#links"><span class="octicon octicon-link"></span></a>Links</h2>
 
 <ul>
-<li>Admin</li>
-</ul><h2>
-<a name="godoc" class="anchor" href="#godoc"><span class="octicon octicon-link"></span></a>GoDoc</h2>
-
-<p><a href="https://godoc.org/github.com/siddontang/ledisdb"><img src="https://godoc.org/github.com/siddontang/ledisdb?status.png" alt="GoDoc"></a></p>
-
-<h2>
-<a name="commands" class="anchor" href="#commands"><span class="octicon octicon-link"></span></a>Commands</h2>
-
-<p>Some server commands explaintions are <a href="https://github.com/siddontang/ledisdb/wiki/Commands">here</a>, others will add continuate.</p>
-
-<h2>
-<a name="thanks" class="anchor" href="#thanks"><span class="octicon octicon-link"></span></a>Thanks</h2>
-
-<p>Gmail: <a href="mailto:cenqichao@gmail.com">cenqichao@gmail.com</a></p>
-
-<p>Gmail: <a href="mailto:chendahui007@gmail.com">chendahui007@gmail.com</a></p>
+<li><a href="https://godoc.org/github.com/siddontang/ledisdb">GoDoc</a></li>
+<li><a href="http://blog.csdn.net/siddontang/article/category/2264003">Author's Chinese Blog</a></li>
+<li><a href="https://github.com/siddontang/ledisdb/wiki/Commands">Server Commands</a></li>
+</ul>
 
 <h2>
 <a name="feedback" class="anchor" href="#feedback"><span class="octicon octicon-link"></span></a>Feedback</h2>
