@@ -73,7 +73,7 @@ func loadDump(cfg *ledis.Config, ldb *ledis.Ledis) error {
 
 	//master enable binlog, here output this like mysql
 	if head.LogFileIndex != 0 && head.LogPos != 0 {
-		format := "-- CHANGE MASTER TO MASTER_LOG_FILE='binlog.%07d', MASTER_LOG_POS=%d;\n"
+		format := "MASTER_LOG_FILE='binlog.%07d', MASTER_LOG_POS=%d;\n"
 		fmt.Printf(format, head.LogFileIndex, head.LogPos)
 	}
 
