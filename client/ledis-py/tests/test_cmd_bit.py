@@ -62,15 +62,28 @@ class TestCmdBit(unittest.TestCase):
         assert l.bcount('a') == 1
         l.bmsetbit('a', 10, 1, 20, 1, 30, 1, 40, 1)
         assert l.bcount('a') == 5
-        #TODO test bcount with start/end option
+        assert l.bcount('a', 0, 10) == 2
+        assert l.bcount('a', 20, 30) == 2
+        assert l.bcount('a', 10, 10) == 1
 
     def test_bopt_not_empty_string(self):
         l.bopt('not', 'r', 'a')
         assert l.bget('r') is None
 
-    def test_bopt_not(self):
-        #TODO
-        pass
+    def test_bopt(self):
+        l.bmsetbit('a1', 10, 1, 30, 1, 50, 1, 70, 1, 90, 1)
+        l.bmsetbit('a2', 20, 1, 40, 1, 60, 1, 80, 1, 100, 1)
+        assert l.bopt('and', 'res1', 'a1', 'a2') == 101
+        assert l.bcount('res1') == 0
+
+        assert l.bopt('or', 'res2', 'a1', 'a2') == 101
+        assert l.bcount('res2') == 10
+
+        assert l.bopt('xor', 'res3', 'a1', 'a2') == 101
+        assert l.bcount('res3') == 10
+
+        assert l.bopt('not', 'res4', 'a1') == 91
+        assert l.bcount('res4') == 86
 
     def test_bexpire(self):
         assert not l.bexpire('a', 100)
