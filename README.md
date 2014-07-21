@@ -9,7 +9,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
-+ Easily to embed in Golang application. 
++ Easy to embed in Golang application. 
 + Replication to guarantee data safe.
 + Supplies tools to load, dump, repair database. 
 
@@ -25,13 +25,15 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
 + Install leveldb and snappy, if you have installed, skip.
 
-    I supply a simple shell to install leveldb and snappy, you can use: 
+    LedisDB supplies a simple shell to install leveldb and snappy: 
 
         sh build_leveldb.sh
 
-    It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy
+    It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy.
 
-+ Change LEVELDB_DIR and SNAPPY_DIR to real install path in dev.sh.
+    LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
+
++ Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
 + Then:
 
@@ -40,7 +42,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
         go install ./...
 
-## Run
+## Server Example
 
     ./ledis-server -config=/etc/ledis.json
 
@@ -52,7 +54,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
     ledis 127.0.0.1:6380> get a
     "1"
 
-## Lib
+## Package Example
     
     import "github.com/siddontang/ledisdb/ledis"
     l, _ := ledis.Open(cfg)
@@ -63,9 +65,9 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
     db.Get(key)
 
 
-## Replication
+## Replication Example
 
-set slaveof in config or dynamiclly
+Set slaveof in config or dynamiclly
 
     ledis-cli -p 6381 
 
@@ -78,21 +80,29 @@ See benchmark.md for more.
 
 ## Todo
 
-+ Admin
+See [Issues todo](https://github.com/siddontang/ledisdb/issues?labels=todo&page=1&state=open)
 
-## GoDoc
 
-[![GoDoc](https://godoc.org/github.com/siddontang/ledisdb?status.png)](https://godoc.org/github.com/siddontang/ledisdb)
+## Links
 
-## Commands
++ [Official Website](http://ledisdb.com)
++ [Author's Chinese Blog](http://blog.csdn.net/siddontang/article/category/2264003)
++ [GoDoc](https://godoc.org/github.com/siddontang/ledisdb)
++ [Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands)
 
-Some server commands explaintions are [here](https://github.com/siddontang/ledisdb/wiki/Commands), others will add continuate.
 
 ## Thanks
 
 Gmail: cenqichao@gmail.com
 
 Gmail: chendahui007@gmail.com
+
+Gmail: cppgohan@gmail.com
+
+Gmail: tiaotiaoyly@gmail.com
+
+Gmail: wyk4true@gmail.com
+
 
 ## Feedback
 

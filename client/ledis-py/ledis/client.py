@@ -1,7 +1,7 @@
 from __future__ import with_statement
 import datetime
 import time as mod_time
-from ledis._compat import (b, izip, imap, iteritems, iterkeys, itervalues,
+from ledis._compat import (b, izip, imap, iteritems,
                            basestring, long, nativestr, urlparse, bytes)
 from ledis.connection import ConnectionPool, UnixDomainSocketConnection
 from ledis.exceptions import (
@@ -53,9 +53,8 @@ def zset_score_pairs(response, **options):
     """
     if not response or not options['withscores']:
         return response
-    score_cast_func = options.get('score_cast_func', int)
     it = iter(response)
-    return list(izip(it, imap(score_cast_func, it)))
+    return list(izip(it, imap(int, it)))
 
 
 def int_or_none(response):
@@ -77,13 +76,14 @@ class Ledis(object):
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
             'EXISTS EXPIRE EXPIREAT HEXISTS HMSET SETNX '
-            'PERSIST HPERSIST LPERSIST ZPERSIST',
+            'PERSIST HPERSIST LPERSIST ZPERSIST BEXPIRE '
+            'BEXPIREAT BPERSIST BDELETE',
             bool
         ),
         string_keys_to_dict(
             'DECRBY DEL HDEL HLEN INCRBY LLEN '
             'ZADD ZCARD ZREM ZREMRANGEBYRANK ZREMRANGEBYSCORE'
-            'LMCLEAR HMCLEAR ZMCLEAR',
+            'LMCLEAR HMCLEAR ZMCLEAR BCOUNT BGETBIT BSETBIT BOPT BMSETBIT',
             int
         ),
         string_keys_to_dict(
@@ -102,7 +102,9 @@ class Ledis(object):
         {
             'HGETALL': lambda r: r and pairs_to_dict(r) or {},
             'PING': lambda r: nativestr(r) == 'PONG',
-            'SET': lambda r: r and nativestr(r) == 'OK', }
+            'SET': lambda r: r and nativestr(r) == 'OK',
+        },
+
     )
 
     @classmethod
@@ -187,7 +189,6 @@ class Ledis(object):
             return self.response_callbacks[command_name](response, **options)
         return response
 
-
     #### SERVER INFORMATION ####
     def echo(self, value):
         "Echo the string back from the server"
@@ -204,7 +205,6 @@ class Ledis(object):
         except ValueError:
             db = 0
         return self.execute_command('SELECT', db)
-
 
     #### BASIC KEY COMMANDS ####
     def decr(self, name, amount=1):
@@ -327,7 +327,6 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('PERSIST', name)
 
-
     #### LIST COMMANDS ####
     def lindex(self, name, index):
         """
@@ -433,8 +432,8 @@ class Ledis(object):
 
     def zcount(self, name, min, max):
         """
-        Return the number of elements in the sorted set at key ``name`` with a score 
-        between ``min`` and ``max``. 
+        Return the number of elements in the sorted set at key ``name`` with a score
+        between ``min`` and ``max``.
         The min and max arguments have the same semantic as described for ZRANGEBYSCORE.
         """
         return self.execute_command('ZCOUNT', name, min, max)
@@ -454,17 +453,15 @@ class Ledis(object):
 
         ``withscores`` indicates to return the scores along with the values.
         The return type is a list of (value, score) pairs
-
-        ``score_cast_func`` a callable used to cast the score return value
         """
         if desc:
-            return self.zrevrange(name, start, end, withscores,
-                                  score_cast_func)
+            return self.zrevrange(name, start, end, withscores)
+                                  
         pieces = ['ZRANGE', name, start, end]
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': int}
+            'withscores': withscores}
         return self.execute_command(*pieces, **options)
 
     def zrangebyscore(self, name, min, max, start=None, num=None,
@@ -478,8 +475,6 @@ class Ledis(object):
 
         ``withscores`` indicates to return the scores along with the values.
         The return type is a list of (value, score) pairs
-
-        `score_cast_func`` a callable used to cast the score return value
         """
         if (start is not None and num is None) or \
                 (num is not None and start is None):
@@ -490,7 +485,7 @@ class Ledis(object):
         if withscores:
             pieces.append('withscores')
         options = {
-            'withscores': withscores, 'score_cast_func': int}
+            'withscores': withscores}
         return self.execute_command(*pieces, **options)
 
     def zrank(self, name, value):
@@ -529,14 +524,11 @@ class Ledis(object):
 
         ``withscores`` indicates to return the scores along with the values
         The return type is a list of (value, score) pairs
-
-        ``score_cast_func`` a callable used to cast the score return value
         """
         pieces = ['ZREVRANGE', name, start, num]
         if withscores:
             pieces.append('withscores')
-        options = {
-            'withscores': withscores, 'score_cast_func': int}
+        options = {'withscores': withscores}
         return self.execute_command(*pieces, **options)
 
     def zrevrangebyscore(self, name, min, max, start=None, num=None,
@@ -550,8 +542,6 @@ class Ledis(object):
 
         ``withscores`` indicates to return the scores along with the values.
         The return type is a list of (value, score) pairs
-
-        ``score_cast_func`` a callable used to cast the score return value
         """
         if (start is not None and num is None) or \
                 (num is not None and start is None):
@@ -561,8 +551,7 @@ class Ledis(object):
             pieces.extend(['LIMIT', start, num])
         if withscores:
             pieces.append('withscores')
-        options = {
-            'withscores': withscores, 'score_cast_func': int}
+        options = {'withscores': withscores}
         return self.execute_command(*pieces, **options)
 
     def zrevrank(self, name, value):
@@ -703,3 +692,79 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
 
+
+
+    ### BIT COMMANDS
+    def bget(self, name):
+        ""
+        return self.execute_command("BGET", name)
+
+    def bdelete(self, name):
+        ""
+        return self.execute_command("BDELETE", name)
+
+    def bsetbit(self, name, offset, value):
+        ""
+        value = value and 1 or 0
+        return self.execute_command("BSETBIT", name, offset, value)
+
+    def bgetbit(self, name, offset):
+        ""
+        return self.execute_command("BGETBIT", name, offset)
+
+    def bmsetbit(self, name, *args):
+        """
+        Set any number of offset, value pairs to the key ``name``. Pairs can be
+        specified in the following way:
+
+            offset1, value1, offset2, value2, ...
+        """
+        pieces = []
+        if args:
+            if len(args) % 2 != 0:
+                raise LedisError("BMSETBIT requires an equal number of "
+                                 "offset and value")
+            pieces.extend(args)
+        return self.execute_command("BMSETBIT", name, *pieces)
+
+    def bcount(self, key, start=None, end=None):
+        ""
+        params = [key]
+        if start is not None and end is not None:
+            params.append(start)
+            params.append(end)
+        elif (start is not None and end is None) or \
+             (start is None and end is not None):
+            raise LedisError("Both start and end must be specified")
+        return self.execute_command("BCOUNT", *params)
+
+    def bopt(self, operation, dest, *keys):
+        """
+        Perform a bitwise operation using ``operation`` between ``keys`` and
+        store the result in ``dest``.
+        ``operation`` is one of `and`, `or`, `xor`, `not`.
+        """
+        return self.execute_command('BOPT', operation, dest, *keys)
+
+    def bexpire(self, name, time):
+        "Set timeout on key ``name`` with ``time``"
+        if isinstance(time, datetime.timedelta):
+            time = time.seconds + time.days * 24 * 3600
+        return self.execute_command('BEXPIRE', name, time)
+
+    def bexpireat(self, name, when):
+        """
+        Set an expire flag on key name for time seconds. time can be represented by
+         an integer or a Python timedelta object.
+        """
+        if isinstance(when, datetime.datetime):
+            when = int(mod_time.mktime(when.timetuple()))
+        return self.execute_command('BEXPIREAT', name, when)
+
+    def bttl(self, name):
+        "Returns the number of seconds until the key name will expire"
+        return self.execute_command('BTTL', name)
+
+    def bpersist(self, name):
+        "Removes an expiration on name"
+        return self.execute_command('BPERSIST', name)

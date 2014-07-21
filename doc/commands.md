@@ -70,7 +70,7 @@ Table of Contents
 	- [ZREMRANGEBYRANK key start stop](#zremrangebyrank-key-start-stop)
 	- [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
 	- [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
-	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
+	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore-key-max-min-withscores-limit-offset-count)
 	- [ZREVRANK key member](#zrevrank-key-member)
 	- [ZSCORE key member](#zscore-key-member)
 	- [ZCLEAR key](#zclear-key)
@@ -79,6 +79,19 @@ Table of Contents
 	- [ZEXPIREAT key timestamp](#zexpireat-key-timestamp)
 	- [ZTTL key](#zttl-key)
 	- [ZPERSIST key](#zpersist-key)
+- [Bitmap](#bitmap)
+
+	- [BGET key](#bget-key)
+	- [BGETBIT key offset](#bgetbit-key-offset)
+	- [BSETBIT key offset value](#bsetbit-key-offset-value)
+	- [BMSETBIT key offset value[offset value ...]](#bmsetbit-key-offset-value-offset-value-)
+	- [BOPT operation destkey key [key ...]](#bopt-operation-destkey-key-key-)
+	- [BCOUNT key [start, end]](#bcount-key-start-end)
+	- [BEXPIRE key seconds](#bexpire-key-seconds)
+	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
+	- [BTTL key](#bttl-key)
+	- [BPERSIST key](#bpersist-key)
+
 - [Replication](#replication)
 	- [SLAVEOF host port](#slaveof-host-port)
 	- [FULLSYNC](#fullsync)
@@ -1138,7 +1151,7 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> zcard myset
+ledis> ZCARD myset
 (integer) 4
 ```
 
@@ -1168,9 +1181,9 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> zcount myset -inf +inf
+ledis> ZCOUNT myset -inf +inf
 (integer) 4
-ledis> zcount myset (1 3
+ledis> ZCOUNT myset (1 3
 (integer) 2
 ```
 
@@ -1444,13 +1457,13 @@ Use ZRANK to get the rank of an element with the scores ordered from low to high
 **Examples**
 
 ```
-127.0.0.1:6380> zadd myset 1 one
+ledis> ZADD myset 1 one
 (integer) 1
-127.0.0.1:6380> zadd myset 2 two
+ledis> ZADD myset 2 two
 (integer) 1
-127.0.0.1:6380> zrevrank myset one
+ledis> ZREVRANK myset one
 (integer) 1
-127.0.0.1:6380> zrevrank myset three
+ledis> ZREVRANK myset three
 (nil)
 ```
 
@@ -1581,13 +1594,13 @@ int64: TTL in seconds
 **Examples**
 
 ```
-ledis> zadd myset 1 'one'
+ledis> ZADD myset 1 'one'
 (integer) 1
-ledis> zexpire myset 100
+ledis> ZEXPIRE myset 100
 (integer) 1
-ledis> zttl myset
+ledis> ZTTL myset
 (integer) 97
-ledis> zttl myset2
+ledis> ZTTL myset2
 (integer) -1
 ```
 
@@ -1615,6 +1628,166 @@ ledis> ZPERSIST myset
 ledis> ZTTL mset
 (integer) -1
 ```
+
+
+
+## Bitmap
+
+
+### BGET key
+
+Returns the whole binary data stored at `key`.
+
+**Return value**
+
+bulk: the raw value of key, or nil when key does not exist.
+
+**Examples**
+
+```
+ledis> BMSETBIT flag 0 1 5 1 6 1
+(integer) 3
+ledis> BGET flag
+a
+```
+
+
+### BGETBIT key offset
+
+Returns the bit value at `offset` in the string value stored at `key`.
+When *offset* beyond the data length, ot the target data is not exist, the bit value will be 0 always.
+
+**Return value**
+
+int64 : the bit value stored at offset.
+
+**Examples**
+
+```
+ledis> BSETBIT flag 1024 1
+(integer) 0
+ledis> BGETBIT flag 0
+(integer) 0
+ledis> BGETBIT flag 1024
+(integer) 1
+ledis> BGETBIT flag 65535
+(integer) 0
+```
+
+
+### BSETBIT key offset value
+
+Sets or clear the bit at `offset` in the binary data sotred at `key`.
+The bit is either set or cleared depending on `value`, which can be either `0` or `1`.
+The *offset* argument is required to be qual to 0, and smaller than
+2^23 (this means bitmap limits to 8MB).
+
+**Return value**
+
+int64 : the original bit value stored at offset.
+
+**Examples**
+
+```
+ledis> BSETBIT flag 0 1
+(integer) 0
+ledis> BSETBIT flag 0 0
+(integer) 1
+ledis> BGETBIT flag 0 99
+ERR invalid command param
+```
+
+### BMSETBIT key offset value [offset value ...]
+Sets the given *offset* to their respective values.
+
+**Return value**
+
+int64 : The number of input *offset*
+
+**Examples**
+
+```
+ledis> BMSETBIT flag 0 1 1 1 2 0 3 1
+(integer) 4
+ledis> BCOUNT flag
+(integer) 3
+```
+
+
+### BOPT operation destkey key [key ...]
+Perform a bitwise operation between multiple keys (containing string values) and store the result in the destination key.
+
+**Return value**
+
+Int64:
+The size of the string stored in the destination key, that is equal to the size of the longest input string.
+**Examples**
+
+```
+ledis> BMSETBIT a 0 1 2 1
+(integer) 2
+ledis> BMSETBIT b 1 1 
+(integer) 1
+ledis> BOPT AND res a b    
+(integer) 3
+ledis> BCOUNT res
+(integer) 0
+ledis> BOPT OR res2 a b
+(integer) 3
+ledis> BCOUNT res2
+(integer) 3
+ledis> BOPT XOR res3 a b
+(integer) 3
+ledis> BCOUNT res3
+(integer) 3
+```
+
+### BCOUNT key [start end]
+
+Count the number of set bits in a bitmap.
+
+**Return value**
+
+int64 : The number of bits set to 1.
+
+**Examples**
+
+```
+ledis> BMSETBIT flag 0 1 5 1 6 1
+(integer) 3
+ledis> BGET flag
+a
+ledis> BCOUNT flag
+(integer) 3
+ledis> BCOUNT flag 0 0s
+(integer) 1
+ledis> BCOUNT flag 0 4
+(integer) 1
+ledis> BCOUNT flag 0 5
+(integer) 2
+ledis> BCOUNT flag 5 6
+(integer) 2
+```
+
+
+### BEXPIRE key seconds
+
+(refer to [EXPIRE](#expire-key-seconds) api for other types)
+
+
+### BEXPIREAT key timestamp
+
+(refer to [EXPIREAT](#expireat-key-timestamp) api for other types)
+
+
+### BTTL key
+
+(refer to [TTL](#ttl-key) api for other types)
+
+
+### BPERSIST key
+
+(refer to [PERSIST](#persist-key) api for other types)
 
 
 ## Replication

@@ -3,16 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/server"
 	"io/ioutil"
-	"path"
 )
 
 var configPath = flag.String("config", "/etc/ledis.json", "ledisdb config file")
 var dumpPath = flag.String("dump_file", "", "ledisdb dump file")
-var masterAddr = flag.String("master_addr", "",
-	"master addr to set where dump file comes from, if not set correctly, next slaveof may cause fullsync")
 
 func main() {
 	flag.Parse()
@@ -74,13 +71,11 @@ func loadDump(cfg *ledis.Config, ldb *ledis.Ledis) error {
 		return err
 	}
 
-	info := new(server.MasterInfo)
+	//master enable binlog, here output this like mysql
+	if head.LogFileIndex != 0 && head.LogPos != 0 {
+		format := "MASTER_LOG_FILE='binlog.%07d', MASTER_LOG_POS=%d;\n"
+		fmt.Printf(format, head.LogFileIndex, head.LogPos)
+	}
 
-	info.Addr = *masterAddr
-	info.LogFileIndex = head.LogFileIndex
-	info.LogPos = head.LogPos
-
-	infoFile := path.Join(cfg.DataDir, "master.info")
-
-	return info.Save(infoFile)
+	return nil
 }
