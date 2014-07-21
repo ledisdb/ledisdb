@@ -29,7 +29,9 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
         sh build_leveldb.sh
 
-    It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy
+    It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy.
+
+    LedisDB use the modification LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
 
 + Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
@@ -40,7 +42,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
         go install ./...
 
-## Run
+## Server Example
 
     ./ledis-server -config=/etc/ledis.json
 
@@ -52,7 +54,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
     ledis 127.0.0.1:6380> get a
     "1"
 
-## Lib
+## Package Example
     
     import "github.com/siddontang/ledisdb/ledis"
     l, _ := ledis.Open(cfg)
@@ -63,7 +65,7 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
     db.Get(key)
 
 
-## Replication
+## Replication Example
 
 Set slaveof in config or dynamiclly
 
@@ -78,7 +80,7 @@ See benchmark.md for more.
 
 ## Todo
 
-+ Admin
+See [Issues todo](https://github.com/siddontang/ledisdb/issues?labels=todo&page=1&state=open)
 
 
 ## Links
@@ -95,7 +97,12 @@ Gmail: cenqichao@gmail.com
 
 Gmail: chendahui007@gmail.com
 
-Gamil: tiaotiaoyly@gmail.com
+Gmail: cppgohan@gmail.com
+
+Gmail: tiaotiaoyly@gmail.com
+
+Gmail: wyk4true@gmail.com
+
 
 ## Feedback
 
