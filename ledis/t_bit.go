@@ -255,7 +255,7 @@ func (db *DB) bDelete(t *tx, key []byte) (drop int64) {
 	maxKey := db.bEncodeBinKey(key, maxSeq)
 	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeClose)
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+		t.Delete(it.RawKey())
 		drop++
 	}
 	it.Close()
@@ -450,14 +450,14 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 
 	var seq, s, e uint32
 	for ; it.Valid(); it.Next() {
-		if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
+		if _, seq, err = db.bDecodeBinKey(it.RawKey()); err != nil {
 			data = nil
 			break
 		}
 
 		s = seq << segByteWidth
 		e = MinUInt32(s+segByteSize, capByteSize)
-		copy(data[s:e], it.Value())
+		copy(data[s:e], it.RawValue())
 	}
 	it.Close()
 
@@ -664,7 +664,7 @@ func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) 
 
 	it := db.db.RangeIterator(skey, ekey, leveldb.RangeOpen)
 	for ; it.Valid(); it.Next() {
-		segment = it.Value()
+		segment = it.RawValue()
 		for _, bt := range segment {
 			cnt += bitsInByte[bt]
 		}
@@ -777,12 +777,12 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		// ps : init segments by data corresponding to the 1st valid source key
 		it := db.bIterator(srckeys[srcIdx])
 		for ; it.Valid(); it.Next() {
-			if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
+			if _, seq, err = db.bDecodeBinKey(it.RawKey()); err != nil {
 				// to do ...
 				it.Close()
 				return
 			}
-			segments[seq] = it.Value()
+			segments[seq] = it.RawValue()
 		}
 		it.Close()
 		srcIdx++
@@ -799,7 +799,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		for idx, end := uint32(0), false; !end; it.Next() {
 			end = !it.Valid()
 			if !end {
-				if _, seq, err = db.bDecodeBinKey(it.Key()); err != nil {
+				if _, seq, err = db.bDecodeBinKey(it.RawKey()); err != nil {
 					// to do ...
 					it.Close()
 					return
@@ -820,7 +820,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 			}
 
 			if !end {
-				res = it.Value()
+				res = it.RawValue()
 				exeOp(segments[seq], res, &res)
 				segments[seq] = res
 				idx++
