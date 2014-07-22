@@ -32,7 +32,7 @@ func TestReplication(t *testing.T) {
 	masterCfg := new(Config)
 	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
 	masterCfg.Addr = "127.0.0.1:11182"
-	masterCfg.DB.UseBinLog = true
+	masterCfg.BinLog.Use = true
 
 	var master *App
 	var slave *App

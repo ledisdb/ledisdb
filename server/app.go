@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/siddontang/copier"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"path"
@@ -28,10 +29,6 @@ type App struct {
 func NewApp(cfg *Config) (*App, error) {
 	if len(cfg.DataDir) == 0 {
 		return nil, fmt.Errorf("must set data_dir first")
-	}
-
-	if len(cfg.DB.DataDir) == 0 {
-		cfg.DB.DataDir = cfg.DataDir
 	}
 
 	app := new(App)
@@ -66,13 +63,26 @@ func NewApp(cfg *Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.Open(&cfg.DB); err != nil {
+	if app.ldb, err = openLedis(cfg); err != nil {
 		return nil, err
 	}
 
 	app.m = newMaster(app)
 
 	return app, nil
+}
+
+func openLedis(cfg *Config) (*ledis.Ledis, error) {
+	c := new(ledis.Config)
+
+	c.DataDir = cfg.DataDir
+
+	copier.Copy(&c.DB, &cfg.DB)
+	copier.Copy(&c.BinLog, &cfg.BinLog)
+
+	println("max open files", c.DB.MaxOpenFiles)
+
+	return ledis.Open(c)
 }
 
 func (app *App) Close() {
