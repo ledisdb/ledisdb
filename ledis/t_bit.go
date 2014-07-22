@@ -782,7 +782,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 				it.Close()
 				return
 			}
-			segments[seq] = it.RawValue()
+			segments[seq] = it.Value()
 		}
 		it.Close()
 		srcIdx++
@@ -820,7 +820,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 			}
 
 			if !end {
-				res = it.RawValue()
+				res = it.Value()
 				exeOp(segments[seq], res, &res)
 				segments[seq] = res
 				idx++
