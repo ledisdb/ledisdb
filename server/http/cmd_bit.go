@@ -11,7 +11,7 @@ func bgetCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bget")
 	}
-	if v, err := db.BGet(ledis.Slice(args[0])); err != nil {
+	if v, err := db.BGet([]byte(args[0])); err != nil {
 		return nil, err
 	} else {
 		return v, nil
@@ -22,7 +22,7 @@ func bdeleteCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bdelete")
 	}
-	if n, err := db.BDelete(ledis.Slice(args[0])); err != nil {
+	if n, err := db.BDelete([]byte(args[0])); err != nil {
 		return nil, err
 	} else {
 		return n, err
@@ -33,7 +33,7 @@ func bsetbitCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 3 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bsetbit")
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	offset, err := strconv.ParseInt(args[1], 10, 32)
 	if err != nil {
 		return nil, ErrValue
@@ -51,7 +51,7 @@ func bgetbitCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bgetbit")
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	offset, err := strconv.ParseInt(args[1], 10, 32)
 	if err != nil {
 		return nil, ErrValue
@@ -70,7 +70,7 @@ func bmsetbitCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) < 3 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bmsetbit")
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if len(args[1:])%2 != 0 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bmsetbit")
 	} else {
@@ -114,7 +114,7 @@ func bcountCommand(db *ledis.DB, args ...string) (interface{}, error) {
 			return nil, err
 		}
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if cnt, err := db.BCount(key, int32(start), int32(end)); err != nil {
 		return nil, err
 	} else {
@@ -127,13 +127,13 @@ func boptCommand(db *ledis.DB, args ...string) (interface{}, error) {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bopt")
 	}
 	opDesc := strings.ToLower(args[0])
-	dstKey := ledis.Slice(args[1])
+	dstKey := []byte(args[1])
 
 	var srcKeys = [][]byte{}
 	if len(args) >= 3 {
 		srcKeys = make([][]byte, len(args[2:]))
 		for i, arg := range args[2:] {
-			srcKeys[i] = ledis.Slice(arg)
+			srcKeys[i] = []byte(arg)
 		}
 	}
 
@@ -165,7 +165,7 @@ func bexpireCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if v, err := db.BExpire(key, duration); err != nil {
 		return nil, err
 	} else {
@@ -181,7 +181,7 @@ func bexpireatCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if v, err := db.BExpireAt(key, when); err != nil {
 		return nil, err
 	} else {
@@ -193,7 +193,7 @@ func bttlCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bttl")
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if v, err := db.BTTL(key); err != nil {
 		return nil, err
 	} else {
@@ -205,7 +205,7 @@ func bpersistCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "bpersist")
 	}
-	key := ledis.Slice(args[0])
+	key := []byte(args[0])
 	if n, err := db.BPersist(key); err != nil {
 		return nil, err
 	} else {
