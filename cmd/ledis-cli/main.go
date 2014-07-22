@@ -30,6 +30,7 @@ func main() {
 
 	sendSelect(c, *dbn)
 
+	SetCompletionHandler(completionHandler)
 	setHistoryCapacity(100)
 
 	reg, _ := regexp.Compile(`'.*?'|".*?"|\S+`)
@@ -156,4 +157,14 @@ func sendSelect(client *ledis.Client, index int) {
 	if err != nil {
 		fmt.Println("index out of range, should less than 16")
 	}
+}
+
+func completionHandler(in string) []string {
+	var keyWords []string
+	for _, i := range helpCommands {
+		if strings.HasPrefix(i[0], strings.ToUpper(in)) {
+			keyWords = append(keyWords, i[0])
+		}
+	}
+	return keyWords
 }
