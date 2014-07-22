@@ -1,0 +1,124 @@
+/* Space out content a bit */
+body {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  color: #7f8c8d;
+}
+
+a {
+    color:  #7f8c8d ;
+}
+
+a:hover,a:focus {
+    color: #7f8c8d;
+    text-decoration: underline
+}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus {
+  color:  #7f8c8d ;
+  background: None;
+}
+
+.nav-pills>li>a, .nav-pills>li>a:hover, .nav-pills>li>a:focus {
+  color:  #7f8c8d ;
+
+} 
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header,
+.features,
+.footer {
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Custom page header */
+.header {
+  border-bottom: 1px solid #e5e5e5;
+}
+/* Make the masthead heading the same height as the navigation */
+.header h3 {
+  padding-bottom: 19px;
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 40px;
+}
+
+/* Custom page footer */
+.gradient {
+  margin-top: 30px;
+  line-height: 20px;
+  padding-top: 19px;
+  border-top: 1px solid #e5e5e5;
+}
+
+/* Main features message and sign up button */
+.jumbotron {
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+.jumbotron .btn {
+  padding: 14px 24px;
+  font-size: 21px;
+}
+
+/* Supporting features content */
+.features {
+  margin: 40px 0;
+}
+.features p + h4 {
+  margin-top: 28px;
+}
+.features > div{
+  padding:1px;
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+  /* Remove the padding we set earlier */
+  .header,
+  .features,
+  .footer {
+    padding-right: 0;
+    padding-left: 0;
+  }
+  /* Space out the masthead */
+  .header {
+    margin-bottom: 30px;
+  }
+  /* Remove the bottom border on the jumbotron for visual effect */
+  .jumbotron {
+    border-bottom: 0;
+  }
+}
+
+.col-sm-4{
+  width: 49.333333%;
+}
+
+
+
+.about {
+  margin-right: 20px;
+  padding-left: 150px;
+}
+
+.underline-link {
+    text-decoration: underline;
+}
+
+[class^="icon-"]:before, [class*=" icon-"]:before {
+  text-decoration: none;
+}
+
+.row.contact > h2 {
+  margin-bottom: 10px;
+}
+
+.row {
+  margin-left: 0px;
+}
+
+.hide {
+  display: none;
+}

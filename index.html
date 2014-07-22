@@ -1,60 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <!--link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'-->
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+
     <title>LedisDB</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/github.css">
+
+    <!-- Custom styles for this template -->
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
   </head>
 
   <body>
-    <a href="https://github.com/siddontang/ledisdb"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
-    <div id="container">
-      <div class="inner">
 
-        <header>
-          <h1>LedisDB</h1>
-          <h2>a high performance NoSQL powered by Golang</h2>
-        </header>
+    <div class="container">
+      <div class="header">
+        <ul class="nav nav-pills pull-right" role="tablist">
+          <li role="presentation"><a href="/">Home</a></li>
+          <li role="presentation"><a href="/contact.html">Contact</a></li>
+        </ul>
+        <h3 class="text-muted">LedisDB</h3>
+      </div>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/siddontang/ledisdb/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/siddontang/ledisdb/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/siddontang/ledisdb" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
+      <div class="jumbotron">
+        <h1>LedisDB</h1>
+        <p class="lead">A high performance NoSQL like Redis based on LevelDB implemented by Golang.</p>
+        <p><a class="btn btn-lg btn-default" target="_blank" href="https://github.com/siddontang/ledisdb" role="button">
+          <i class="glyphicon glyphicon-eye-open"></i>
+          View on GitHub</a></p>
+      </div>
 
-        <hr>
+      <div class="row features" id="features">
+        <div class="col-lg-6">
+          <h3 class="">Data Structure</h3>
+          <p>Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.</p>
+          
+          <h3>LevelDB Rocks</h3>
+          <p>Uses leveldb to store massive data, disk-based storage, over the memory limit.</p>
 
-        <section id="main_content">
-          <h1>
-<a name="ledisdb" class="anchor" href="#ledisdb"><span class="octicon octicon-link"></span></a>LedisDB</h1>
+          <h3>Expiration & TTL</h3>
+          <p>Supports expiration and ttl in all kinds of data structures.</p>
 
-<p>Ledisdb is a high performance NoSQL like Redis based on LevelDB written by Golang. It supports some advanced data structure like kv, list, hash, zset and bitmap, and may be alternative for Redis.</p>
+          <h3>CLI Support</h3>
+          <p>Redis clients, like redis-cli, are supported directly.</p>
 
-<h2>
-<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+        </div>
 
-<ul>
-<li>Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.</li>
-<li>Uses leveldb to store lots of data, over the memory limit.</li>
-<li>Supports expiration and ttl.</li>
-<li>Redis clients, like redis-cli, are supported directly.</li>
-<li>Multi client API supports, including Golang, Python, Lua(Openresty).</li>
-<li>Easy to embed in Golang application.</li>
-<li>Replication to guarantee data safe.</li>
-<li>Supplies tools to load, dump, repair database.</li>
-</ul>
+        <div class="col-lg-6">
+        
+          <h3>Multiple Languages</h3>
+          <p>Multiple clients API supports, including Golang, Python, Lua(Openresty).</p>
 
-<h2>
-<a name="eample" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
+          <h3>Easy Embedding</h3>
+          <p>Easy to embed in Golang application.</p>
 
-<pre><code>./ledis-server -config=/etc/ledis.json
+          <h3>Data Protection</h3>
+          <p>Replication to guarantee data safety.</p>
+
+          <h3>Useful Tools</h3>
+          <p>Supplies tools to load, dump, and repair database.</p>
+
+        </div>
+      </div>
+
+      <div class="row examples" id="examples">
+        <h2>Examples</h2>
+        <pre><code class="Bash">
+./ledis-server -config=/etc/ledis.json
 
 //another shell
 ledis-cli -p 6380
@@ -63,55 +89,183 @@ ledis 127.0.0.1:6380&gt; set a 1
 OK
 ledis 127.0.0.1:6380&gt; get a
 "1"
-</code></pre>
+        </code></pre>
 
-<h2>
-<a name="lib" class="anchor" href="#lib"><span class="octicon octicon-link"></span></a>Lib Example</h2>
-
-<pre><code>import "github.com/siddontang/ledisdb/ledis"
+        <h2>Lib Example</h2>
+        <pre><code class="Bash">
+import "github.com/siddontang/ledisdb/ledis"
 l, _ := ledis.Open(cfg)
 db, _ := l.Select(0)
 
 db.Set(key, value)
 
 db.Get(key)
-</code></pre>
-
-
-<h2>
-<a name="links" class="anchor" href="#links"><span class="octicon octicon-link"></span></a>Links</h2>
-
-<ul>
-<li><a href="https://godoc.org/github.com/siddontang/ledisdb">GoDoc</a></li>
-<li><a href="http://blog.csdn.net/siddontang/article/category/2264003">Author's Chinese Blog</a></li>
-<li><a href="https://github.com/siddontang/ledisdb/wiki/Commands">Server Commands</a></li>
-</ul>
-
-<h2>
-<a name="feedback" class="anchor" href="#feedback"><span class="octicon octicon-link"></span></a>Feedback</h2>
-
-<p>Gmail: <a href="mailto:siddontang@gmail.com">siddontang@gmail.com</a></p>
-        </section>
-
-        <footer>
-          Ledisdb is maintained by <a href="https://github.com/siddontang">siddontang</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-        
+          </code></pre>
       </div>
+
+      <!-- /benchmark-->
+      <div class="row benchmark" id="benchmark"> 
+      <h2>Benchmark</h2>
+
+        <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+        <table class="hide" id="datatable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>redis</th>
+              <th>ssdb</th>
+                    <th>ledis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>SET</th>
+              <td>42735.04</td>
+              <td>35971.22</td>
+                    <td>38759.69</td>
+            </tr>
+            <tr>
+              <th>GET</th>
+              <td>45871.56</td>
+              <td>47393.37</td>
+              <td>40160.64</td>
+            </tr>
+            <tr>
+              <th>INCR</th>
+              <td>45248.87</td>
+              <td>36630.04</td>
+              <td>36101.08</td>
+            </tr>
+            <tr>
+              <th>LPUSH</th>
+              <td>45045.04</td>
+              <td>37174.72</td>
+              <td>33003.30</td>
+            </tr>
+            <tr>
+              <th>LPOP</th>
+              <td>43103.45</td>
+              <td>38167.94</td>
+              <td>27624.31</td>
+            </tr>
+            <tr>
+              <th>LPUSH-lrange</th>
+              <td>44843.05</td>
+              <td>37593.98</td>
+              <td>32894.74</td>
+            </tr>
+                <tr>
+              <th>LRANGE_100</th>
+              <td>14727.54</td>
+              <td>905.55</td>
+              <td>7352.94</td>
+            </tr>
+                <tr>
+              <th>LRANGE_300</th>
+              <td>6915.63</td>
+              <td>327.78</td>
+              <td>2867.79</td>
+            </tr>
+                 <tr>
+              <th>LRANGE_500</th>
+              <td>5042.86</td>
+              <td>222.36</td>
+              <td>1778.41</td>
+            </tr>
+                 <tr>
+              <th>LRANGE_600</th>
+              <td>3960.40</td>
+              <td>165.30</td>
+              <td>1590.33</td>
+            </tr>
+                 <tr>
+              <th>MSET</th>
+              <td>33003.30</td>
+              <td>33112.59</td>
+              <td>21881.84</td>
+            </tr>
+          </tbody>
+        </table>
+        <br>
+          <p>For more information, please take a look at <a href="https://github.com/siddontang/ledisdb/blob/master/benchmark.md"><em>benchmark.md.</em></a></p>
+      </div>
+
+   
+
+      <!-- /footer-->
+  <!--     <div class="footer">
+
+
+        <p>CopyRight@LedisDB // <a target="_blank"href="https://github.com/siddontang/ledisdb/blob/master/LICENSE">MIT  License</a> // maintained by <a target="_blank" href="https://github.com/siddontang">SiddonTang</a></p>
+      </div>
+ -->
+
+    <div id="footer-wrapper" class="gradient">
+        <div id="footer" class="row">
+            <div class="large-4 columns col-sm-4">
+                <h2 id="contribute" >Get Involved</h2>
+                <ul class="underline-link">
+                  <li><a target="_blank" href="https://github.com/siddontang/ledisdb/issues?state=open">Issue Tracker</a></li>
+                  <li><a target="_blank" href="https://github.com/siddontang/ledisdb/issues?labels=todo&page=1&state=open">Todo</a></li>
+                </ul>
+            </div>
+      
+            <div class="large-4 columns col-sm-4">
+                <h2>Quick Links</h2>
+                <ul class="underline-link">
+                  <li><a target="_blank" href="https://github.com/siddontang/ledisdb/wiki">Wiki</a></li>
+                   <li><a target="_blank" href="http://ledis-py.readthedocs.org/">Ledis-py</a></li>
+                   <li><a target="_blank" href="https://godoc.org/github.com/siddontang/ledisdb">Godoc</a></li>
+                   <li><a target="_blank" href="http://blog.csdn.net/siddontang/article/category/2264003">Author's Chinese Blog</a></li>
+                </ul>
+            </div>
+        </div>
+        <div id="about" class="about">
+            <div class="foot">
+                <p>LedisDB was created and maintained by <a class="underline-link" href="https://github.com/siddontang">SiddonTang</a>.
+                    <a  class="underline-link" href="https://github.com/siddontang/ledisdb/blob/master/LICENSE">MIT License</a>.</p>
+            </div>
+        </div>
     </div>
+
+    </div> <!-- /container -->
+
+
+    <script src="js/jquery-1.11.1.min.js"></script>
+    <script src="js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/data.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script>
+    $(function () {
+        $('#container').highcharts({
+            data: {
+                table: document.getElementById('datatable')
+            },
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'Redis vs SSDB vs LedisDB'
+            },
+            yAxis: {
+                allowDecimals: false,
+                title: {
+                    text: 'Units'
+                }
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>'+ this.series.name +'</b><br/>'+
+                        this.point.y +' '+ this.point.name.toLowerCase();
+                }
+            }
+        });
+    });
+    </script>
+
   </body>
-  
-  <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-27956076-2', 'auto');
-  ga('send', 'pageview');
-
-</script>
-
 </html>
