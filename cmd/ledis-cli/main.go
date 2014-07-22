@@ -28,6 +28,8 @@ func main() {
 
 	c := ledis.NewClient(cfg)
 
+	sendSelect(c, *dbn)
+
 	setHistoryCapacity(100)
 
 	reg, _ := regexp.Compile(`'.*?'|".*?"|\S+`)
@@ -35,11 +37,7 @@ func main() {
 	prompt := ""
 
 	for {
-		if *dbn >= 16 {
-			fmt.Printf("ERR invalid db index %d. Auto switch back db 0.\n", *dbn)
-			*dbn = 0
-			continue
-		} else if *dbn > 0 && *dbn < 16 {
+		if *dbn > 0 && *dbn < 16 {
 			prompt = fmt.Sprintf("%s[%d]>", cfg.Addr, *dbn)
 		} else {
 			prompt = fmt.Sprintf("%s>", cfg.Addr)
@@ -67,13 +65,17 @@ func main() {
 			if strings.ToLower(cmd) == "help" || cmd == "?" {
 				printHelp(cmds)
 			} else {
+				if len(cmds) == 2 && strings.ToLower(cmds[0]) == "select" {
+					if db, _ := strconv.Atoi(cmds[1]); db < 16 && db >= 0 {
+						*dbn = db
+					}
+
+				}
+
 				r, err := c.Do(cmds[0], args...)
 
 				if err != nil {
 					fmt.Printf("%s", err.Error())
-				} else if nb, _ := strconv.Atoi(cmds[1]); strings.ToLower(cmds[0]) == "select" && nb < 16 {
-					*dbn = nb
-					printReply(cmd, r)
 				} else {
 					printReply(cmd, r)
 				}
@@ -142,5 +144,16 @@ func printHelp(cmds []string) {
 				printCommandHelp(helpCommands[i])
 			}
 		}
+	}
+}
+
+func sendSelect(client *ledis.Client, index int) {
+	if index > 16 || index < 0 {
+		index = 0
+		fmt.Println("index out of range, should less than 16")
+	}
+	_, err := client.Do("select", index)
+	if err != nil {
+		fmt.Println("index out of range, should less than 16")
 	}
 }
