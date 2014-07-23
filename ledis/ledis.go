@@ -65,6 +65,7 @@ func Open(cfg *Config) (*Ledis, error) {
 	l.ldb = ldb
 
 	if cfg.BinLog.Use {
+		println("binlog will be refactored later, use your own risk!!!")
 		l.binlog, err = NewBinLog(cfg.NewBinLogConfig())
 		if err != nil {
 			return nil, err
