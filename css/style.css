@@ -47,6 +47,11 @@ p {
 
 } 
 
+.nav>li>a:hover, .nav>li>a:focus {
+  background-color: transparent;
+  color: #45a797;
+}
+
 /* Everything but the jumbotron gets side spacing for mobile first views */
 .header,
 .features,
@@ -55,11 +60,12 @@ p {
   padding-left: 15px;
 }
 
-/* Custom page header */
-/*.header{
+.header{
     border-bottom: 1px solid #e5e5e5;
-    margin-top: 10px;
-}*/
+    /*margin-top: 10px;*/
+    padding-bottom: 15px
+}
+
 /* Make the masthead heading the same height as the navigation */
 .logo {
 
@@ -82,6 +88,7 @@ p {
   text-align: center;
   border-bottom: 1px solid #e5e5e5;
 }
+
 .jumbotron .btn {
   padding: 14px 24px;
   font-size: 21px;
