@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/siddontang/copier"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/leveldb"
 	"io/ioutil"
@@ -36,11 +37,13 @@ func main() {
 		return
 	}
 
-	if len(cfg.DataDB.Path) == 0 {
-		cfg.DataDB.Path = path.Join(cfg.DataDir, "data")
-	}
+	dbPath := path.Join(cfg.DataDir, "data")
 
-	if err = leveldb.Repair(&cfg.DataDB); err != nil {
+	dbCfg := new(leveldb.Config)
+	copier.Copy(dbCfg, &cfg.DB)
+	dbCfg.Path = dbPath
+
+	if err = leveldb.Repair(dbCfg); err != nil {
 		println("repair error: ", err.Error())
 	}
 }
