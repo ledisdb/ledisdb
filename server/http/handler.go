@@ -41,13 +41,16 @@ func (h *CmdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CmdHandler) parseReqPath(path string) (db int, cmd string, args []string) {
+	/*
+	   the proper format of `path`  is /cmd/arg1/arg2/../argN  or  /db/cmd/arg1/arg2/../argN
+	   if `path` is the first kind, `db` will be 0
+	*/
 	substrings := strings.Split(strings.TrimLeft(path, "/"), "/")
 	if len(substrings) == 1 {
 		return 0, substrings[0], substrings[1:]
 	}
 	db, err := strconv.Atoi(substrings[0])
 	if err != nil {
-		//       db = 0
 		cmd = substrings[0]
 		args = substrings[1:]
 	} else {

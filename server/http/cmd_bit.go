@@ -14,7 +14,7 @@ func bgetCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	if v, err := db.BGet([]byte(args[0])); err != nil {
 		return nil, err
 	} else {
-		return v, nil
+		return ledis.String(v), nil
 	}
 }
 
