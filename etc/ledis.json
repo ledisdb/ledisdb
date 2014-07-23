@@ -9,10 +9,5 @@
             "max_open_files":1024         
     },
 
-    "binlog" : {
-        "use" : false,
-        "max_open_files" : 1024
-    },
-
     "access_log" : "access.log"
 }
