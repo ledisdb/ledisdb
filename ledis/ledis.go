@@ -3,10 +3,8 @@ package ledis
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/siddontang/copier"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/leveldb"
-	"path"
 	"sync"
 	"time"
 )
@@ -49,31 +47,12 @@ func OpenWithJsonConfig(configJson json.RawMessage) (*Ledis, error) {
 	return Open(&cfg)
 }
 
-func openDB(cfg *Config) (*leveldb.DB, error) {
-	dbPath := path.Join(cfg.DataDir, "data")
-
-	dbCfg := new(leveldb.Config)
-	copier.Copy(dbCfg, &cfg.DB)
-	dbCfg.Path = dbPath
-
-	return leveldb.Open(dbCfg)
-}
-
-func openBinLog(cfg *Config) (*BinLog, error) {
-	binLogPath := path.Join(cfg.DataDir, "bin_log")
-	c := new(BinLogConfig)
-	copier.Copy(c, &cfg.BinLog)
-	c.Path = binLogPath
-
-	return NewBinLog(c)
-}
-
 func Open(cfg *Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		return nil, fmt.Errorf("must set correct data_dir")
 	}
 
-	ldb, err := openDB(cfg)
+	ldb, err := leveldb.Open(cfg.NewDBConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +65,7 @@ func Open(cfg *Config) (*Ledis, error) {
 	l.ldb = ldb
 
 	if cfg.BinLog.Use {
-		l.binlog, err = openBinLog(cfg)
+		l.binlog, err = NewBinLog(cfg.NewBinLogConfig())
 		if err != nil {
 			return nil, err
 		}

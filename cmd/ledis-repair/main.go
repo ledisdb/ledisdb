@@ -3,11 +3,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/siddontang/copier"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/leveldb"
 	"io/ioutil"
-	"path"
 )
 
 var fileName = flag.String("config", "/etc/ledis.json", "ledisdb config file")
@@ -37,13 +35,7 @@ func main() {
 		return
 	}
 
-	dbPath := path.Join(cfg.DataDir, "data")
-
-	dbCfg := new(leveldb.Config)
-	copier.Copy(dbCfg, &cfg.DB)
-	dbCfg.Path = dbPath
-
-	if err = leveldb.Repair(dbCfg); err != nil {
+	if err = leveldb.Repair(cfg.NewDBConfig()); err != nil {
 		println("repair error: ", err.Error())
 	}
 }

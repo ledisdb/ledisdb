@@ -2,6 +2,8 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/siddontang/copier"
+	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 )
 
@@ -49,4 +51,15 @@ func NewConfigWithFile(fileName string) (*Config, error) {
 	}
 
 	return NewConfig(data)
+}
+
+func (cfg *Config) NewLedisConfig() *ledis.Config {
+	c := new(ledis.Config)
+
+	c.DataDir = cfg.DataDir
+
+	copier.Copy(&c.DB, &cfg.DB)
+	copier.Copy(&c.BinLog, &cfg.BinLog)
+
+	return c
 }
