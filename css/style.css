@@ -2,16 +2,39 @@
 body {
   padding-top: 20px;
   padding-bottom: 20px;
-  color: #7f8c8d;
 }
 
 a {
-    color:  #7f8c8d ;
+  color: #7f8c8d;
 }
 
 a:hover,a:focus {
-    color: #7f8c8d;
-    text-decoration: underline
+  color: #45a797;
+}
+
+h2 { 
+  color: #45a797;
+}
+
+.gradient h2 {
+  color: #7f8c8d ;
+}
+
+.features h3 {
+  color: #3d4c4e;
+  font-size: 22px;
+}
+
+p {
+  color: #7f8c8d;
+}
+
+.jumbotron h1 {
+  color: #131d1f;
+}
+
+.jumbotron p {
+  color: #7f8c8d;
 }
 
 .nav-pills>li.active>a, .nav-pills>li.active>a:hover, .nav-pills>li.active>a:focus {
@@ -33,11 +56,13 @@ a:hover,a:focus {
 }
 
 /* Custom page header */
-.header {
-  border-bottom: 1px solid #e5e5e5;
-}
+/*.header{
+    border-bottom: 1px solid #e5e5e5;
+    margin-top: 10px;
+}*/
 /* Make the masthead heading the same height as the navigation */
-.header h3 {
+.logo {
+
   padding-bottom: 19px;
   margin-top: 0;
   margin-bottom: 0;
@@ -96,8 +121,6 @@ a:hover,a:focus {
   width: 49.333333%;
 }
 
-
-
 .about {
   margin-right: 20px;
   padding-left: 150px;
@@ -122,3 +145,21 @@ a:hover,a:focus {
 .hide {
   display: none;
 }
+
+
+.btn-ledis {
+  color: #fff;
+  background-color: #45a797;
+/*  border-color: #45a797;*/
+}
+
+.btn-ledis:hover {
+  color: #fff;
+  background-color: #5abdad;
+  /*border-color: #5abdad;*/
+}
+
+.benchmark a {
+  text-decoration: underline;
+}
+

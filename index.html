@@ -33,13 +33,13 @@
           <li role="presentation"><a href="/">Home</a></li>
           <li role="presentation"><a href="/contact.html">Contact</a></li>
         </ul>
-        <h3 class="text-muted">LedisDB</h3>
+      <a class="logo"  href="/"><img src="/img/logo.png" alt="LedisDB"></a>  
       </div>
 
       <div class="jumbotron">
         <h1>LedisDB</h1>
         <p class="lead">A high performance NoSQL like Redis based on LevelDB implemented by Golang.</p>
-        <p><a class="btn btn-lg btn-default" target="_blank" href="https://github.com/siddontang/ledisdb" role="button">
+        <p><a class="btn btn-lg btn-ledis" target="_blank" href="https://github.com/siddontang/ledisdb" role="button">
           <i class="glyphicon glyphicon-eye-open"></i>
           View on GitHub</a></p>
       </div>
@@ -113,9 +113,9 @@ db.Get(key)
           <thead>
             <tr>
               <th></th>
-              <th>redis</th>
-              <th>ssdb</th>
-                    <th>ledis</th>
+              <th>Redis</th>
+              <th>SSDB</th>
+              <th>LedisDB</th>
             </tr>
           </thead>
           <tbody>
@@ -188,18 +188,8 @@ db.Get(key)
           </tbody>
         </table>
         <br>
-          <p>For more information, please take a look at <a href="https://github.com/siddontang/ledisdb/blob/master/benchmark.md"><em>benchmark.md.</em></a></p>
+          <p>For more information, please take a look at <a href="https://github.com/siddontang/ledisdb/blob/master/benchmark.md"><em>benchmark.md</em></a>.</p>
       </div>
-
-   
-
-      <!-- /footer-->
-  <!--     <div class="footer">
-
-
-        <p>CopyRight@LedisDB // <a target="_blank"href="https://github.com/siddontang/ledisdb/blob/master/LICENSE">MIT  License</a> // maintained by <a target="_blank" href="https://github.com/siddontang">SiddonTang</a></p>
-      </div>
- -->
 
     <div id="footer-wrapper" class="gradient">
         <div id="footer" class="row">
@@ -241,6 +231,9 @@ db.Get(key)
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
     <script>
     $(function () {
+         Highcharts.setOptions({
+         colors: ['#df4810', '#3d4c4e', '#45a797']
+    });
         $('#container').highcharts({
             data: {
                 table: document.getElementById('datatable')
@@ -264,6 +257,7 @@ db.Get(key)
                 }
             }
         });
+     
     });
     </script>
 
