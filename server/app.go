@@ -30,10 +30,6 @@ func NewApp(cfg *Config) (*App, error) {
 		return nil, fmt.Errorf("must set data_dir first")
 	}
 
-	if len(cfg.DB.DataDir) == 0 {
-		cfg.DB.DataDir = cfg.DataDir
-	}
-
 	app := new(App)
 
 	app.quit = make(chan struct{})
@@ -66,7 +62,7 @@ func NewApp(cfg *Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.Open(&cfg.DB); err != nil {
+	if app.ldb, err = ledis.Open(cfg.NewLedisConfig()); err != nil {
 		return nil, err
 	}
 

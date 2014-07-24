@@ -5,22 +5,9 @@ import (
 	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/leveldb"
-	"path"
 	"sync"
 	"time"
 )
-
-type Config struct {
-	DataDir string `json:"data_dir"`
-
-	//if you not set leveldb path, use data_dir/data
-	DataDB leveldb.Config `json:"data_db"`
-
-	UseBinLog bool `json:"use_bin_log"`
-
-	//if you not set bin log path, use data_dir/bin_log
-	BinLog BinLogConfig `json:"bin_log"`
-}
 
 type DB struct {
 	l *Ledis
@@ -65,11 +52,7 @@ func Open(cfg *Config) (*Ledis, error) {
 		return nil, fmt.Errorf("must set correct data_dir")
 	}
 
-	if len(cfg.DataDB.Path) == 0 {
-		cfg.DataDB.Path = path.Join(cfg.DataDir, "data")
-	}
-
-	ldb, err := leveldb.Open(&cfg.DataDB)
+	ldb, err := leveldb.Open(cfg.NewDBConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -81,11 +64,9 @@ func Open(cfg *Config) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if cfg.UseBinLog {
-		if len(cfg.BinLog.Path) == 0 {
-			cfg.BinLog.Path = path.Join(cfg.DataDir, "bin_log")
-		}
-		l.binlog, err = NewBinLog(&cfg.BinLog)
+	if cfg.BinLog.Use {
+		println("binlog will be refactored later, use your own risk!!!")
+		l.binlog, err = NewBinLog(cfg.NewBinLogConfig())
 		if err != nil {
 			return nil, err
 		}

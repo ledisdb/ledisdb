@@ -14,7 +14,7 @@ func getTestDB() *DB {
 		var d = []byte(`
             {
             	"data_dir" : "/tmp/test_ledis",
-                "data_db" : {
+                "db" : {
                     "compression":true,
                     "block_size" : 32768,
                     "write_buffer_size" : 2097152,

@@ -35,8 +35,8 @@ func TestReplication(t *testing.T) {
 	master, err = OpenWithJsonConfig([]byte(`
         {
             "data_dir" : "/tmp/test_repl/master",
-            "use_bin_log" : true,
-            "bin_log" : {
+            "binlog" : {
+            	"use" : true,
                 "max_file_size" : 50
             }
         } 

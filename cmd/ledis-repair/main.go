@@ -6,7 +6,6 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/leveldb"
 	"io/ioutil"
-	"path"
 )
 
 var fileName = flag.String("config", "/etc/ledis.json", "ledisdb config file")
@@ -36,11 +35,7 @@ func main() {
 		return
 	}
 
-	if len(cfg.DataDB.Path) == 0 {
-		cfg.DataDB.Path = path.Join(cfg.DataDir, "data")
-	}
-
-	if err = leveldb.Repair(&cfg.DataDB); err != nil {
+	if err = leveldb.Repair(cfg.NewDBConfig()); err != nil {
 		println("repair error: ", err.Error())
 	}
 }
