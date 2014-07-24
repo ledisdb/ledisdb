@@ -166,7 +166,12 @@ p {
   /*border-color: #5abdad;*/
 }
 
+.post p a,
 .benchmark a {
   text-decoration: underline;
+}
+
+.content {
+  margin-top: 30px;
 }
 
