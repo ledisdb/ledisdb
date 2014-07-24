@@ -12,7 +12,7 @@ func TestBgetCommand(t *testing.T) {
 	db.BSetBit([]byte("test_bget"), 2, 1)
 
 	_, err := bgetCommand(db, "test_bget", "a", "b", "c")
-	if err == nil || err.Error() != "ERR wrong number of arguments for 'bget' command" {
+	if err == nil || err.Error() != "wrong number of arguments for 'bget' command" {
 		t.Fatal("invalid err %v", err)
 	}
 
@@ -30,7 +30,7 @@ func TestBDeleteCommand(t *testing.T) {
 	db := getTestDB()
 
 	_, err := bdeleteCommand(db, "test_bdelete", "a", "b", "c")
-	if err == nil || err.Error() != "ERR wrong number of arguments for 'bdelete' command" {
+	if err == nil || err.Error() != "wrong number of arguments for 'bdelete' command" {
 		t.Fatalf("invalid err %v", err)
 	}
 
@@ -57,7 +57,7 @@ func TestBDeleteCommand(t *testing.T) {
 func TestBSetbitCommand(t *testing.T) {
 	db := getTestDB()
 	_, err := bsetbitCommand(db, "test_bsetbit", "a", "b", "c")
-	if err == nil || err.Error() != "ERR wrong number of arguments for 'bsetbit' command" {
+	if err == nil || err.Error() != "wrong number of arguments for 'bsetbit' command" {
 		t.Fatalf("invalid err %v", err)
 	}
 	n, err := bsetbitCommand(db, "test_bsetbit", "1", "1")
@@ -80,7 +80,7 @@ func TestBMsetbitCommand(t *testing.T) {
 	db := getTestDB()
 	_, err := bmsetbitCommand(db, "test_bmsetbit", "a", "b", "c")
 
-	if err == nil || err.Error() != "ERR wrong number of arguments for 'bmsetbit' command" {
+	if err == nil || err.Error() != "wrong number of arguments for 'bmsetbit' command" {
 		t.Fatalf("invalid err %v", err)
 	}
 	n, err := bmsetbitCommand(db, "test_bmsetbit", "1", "1", "3", "1")
@@ -89,5 +89,13 @@ func TestBMsetbitCommand(t *testing.T) {
 	}
 	if n.(int64) != 2 {
 		t.Fatalf("wrong result: %v", n)
+	}
+}
+
+func TestBCountCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := bcountCommand(db, "test_bcount", "a", "b", "c")
+	if err == nil || err.Error() != "wrong number of arguments for 'bcount' command" {
+		t.Fatalf("invalid err %v", err)
 	}
 }
