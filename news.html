@@ -42,12 +42,11 @@
         <h2>News</h2>
         <div class="content">
           <div class="post">
-           <h3>LedisDB v0.1 Released</h3>
+           <h3><a href="#ledisdb-v0.1-released">LedisDB v0.1 Released</a></h3>
            <p>Today we are happy to announce the release of LedisDB <a href="https://github.com/siddontang/ledisdb/releases/tag/v0.1">v0.1</a>.</p>
            <p class="small text-muted">Published 24 July 2014</p>
           </div>
         </div>
-        
       </div>
       
     <div id="footer-wrapper" class="gradient">
@@ -78,6 +77,11 @@
         </div>
     </div>
   </div>
-
+  <script src="js/jquery-1.11.1.min.js"></script>
+  <script>
+  $('.post a').click(function() {
+     $('html,body').animate({scrollTop: $(this).offset().top}, 1);
+}); 
+  </script>
   </body>
 </html>
