@@ -27,7 +27,6 @@ func main() {
 	cfg.MaxIdleConns = 1
 
 	c := ledis.NewClient(cfg)
-
 	sendSelect(c, *dbn)
 
 	SetCompletionHandler(completionHandler)
@@ -155,7 +154,7 @@ func sendSelect(client *ledis.Client, index int) {
 	}
 	_, err := client.Do("select", index)
 	if err != nil {
-		fmt.Println("index out of range, should less than 16")
+		fmt.Printf("%s\n", err.Error())
 	}
 }
 
