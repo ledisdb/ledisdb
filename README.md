@@ -71,7 +71,7 @@ Set slaveof in config or dynamiclly
 
     ledis-cli -p 6381 
 
-    ledis 127.0.0.1:6381> slaveof 127.0.0.1:6380
+    ledis 127.0.0.1:6381> slaveof 127.0.0.1 6380
     OK
 
 ## Benchmark
