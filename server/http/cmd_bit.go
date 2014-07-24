@@ -106,12 +106,12 @@ func bcountCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	var start, end int64 = 0, -1
 	if argCnt > 1 {
 		if start, err = strconv.ParseInt(args[1], 10, 32); err != nil {
-			return nil, err
+			return nil, ErrValue
 		}
 	}
 	if argCnt > 2 {
-		if end, err = strconv.ParseInt(args[1], 10, 32); err != nil {
-			return nil, err
+		if end, err = strconv.ParseInt(args[2], 10, 32); err != nil {
+			return nil, ErrValue
 		}
 	}
 	key := []byte(args[0])
@@ -148,7 +148,7 @@ func boptCommand(db *ledis.DB, args ...string) (interface{}, error) {
 	case "not":
 		op = ledis.OPnot
 	default:
-		return nil, fmt.Errorf("ERR invalid argument '%s' for 'bopt' command", opDesc)
+		return nil, fmt.Errorf("invalid argument '%s' for 'bopt' command", opDesc)
 	}
 	if blen, err := db.BOperation(op, dstKey, srcKeys...); err != nil {
 		return nil, err
