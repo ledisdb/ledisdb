@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	ERR_ARGUMENT_FORMAT = "ERR wrong number of arguments for '%s' command"
+	ERR_ARGUMENT_FORMAT = "wrong number of arguments for '%s' command"
 	MSG_OK              = "OK"
 )
 
 var (
-	ErrValue  = errors.New("ERR value is not an integer or out of range")
-	ErrSyntax = errors.New("ERR syntax error")
+	ErrValue  = errors.New("value is not an integer or out of range")
+	ErrSyntax = errors.New("syntax error")
 )
 
 type commondFunc func(*ledis.DB, ...string) (interface{}, error)

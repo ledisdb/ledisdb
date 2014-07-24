@@ -288,8 +288,15 @@ func zrangeGeneric(db *ledis.DB, reverse bool, args ...string) (interface{}, err
 	args = args[3:]
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(args[0]) == "withscores" {
-		withScores = true
+	if len(args) > 0 {
+		if len(args) != 1 {
+			return nil, ErrSyntax
+		}
+		if strings.ToLower(args[0]) == "withscores" {
+			withScores = true
+		} else {
+			return nil, ErrSyntax
+		}
 	}
 
 	if datas, err := db.ZRangeGeneric(key, start, stop, reverse); err != nil {
