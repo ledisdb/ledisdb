@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/ledis"
+	"github.com/ugorji/go/codec"
+	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"strings"
 )
@@ -15,29 +17,50 @@ type CmdHandler struct {
 	Ldb *ledis.Ledis
 }
 
+var allowedContentTypes = map[string]struct{}{
+	"json":    struct{}{},
+	"bson":    struct{}{},
+	"msgpack": struct{}{},
+}
+
 func (h *CmdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+
 	idx, cmd, args := h.parseReqPath(r.URL.Path)
+
+	contentType := r.FormValue("type")
+	if contentType == "" {
+		contentType = "json"
+	}
+	contentType = strings.ToLower(contentType)
+	if _, ok := allowedContentTypes[contentType]; !ok {
+		h.writeError(
+			cmd,
+			fmt.Errorf("unsupported content type '%s', only json, bson, msgpack are supported", contentType),
+			w,
+			"json")
+		return
+	}
 	cmdFunc := lookup(cmd)
 	if cmdFunc == nil {
-		h.cmdNotFound(cmd, w)
+		h.cmdNotFound(cmd, w, contentType)
 		return
 	}
 	var db *ledis.DB
 	var err error
 	if db, err = h.Ldb.Select(idx); err != nil {
-		h.serverError(cmd, err, w)
+		h.writeError(cmd, err, w, contentType)
 		return
 	}
 	result, err := cmdFunc(db, args...)
 	if err != nil {
-		h.serverError(cmd, err, w)
+		h.writeError(cmd, err, w, contentType)
 		return
 	}
-	h.write(cmd, result, w)
+	h.write(cmd, result, w, contentType)
 }
 
 func (h *CmdHandler) parseReqPath(path string) (db int, cmd string, args []string) {
@@ -60,20 +83,38 @@ func (h *CmdHandler) parseReqPath(path string) (db int, cmd string, args []strin
 	}
 	return
 }
-func (h *CmdHandler) cmdNotFound(cmd string, w http.ResponseWriter) {
-	result := [2]interface{}{
-		false,
-		fmt.Sprintf("ERR unknown command '%s'", cmd),
-	}
-	h.write(cmd, result, w)
+func (h *CmdHandler) cmdNotFound(cmd string, w http.ResponseWriter, contentType string) {
+	err := fmt.Errorf("unknown command '%s'", cmd)
+	h.writeError(cmd, err, w, contentType)
 }
 
-func (h *CmdHandler) write(cmd string, result interface{}, w http.ResponseWriter) {
+func (h *CmdHandler) write(cmd string, result interface{}, w http.ResponseWriter, contentType string) {
 	m := map[string]interface{}{
 		cmd: result,
 	}
 
-	buf, err := json.Marshal(&m)
+	switch contentType {
+	case "json":
+		writeJSON(&m, w)
+	case "bson":
+		writeBSON(&m, w)
+	case "msgpack":
+		writeMsgPack(&m, w)
+	default:
+		log.Error("invalid content type %s", contentType)
+	}
+}
+
+func (h *CmdHandler) writeError(cmd string, err error, w http.ResponseWriter, contentType string) {
+	result := [2]interface{}{
+		false,
+		fmt.Sprintf("ERR %s", err.Error()),
+	}
+	h.write(cmd, result, w, contentType)
+}
+
+func writeJSON(resutl interface{}, w http.ResponseWriter) {
+	buf, err := json.Marshal(resutl)
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -88,12 +129,30 @@ func (h *CmdHandler) write(cmd string, result interface{}, w http.ResponseWriter
 	}
 }
 
-func (h *CmdHandler) serverError(cmd string, err error, w http.ResponseWriter) {
-	result := [2]interface{}{
-		false,
-		fmt.Sprintf("ERR %s", err.Error()),
+func writeBSON(result interface{}, w http.ResponseWriter) {
+	buf, err := bson.Marshal(result)
+	if err != nil {
+		log.Error(err.Error())
+		return
 	}
-	h.write(cmd, result, w)
+
+	w.Header().Set("Content-type", "application/octet-stream")
+	w.Header().Set("Content-Length", strconv.Itoa(len(buf)))
+
+	_, err = w.Write(buf)
+	if err != nil {
+		log.Error(err.Error())
+	}
+}
+
+func writeMsgPack(result interface{}, w http.ResponseWriter) {
+	w.Header().Set("Content-type", "application/octet-stream")
+
+	var mh codec.MsgpackHandle
+	enc := codec.NewEncoder(w, &mh)
+	if err := enc.Encode(result); err != nil {
+		log.Error(err.Error())
+	}
 }
 
 type WsHandler struct {
