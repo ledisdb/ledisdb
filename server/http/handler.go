@@ -42,8 +42,9 @@ func (h *CmdHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *CmdHandler) parseReqPath(path string) (db int, cmd string, args []string) {
 	/*
-	   the proper format of `path`  is /cmd/arg1/arg2/../argN  or  /db/cmd/arg1/arg2/../argN
-	   if `path` is the first kind, `db` will be 0
+	      this function extracts `db`, `cmd` and `args` from `path`
+	      the proper format of `path`  is /cmd/arg1/arg2/../argN  or  /db/cmd/arg1/arg2/../argN
+	   	  if `path` is the first kind, `db` will be 0
 	*/
 	substrings := strings.Split(strings.TrimLeft(path, "/"), "/")
 	if len(substrings) == 1 {
