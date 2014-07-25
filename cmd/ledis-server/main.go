@@ -10,6 +10,7 @@ import (
 )
 
 var configFile = flag.String("config", "/etc/ledis.json", "ledisdb config file")
+var storeName = flag.String("store", "", "select a store to use, it will overwrite the config's store")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -25,6 +26,10 @@ func main() {
 	if err != nil {
 		println(err.Error())
 		return
+	}
+
+	if len(*storeName) > 0 {
+		cfg.DB.Name = *storeName
 	}
 
 	var app *server.App
