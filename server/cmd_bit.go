@@ -196,7 +196,7 @@ func bexpireCommand(c *client) error {
 
 	duration, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.BExpire(args[0], duration); err != nil {
@@ -216,7 +216,7 @@ func bexpireatCommand(c *client) error {
 
 	when, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.BExpireAt(args[0], when); err != nil {

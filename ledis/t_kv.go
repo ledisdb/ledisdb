@@ -197,7 +197,7 @@ func (db *DB) Incr(key []byte) (int64, error) {
 	return db.incr(key, 1)
 }
 
-func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
+func (db *DB) IncrBy(key []byte, increment int64) (int64, error) {
 	return db.incr(key, increment)
 }
 
