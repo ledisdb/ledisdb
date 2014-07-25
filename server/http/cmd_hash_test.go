@@ -73,7 +73,7 @@ func TestHExistsCommand(t *testing.T) {
 
 }
 
-func TestDelCommand(t *testing.T) {
+func TestHDelCommand(t *testing.T) {
 	db := getTestDB()
 	_, err := hdelCommand(db, "test_hdel")
 	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "hdel") {

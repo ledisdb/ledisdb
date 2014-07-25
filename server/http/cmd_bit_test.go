@@ -14,7 +14,7 @@ func TestBgetCommand(t *testing.T) {
 
 	_, err := bgetCommand(db, "test_bget", "a", "b", "c")
 	if err == nil || err.Error() != "wrong number of arguments for 'bget' command" {
-		t.Fatal("invalid err %v", err)
+		t.Fatalf("invalid err %v", err)
 	}
 
 	r, err := bgetCommand(db, "test_bget")
@@ -23,7 +23,7 @@ func TestBgetCommand(t *testing.T) {
 	}
 	str := r.(string)
 	if str != "\x07" {
-		t.Fatal("wrong result of 'bget': %v", []byte(str))
+		t.Fatalf("wrong result of 'bget': %v", []byte(str))
 	}
 }
 

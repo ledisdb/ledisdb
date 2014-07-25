@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestGetCommand(t *testing.T) {
@@ -113,4 +114,148 @@ func TestIncrCommand(t *testing.T) {
 		t.Fatal("invalid result ", v)
 	}
 
+}
+
+func TestDecrCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := decrCommand(db, "test_decr", "a")
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "decr") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := decrCommand(db, "test_decr")
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != -1 {
+		t.Fatal("invalid result ", v)
+	}
+}
+
+func TestDelCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := delCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "del") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := delCommand(db, "test_del")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != 1 {
+		t.Fatal("invalid result ", v)
+	}
+}
+
+func TestMsetCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := msetCommand(db, "a", "b", "c")
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "mset") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := msetCommand(db, "test_mset", "v")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	r := v.([]interface{})
+	if len(r) != 2 {
+		t.Fatal("invalid result ", v)
+	}
+	if r[0].(bool) != true {
+		t.Fatal("invalid result ", r[0])
+	}
+
+	if r[1].(string) != "OK" {
+		t.Fatal("invalid result ", r[1])
+	}
+}
+
+func TestMgetCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := mgetCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "mget") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := mgetCommand(db, "test_mget")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	arr := v.([]interface{})
+	if arr[0] != nil {
+		t.Fatal("invalid result ", arr)
+	}
+}
+
+func TestExpireCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := expireCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "expire") {
+		t.Fatal("invalid err ", err)
+	}
+	v, err := expireCommand(db, "test_expire", "10")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != 0 {
+		t.Fatal("invalid result ", v)
+	}
+}
+
+func TestExpireAtCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := expireAtCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "expireat") {
+		t.Fatal("invalid err ", err)
+	}
+
+	expireAt := fmt.Sprintf("%d", time.Now().Unix()+10)
+	v, err := expireAtCommand(db, "test_expireat", expireAt)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != 0 {
+		t.Fatal("invalid result ", v)
+	}
+}
+
+func TestTTLCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := ttlCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "ttl") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := ttlCommand(db, "test_ttl")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != -1 {
+		t.Fatal("invalid result ", v)
+	}
+}
+
+func TestPersistCommand(t *testing.T) {
+	db := getTestDB()
+	_, err := persistCommand(db)
+	if err == nil || err.Error() != fmt.Sprintf(ERR_ARGUMENT_FORMAT, "persist") {
+		t.Fatal("invalid err ", err)
+	}
+
+	v, err := persistCommand(db, "test_persist")
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v.(int64) != 0 {
+		t.Fatal("invalid result ", v)
+	}
 }
