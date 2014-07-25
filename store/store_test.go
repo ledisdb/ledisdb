@@ -137,6 +137,16 @@ func TestIterator(t *testing.T) {
 		db.Put(key, value)
 	}
 
+	i = db.NewIterator()
+	i.SeekToFirst()
+
+	if !i.Valid() {
+		t.Fatal("must valid")
+	} else if string(i.Key()) != "key_0" {
+		t.Fatal(string(i.Key()))
+	}
+	i.Close()
+
 	var it *RangeLimitIterator
 
 	k := func(i int) []byte {
@@ -147,51 +157,67 @@ func TestIterator(t *testing.T) {
 	if err := checkIterator(it, 1, 2, 3, 4, 5); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
+
+	it = db.RangeLimitIterator(k(1), k(5), RangeClose, 0, -1)
+	if err := checkIterator(it, 1, 2, 3, 4, 5); err != nil {
+		t.Fatal(err)
+	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeClose, 1, 3)
 	if err := checkIterator(it, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeLOpen, 0, -1)
 	if err := checkIterator(it, 2, 3, 4, 5); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeROpen, 0, -1)
 	if err := checkIterator(it, 1, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeOpen, 0, -1)
 	if err := checkIterator(it, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeClose, 0, -1)
 	if err := checkIterator(it, 5, 4, 3, 2, 1); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeClose, 1, 3)
 	if err := checkIterator(it, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeLOpen, 0, -1)
 	if err := checkIterator(it, 5, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeROpen, 0, -1)
 	if err := checkIterator(it, 4, 3, 2, 1); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeOpen, 0, -1)
 	if err := checkIterator(it, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 }
 
 func TestCloseMore(t *testing.T) {

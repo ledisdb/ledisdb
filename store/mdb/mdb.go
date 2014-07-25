@@ -20,7 +20,7 @@ type MDB struct {
 func Open(c *Config) (MDB, error) {
 	path := c.Path
 	if c.MapSize == 0 {
-		c.MapSize = 1 * 1024 * 1024 * 1024
+		c.MapSize = 10 * 1024 * 1024
 	}
 
 	env, err := mdb.NewEnv()
@@ -245,5 +245,5 @@ func (db MDB) NewIterator() driver.IIterator {
 }
 
 func (db MDB) NewWriteBatch() driver.IWriteBatch {
-	return WriteBatch{db, []Write{}}
+	return &WriteBatch{&db, []Write{}}
 }

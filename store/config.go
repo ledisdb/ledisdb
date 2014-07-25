@@ -5,10 +5,13 @@ type Config struct {
 
 	Path string
 
-	//for leveldb, goleveldb, rocksdb
+	//for leveldb, goleveldb
 	Compression     bool
 	BlockSize       int
 	WriteBufferSize int
 	CacheSize       int
 	MaxOpenFiles    int
+
+	//for lmdb
+	MapSize int
 }
