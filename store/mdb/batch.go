@@ -27,6 +27,6 @@ func (w *WriteBatch) Commit() error {
 }
 
 func (w *WriteBatch) Rollback() error {
-	w.wb = []Write{}
+	w.wb = w.wb[0:0]
 	return nil
 }

@@ -20,7 +20,7 @@ type MDB struct {
 func Open(c *Config) (MDB, error) {
 	path := c.Path
 	if c.MapSize == 0 {
-		c.MapSize = 10 * 1024 * 1024
+		c.MapSize = 1024 * 1024 * 1024
 	}
 
 	env, err := mdb.NewEnv()
@@ -43,7 +43,7 @@ func Open(c *Config) (MDB, error) {
 		}
 	}
 
-	err = env.Open(path, mdb.WRITEMAP|mdb.MAPASYNC|mdb.CREATE, 0755)
+	err = env.Open(path, mdb.NOSYNC|mdb.NOMETASYNC|mdb.WRITEMAP|mdb.MAPASYNC|mdb.CREATE, 0755)
 	if err != nil {
 		return MDB{}, err
 	}
@@ -77,7 +77,12 @@ func Repair(c *Config) error {
 }
 
 func (db MDB) Put(key, value []byte) error {
-	return db.BatchPut([]Write{{key, value}})
+	itr := db.iterator(false)
+	defer itr.Close()
+
+	itr.err = itr.c.Put(key, value, 0)
+	itr.setState()
+	return itr.Error()
 }
 
 func (db MDB) BatchPut(writes []Write) error {
@@ -118,13 +123,14 @@ func (db MDB) Get(key []byte) ([]byte, error) {
 
 func (db MDB) Delete(key []byte) error {
 	itr := db.iterator(false)
+	defer itr.Close()
 
 	itr.key, itr.value, itr.err = itr.c.Get(key, mdb.SET)
 	if itr.err == nil {
 		itr.err = itr.c.Del(0)
 	}
 	itr.setState()
-	return itr.Close()
+	return itr.Error()
 }
 
 type MDBIterator struct {

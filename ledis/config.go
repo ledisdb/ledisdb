@@ -15,6 +15,7 @@ type Config struct {
 		WriteBufferSize int  `json:"write_buffer_size"`
 		CacheSize       int  `json:"cache_size"`
 		MaxOpenFiles    int  `json:"max_open_files"`
+		MapSize         int  `json:"map_size"`
 	} `json:"db"`
 
 	BinLog struct {
