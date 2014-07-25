@@ -12,11 +12,11 @@ var ldb *ledis.Ledis
 func getTestDB() *ledis.DB {
 	f := func() {
 		var err error
-		if _, err := os.Stat("/tmp/test_http_api_db"); err == nil {
-			if err := os.RemoveAll("/tmp/test_http_api_db"); err != nil {
+		if _, err = os.Stat("/tmp/test_http_api_db"); err == nil {
+			if err = os.RemoveAll("/tmp/test_http_api_db"); err != nil {
 				panic(err)
 			}
-		} else if err != os.ErrNotExist {
+		} else if !os.IsNotExist(err) {
 			panic(err)
 		}
 		var cfg ledis.Config

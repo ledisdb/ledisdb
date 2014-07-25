@@ -17,18 +17,18 @@ var (
 	ErrSyntax = errors.New("syntax error")
 )
 
-type commondFunc func(*ledis.DB, ...string) (interface{}, error)
+type commandFunc func(*ledis.DB, ...string) (interface{}, error)
 
-var regCmds = map[string]commondFunc{}
+var regCmds = map[string]commandFunc{}
 
-func register(name string, f commondFunc) {
+func register(name string, f commandFunc) {
 	if _, ok := regCmds[strings.ToLower(name)]; ok {
 		panic(fmt.Sprintf("%s has been registered", name))
 	}
 	regCmds[name] = f
 }
 
-func lookup(name string) commondFunc {
+func lookup(name string) commandFunc {
 	return regCmds[strings.ToLower(name)]
 
 }
