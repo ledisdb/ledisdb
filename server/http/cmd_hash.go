@@ -172,10 +172,14 @@ func hkeysCommand(db *ledis.DB, args ...string) (interface{}, error) {
 		return nil, fmt.Errorf(ERR_ARGUMENT_FORMAT, "hkeys")
 	}
 	key := []byte(args[0])
-	if v, err := db.HKeys(key); err != nil {
+	if fields, err := db.HKeys(key); err != nil {
 		return nil, err
 	} else {
-		return v, nil
+		arr := make([]string, len(fields))
+		for i, f := range fields {
+			arr[i] = ledis.String(f)
+		}
+		return arr, nil
 	}
 }
 
@@ -303,4 +307,5 @@ func init() {
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
 	register("hpersist", hpersistCommand)
+
 }

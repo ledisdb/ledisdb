@@ -27,6 +27,8 @@ func register(name string, f commondFunc) {
 	}
 	regCmds[name] = f
 }
+
 func lookup(name string) commondFunc {
 	return regCmds[strings.ToLower(name)]
+
 }
