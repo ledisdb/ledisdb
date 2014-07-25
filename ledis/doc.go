@@ -1,4 +1,5 @@
-// Package ledis is a high performance embedded NoSQL based on leveldb.
+// Package ledis is a high performance embedded NoSQL.
+//
 // Ledis supports various advanced data structure like kv, list, hash and zset like redis.
 //
 // Other features include binlog replication, data with a limited time-to-live.

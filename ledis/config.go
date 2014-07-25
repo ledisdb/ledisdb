@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"github.com/siddontang/copier"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"path"
 )
 
@@ -24,10 +24,10 @@ type Config struct {
 	} `json:"binlog"`
 }
 
-func (cfg *Config) NewDBConfig() *leveldb.Config {
+func (cfg *Config) NewDBConfig() *store.Config {
 	dbPath := path.Join(cfg.DataDir, "data")
 
-	dbCfg := new(leveldb.Config)
+	dbCfg := new(store.Config)
 	copier.Copy(dbCfg, &cfg.DB)
 	dbCfg.Path = dbPath
 	return dbCfg

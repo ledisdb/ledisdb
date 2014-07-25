@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/siddontang/go-snappy/snappy"
-	"github.com/siddontang/ledisdb/leveldb"
 	"io"
 	"os"
 )
@@ -57,16 +56,13 @@ func (l *Ledis) DumpFile(path string) error {
 }
 
 func (l *Ledis) Dump(w io.Writer) error {
-	var sp *leveldb.Snapshot
 	var m *MasterInfo = new(MasterInfo)
-	if l.binlog == nil {
-		sp = l.ldb.NewSnapshot()
-	} else {
-		l.Lock()
-		sp = l.ldb.NewSnapshot()
+	l.Lock()
+	defer l.Unlock()
+
+	if l.binlog != nil {
 		m.LogFileIndex = l.binlog.LogFileIndex()
 		m.LogPos = l.binlog.LogFilePos()
-		l.Unlock()
 	}
 
 	var err error
@@ -76,7 +72,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 		return err
 	}
 
-	it := sp.NewIterator()
+	it := l.ldb.NewIterator()
 	it.SeekToFirst()
 
 	compressBuf := make([]byte, 4096)

@@ -1,7 +1,7 @@
 package ledis
 
 import (
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 )
 
 func (db *DB) FlushAll() (drop int64, err error) {
@@ -36,7 +36,7 @@ func (db *DB) newEliminator() *elimination {
 }
 
 func (db *DB) flushRegion(t *tx, minKey []byte, maxKey []byte) (drop int64, err error) {
-	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeROpen)
+	it := db.db.RangeIterator(minKey, maxKey, store.RangeROpen)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.RawKey())
 		drop++

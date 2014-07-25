@@ -8,12 +8,10 @@ if [[ "$VTTOP" == "${VTTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
     exit 1
 fi
 
-
 #default snappy and leveldb install path
 #you may change yourself
-
-SNAPPY_DIR=/usr/local/snappy
-LEVELDB_DIR=/usr/local/leveldb
+export SNAPPY_DIR=/usr/local/snappy
+export LEVELDB_DIR=/usr/local/leveldb
 
 function add_path()
 {

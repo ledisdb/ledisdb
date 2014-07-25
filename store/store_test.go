@@ -1,4 +1,4 @@
-package leveldb
+package store
 
 import (
 	"bytes"
@@ -8,23 +8,17 @@ import (
 	"testing"
 )
 
-var testConfigJson = []byte(`
-    {
-        "path" : "./testdb",
-        "compression":true,
-        "block_size" : 32768,
-        "write_buffer_size" : 2097152,
-        "cache_size" : 20971520
-    }
-    `)
-
 var testOnce sync.Once
 var testDB *DB
 
 func getTestDB() *DB {
 	f := func() {
 		var err error
-		testDB, err = OpenWithJsonConfig(testConfigJson)
+
+		cfg := new(Config)
+		cfg.Path = "/tmp/testdb"
+
+		testDB, err = Open(cfg)
 		if err != nil {
 			println(err.Error())
 			panic(err)
@@ -131,7 +125,11 @@ func checkIterator(it *RangeLimitIterator, cv ...int) error {
 func TestIterator(t *testing.T) {
 	db := getTestDB()
 
-	db.Clear()
+	i := db.NewIterator()
+	for i.SeekToFirst(); i.Valid(); i.Next() {
+		db.Delete(i.Key())
+	}
+	i.Close()
 
 	for i := 0; i < 10; i++ {
 		key := []byte(fmt.Sprintf("key_%d", i))
@@ -196,51 +194,6 @@ func TestIterator(t *testing.T) {
 	}
 }
 
-func TestSnapshot(t *testing.T) {
-	db := getTestDB()
-
-	key := []byte("key")
-	value := []byte("hello world")
-
-	db.Put(key, value)
-
-	s := db.NewSnapshot()
-	defer s.Close()
-
-	db.Put(key, []byte("hello world2"))
-
-	if v, err := s.Get(key); err != nil {
-		t.Fatal(err)
-	} else if string(v) != string(value) {
-		t.Fatal(string(v))
-	}
-}
-
-func TestDestroy(t *testing.T) {
-	db := getTestDB()
-
-	db.Put([]byte("a"), []byte("1"))
-	if err := db.Clear(); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := os.Stat(db.cfg.Path); err != nil {
-		t.Fatal("must exist ", err.Error())
-	}
-
-	if v, err := db.Get([]byte("a")); err != nil {
-		t.Fatal(err)
-	} else if string(v) == "1" {
-		t.Fatal(string(v))
-	}
-
-	db.Destroy()
-
-	if _, err := os.Stat(db.cfg.Path); !os.IsNotExist(err) {
-		t.Fatal("must not exist")
-	}
-}
-
 func TestCloseMore(t *testing.T) {
 	cfg := new(Config)
 	cfg.Path = "/tmp/testdb1234"
@@ -256,4 +209,6 @@ func TestCloseMore(t *testing.T) {
 
 		db.Close()
 	}
+
+	os.RemoveAll(cfg.Path)
 }

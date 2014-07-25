@@ -1,3 +1,5 @@
+// +build leveldb
+
 package leveldb
 
 // #include "leveldb/c.h"

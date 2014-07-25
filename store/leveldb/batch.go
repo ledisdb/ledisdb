@@ -1,3 +1,5 @@
+// +build leveldb
+
 package leveldb
 
 // #cgo LDFLAGS: -lleveldb
@@ -13,8 +15,9 @@ type WriteBatch struct {
 	wbatch *C.leveldb_writebatch_t
 }
 
-func (w *WriteBatch) Close() {
+func (w *WriteBatch) Close() error {
 	C.leveldb_writebatch_destroy(w.wbatch)
+	return nil
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
@@ -41,12 +44,9 @@ func (w *WriteBatch) Commit() error {
 	return w.commit(w.db.writeOpts)
 }
 
-func (w *WriteBatch) SyncCommit() error {
-	return w.commit(w.db.syncWriteOpts)
-}
-
-func (w *WriteBatch) Rollback() {
+func (w *WriteBatch) Rollback() error {
 	C.leveldb_writebatch_clear(w.wbatch)
+	return nil
 }
 
 func (w *WriteBatch) commit(wb *WriteOptions) error {

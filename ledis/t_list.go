@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -203,7 +203,7 @@ func (db *DB) lDelete(t *tx, key []byte) int64 {
 	startKey := db.lEncodeListKey(key, headSeq)
 	stopKey := db.lEncodeListKey(key, tailSeq)
 
-	rit := leveldb.NewRangeIterator(it, &leveldb.Range{startKey, stopKey, leveldb.RangeClose})
+	rit := store.NewRangeIterator(it, &store.Range{startKey, stopKey, store.RangeClose})
 	for ; rit.Valid(); rit.Next() {
 		t.Delete(rit.RawKey())
 		num++
@@ -214,7 +214,7 @@ func (db *DB) lDelete(t *tx, key []byte) int64 {
 	return num
 }
 
-func (db *DB) lGetMeta(it *leveldb.Iterator, ek []byte) (headSeq int32, tailSeq int32, size int32, err error) {
+func (db *DB) lGetMeta(it *store.Iterator, ek []byte) (headSeq int32, tailSeq int32, size int32, err error) {
 	var v []byte
 	if it != nil {
 		v = it.Find(ek)
@@ -364,12 +364,12 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	v := make([][]byte, 0, limit)
 
 	startKey := db.lEncodeListKey(key, headSeq)
-	rit := leveldb.NewRangeLimitIterator(it,
-		&leveldb.Range{
+	rit := store.NewRangeLimitIterator(it,
+		&store.Range{
 			Min:  startKey,
 			Max:  nil,
-			Type: leveldb.RangeClose},
-		&leveldb.Limit{
+			Type: store.RangeClose},
+		&store.Limit{
 			Offset: 0,
 			Count:  int(limit)})
 
