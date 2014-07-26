@@ -3,7 +3,7 @@
     "data_dir": "/tmp/ledis_server",
 
     "db": {
-            "name" : "golveldb",
+            "name" : "leveldb",
 
             "compression": false,
             "block_size": 32768,
