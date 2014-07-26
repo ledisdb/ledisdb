@@ -25,35 +25,37 @@ function add_path()
   fi
 }
 
+GO_BUILD_TAGS= 
+
 export GOPATH=$(add_path $GOPATH $VTROOT)
 
 # check snappy 
 if [ -f $SNAPPY_DIR/lib/libsnappy.a ]; then
-    CGO_CFLAGS+="-I$SNAPPY_DIR/include"
-    CGO_CXXFLAGS+="-I$SNAPPY_DIR/include"
-    CGO_LDFLAGS+="-L$SNAPPY_DIR/lib -lsnappy"
+    CGO_CFLAGS="$CGO_CFLAGS -I$SNAPPY_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$SNAPPY_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$SNAPPY_DIR/lib -lsnappy"
     LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $SNAPPY_DIR/lib)
     DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $SNAPPY_DIR/lib)
 fi
 
 # check leveldb
 if [ -f $LEVELDB_DIR/lib/libleveldb.a ]; then
-    CGO_CFLAGS+="-I$LEVELDB_DIR/include"
-    CGO_CXXFLAGS+="-I$LEVELDB_DIR/include"
-    CGO_LDFLAGS+="-L$LEVELDB_DIR/lib -lleveldb"
+    CGO_CFLAGS="$CGO_CFLAGS -I$LEVELDB_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$LEVELDB_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$LEVELDB_DIR/lib -lleveldb"
     LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LEVELDB_DIR/lib)
     DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LEVELDB_DIR/lib)
-    GO_BUILD_TAGS+="leveldb"
+    GO_BUILD_TAGS="$GO_BUILD_TAGS leveldb"
 fi
 
 # check rocksdb
-if [ -f $ROCKSDB_DIR/lib/libleveldb.a ]; then
-    CGO_CFLAGS+="-I$ROCKSDB_DIR/include"
-    CGO_CXXFLAGS+="-I$ROCKSDB_DIR/include"
-    CGO_LDFLAGS+="-L$ROCKSDB_DIR/lib -lleveldb"
+if [ -f $ROCKSDB_DIR/lib/librocksdb.a ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$ROCKSDB_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$ROCKSDB_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR/lib -lleveldb"
     LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $ROCKSDB_DIR/lib)
     DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $ROCKSDB_DIR/lib)
-    GO_BUILD_TAGS+="rocksdb"
+    GO_BUILD_TAGS="$GO_BUILD_TAGS rocksdb"
 fi
 
 export CGO_CFLAGS
