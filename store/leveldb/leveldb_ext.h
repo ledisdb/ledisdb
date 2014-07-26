@@ -1,3 +1,5 @@
+// +build leveldb
+
 #ifndef LEVELDB_EXT_H
 #define LEVELDB_EXT_H
 

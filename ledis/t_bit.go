@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"sort"
 	"time"
 )
@@ -253,7 +253,7 @@ func (db *DB) bDelete(t *tx, key []byte) (drop int64) {
 
 	minKey := db.bEncodeBinKey(key, minSeq)
 	maxKey := db.bEncodeBinKey(key, maxSeq)
-	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeClose)
+	it := db.db.RangeIterator(minKey, maxKey, store.RangeClose)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.RawKey())
 		drop++
@@ -280,10 +280,10 @@ func (db *DB) bAllocateSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 	return bk, segment, err
 }
 
-func (db *DB) bIterator(key []byte) *leveldb.RangeLimitIterator {
+func (db *DB) bIterator(key []byte) *store.RangeLimitIterator {
 	sk := db.bEncodeBinKey(key, minSeq)
 	ek := db.bEncodeBinKey(key, maxSeq)
-	return db.db.RangeIterator(sk, ek, leveldb.RangeClose)
+	return db.db.RangeIterator(sk, ek, store.RangeClose)
 }
 
 func (db *DB) bSegAnd(a []byte, b []byte, res *[]byte) {
@@ -446,7 +446,7 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 
 	minKey := db.bEncodeBinKey(key, minSeq)
 	maxKey := db.bEncodeBinKey(key, tailSeq)
-	it := db.db.RangeIterator(minKey, maxKey, leveldb.RangeClose)
+	it := db.db.RangeIterator(minKey, maxKey, store.RangeClose)
 
 	var seq, s, e uint32
 	for ; it.Valid(); it.Next() {
@@ -662,7 +662,7 @@ func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) 
 	skey := db.bEncodeBinKey(key, sseq)
 	ekey := db.bEncodeBinKey(key, eseq)
 
-	it := db.db.RangeIterator(skey, ekey, leveldb.RangeOpen)
+	it := db.db.RangeIterator(skey, ekey, store.RangeOpen)
 	for ; it.Valid(); it.Next() {
 		segment = it.RawValue()
 		for _, bt := range segment {

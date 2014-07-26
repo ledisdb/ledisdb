@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"io/ioutil"
 )
 
@@ -35,7 +35,7 @@ func main() {
 		return
 	}
 
-	if err = leveldb.Repair(cfg.NewDBConfig()); err != nil {
+	if err = store.Repair(cfg.NewDBConfig()); err != nil {
 		println("repair error: ", err.Error())
 	}
 }

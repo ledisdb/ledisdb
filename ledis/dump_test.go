@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"bytes"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
 )
@@ -59,7 +59,7 @@ func TestDump(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	it := master.ldb.RangeLimitIterator(nil, nil, leveldb.RangeClose, 0, -1)
+	it := master.ldb.RangeLimitIterator(nil, nil, store.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		key := it.Key()
 		value := it.Value()

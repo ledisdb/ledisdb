@@ -1,3 +1,5 @@
+// +build leveldb
+
 #include "leveldb_ext.h"
 
 #include <stdlib.h>

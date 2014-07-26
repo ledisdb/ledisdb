@@ -3,14 +3,14 @@ package ledis
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"os"
 	"path"
 	"testing"
 )
 
 func checkLedisEqual(master *Ledis, slave *Ledis) error {
-	it := master.ldb.RangeLimitIterator(nil, nil, leveldb.RangeClose, 0, -1)
+	it := master.ldb.RangeLimitIterator(nil, nil, store.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		key := it.Key()
 		value := it.Value()

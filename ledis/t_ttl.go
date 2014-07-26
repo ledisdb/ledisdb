@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -156,7 +156,7 @@ func (eli *elimination) active() {
 	minKey := db.expEncodeTimeKey(NoneType, nil, 0)
 	maxKey := db.expEncodeTimeKey(maxDataType, nil, now)
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		tk := it.RawKey()
 		mk := it.RawValue()

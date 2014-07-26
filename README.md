@@ -1,11 +1,14 @@
 # LedisDB
 
-Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. It supports some advanced data structure like kv, list, hash and zset, and may be alternative for Redis.
+Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash and zset, and may be alternative for Redis.
+
+LedisDB now supports multi database as backend to store data, you can test and choose the proper one for you.
 
 ## Features
 
 + Rich advanced data structure: KV, List, Hash, ZSet, Bit.
-+ Uses leveldb to store lots of data, over the memory limit. 
++ Stores lots of data, over the memory limit. 
++ Various backend database to use: LevelDB, goleveldb, LMDB.  
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
@@ -15,15 +18,19 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
 ## Build and Install
 
-+ Create a workspace and checkout ledisdb source
+Create a workspace and checkout ledisdb source
 
-        mkdir $WORKSPACE
-        cd $WORKSPACE
-        git clone git@github.com:siddontang/ledisdb.git src/github.com/siddontang/ledisdb
+    mkdir $WORKSPACE
+    cd $WORKSPACE
+    git clone git@github.com:siddontang/ledisdb.git src/github.com/siddontang/ledisdb
 
-        cd src/github.com/siddontang/ledisdb
+    cd src/github.com/siddontang/ledisdb
 
-+ Install leveldb and snappy, if you have installed, skip.
+    make
+
+## LevelDB support
+
++ Install leveldb and snappy.
 
     LedisDB supplies a simple shell to install leveldb and snappy: 
 
@@ -35,16 +42,43 @@ Ledisdb is a high performance NoSQL like Redis based on LevelDB written by go. I
 
 + Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
-+ Then:
++ ```make```
 
-        . ./bootstap.sh 
-        . ./dev.sh
+## RocksDB support
 
-        go install ./...
++ Install rocksdb and snappy first.
+
+    LedisDB has not supplied a simple shell to install, maybe it will later.
+
++ Set ROCKSDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
+
++ ```make```
+
+## Choose store database
+
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, it will choose goleveldb as default to store data if you not set.
+
+Choosing a store database to use is very simple, you have two ways:
+
++ Set in server config file
+
+        "db" : {
+            "name" : "leveldb"
+        }
+
++ Set in command flag
+
+        ledis-server -config=/etc/ledis.json -db_name=leveldb
+
+    Flag command set will overwrite config set.
+
+**Caveat**
+
+You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 
 ## Server Example
 
-    ./ledis-server -config=/etc/ledis.json
+    ledis-server -config=/etc/ledis.json
 
     //another shell
     ledis-cli -p 6380

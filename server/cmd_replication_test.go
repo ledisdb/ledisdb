@@ -3,14 +3,14 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
 	"time"
 )
 
 func checkDataEqual(master *App, slave *App) error {
-	it := master.ldb.DataDB().RangeLimitIterator(nil, nil, leveldb.RangeClose, 0, -1)
+	it := master.ldb.DataDB().RangeLimitIterator(nil, nil, store.RangeClose, 0, -1)
 	for ; it.Valid(); it.Next() {
 		key := it.Key()
 		value := it.Value()

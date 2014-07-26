@@ -1,4 +1,4 @@
-package leveldb
+package store
 
 import (
 	"bytes"
@@ -8,23 +8,17 @@ import (
 	"testing"
 )
 
-var testConfigJson = []byte(`
-    {
-        "path" : "./testdb",
-        "compression":true,
-        "block_size" : 32768,
-        "write_buffer_size" : 2097152,
-        "cache_size" : 20971520
-    }
-    `)
-
 var testOnce sync.Once
 var testDB *DB
 
 func getTestDB() *DB {
 	f := func() {
 		var err error
-		testDB, err = OpenWithJsonConfig(testConfigJson)
+
+		cfg := new(Config)
+		cfg.Path = "/tmp/testdb"
+
+		testDB, err = Open(cfg)
 		if err != nil {
 			println(err.Error())
 			panic(err)
@@ -131,13 +125,27 @@ func checkIterator(it *RangeLimitIterator, cv ...int) error {
 func TestIterator(t *testing.T) {
 	db := getTestDB()
 
-	db.Clear()
+	i := db.NewIterator()
+	for i.SeekToFirst(); i.Valid(); i.Next() {
+		db.Delete(i.Key())
+	}
+	i.Close()
 
 	for i := 0; i < 10; i++ {
 		key := []byte(fmt.Sprintf("key_%d", i))
 		value := []byte("")
 		db.Put(key, value)
 	}
+
+	i = db.NewIterator()
+	i.SeekToFirst()
+
+	if !i.Valid() {
+		t.Fatal("must valid")
+	} else if string(i.Key()) != "key_0" {
+		t.Fatal(string(i.Key()))
+	}
+	i.Close()
 
 	var it *RangeLimitIterator
 
@@ -149,96 +157,67 @@ func TestIterator(t *testing.T) {
 	if err := checkIterator(it, 1, 2, 3, 4, 5); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
+
+	it = db.RangeLimitIterator(k(1), k(5), RangeClose, 0, -1)
+	if err := checkIterator(it, 1, 2, 3, 4, 5); err != nil {
+		t.Fatal(err)
+	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeClose, 1, 3)
 	if err := checkIterator(it, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeLOpen, 0, -1)
 	if err := checkIterator(it, 2, 3, 4, 5); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeROpen, 0, -1)
 	if err := checkIterator(it, 1, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RangeLimitIterator(k(1), k(5), RangeOpen, 0, -1)
 	if err := checkIterator(it, 2, 3, 4); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeClose, 0, -1)
 	if err := checkIterator(it, 5, 4, 3, 2, 1); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeClose, 1, 3)
 	if err := checkIterator(it, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeLOpen, 0, -1)
 	if err := checkIterator(it, 5, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeROpen, 0, -1)
 	if err := checkIterator(it, 4, 3, 2, 1); err != nil {
 		t.Fatal(err)
 	}
+	it.Close()
 
 	it = db.RevRangeLimitIterator(k(1), k(5), RangeOpen, 0, -1)
 	if err := checkIterator(it, 4, 3, 2); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestSnapshot(t *testing.T) {
-	db := getTestDB()
-
-	key := []byte("key")
-	value := []byte("hello world")
-
-	db.Put(key, value)
-
-	s := db.NewSnapshot()
-	defer s.Close()
-
-	db.Put(key, []byte("hello world2"))
-
-	if v, err := s.Get(key); err != nil {
-		t.Fatal(err)
-	} else if string(v) != string(value) {
-		t.Fatal(string(v))
-	}
-}
-
-func TestDestroy(t *testing.T) {
-	db := getTestDB()
-
-	db.Put([]byte("a"), []byte("1"))
-	if err := db.Clear(); err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := os.Stat(db.cfg.Path); err != nil {
-		t.Fatal("must exist ", err.Error())
-	}
-
-	if v, err := db.Get([]byte("a")); err != nil {
-		t.Fatal(err)
-	} else if string(v) == "1" {
-		t.Fatal(string(v))
-	}
-
-	db.Destroy()
-
-	if _, err := os.Stat(db.cfg.Path); !os.IsNotExist(err) {
-		t.Fatal("must not exist")
-	}
+	it.Close()
 }
 
 func TestCloseMore(t *testing.T) {
@@ -256,4 +235,6 @@ func TestCloseMore(t *testing.T) {
 
 		db.Close()
 	}
+
+	os.RemoveAll(cfg.Path)
 }

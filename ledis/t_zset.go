@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -432,7 +432,7 @@ func (db *DB) ZCount(key []byte, min int64, max int64) (int64, error) {
 	minKey := db.zEncodeStartScoreKey(key, min)
 	maxKey := db.zEncodeStopScoreKey(key, max)
 
-	rangeType := leveldb.RangeROpen
+	rangeType := store.RangeROpen
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, -1)
 	var n int64 = 0
@@ -460,17 +460,17 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 		if s, err := Int64(v, nil); err != nil {
 			return 0, err
 		} else {
-			var rit *leveldb.RangeLimitIterator
+			var rit *store.RangeLimitIterator
 
 			sk := db.zEncodeScoreKey(key, member, s)
 
 			if !reverse {
 				minKey := db.zEncodeStartScoreKey(key, MinScore)
 
-				rit = leveldb.NewRangeIterator(it, &leveldb.Range{minKey, sk, leveldb.RangeClose})
+				rit = store.NewRangeIterator(it, &store.Range{minKey, sk, store.RangeClose})
 			} else {
 				maxKey := db.zEncodeStopScoreKey(key, MaxScore)
-				rit = leveldb.NewRevRangeIterator(it, &leveldb.Range{sk, maxKey, leveldb.RangeClose})
+				rit = store.NewRevRangeIterator(it, &store.Range{sk, maxKey, store.RangeClose})
 			}
 
 			var lastKey []byte = nil
@@ -492,14 +492,14 @@ func (db *DB) zrank(key []byte, member []byte, reverse bool) (int64, error) {
 	return -1, nil
 }
 
-func (db *DB) zIterator(key []byte, min int64, max int64, offset int, count int, reverse bool) *leveldb.RangeLimitIterator {
+func (db *DB) zIterator(key []byte, min int64, max int64, offset int, count int, reverse bool) *store.RangeLimitIterator {
 	minKey := db.zEncodeStartScoreKey(key, min)
 	maxKey := db.zEncodeStopScoreKey(key, max)
 
 	if !reverse {
-		return db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, count)
+		return db.db.RangeLimitIterator(minKey, maxKey, store.RangeClose, offset, count)
 	} else {
-		return db.db.RevRangeLimitIterator(minKey, maxKey, leveldb.RangeClose, offset, count)
+		return db.db.RevRangeLimitIterator(minKey, maxKey, store.RangeClose, offset, count)
 	}
 }
 
@@ -550,10 +550,10 @@ func (db *DB) zRange(key []byte, min int64, max int64, offset int, count int, re
 
 	v := make([]ScorePair, 0, nv)
 
-	var it *leveldb.RangeLimitIterator
+	var it *store.RangeLimitIterator
 
 	//if reverse and offset is 0, count < 0, we may use forward iterator then reverse
-	//because leveldb iterator prev is slower than next
+	//because store iterator prev is slower than next
 	if !reverse || (offset == 0 && count < 0) {
 		it = db.zIterator(key, min, max, offset, count, false)
 	} else {
@@ -740,7 +740,7 @@ func (db *DB) zFlush() (drop int64, err error) {
 	maxKey[0] = db.index
 	maxKey[1] = ZScoreType + 1
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
 	defer it.Close()
 
 	for ; it.Valid(); it.Next() {
@@ -779,9 +779,9 @@ func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]Sco
 
 	v := make([]ScorePair, 0, 2*count)
 
-	rangeType := leveldb.RangeROpen
+	rangeType := store.RangeROpen
 	if !inclusive {
-		rangeType = leveldb.RangeOpen
+		rangeType = store.RangeOpen
 	}
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)

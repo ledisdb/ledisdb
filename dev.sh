@@ -1,19 +1,18 @@
 #!/bin/bash
 
-export VTTOP=$(pwd)
-export VTROOT="${VTROOT:-${VTTOP/\/src\/github.com\/siddontang\/ledisdb/}}"
-# VTTOP sanity check
-if [[ "$VTTOP" == "${VTTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
-    echo "WARNING: VTTOP($VTTOP) does not contain src/github.com/siddontang/ledisdb"
+export LEDISTOP=$(pwd)
+export LEDISROOT="${LEDISROOT:-${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}}"
+# LEDISTOP sanity check
+if [[ "$LEDISTOP" == "${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
+    echo "WARNING: LEDISTOP($LEDISTOP) does not contain src/github.com/siddontang/ledisdb"
     exit 1
 fi
 
-
 #default snappy and leveldb install path
 #you may change yourself
-
 SNAPPY_DIR=/usr/local/snappy
 LEVELDB_DIR=/usr/local/leveldb
+ROCKSDB_DIR=/usr/local/rocksdb
 
 function add_path()
 {
@@ -26,16 +25,45 @@ function add_path()
   fi
 }
 
-export GOPATH=$(add_path $GOPATH $VTROOT)
+export GOPATH=$(add_path $GOPATH $LEDISROOT)
 
-export CGO_CFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
-export CGO_CXXFLAGS="-I$LEVELDB_DIR/include -I$SNAPPY_DIR/include"
-export CGO_LDFLAGS="-L$LEVELDB_DIR/lib -L$SNAPPY_DIR/lib -lsnappy"
+GO_BUILD_TAGS=
+CGO_CFLAGS=
+CGO_CXXFLAGS=
+CGO_LDFLAGS=
 
-#for linux, use LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $SNAPPY_DIR/lib)
-export LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LEVELDB_DIR/lib)
+# check snappy 
+if [ -f $SNAPPY_DIR/lib/libsnappy.a ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$SNAPPY_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$SNAPPY_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$SNAPPY_DIR/lib -lsnappy"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $SNAPPY_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $SNAPPY_DIR/lib)
+fi
 
-#for macos, use DYLD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $SNAPPY_DIR/lib)
-export DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LEVELDB_DIR/lib)
+# check leveldb
+if [ -f $LEVELDB_DIR/lib/libleveldb.a ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$LEVELDB_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$LEVELDB_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$LEVELDB_DIR/lib -lleveldb"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LEVELDB_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LEVELDB_DIR/lib)
+    GO_BUILD_TAGS="$GO_BUILD_TAGS leveldb"
+fi
+
+# check rocksdb
+if [ -f $ROCKSDB_DIR/lib/librocksdb.a ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$ROCKSDB_DIR/include"
+    CGO_CXXFLAGS="$CGO_CXXFLAGS -I$ROCKSDB_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR/lib -lrocksdb"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $ROCKSDB_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $ROCKSDB_DIR/lib)
+    GO_BUILD_TAGS="$GO_BUILD_TAGS rocksdb"
+fi
+
+export CGO_CFLAGS
+export CGO_CXXFLAGS
+export CGO_LDFLAGS
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
+export GO_BUILD_TAGS

@@ -1,7 +1,7 @@
 package ledis
 
 import (
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"sync"
 )
 
@@ -9,7 +9,7 @@ type tx struct {
 	m sync.Mutex
 
 	l  *Ledis
-	wb *leveldb.WriteBatch
+	wb *store.WriteBatch
 
 	binlog *BinLog
 	batch  [][]byte

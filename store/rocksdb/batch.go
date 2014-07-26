@@ -1,7 +1,9 @@
-package leveldb
+// +build rocksdb
 
-// #cgo LDFLAGS: -lleveldb
-// #include "leveldb/c.h"
+package rocksdb
+
+// #cgo LDFLAGS: -lrocksdb
+// #include "rocksdb/c.h"
 import "C"
 
 import (
@@ -10,11 +12,12 @@ import (
 
 type WriteBatch struct {
 	db     *DB
-	wbatch *C.leveldb_writebatch_t
+	wbatch *C.rocksdb_writebatch_t
 }
 
-func (w *WriteBatch) Close() {
-	C.leveldb_writebatch_destroy(w.wbatch)
+func (w *WriteBatch) Close() error {
+	C.rocksdb_writebatch_destroy(w.wbatch)
+	return nil
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
@@ -29,11 +32,11 @@ func (w *WriteBatch) Put(key, value []byte) {
 	lenk := len(key)
 	lenv := len(value)
 
-	C.leveldb_writebatch_put(w.wbatch, k, C.size_t(lenk), v, C.size_t(lenv))
+	C.rocksdb_writebatch_put(w.wbatch, k, C.size_t(lenk), v, C.size_t(lenv))
 }
 
 func (w *WriteBatch) Delete(key []byte) {
-	C.leveldb_writebatch_delete(w.wbatch,
+	C.rocksdb_writebatch_delete(w.wbatch,
 		(*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
 
@@ -41,17 +44,14 @@ func (w *WriteBatch) Commit() error {
 	return w.commit(w.db.writeOpts)
 }
 
-func (w *WriteBatch) SyncCommit() error {
-	return w.commit(w.db.syncWriteOpts)
-}
-
-func (w *WriteBatch) Rollback() {
-	C.leveldb_writebatch_clear(w.wbatch)
+func (w *WriteBatch) Rollback() error {
+	C.rocksdb_writebatch_clear(w.wbatch)
+	return nil
 }
 
 func (w *WriteBatch) commit(wb *WriteOptions) error {
 	var errStr *C.char
-	C.leveldb_write(w.db.db, wb.Opt, w.wbatch, &errStr)
+	C.rocksdb_write(w.db.db, wb.Opt, w.wbatch, &errStr)
 	if errStr != nil {
 		return saveError(errStr)
 	}

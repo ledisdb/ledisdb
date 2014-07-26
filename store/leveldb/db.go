@@ -1,3 +1,5 @@
+// +build leveldb
+
 // Package leveldb is a wrapper for c++ leveldb
 package leveldb
 
@@ -9,7 +11,7 @@ package leveldb
 import "C"
 
 import (
-	"encoding/json"
+	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"unsafe"
 )
@@ -26,35 +28,6 @@ type Config struct {
 	MaxOpenFiles    int  `json:"max_open_files"`
 }
 
-type DB struct {
-	cfg *Config
-
-	db *C.leveldb_t
-
-	opts *Options
-
-	//for default read and write options
-	readOpts     *ReadOptions
-	writeOpts    *WriteOptions
-	iteratorOpts *ReadOptions
-
-	syncWriteOpts *WriteOptions
-
-	cache *Cache
-
-	filter *FilterPolicy
-}
-
-func OpenWithJsonConfig(configJson json.RawMessage) (*DB, error) {
-	cfg := new(Config)
-	err := json.Unmarshal(configJson, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return Open(cfg)
-}
-
 func Open(cfg *Config) (*DB, error) {
 	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
 		return nil, err
@@ -68,21 +41,6 @@ func Open(cfg *Config) (*DB, error) {
 	}
 
 	return db, nil
-}
-
-func (db *DB) open() error {
-	db.initOptions(db.cfg)
-
-	var errStr *C.char
-	ldbname := C.CString(db.cfg.Path)
-	defer C.leveldb_free(unsafe.Pointer(ldbname))
-
-	db.db = C.leveldb_open(db.opts.Opt, ldbname, &errStr)
-	if errStr != nil {
-		db.db = nil
-		return saveError(errStr)
-	}
-	return nil
 }
 
 func Repair(cfg *Config) error {
@@ -108,6 +66,38 @@ func Repair(cfg *Config) error {
 	return nil
 }
 
+type DB struct {
+	cfg *Config
+
+	db *C.leveldb_t
+
+	opts *Options
+
+	//for default read and write options
+	readOpts     *ReadOptions
+	writeOpts    *WriteOptions
+	iteratorOpts *ReadOptions
+
+	cache *Cache
+
+	filter *FilterPolicy
+}
+
+func (db *DB) open() error {
+	db.initOptions(db.cfg)
+
+	var errStr *C.char
+	ldbname := C.CString(db.cfg.Path)
+	defer C.leveldb_free(unsafe.Pointer(ldbname))
+
+	db.db = C.leveldb_open(db.opts.Opt, ldbname, &errStr)
+	if errStr != nil {
+		db.db = nil
+		return saveError(errStr)
+	}
+	return nil
+}
+
 func (db *DB) initOptions(cfg *Config) {
 	opts := NewOptions()
 
@@ -126,6 +116,8 @@ func (db *DB) initOptions(cfg *Config) {
 
 	if !cfg.Compression {
 		opts.SetCompression(NoCompression)
+	} else {
+		opts.SetCompression(SnappyCompression)
 	}
 
 	if cfg.BlockSize <= 0 {
@@ -153,9 +145,6 @@ func (db *DB) initOptions(cfg *Config) {
 
 	db.iteratorOpts = NewReadOptions()
 	db.iteratorOpts.SetFillCache(false)
-
-	db.syncWriteOpts = NewWriteOptions()
-	db.syncWriteOpts.SetSync(true)
 }
 
 func (db *DB) Close() error {
@@ -177,80 +166,23 @@ func (db *DB) Close() error {
 	db.readOpts.Close()
 	db.writeOpts.Close()
 	db.iteratorOpts.Close()
-	db.syncWriteOpts.Close()
 
 	return nil
-}
-
-func (db *DB) Destroy() error {
-	path := db.cfg.Path
-
-	db.Close()
-
-	opts := NewOptions()
-	defer opts.Close()
-
-	var errStr *C.char
-	ldbname := C.CString(path)
-	defer C.leveldb_free(unsafe.Pointer(ldbname))
-
-	C.leveldb_destroy_db(opts.Opt, ldbname, &errStr)
-	if errStr != nil {
-		return saveError(errStr)
-	}
-	return nil
-}
-
-func (db *DB) Clear() error {
-	bc := db.NewWriteBatch()
-	defer bc.Close()
-
-	var err error
-	it := db.NewIterator()
-	it.SeekToFirst()
-
-	num := 0
-	for ; it.Valid(); it.Next() {
-		bc.Delete(it.RawKey())
-		num++
-		if num == 1000 {
-			num = 0
-			if err = bc.Commit(); err != nil {
-				return err
-			}
-		}
-	}
-
-	err = bc.Commit()
-
-	return err
 }
 
 func (db *DB) Put(key, value []byte) error {
 	return db.put(db.writeOpts, key, value)
 }
 
-func (db *DB) SyncPut(key, value []byte) error {
-	return db.put(db.syncWriteOpts, key, value)
-}
-
 func (db *DB) Get(key []byte) ([]byte, error) {
-	return db.get(nil, db.readOpts, key)
-}
-
-func (db *DB) BufGet(r []byte, key []byte) ([]byte, error) {
-	return db.get(r, db.readOpts, key)
+	return db.get(db.readOpts, key)
 }
 
 func (db *DB) Delete(key []byte) error {
 	return db.delete(db.writeOpts, key)
 }
 
-func (db *DB) SyncDelete(key []byte) error {
-	return db.delete(db.syncWriteOpts, key)
-}
-
-func (db *DB) NewWriteBatch() *WriteBatch {
+func (db *DB) NewWriteBatch() driver.IWriteBatch {
 	wb := &WriteBatch{
 		db:     db,
 		wbatch: C.leveldb_writebatch_create(),
@@ -258,49 +190,12 @@ func (db *DB) NewWriteBatch() *WriteBatch {
 	return wb
 }
 
-func (db *DB) NewSnapshot() *Snapshot {
-	s := &Snapshot{
-		db:           db,
-		snap:         C.leveldb_create_snapshot(db.db),
-		readOpts:     NewReadOptions(),
-		iteratorOpts: NewReadOptions(),
-	}
-
-	s.readOpts.SetSnapshot(s)
-	s.iteratorOpts.SetSnapshot(s)
-	s.iteratorOpts.SetFillCache(false)
-
-	return s
-}
-
-func (db *DB) NewIterator() *Iterator {
+func (db *DB) NewIterator() driver.IIterator {
 	it := new(Iterator)
 
 	it.it = C.leveldb_create_iterator(db.db, db.iteratorOpts.Opt)
 
 	return it
-}
-
-func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
-}
-
-func (db *DB) RevRangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
-	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
-}
-
-//count < 0, unlimit.
-//
-//offset must >= 0, if < 0, will get nothing.
-func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
-	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
-}
-
-//count < 0, unlimit.
-//
-//offset must >= 0, if < 0, will get nothing.
-func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
-	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
 func (db *DB) put(wo *WriteOptions, key, value []byte) error {
@@ -324,7 +219,7 @@ func (db *DB) put(wo *WriteOptions, key, value []byte) error {
 	return nil
 }
 
-func (db *DB) get(r []byte, ro *ReadOptions, key []byte) ([]byte, error) {
+func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 	var errStr *C.char
 	var vallen C.size_t
 	var k *C.char
@@ -347,13 +242,7 @@ func (db *DB) get(r []byte, ro *ReadOptions, key []byte) ([]byte, error) {
 
 	defer C.leveldb_get_free_ext(unsafe.Pointer(c))
 
-	if r == nil {
-		r = []byte{}
-	}
-
-	r = r[0:0]
-	b := slice(unsafe.Pointer(value), int(C.int(vallen)))
-	return append(r, b...), nil
+	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
 }
 
 func (db *DB) delete(wo *WriteOptions, key []byte) error {

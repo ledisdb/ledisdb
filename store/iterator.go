@@ -1,14 +1,8 @@
-package leveldb
-
-// #cgo LDFLAGS: -lleveldb
-// #include <stdlib.h>
-// #include "leveldb/c.h"
-// #include "leveldb_ext.h"
-import "C"
+package store
 
 import (
 	"bytes"
-	"unsafe"
+	"github.com/siddontang/ledisdb/store/driver"
 )
 
 const (
@@ -27,10 +21,10 @@ const (
 //
 // range type:
 //
-// 	close: [min, max]
-// 	open: (min, max)
-// 	lopen: (min, max]
-// 	ropen: [min, max)
+//  close: [min, max]
+//  open: (min, max)
+//  lopen: (min, max]
+//  ropen: [min, max)
 //
 type Range struct {
 	Min []byte
@@ -45,54 +39,39 @@ type Limit struct {
 }
 
 type Iterator struct {
-	it      *C.leveldb_iterator_t
-	isValid C.uchar
+	it driver.IIterator
 }
 
 // Returns a copy of key.
 func (it *Iterator) Key() []byte {
-	var klen C.size_t
-	kdata := C.leveldb_iter_key(it.it, &klen)
-	if kdata == nil {
+	k := it.it.Key()
+	if k == nil {
 		return nil
 	}
 
-	return C.GoBytes(unsafe.Pointer(kdata), C.int(klen))
+	return append([]byte{}, k...)
 }
 
 // Returns a copy of value.
 func (it *Iterator) Value() []byte {
-	var vlen C.size_t
-	vdata := C.leveldb_iter_value(it.it, &vlen)
-	if vdata == nil {
+	v := it.it.Value()
+	if v == nil {
 		return nil
 	}
 
-	return C.GoBytes(unsafe.Pointer(vdata), C.int(vlen))
+	return append([]byte{}, v...)
 }
 
 // Returns a reference of key.
 // you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawKey() []byte {
-	var klen C.size_t
-	kdata := C.leveldb_iter_key(it.it, &klen)
-	if kdata == nil {
-		return nil
-	}
-
-	return slice(unsafe.Pointer(kdata), int(C.int(klen)))
+	return it.it.Key()
 }
 
 // Returns a reference of value.
 // you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawValue() []byte {
-	var vlen C.size_t
-	vdata := C.leveldb_iter_value(it.it, &vlen)
-	if vdata == nil {
-		return nil
-	}
-
-	return slice(unsafe.Pointer(vdata), int(C.int(vlen)))
+	return it.it.Value()
 }
 
 // Copy key to b, if b len is small or nil, returns a new one.
@@ -126,33 +105,33 @@ func (it *Iterator) BufValue(b []byte) []byte {
 
 func (it *Iterator) Close() {
 	if it.it != nil {
-		C.leveldb_iter_destroy(it.it)
+		it.it.Close()
 		it.it = nil
 	}
 }
 
 func (it *Iterator) Valid() bool {
-	return ucharToBool(it.isValid)
+	return it.it.Valid()
 }
 
 func (it *Iterator) Next() {
-	it.isValid = C.leveldb_iter_next_ext(it.it)
+	it.it.Next()
 }
 
 func (it *Iterator) Prev() {
-	it.isValid = C.leveldb_iter_prev_ext(it.it)
+	it.it.Prev()
 }
 
 func (it *Iterator) SeekToFirst() {
-	it.isValid = C.leveldb_iter_seek_to_first_ext(it.it)
+	it.it.First()
 }
 
 func (it *Iterator) SeekToLast() {
-	it.isValid = C.leveldb_iter_seek_to_last_ext(it.it)
+	it.it.Last()
 }
 
 func (it *Iterator) Seek(key []byte) {
-	it.isValid = C.leveldb_iter_seek_ext(it.it, (*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
+	it.it.Seek(key)
 }
 
 // Finds by key, if not found, nil returns.

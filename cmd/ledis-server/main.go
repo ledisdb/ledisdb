@@ -10,6 +10,7 @@ import (
 )
 
 var configFile = flag.String("config", "/etc/ledis.json", "ledisdb config file")
+var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -25,6 +26,10 @@ func main() {
 	if err != nil {
 		println(err.Error())
 		return
+	}
+
+	if len(*dbName) > 0 {
+		cfg.DB.Name = *dbName
 	}
 
 	var app *server.App
