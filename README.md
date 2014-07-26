@@ -26,13 +26,13 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
-    make
+    source dev.sh && make
 
 ## LevelDB support
 
 + Install leveldb and snappy.
 
-    LedisDB supplies a simple shell to install leveldb and snappy: 
+    LedisDB supplies a simple script to install leveldb and snappy: 
 
         sh build_leveldb.sh
 
@@ -42,17 +42,17 @@ Create a workspace and checkout ledisdb source
 
 + Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
-+ ```make```
++ ```source dev.sh && make```
 
 ## RocksDB support
 
 + Install rocksdb and snappy first.
 
-    LedisDB has not supplied a simple shell to install, maybe it will later.
+    LedisDB has not supplied a simple script to install, maybe it will later.
 
 + Set ROCKSDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
-+ ```make```
++ ```source dev.sh && make```
 
 ## Choose store database
 
