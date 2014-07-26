@@ -12,13 +12,13 @@ import (
 const defaultFilterBits int = 10
 
 type Config struct {
-	Path string
+	Path string `json:"path"`
 
-	Compression bool
-
-	BlockSize       int
-	WriteBufferSize int
-	CacheSize       int
+	Compression     bool `json:"compression"`
+	BlockSize       int  `json:"block_size"`
+	WriteBufferSize int  `json:"write_buffer_size"`
+	CacheSize       int  `json:"cache_size"`
+	MaxOpenFiles    int  `json:"max_open_files"`
 }
 
 type DB struct {

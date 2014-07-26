@@ -30,7 +30,7 @@ Create a workspace and checkout ledisdb source
 
 ## LevelDB support
 
-+ Install leveldb and snappy, if you have installed, skip.
++ Install leveldb and snappy.
 
     LedisDB supplies a simple shell to install leveldb and snappy: 
 
@@ -42,15 +42,43 @@ Create a workspace and checkout ledisdb source
 
 + Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
 
-+ make
++ ```make```
 
 ## RocksDB support
 
-todo.......
++ Install rocksdb and snappy first.
+
+    LedisDB has not supplied a simple shell to install, maybe it will later.
+
++ Set ROCKSDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
+
++ ```make```
+
+## Choose store database
+
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, it will choose goleveldb as default to store data if you not set.
+
+Choosing a store database to use is very simple, you have two ways:
+
++ Set in server config file
+
+        "db" : {
+            "name" : "leveldb"
+        }
+
++ Set in command flag
+
+        ledis-server -config=/etc/ledis.json -db_name=leveldb
+
+    Flag command set will overwrite config set.
+
+**Caveat**
+
+You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 
 ## Server Example
 
-    ./ledis-server -config=/etc/ledis.json
+    ledis-server -config=/etc/ledis.json
 
     //another shell
     ledis-cli -p 6380

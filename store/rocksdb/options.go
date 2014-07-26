@@ -1,0 +1,138 @@
+// +build rocksdb
+
+package rocksdb
+
+// #cgo LDFLAGS: -lrocksdb
+// #include "rocksdb/c.h"
+import "C"
+
+type CompressionOpt int
+
+const (
+	NoCompression     = CompressionOpt(0)
+	SnappyCompression = CompressionOpt(1)
+)
+
+type Options struct {
+	Opt *C.rocksdb_options_t
+}
+
+type ReadOptions struct {
+	Opt *C.rocksdb_readoptions_t
+}
+
+type WriteOptions struct {
+	Opt *C.rocksdb_writeoptions_t
+}
+
+func NewOptions() *Options {
+	opt := C.rocksdb_options_create()
+	return &Options{opt}
+}
+
+func NewReadOptions() *ReadOptions {
+	opt := C.rocksdb_readoptions_create()
+	return &ReadOptions{opt}
+}
+
+func NewWriteOptions() *WriteOptions {
+	opt := C.rocksdb_writeoptions_create()
+	return &WriteOptions{opt}
+}
+
+func (o *Options) Close() {
+	C.rocksdb_options_destroy(o.Opt)
+}
+
+func (o *Options) SetComparator(cmp *C.rocksdb_comparator_t) {
+	C.rocksdb_options_set_comparator(o.Opt, cmp)
+}
+
+func (o *Options) SetErrorIfExists(error_if_exists bool) {
+	eie := boolToUchar(error_if_exists)
+	C.rocksdb_options_set_error_if_exists(o.Opt, eie)
+}
+
+func (o *Options) SetCache(cache *Cache) {
+	C.rocksdb_options_set_cache(o.Opt, cache.Cache)
+}
+
+func (o *Options) SetEnv(env *Env) {
+	C.rocksdb_options_set_env(o.Opt, env.Env)
+}
+
+func (o *Options) SetWriteBufferSize(s int) {
+	C.rocksdb_options_set_write_buffer_size(o.Opt, C.size_t(s))
+}
+
+func (o *Options) SetParanoidChecks(pc bool) {
+	C.rocksdb_options_set_paranoid_checks(o.Opt, boolToUchar(pc))
+}
+
+func (o *Options) SetMaxOpenFiles(n int) {
+	C.rocksdb_options_set_max_open_files(o.Opt, C.int(n))
+}
+
+func (o *Options) SetBlockSize(s int) {
+	C.rocksdb_options_set_block_size(o.Opt, C.size_t(s))
+}
+
+func (o *Options) SetBlockRestartInterval(n int) {
+	C.rocksdb_options_set_block_restart_interval(o.Opt, C.int(n))
+}
+
+func (o *Options) SetCompression(t CompressionOpt) {
+	C.rocksdb_options_set_compression(o.Opt, C.int(t))
+}
+
+func (o *Options) SetCreateIfMissing(b bool) {
+	C.rocksdb_options_set_create_if_missing(o.Opt, boolToUchar(b))
+}
+
+func (o *Options) SetFilterPolicy(fp *FilterPolicy) {
+	var policy *C.rocksdb_filterpolicy_t
+	if fp != nil {
+		policy = fp.Policy
+	}
+	C.rocksdb_options_set_filter_policy(o.Opt, policy)
+}
+
+func (o *Options) SetMaxBackgroundCompactions(n int) {
+	C.rocksdb_options_set_max_background_compactions(o.Opt, C.int(n))
+}
+
+func (o *Options) SetMaxBackgroundFlushes(n int) {
+	C.rocksdb_options_set_max_background_flushes(o.Opt, C.int(n))
+}
+
+func (o *Options) SetLevel0SlowdownWritesTrigger(n int) {
+	C.rocksdb_options_set_level0_slowdown_writes_trigger(o.Opt, C.int(n))
+}
+
+func (o *Options) SetLevel0StopWritesTrigger(n int) {
+	C.rocksdb_options_set_level0_stop_writes_trigger(o.Opt, C.int(n))
+}
+
+func (o *Options) SetTargetFileSizeBase(n int) {
+	C.rocksdb_options_set_target_file_size_base(o.Opt, C.uint64_t(uint64(n)))
+}
+
+func (ro *ReadOptions) Close() {
+	C.rocksdb_readoptions_destroy(ro.Opt)
+}
+
+func (ro *ReadOptions) SetVerifyChecksums(b bool) {
+	C.rocksdb_readoptions_set_verify_checksums(ro.Opt, boolToUchar(b))
+}
+
+func (ro *ReadOptions) SetFillCache(b bool) {
+	C.rocksdb_readoptions_set_fill_cache(ro.Opt, boolToUchar(b))
+}
+
+func (wo *WriteOptions) Close() {
+	C.rocksdb_writeoptions_destroy(wo.Opt)
+}
+
+func (wo *WriteOptions) SetSync(b bool) {
+	C.rocksdb_writeoptions_set_sync(wo.Opt, boolToUchar(b))
+}

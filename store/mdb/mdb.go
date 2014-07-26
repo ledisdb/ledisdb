@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	Path    string
-	MapSize int
+	Path    string `json:"path"`
+	MapSize int    `json:"map_size"`
 }
 
 type MDB struct {

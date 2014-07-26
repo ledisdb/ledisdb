@@ -1,18 +1,20 @@
-// +build leveldb
+// +build rocksdb
 
-// Package leveldb is a wrapper for c++ leveldb
-package leveldb
+// Package rocksdb is a wrapper for c++ rocksdb
+package rocksdb
 
 /*
-#cgo LDFLAGS: -lleveldb
-#include <leveldb/c.h>
-#include "leveldb_ext.h"
+#cgo LDFLAGS: -lrocksdb
+#include <rocksdb/c.h>
+#include <stdlib.h>
+#include "rocksdb_ext.h"
 */
 import "C"
 
 import (
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
+	"runtime"
 	"unsafe"
 )
 
@@ -57,9 +59,9 @@ func Repair(cfg *Config) error {
 
 	var errStr *C.char
 	ldbname := C.CString(db.cfg.Path)
-	defer C.leveldb_free(unsafe.Pointer(ldbname))
+	defer C.free(unsafe.Pointer(ldbname))
 
-	C.leveldb_repair_db(db.opts.Opt, ldbname, &errStr)
+	C.rocksdb_repair_db(db.opts.Opt, ldbname, &errStr)
 	if errStr != nil {
 		return saveError(errStr)
 	}
@@ -69,7 +71,9 @@ func Repair(cfg *Config) error {
 type DB struct {
 	cfg *Config
 
-	db *C.leveldb_t
+	db *C.rocksdb_t
+
+	env *Env
 
 	opts *Options
 
@@ -88,9 +92,9 @@ func (db *DB) open() error {
 
 	var errStr *C.char
 	ldbname := C.CString(db.cfg.Path)
-	defer C.leveldb_free(unsafe.Pointer(ldbname))
+	defer C.free(unsafe.Pointer(ldbname))
 
-	db.db = C.leveldb_open(db.opts.Opt, ldbname, &errStr)
+	db.db = C.rocksdb_open(db.opts.Opt, ldbname, &errStr)
 	if errStr != nil {
 		db.db = nil
 		return saveError(errStr)
@@ -106,6 +110,11 @@ func (db *DB) initOptions(cfg *Config) {
 	if cfg.CacheSize <= 0 {
 		cfg.CacheSize = 4 * 1024 * 1024
 	}
+
+	db.env = NewDefaultEnv()
+	db.env.SetBackgroundThreads(runtime.NumCPU() * 2)
+	db.env.SetHighPriorityBackgroundThreads(1)
+	opts.SetEnv(db.env)
 
 	db.cache = NewLRUCache(cfg.CacheSize)
 	opts.SetCache(db.cache)
@@ -138,6 +147,13 @@ func (db *DB) initOptions(cfg *Config) {
 
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 
+	opts.SetMaxBackgroundCompactions(runtime.NumCPU()*2 - 1)
+	opts.SetMaxBackgroundFlushes(1)
+
+	opts.SetLevel0SlowdownWritesTrigger(16)
+	opts.SetLevel0StopWritesTrigger(64)
+	opts.SetTargetFileSizeBase(32 * 1024 * 1024)
+
 	db.opts = opts
 
 	db.readOpts = NewReadOptions()
@@ -149,7 +165,7 @@ func (db *DB) initOptions(cfg *Config) {
 
 func (db *DB) Close() error {
 	if db.db != nil {
-		C.leveldb_close(db.db)
+		C.rocksdb_close(db.db)
 		db.db = nil
 	}
 
@@ -161,6 +177,10 @@ func (db *DB) Close() error {
 
 	if db.filter != nil {
 		db.filter.Close()
+	}
+
+	if db.env != nil {
+		db.env.Close()
 	}
 
 	db.readOpts.Close()
@@ -185,7 +205,7 @@ func (db *DB) Delete(key []byte) error {
 func (db *DB) NewWriteBatch() driver.IWriteBatch {
 	wb := &WriteBatch{
 		db:     db,
-		wbatch: C.leveldb_writebatch_create(),
+		wbatch: C.rocksdb_writebatch_create(),
 	}
 	return wb
 }
@@ -193,7 +213,7 @@ func (db *DB) NewWriteBatch() driver.IWriteBatch {
 func (db *DB) NewIterator() driver.IIterator {
 	it := new(Iterator)
 
-	it.it = C.leveldb_create_iterator(db.db, db.iteratorOpts.Opt)
+	it.it = C.rocksdb_create_iterator(db.db, db.iteratorOpts.Opt)
 
 	return it
 }
@@ -210,7 +230,7 @@ func (db *DB) put(wo *WriteOptions, key, value []byte) error {
 
 	lenk := len(key)
 	lenv := len(value)
-	C.leveldb_put(
+	C.rocksdb_put(
 		db.db, wo.Opt, k, C.size_t(lenk), v, C.size_t(lenv), &errStr)
 
 	if errStr != nil {
@@ -227,10 +247,8 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	var value *C.char
-
-	c := C.leveldb_get_ext(
-		db.db, ro.Opt, k, C.size_t(len(key)), &value, &vallen, &errStr)
+	value := C.rocksdb_get(
+		db.db, ro.Opt, k, C.size_t(len(key)), &vallen, &errStr)
 
 	if errStr != nil {
 		return nil, saveError(errStr)
@@ -240,8 +258,7 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	defer C.leveldb_get_free_ext(unsafe.Pointer(c))
-
+	defer C.free(unsafe.Pointer(value))
 	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
 }
 
@@ -252,7 +269,7 @@ func (db *DB) delete(wo *WriteOptions, key []byte) error {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	C.leveldb_delete(
+	C.rocksdb_delete(
 		db.db, wo.Opt, k, C.size_t(len(key)), &errStr)
 
 	if errStr != nil {

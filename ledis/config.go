@@ -5,6 +5,7 @@ import (
 	"github.com/siddontang/copier"
 	"github.com/siddontang/ledisdb/store"
 	"path"
+	"strings"
 )
 
 type Config struct {
@@ -32,6 +33,8 @@ func (cfg *Config) NewDBConfig() *store.Config {
 		fmt.Printf("no store set, use default %s\n", store.DefaultStoreName)
 		cfg.DB.Name = store.DefaultStoreName
 	}
+
+	cfg.DB.Name = strings.ToLower(cfg.DB.Name)
 
 	dbCfg := new(store.Config)
 	copier.Copy(dbCfg, &cfg.DB)

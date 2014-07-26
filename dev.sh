@@ -1,10 +1,10 @@
 #!/bin/bash
 
-export VTTOP=$(pwd)
-export VTROOT="${VTROOT:-${VTTOP/\/src\/github.com\/siddontang\/ledisdb/}}"
-# VTTOP sanity check
-if [[ "$VTTOP" == "${VTTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
-    echo "WARNING: VTTOP($VTTOP) does not contain src/github.com/siddontang/ledisdb"
+export LEDISTOP=$(pwd)
+export LEDISROOT="${LEDISROOT:-${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}}"
+# LEDISTOP sanity check
+if [[ "$LEDISTOP" == "${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
+    echo "WARNING: LEDISTOP($LEDISTOP) does not contain src/github.com/siddontang/ledisdb"
     exit 1
 fi
 
@@ -12,7 +12,7 @@ fi
 #you may change yourself
 SNAPPY_DIR=/usr/local/snappy
 LEVELDB_DIR=/usr/local/leveldb
-ROCKSDB_DIR=
+ROCKSDB_DIR=/usr/local/rocksdb
 
 function add_path()
 {
@@ -25,9 +25,12 @@ function add_path()
   fi
 }
 
-GO_BUILD_TAGS= 
+export GOPATH=$(add_path $GOPATH $LEDISROOT)
 
-export GOPATH=$(add_path $GOPATH $VTROOT)
+GO_BUILD_TAGS=
+CGO_CFLAGS=
+CGO_CXXFLAGS=
+CGO_LDFLAGS=
 
 # check snappy 
 if [ -f $SNAPPY_DIR/lib/libsnappy.a ]; then
@@ -52,7 +55,7 @@ fi
 if [ -f $ROCKSDB_DIR/lib/librocksdb.a ]; then
     CGO_CFLAGS="$CGO_CFLAGS -I$ROCKSDB_DIR/include"
     CGO_CXXFLAGS="$CGO_CXXFLAGS -I$ROCKSDB_DIR/include"
-    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR/lib -lleveldb"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR/lib -lrocksdb"
     LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $ROCKSDB_DIR/lib)
     DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $ROCKSDB_DIR/lib)
     GO_BUILD_TAGS="$GO_BUILD_TAGS rocksdb"
