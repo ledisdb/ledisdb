@@ -138,7 +138,7 @@ func TestKVIncrDecr(t *testing.T) {
 	}
 }
 
-func TestErrorParams(t *testing.T) {
+func TestKVErrorParams(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
