@@ -8,7 +8,7 @@ LedisDB now supports multi database as backend to store data, you can test and c
 
 + Rich advanced data structure: KV, List, Hash, ZSet, Bit.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB.  
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB.  
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
