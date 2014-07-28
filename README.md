@@ -118,7 +118,7 @@ Set slaveof in config or dynamiclly
 
 ## Benchmark
 
-See benchmark.md for more.
+See [benchmark](https://github.com/siddontang/ledisdb/wiki/Benchmark) for more.
 
 ## Todo
 
