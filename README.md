@@ -45,8 +45,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
 
-+ Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
-
++ Set ```LEVELDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
 + ```make```
 
 ## RocksDB support
@@ -55,7 +54,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB has not supplied a simple script to install, maybe later.
 
-+ Set ROCKSDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
++ Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
 
 + ```make```
 
