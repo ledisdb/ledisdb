@@ -8,7 +8,7 @@ LedisDB now supports multi database as backend to store data, you can test and c
 
 + Rich advanced data structure: KV, List, Hash, ZSet, Bit.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB.  
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB.  
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
@@ -45,8 +45,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
 
-+ Set LEVELDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
-
++ Set ```LEVELDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
 + ```make```
 
 ## RocksDB support
@@ -55,8 +54,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB has not supplied a simple script to install, maybe later.
 
-+ Set ROCKSDB_DIR and SNAPPY_DIR to the actual install path in dev.sh.
-
++ Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
 + ```make```
 
 ## Choose store database
