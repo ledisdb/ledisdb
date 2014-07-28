@@ -1,20 +1,24 @@
 package ledis
 
 import (
+	"fmt"
 	"github.com/siddontang/copier"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"path"
+	"strings"
 )
 
 type Config struct {
 	DataDir string `json:"data_dir"`
 
 	DB struct {
-		Compression     bool `json:"compression"`
-		BlockSize       int  `json:"block_size"`
-		WriteBufferSize int  `json:"write_buffer_size"`
-		CacheSize       int  `json:"cache_size"`
-		MaxOpenFiles    int  `json:"max_open_files"`
+		Name            string `json:"name"`
+		Compression     bool   `json:"compression"`
+		BlockSize       int    `json:"block_size"`
+		WriteBufferSize int    `json:"write_buffer_size"`
+		CacheSize       int    `json:"cache_size"`
+		MaxOpenFiles    int    `json:"max_open_files"`
+		MapSize         int    `json:"map_size"`
 	} `json:"db"`
 
 	BinLog struct {
@@ -24,11 +28,19 @@ type Config struct {
 	} `json:"binlog"`
 }
 
-func (cfg *Config) NewDBConfig() *leveldb.Config {
-	dbPath := path.Join(cfg.DataDir, "data")
+func (cfg *Config) NewDBConfig() *store.Config {
+	if len(cfg.DB.Name) == 0 {
+		fmt.Printf("no store set, use default %s\n", store.DefaultStoreName)
+		cfg.DB.Name = store.DefaultStoreName
+	}
 
-	dbCfg := new(leveldb.Config)
+	cfg.DB.Name = strings.ToLower(cfg.DB.Name)
+
+	dbCfg := new(store.Config)
 	copier.Copy(dbCfg, &cfg.DB)
+
+	dbPath := path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DB.Name))
+
 	dbCfg.Path = dbPath
 	return dbCfg
 }

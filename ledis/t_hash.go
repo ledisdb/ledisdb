@@ -3,7 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -132,7 +132,7 @@ func (db *DB) hDelete(t *tx, key []byte) int64 {
 	stop := db.hEncodeStopKey(key)
 
 	var num int64 = 0
-	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++
@@ -354,7 +354,7 @@ func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 
 	v := make([]FVPair, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -379,7 +379,7 @@ func (db *DB) HKeys(key []byte) ([][]byte, error) {
 
 	v := make([][]byte, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -403,7 +403,7 @@ func (db *DB) HValues(key []byte) ([][]byte, error) {
 
 	v := make([][]byte, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, leveldb.RangeROpen, 0, -1)
+	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, _, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -491,9 +491,9 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 
 	v := make([]FVPair, 0, count)
 
-	rangeType := leveldb.RangeROpen
+	rangeType := store.RangeROpen
 	if !inclusive {
-		rangeType = leveldb.RangeOpen
+		rangeType = store.RangeOpen
 	}
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)

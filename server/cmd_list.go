@@ -87,7 +87,7 @@ func lindexCommand(c *client) error {
 
 	index, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.LIndex(args[0], int32(index)); err != nil {
@@ -111,12 +111,12 @@ func lrangeCommand(c *client) error {
 
 	start, err = ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	stop, err = ledis.StrInt64(args[2], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.LRange(args[0], int32(start), int32(stop)); err != nil {
@@ -166,7 +166,7 @@ func lexpireCommand(c *client) error {
 
 	duration, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.LExpire(args[0], duration); err != nil {
@@ -186,7 +186,7 @@ func lexpireAtCommand(c *client) error {
 
 	when, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.LExpireAt(args[0], when); err != nil {

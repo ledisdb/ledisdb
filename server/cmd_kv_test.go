@@ -137,3 +137,81 @@ func TestKVIncrDecr(t *testing.T) {
 		t.Fatal(n)
 	}
 }
+
+func TestKVErrorParams(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	if _, err := c.Do("get", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("set", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("getset", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("setnx", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("exists", "a", "b"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("incr", "a", "b"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("incrby", "a"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("decrby", "a"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatalf("invalid err %v", err)
+	}
+
+	if _, err := c.Do("del"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("mset"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("mset", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("mget"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("expire"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("expire", "a", "b"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("expireat"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("expireat", "a", "b"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("ttl"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("persist"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+}

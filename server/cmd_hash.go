@@ -91,7 +91,7 @@ func hincrbyCommand(c *client) error {
 
 	delta, err := ledis.StrInt64(args[2], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	var n int64
@@ -230,7 +230,7 @@ func hexpireCommand(c *client) error {
 
 	duration, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.HExpire(args[0], duration); err != nil {
@@ -250,7 +250,7 @@ func hexpireAtCommand(c *client) error {
 
 	when, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.HExpireAt(args[0], when); err != nil {

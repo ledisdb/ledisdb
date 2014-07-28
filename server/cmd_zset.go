@@ -29,7 +29,7 @@ func zaddCommand(c *client) error {
 	for i := 0; i < len(params); i++ {
 		score, err := ledis.StrInt64(args[2*i], nil)
 		if err != nil {
-			return err
+			return ErrValue
 		}
 
 		params[i].Score = score
@@ -104,7 +104,7 @@ func zincrbyCommand(c *client) error {
 
 	delta, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.ZIncrBy(key, delta, args[2]); err != nil {
@@ -444,7 +444,7 @@ func zexpireCommand(c *client) error {
 
 	duration, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.ZExpire(args[0], duration); err != nil {
@@ -464,7 +464,7 @@ func zexpireAtCommand(c *client) error {
 
 	when, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.ZExpireAt(args[0], when); err != nil {

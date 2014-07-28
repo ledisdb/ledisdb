@@ -116,10 +116,10 @@ func incrbyCommand(c *client) error {
 
 	delta, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
-	if n, err := c.db.IncryBy(c.args[0], delta); err != nil {
+	if n, err := c.db.IncrBy(c.args[0], delta); err != nil {
 		return err
 	} else {
 		c.writeInteger(n)
@@ -136,7 +136,7 @@ func decrbyCommand(c *client) error {
 
 	delta, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if n, err := c.db.DecrBy(c.args[0], delta); err != nil {
@@ -211,7 +211,7 @@ func expireCommand(c *client) error {
 
 	duration, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.Expire(args[0], duration); err != nil {
@@ -231,7 +231,7 @@ func expireAtCommand(c *client) error {
 
 	when, err := ledis.StrInt64(args[1], nil)
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if v, err := c.db.ExpireAt(args[0], when); err != nil {

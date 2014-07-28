@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-log/log"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"sync"
 	"time"
 )
@@ -12,7 +12,7 @@ import (
 type DB struct {
 	l *Ledis
 
-	db *leveldb.DB
+	db *store.DB
 
 	index uint8
 
@@ -28,7 +28,7 @@ type Ledis struct {
 
 	cfg *Config
 
-	ldb *leveldb.DB
+	ldb *store.DB
 	dbs [MaxDBNumber]*DB
 
 	binlog *BinLog
@@ -52,7 +52,7 @@ func Open(cfg *Config) (*Ledis, error) {
 		return nil, fmt.Errorf("must set correct data_dir")
 	}
 
-	ldb, err := leveldb.Open(cfg.NewDBConfig())
+	ldb, err := store.Open(cfg.NewDBConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (l *Ledis) FlushAll() error {
 }
 
 // very dangerous to use
-func (l *Ledis) DataDB() *leveldb.DB {
+func (l *Ledis) DataDB() *store.DB {
 	return l.ldb
 }
 

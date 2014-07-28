@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/ledisdb/leveldb"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -197,7 +197,7 @@ func (db *DB) Incr(key []byte) (int64, error) {
 	return db.incr(key, 1)
 }
 
-func (db *DB) IncryBy(key []byte, increment int64) (int64, error) {
+func (db *DB) IncrBy(key []byte, increment int64) (int64, error) {
 	return db.incr(key, increment)
 }
 
@@ -343,9 +343,9 @@ func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
 
 	v := make([]KVPair, 0, 2*count)
 
-	rangeType := leveldb.RangeROpen
+	rangeType := store.RangeROpen
 	if !inclusive {
-		rangeType = leveldb.RangeOpen
+		rangeType = store.RangeOpen
 	}
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
