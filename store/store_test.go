@@ -3,35 +3,20 @@ package store
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"sync"
 	"testing"
 )
 
-var testOnce sync.Once
-var testDB *DB
+func TestStore(t *testing.T) {
 
-func getTestDB() *DB {
-	f := func() {
-		var err error
-
-		cfg := new(Config)
-		cfg.Path = "/tmp/testdb"
-
-		testDB, err = Open(cfg)
-		if err != nil {
-			println(err.Error())
-			panic(err)
-		}
-	}
-
-	testOnce.Do(f)
-	return testDB
 }
 
-func TestSimple(t *testing.T) {
-	db := getTestDB()
+func testStore(db *DB, t *testing.T) {
+	testSimple(db, t)
+	testBatch(db, t)
+	testIterator(db, t)
+}
 
+func testSimple(db *DB, t *testing.T) {
 	key := []byte("key")
 	value := []byte("hello world")
 	if err := db.Put(key, value); err != nil {
@@ -54,9 +39,7 @@ func TestSimple(t *testing.T) {
 	}
 }
 
-func TestBatch(t *testing.T) {
-	db := getTestDB()
-
+func testBatch(db *DB, t *testing.T) {
 	key1 := []byte("key1")
 	key2 := []byte("key2")
 
@@ -122,9 +105,7 @@ func checkIterator(it *RangeLimitIterator, cv ...int) error {
 	return nil
 }
 
-func TestIterator(t *testing.T) {
-	db := getTestDB()
-
+func testIterator(db *DB, t *testing.T) {
 	i := db.NewIterator()
 	for i.SeekToFirst(); i.Valid(); i.Next() {
 		db.Delete(i.Key())
@@ -218,23 +199,4 @@ func TestIterator(t *testing.T) {
 		t.Fatal(err)
 	}
 	it.Close()
-}
-
-func TestCloseMore(t *testing.T) {
-	cfg := new(Config)
-	cfg.Path = "/tmp/testdb1234"
-	cfg.CacheSize = 4 * 1024 * 1024
-	os.RemoveAll(cfg.Path)
-	for i := 0; i < 100; i++ {
-		db, err := Open(cfg)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		db.Put([]byte("key"), []byte("value"))
-
-		db.Close()
-	}
-
-	os.RemoveAll(cfg.Path)
 }
