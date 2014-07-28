@@ -134,7 +134,7 @@ func (o *Options) SetTargetFileSizeMultiplier(n int) {
 }
 
 func (o *Options) SetMaxBytesForLevelBase(n int) {
-	C.rocksdb_options_set_max_bytes_for_level_base(o.Opt, C.int(n))
+	C.rocksdb_options_set_max_bytes_for_level_base(o.Opt, C.uint64_t(uint64(n)))
 }
 
 func (o *Options) SetMaxBytesForLevelMultiplier(n int) {
