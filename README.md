@@ -55,7 +55,6 @@ Create a workspace and checkout ledisdb source
     LedisDB has not supplied a simple script to install, maybe later.
 
 + Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
-
 + ```make```
 
 ## Choose store database
