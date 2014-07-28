@@ -26,8 +26,12 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
+    #set build and run environment 
+    source dev.sh
+
     make
     make test
+
 
 ## LevelDB support
 
@@ -78,6 +82,9 @@ Choosing a store database to use is very simple, you have two ways:
 You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 
 ## Server Example
+    
+    //set run environment if not
+    source dev.sh
 
     ledis-server -config=/etc/ledis.json
 
