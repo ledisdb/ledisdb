@@ -97,12 +97,24 @@ func (o *Options) SetFilterPolicy(fp *FilterPolicy) {
 	C.rocksdb_options_set_filter_policy(o.Opt, policy)
 }
 
+func (o *Options) SetMaxWriteBufferNumber(n int) {
+	C.rocksdb_options_set_max_write_buffer_number(o.Opt, C.int(n))
+}
+
 func (o *Options) SetMaxBackgroundCompactions(n int) {
 	C.rocksdb_options_set_max_background_compactions(o.Opt, C.int(n))
 }
 
 func (o *Options) SetMaxBackgroundFlushes(n int) {
 	C.rocksdb_options_set_max_background_flushes(o.Opt, C.int(n))
+}
+
+func (o *Options) SetNumLevels(n int) {
+	C.rocksdb_options_set_num_levels(o.Opt, C.int(n))
+}
+
+func (o *Options) SetLevel0FileNumCompactionTrigger(n int) {
+	C.rocksdb_options_set_level0_file_num_compaction_trigger(o.Opt, C.int(n))
 }
 
 func (o *Options) SetLevel0SlowdownWritesTrigger(n int) {
@@ -115,6 +127,18 @@ func (o *Options) SetLevel0StopWritesTrigger(n int) {
 
 func (o *Options) SetTargetFileSizeBase(n int) {
 	C.rocksdb_options_set_target_file_size_base(o.Opt, C.uint64_t(uint64(n)))
+}
+
+func (o *Options) SetTargetFileSizeMultiplier(n int) {
+	C.rocksdb_options_set_target_file_size_multiplier(o.Opt, C.int(n))
+}
+
+func (o *Options) SetMaxBytesForLevelBase(n int) {
+	C.rocksdb_options_set_max_bytes_for_level_base(o.Opt, C.int(n))
+}
+
+func (o *Options) SetMaxBytesForLevelMultiplier(n int) {
+	C.rocksdb_options_set_max_bytes_for_level_multiplier(o.Opt, C.int(n))
 }
 
 func (ro *ReadOptions) Close() {
