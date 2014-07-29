@@ -9,10 +9,6 @@ type WriteBatch struct {
 	wbatch *leveldb.Batch
 }
 
-func (w *WriteBatch) Close() error {
-	return nil
-}
-
 func (w *WriteBatch) Put(key, value []byte) {
 	w.wbatch.Put(key, value)
 }

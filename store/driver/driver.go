@@ -40,8 +40,6 @@ type IIterator interface {
 }
 
 type IWriteBatch interface {
-	Close() error
-
 	Put(key []byte, value []byte)
 	Delete(key []byte)
 	Commit() error

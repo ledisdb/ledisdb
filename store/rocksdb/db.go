@@ -207,6 +207,11 @@ func (db *DB) NewWriteBatch() driver.IWriteBatch {
 		db:     db,
 		wbatch: C.rocksdb_writebatch_create(),
 	}
+
+	runtime.SetFinalizer(wb, func(w *WriteBatch) {
+		w.Close()
+	})
+
 	return wb
 }
 

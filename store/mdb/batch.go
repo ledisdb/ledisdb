@@ -14,10 +14,6 @@ type WriteBatch struct {
 	wb    []Write
 }
 
-func (w *WriteBatch) Close() error {
-	return nil
-}
-
 func (w *WriteBatch) Put(key, value []byte) {
 	w.wb = append(w.wb, Write{key, value})
 }
