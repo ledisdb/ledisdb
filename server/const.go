@@ -20,11 +20,6 @@ var (
 	NullBulk  = []byte("-1")
 	NullArray = []byte("-1")
 
-	PONG          = "PONG"
-	OK            = "OK"
-	SErrCmdParams = "ERR invalid command param"
-	SErrValue     = "ERR value is not an integer or out of range"
-	SErrSyntax    = "ERR syntax error"
-	SErrOffset    = "ERR offset bit is not an natural number"
-	SErrBool      = "ERR value is not 0 or 1"
+	PONG = "PONG"
+	OK   = "OK"
 )
