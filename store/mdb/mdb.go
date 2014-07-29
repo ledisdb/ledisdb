@@ -140,6 +140,8 @@ type MDBIterator struct {
 	tx    *mdb.Txn
 	valid bool
 	err   error
+
+	closeAutoCommit bool
 }
 
 func (itr *MDBIterator) Key() []byte {
@@ -201,6 +203,11 @@ func (itr *MDBIterator) Close() error {
 		itr.tx.Abort()
 		return err
 	}
+
+	if !itr.closeAutoCommit {
+		return itr.err
+	}
+
 	if itr.err != nil {
 		itr.tx.Abort()
 		return itr.err
@@ -226,16 +233,16 @@ func (db MDB) iterator(rdonly bool) *MDBIterator {
 	}
 	tx, err := db.env.BeginTxn(nil, flags)
 	if err != nil {
-		return &MDBIterator{nil, nil, nil, nil, false, err}
+		return &MDBIterator{nil, nil, nil, nil, false, err, true}
 	}
 
 	c, err := tx.CursorOpen(db.db)
 	if err != nil {
 		tx.Abort()
-		return &MDBIterator{nil, nil, nil, nil, false, err}
+		return &MDBIterator{nil, nil, nil, nil, false, err, true}
 	}
 
-	return &MDBIterator{nil, nil, c, tx, true, nil}
+	return &MDBIterator{nil, nil, c, tx, true, nil, true}
 }
 
 func (db MDB) Close() error {
@@ -252,4 +259,8 @@ func (db MDB) NewIterator() driver.IIterator {
 
 func (db MDB) NewWriteBatch() driver.IWriteBatch {
 	return &WriteBatch{&db, []Write{}}
+}
+
+func (db MDB) Begin() (driver.Tx, error) {
+	return newTx(db)
 }

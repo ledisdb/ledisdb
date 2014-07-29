@@ -1,13 +1,17 @@
 package mdb
 
+type batchPut interface {
+	BatchPut([]Write) error
+}
+
 type Write struct {
 	Key   []byte
 	Value []byte
 }
 
 type WriteBatch struct {
-	db *MDB
-	wb []Write
+	batch batchPut
+	wb    []Write
 }
 
 func (w *WriteBatch) Close() error {
@@ -23,7 +27,7 @@ func (w *WriteBatch) Delete(key []byte) {
 }
 
 func (w *WriteBatch) Commit() error {
-	return w.db.BatchPut(w.wb)
+	return w.batch.BatchPut(w.wb)
 }
 
 func (w *WriteBatch) Rollback() error {

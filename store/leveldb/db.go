@@ -260,3 +260,7 @@ func (db *DB) delete(wo *WriteOptions, key []byte) error {
 	}
 	return nil
 }
+
+func (db *DB) Begin() (driver.Tx, error) {
+	return nil, driver.ErrTxSupport
+}
