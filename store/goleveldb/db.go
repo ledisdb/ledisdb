@@ -1,11 +1,11 @@
 package goleveldb
 
 import (
+	"github.com/siddontang/goleveldb/leveldb"
+	"github.com/siddontang/goleveldb/leveldb/cache"
+	"github.com/siddontang/goleveldb/leveldb/filter"
+	"github.com/siddontang/goleveldb/leveldb/opt"
 	"github.com/siddontang/ledisdb/store/driver"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/cache"
-	"github.com/syndtr/goleveldb/leveldb/filter"
-	"github.com/syndtr/goleveldb/leveldb/opt"
 	"os"
 )
 
