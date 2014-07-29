@@ -48,8 +48,8 @@ func (db *DB) NewIterator() *Iterator {
 	return it
 }
 
-func (db *DB) NewWriteBatch() *WriteBatch {
-	return &WriteBatch{db.db.NewWriteBatch()}
+func (db *DB) NewWriteBatch() WriteBatch {
+	return db.db.NewWriteBatch()
 }
 
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
@@ -74,11 +74,11 @@ func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, off
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-func (db *DB) Begin() (*Tx, error) {
+func (db *DB) Begin() (Tx, error) {
 	tx, err := db.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Tx{tx}, nil
+	return tx, nil
 }

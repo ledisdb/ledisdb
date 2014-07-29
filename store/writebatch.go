@@ -4,6 +4,6 @@ import (
 	"github.com/siddontang/ledisdb/store/driver"
 )
 
-type WriteBatch struct {
+type WriteBatch interface {
 	driver.IWriteBatch
 }

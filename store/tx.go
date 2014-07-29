@@ -4,6 +4,6 @@ import (
 	"github.com/siddontang/ledisdb/store/driver"
 )
 
-type Tx struct {
+type Tx interface {
 	driver.Tx
 }

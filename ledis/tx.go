@@ -9,7 +9,7 @@ type tx struct {
 	m sync.Mutex
 
 	l  *Ledis
-	wb *store.WriteBatch
+	wb store.WriteBatch
 
 	binlog *BinLog
 	batch  [][]byte
