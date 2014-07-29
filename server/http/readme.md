@@ -1,5 +1,5 @@
 ##HTTP Interface
-LedisDB provoids http interfaces for most commands.
+LedisDB provides http interfaces for most commands.
 ####Request
 The proper url format is
 
