@@ -37,6 +37,16 @@ func testSimple(db *DB, t *testing.T) {
 	} else if v != nil {
 		t.Fatal("must nil")
 	}
+
+	if err := db.Put(key, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, err := db.Get(key); err != nil {
+		t.Fatal(err)
+	} else if !bytes.Equal(v, []byte{}) {
+		t.Fatal("must empty")
+	}
 }
 
 func testBatch(db *DB, t *testing.T) {
@@ -80,7 +90,27 @@ func testBatch(db *DB, t *testing.T) {
 		t.Fatal(string(v))
 	}
 
+	wb.Put(key1, nil)
+	wb.Put(key2, []byte{})
+
+	if err := wb.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, err := db.Get(key1); err != nil {
+		t.Fatal(err)
+	} else if !bytes.Equal(v, []byte{}) {
+		t.Fatal("must empty")
+	}
+
+	if v, err := db.Get(key2); err != nil {
+		t.Fatal(err)
+	} else if !bytes.Equal(v, []byte{}) {
+		t.Fatal("must empty")
+	}
+
 	db.Delete(key1)
+	db.Delete(key2)
 }
 
 func checkIterator(it *RangeLimitIterator, cv ...int) error {

@@ -15,6 +15,9 @@ func (w *WriteBatch) Close() error {
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
+	if value == nil {
+		value = []byte{}
+	}
 	w.wb = append(w.wb, Write{key, value})
 }
 
