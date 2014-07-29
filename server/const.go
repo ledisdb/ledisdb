@@ -10,6 +10,8 @@ var (
 	ErrCmdParams    = errors.New("invalid command param")
 	ErrValue        = errors.New("value is not an integer or out of range")
 	ErrSyntax       = errors.New("syntax error")
+	ErrOffset       = errors.New("offset bit is not an natural number")
+	ErrBool         = errors.New("value is not 0 or 1")
 )
 
 var (
@@ -23,4 +25,6 @@ var (
 	SErrCmdParams = "ERR invalid command param"
 	SErrValue     = "ERR value is not an integer or out of range"
 	SErrSyntax    = "ERR syntax error"
+	SErrOffset    = "ERR offset bit is not an natural number"
+	SErrBool      = "ERR value is not 0 or 1"
 )

@@ -429,3 +429,173 @@ func TestZSetRange(t *testing.T) {
 	}
 
 }
+
+func TestZsetErrorParams(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	//zadd
+	if _, err := c.Do("zadd", "test_zadd"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zadd", "test_zadd", "a", "b", "c"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zadd", "test_zadd", "-a", "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zadd", "test_zad", "0.1", "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zcard
+	if _, err := c.Do("zcard"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zscore
+	if _, err := c.Do("zscore", "test_zscore"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrem
+	if _, err := c.Do("zrem", "test_zrem"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zincrby
+	if _, err := c.Do("zincrby", "test_zincrby"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zincrby", "test_zincrby", 0.1, "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zcount
+	if _, err := c.Do("zcount", "test_zcount"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zcount", "test_zcount", "-inf", "=inf"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zcount", "test_zcount", 0.1, 0.1); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrank
+	if _, err := c.Do("zrank", "test_zrank"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrevzrank
+	if _, err := c.Do("zrevrank", "test_zrevrank"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zremrangebyrank
+	if _, err := c.Do("zremrangebyrank", "test_zremrangebyrank"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zremrangebyrank", "test_zremrangebyrank", 0.1, 0.1); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zremrangebyscore
+	if _, err := c.Do("zremrangebyscore", "test_zremrangebyscore"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zremrangebyscore", "test_zremrangebyscore", "-inf", "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zremrangebyscore", "test_zremrangebyscore", 0, "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrange
+	if _, err := c.Do("zrange", "test_zrange"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrange", "test_zrange", 0, 1, "withscore"); err == nil || err.Error() != SErrSyntax {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrange", "test_zrange", 0, 1, "withscores", "a"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrevrange, almost same as zrange
+	if _, err := c.Do("zrevrange", "test_zrevrange"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrangebyscore
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore", 0, 1, "withscore"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore", 0, 1, "withscores", "limit"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore", 0, 1, "withscores", "limi", 1, 1); err == nil || err.Error() != SErrSyntax {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore", 0, 1, "withscores", "limit", "a", 1); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("zrangebyscore", "test_zrangebyscore", 0, 1, "withscores", "limit", 1, "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zrevrangebyscore, almost same as zrangebyscore
+	if _, err := c.Do("zrevrangebyscore", "test_zrevrangebyscore"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zclear
+	if _, err := c.Do("zclear"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zmclear
+	if _, err := c.Do("zmclear"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zexpire
+	if _, err := c.Do("zexpire", "test_zexpire"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zexpireat
+	if _, err := c.Do("zexpireat", "test_zexpireat"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zttl
+	if _, err := c.Do("zttl"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//zpersist
+	if _, err := c.Do("zpersist"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+}

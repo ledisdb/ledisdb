@@ -221,3 +221,163 @@ func testBitOpt(t *testing.T) {
 
 	return
 }
+
+func TestBitErrorParams(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	if _, err := c.Do("bget"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bdelete"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	// bsetbit
+	if _, err := c.Do("bsetbit"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bsetbit", "test_bsetbit"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bsetbit", "test_bsetbit", "o", "v"); err == nil || err.Error() != SErrOffset {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bsetbit", "test_bsetbit", "o", 1); err == nil || err.Error() != SErrOffset {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	// if _, err := c.Do("bsetbit", "test_bsetbit", -1, 1); err == nil || err.Error() != SErrOffset {
+	// 	t.Fatal("invalid err of %v", err)
+	// }
+
+	if _, err := c.Do("bsetbit", "test_bsetbit", 1, "v"); err == nil || err.Error() != SErrBool {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bsetbit", "test_bsetbit", 1, 2); err == nil || err.Error() != SErrBool {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bgetbit
+	if _, err := c.Do("bgetbit", "test_bgetbit"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bgetbit", "test_bgetbit", "o"); err == nil || err.Error() != SErrOffset {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	// if _, err := c.Do("bgetbit", "test_bgetbit", -1); err == nil || err.Error() != SErrOffset {
+	// 	t.Fatal("invalid err of %v", err)
+	// }
+
+	//bmsetbit
+	if _, err := c.Do("bmsetbit", "test_bmsetbit"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", 0, 1, 2); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", "o", "v"); err == nil || err.Error() != SErrOffset {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", "o", 1); err == nil || err.Error() != SErrOffset {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	// if _, err := c.Do("bmsetbit", "test_bmsetbit", -1, 1); err == nil || err.Error() != SErrOffset {
+	// 	t.Fatal("invalid err of %v", err)
+	// }
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", 1, "v"); err == nil || err.Error() != SErrBool {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", 1, 2); err == nil || err.Error() != SErrBool {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bmsetbit", "test_bmsetbit", 1, 0.1); err == nil || err.Error() != SErrBool {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bcount
+
+	if _, err := c.Do("bcount"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bcount", "a", "b", "c"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bcount", 1, "a"); err == nil || err.Error() != SErrValue {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	// if _, err := c.Do("bcount", 1); err == nil || err.Error() != SErrCmdParams {
+	// 	t.Fatal("invalid err of %v", err)
+	// }
+
+	//bopt
+	if _, err := c.Do("bopt"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bopt", "and", 1); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bopt", "x", 1); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bopt", ""); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bexpire", "test_bexpire"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bexpireat", "test_bexpireat"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bttl"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("bpersist"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bexpire
+	if _, err := c.Do("bexpire", "test_bexpire"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bexpireat
+	if _, err := c.Do("bexpireat", "test_bexpireat"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bttl
+	if _, err := c.Do("bttl"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	//bpersist
+	if _, err := c.Do("bpersist"); err == nil || err.Error() != SErrCmdParams {
+		t.Fatal("invalid err of %v", err)
+	}
+
+}
