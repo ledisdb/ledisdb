@@ -134,7 +134,6 @@ func (app *App) httpServe() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/ws", &WsHandler{app.Ledis()})
 	mux.Handle("/", &CmdHandler{app.Ledis()})
 
 	svr := http.Server{Handler: mux}

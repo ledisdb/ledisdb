@@ -154,11 +154,3 @@ func writeMsgPack(result interface{}, w http.ResponseWriter) {
 		log.Error(err.Error())
 	}
 }
-
-type WsHandler struct {
-	Ldb *ledis.Ledis
-}
-
-func (h *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("ws handler"))
-}
