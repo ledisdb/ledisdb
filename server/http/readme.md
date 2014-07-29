@@ -5,7 +5,7 @@ The proper url format is
 
     http://host:port[/db]/cmd/arg1/arg2/.../argN[?type=type]
 
-'db' and 'type' are optional. 'db' stands for ledis db index, ranges from 0 to 15, its default value is 0. 'type' is a cumstom content type, can be json, bson or msgpack,  json is default.
+'db' and 'type' are optional. 'db' stands for ledis db index, ranges from 0 to 15, its default value is 0. 'type' is a custom content type, can be json, bson or msgpack,  json is default.
 
 
 ####Response
