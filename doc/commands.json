@@ -2,417 +2,417 @@
     "BCOUNT": {
         "arguments": "key [start end]",
         "group": "Bitmap",
-        "read only": true
+        "readonly": true
     },
     "BDELETE": {
         "arguments": "key",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "BEXPIRE": {
         "arguments": "key seconds",
         "group": "Bitmap",
-        "readOnly": false
+        "readonly": false
     },
     "BEXPIREAT": {
         "arguments": "key timestamp",
         "group": "Bitmap",
-        "readOnly": false,
+        "readonly": false,
     },
     "BGET": {
         "arguments": "key",
         "group": "Bitmap",
-        "readOnly": true
+        "readonly": true
     },
     "BGETBIT": {
         "arguments": "key offset",
         "group": "Bitmap",
-        "readOnly": true
+        "readonly": true
     },
     "BMSETBIT": {
         "arguments": "key offset value [offset value ...]",
         "group": "Bitmap",
-        "readOnly": false
+        "readonly": false
     },
     "BOPT": {
         "arguments": "operation destkey key [key ...]",
         "group": "Bitmap",
-        "readOnly": false
+        "readonly": false
     },
     "BPERSIST": {
         "arguments": "key",
         "group": "Bitmap",
-        "readOnly": false
+        "readonly": false
     },
     "BSETBIT": {
         "arguments": "key offset value",
         "group": "Bitmap",
-        "readOnly": false
+        "readonly": false
     },
     "BTTL": {
         "arguments": "key",
         "group": "Bitmap",
-        "readOnly": true
+        "readonly": true
     },
     "DECR": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "DECRBY": {
         "arguments": "key decrement",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "DEL": {
         "arguments": "key [key ...]",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "ECHO": {
         "arguments": "message",
         "group": "Server",
-        "readOnly": true
+        "readonly": true
     },
     "EXISTS": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": true
+        "readonly": true
     },
     "EXPIRE": {
         "arguments": "key seconds",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "EXPIREAT": {
         "arguments": "key timestamp",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "FULLSYNC": {
         "arguments": "-",
         "group": "Replication",
-        "readOnly": false
+        "readonly": false
 
     },
     "GET": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": true
+        "readonly": true
     },
     "GETSET": {
         "arguments": " key value",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "HCLEAR": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HDEL": {
         "arguments": "key field [field ...]",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HEXISTS": {
         "arguments": "key field",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HEXPIRE": {
         "arguments": "key seconds",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HEXPIREAT": {
         "arguments": "key timestamp",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HGET": {
         "arguments": "key field",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HGETALL": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HINCRBY": {
         "arguments": "key field increment",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HKEYS": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HLEN": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HMCLEAR": {
         "arguments": "key [key ...]",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HMGET": {
         "arguments": "key field [field ...]",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HMSET": {
         "arguments": "key field value [field value ...]",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HPERSIST": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HSET": {
         "arguments": "key field value",
         "group": "Hash",
-        "readOnly": false
+        "readonly": false
     },
     "HTTL": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "HVALS": {
         "arguments": "key",
         "group": "Hash",
-        "readOnly": true
+        "readonly": true
     },
     "INCR": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "INCRBY": {
         "arguments": "key increment",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "LCLEAR": {
         "arguments": "key",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LEXPIRE": {
         "arguments": "key seconds",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LEXPIREAT": {
         "arguments": "key timestamp",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LINDEX": {
         "arguments": "key index",
         "group": "List",
-        "readOnly": true
+        "readonly": true
     },
     "LLEN": {
         "arguments": "key",
         "group": "List",
-        "readOnly": true
+        "readonly": true
     },
     "LMCLEAR": {
         "arguments": "key [key ...]",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LPERSIST": {
         "arguments": "key",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LPOP": {
         "arguments": "key",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LPUSH": {
         "arguments": "key value [value ...]",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "LRANGE": {
         "arguments": "key start stop",
         "group": "List",
-        "readOnly": true
+        "readonly": true
     },
     "LTTL": {
         "arguments": "key",
         "group": "List",
-        "readOnly": true
+        "readonly": true
     },
     "MGET": {
         "arguments": "key [key ...]",
         "group": "KV",
-        "readOnly": true
+        "readonly": true
     },
     "MSET": {
         "arguments": "key value [key value ...]",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "PERSIST": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "PING": {
         "arguments": "-",
         "group": "Server",
-        "readOnly": true
+        "readonly": true
     },
     "RPOP": {
         "arguments": "key",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "RPUSH": {
         "arguments": "key value [value ...]",
         "group": "List",
-        "readOnly": false
+        "readonly": false
     },
     "SELECT": {
         "arguments": "index",
         "group": "Server",
-        "readOnly": false
+        "readonly": false
     },
     "SET": {
         "arguments": "key value",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "SETNX": {
         "arguments": "key value",
         "group": "KV",
-        "readOnly": false
+        "readonly": false
     },
     "SLAVEOF": {
         "arguments": "host port",
         "group": "Replication",
-        "readOnly": false
+        "readonly": false
     },
     "SYNC": {
         "arguments": "index offset",
         "group": "Replication",
-        "readOnly": false
+        "readonly": false
     },
     "TTL": {
         "arguments": "key",
         "group": "KV",
-        "readOnly": true
+        "readonly": true
     },
     "ZADD": {
         "arguments": "key score member [score member ...]",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZCARD": {
         "arguments": "key",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZCLEAR": {
         "arguments": "key",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZCOUNT": {
         "arguments": "key min max",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZEXPIRE": {
         "arguments": "key seconds",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZEXPIREAT": {
         "arguments": "key timestamp",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZINCRBY": {
         "arguments": "key increment member",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZMCLEAR": {
         "arguments": "key [key ...]",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZPERSIST": {
         "arguments": "key",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZRANGE": {
         "arguments": "key start stop [WITHSCORES]",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZRANGEBYSCORE": {
         "arguments": "key min max [WITHSCORES] [LIMIT offset count]",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZRANK": {
         "arguments": "key member",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZREM": {
         "arguments": "key member [member ...]",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZREMRANGEBYRANK": {
         "arguments": "key start stop",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZREMRANGEBYSCORE": {
         "arguments": "key min max",
         "group": "ZSet",
-        "readOnly": false
+        "readonly": false
     },
     "ZREVRANGE": {
         "arguments": "key start stop [WITHSCORES]",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZREVRANGEBYSCORE": {
         "arguments": "key max min  [WITHSCORES][LIMIT offset count]",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZREVRANK": {
         "arguments": "key member",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZSCORE": {
         "arguments": "key member",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     },
     "ZTTL": {
         "arguments": "key",
         "group": "ZSet",
-        "readOnly": true
+        "readonly": true
     }
 }
