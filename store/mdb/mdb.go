@@ -1,7 +1,7 @@
 package mdb
 
 import (
-	mdb "github.com/influxdb/gomdb"
+	mdb "github.com/siddontang/gomdb"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 )
@@ -32,6 +32,7 @@ func Open(c *Config) (MDB, error) {
 	if err := env.SetMaxDBs(1); err != nil {
 		return MDB{}, err
 	}
+
 	if err := env.SetMapSize(uint64(c.MapSize)); err != nil {
 		return MDB{}, err
 	}
@@ -78,11 +79,10 @@ func Repair(c *Config) error {
 
 func (db MDB) Put(key, value []byte) error {
 	itr := db.iterator(false)
-	defer itr.Close()
 
 	itr.err = itr.c.Put(key, value, 0)
 	itr.setState()
-	return itr.Error()
+	return itr.Close()
 }
 
 func (db MDB) BatchPut(writes []Write) error {
@@ -140,6 +140,8 @@ type MDBIterator struct {
 	tx    *mdb.Txn
 	valid bool
 	err   error
+
+	closeAutoCommit bool
 }
 
 func (itr *MDBIterator) Key() []byte {
@@ -201,6 +203,11 @@ func (itr *MDBIterator) Close() error {
 		itr.tx.Abort()
 		return err
 	}
+
+	if !itr.closeAutoCommit {
+		return itr.err
+	}
+
 	if itr.err != nil {
 		itr.tx.Abort()
 		return itr.err
@@ -226,16 +233,16 @@ func (db MDB) iterator(rdonly bool) *MDBIterator {
 	}
 	tx, err := db.env.BeginTxn(nil, flags)
 	if err != nil {
-		return &MDBIterator{nil, nil, nil, nil, false, err}
+		return &MDBIterator{nil, nil, nil, nil, false, err, true}
 	}
 
 	c, err := tx.CursorOpen(db.db)
 	if err != nil {
 		tx.Abort()
-		return &MDBIterator{nil, nil, nil, nil, false, err}
+		return &MDBIterator{nil, nil, nil, nil, false, err, true}
 	}
 
-	return &MDBIterator{nil, nil, c, tx, true, nil}
+	return &MDBIterator{nil, nil, c, tx, true, nil, true}
 }
 
 func (db MDB) Close() error {
@@ -252,4 +259,8 @@ func (db MDB) NewIterator() driver.IIterator {
 
 func (db MDB) NewWriteBatch() driver.IWriteBatch {
 	return &WriteBatch{&db, []Write{}}
+}
+
+func (db MDB) Begin() (driver.Tx, error) {
+	return newTx(db)
 }

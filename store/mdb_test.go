@@ -32,3 +32,11 @@ func TestLMDB(t *testing.T) {
 
 	db.Close()
 }
+
+func TestLMDBTx(t *testing.T) {
+	db := newTestLMDB()
+
+	testTx(db, t)
+
+	db.Close()
+}

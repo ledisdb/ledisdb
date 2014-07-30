@@ -9,7 +9,7 @@ type tx struct {
 	m sync.Mutex
 
 	l  *Ledis
-	wb *store.WriteBatch
+	wb store.WriteBatch
 
 	binlog *BinLog
 	batch  [][]byte
@@ -27,7 +27,7 @@ func newTx(l *Ledis) *tx {
 }
 
 func (t *tx) Close() {
-	t.wb.Close()
+	t.wb = nil
 }
 
 func (t *tx) Put(key []byte, value []byte) {
