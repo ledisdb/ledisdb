@@ -1,7 +1,7 @@
 package mdb
 
 import (
-	mdb "github.com/influxdb/gomdb"
+	mdb "github.com/siddontang/gomdb"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 )
