@@ -32,6 +32,7 @@ func Open(c *Config) (MDB, error) {
 	if err := env.SetMaxDBs(1); err != nil {
 		return MDB{}, err
 	}
+
 	if err := env.SetMapSize(uint64(c.MapSize)); err != nil {
 		return MDB{}, err
 	}
@@ -78,11 +79,10 @@ func Repair(c *Config) error {
 
 func (db MDB) Put(key, value []byte) error {
 	itr := db.iterator(false)
-	defer itr.Close()
 
 	itr.err = itr.c.Put(key, value, 0)
 	itr.setState()
-	return itr.Error()
+	return itr.Close()
 }
 
 func (db MDB) BatchPut(writes []Write) error {
