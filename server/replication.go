@@ -72,8 +72,8 @@ func (m *MasterInfo) Load(filePath string) error {
 type master struct {
 	sync.Mutex
 
-	c  net.Conn
-	rb *bufio.Reader
+	conn net.Conn
+	rb   *bufio.Reader
 
 	app *App
 
@@ -114,9 +114,9 @@ func (m *master) Close() {
 	default:
 	}
 
-	if m.c != nil {
-		m.c.Close()
-		m.c = nil
+	if m.conn != nil {
+		m.conn.Close()
+		m.conn = nil
 	}
 
 	m.wg.Wait()
@@ -135,17 +135,17 @@ func (m *master) connect() error {
 		return fmt.Errorf("no assign master addr")
 	}
 
-	if m.c != nil {
-		m.c.Close()
-		m.c = nil
+	if m.conn != nil {
+		m.conn.Close()
+		m.conn = nil
 	}
 
-	if c, err := net.Dial("tcp", m.info.Addr); err != nil {
+	if conn, err := net.Dial("tcp", m.info.Addr); err != nil {
 		return err
 	} else {
-		m.c = c
+		m.conn = conn
 
-		m.rb = bufio.NewReaderSize(m.c, 4096)
+		m.rb = bufio.NewReaderSize(m.conn, 4096)
 	}
 	return nil
 }
@@ -248,7 +248,7 @@ var (
 )
 
 func (m *master) fullSync() error {
-	if _, err := m.c.Write(fullSyncCmd); err != nil {
+	if _, err := m.conn.Write(fullSyncCmd); err != nil {
 		return err
 	}
 
@@ -291,7 +291,7 @@ func (m *master) sync() error {
 
 	cmd := ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIndexStr),
 		logIndexStr, len(logPosStr), logPosStr))
-	if _, err := m.c.Write(cmd); err != nil {
+	if _, err := m.conn.Write(cmd); err != nil {
 		return err
 	}
 

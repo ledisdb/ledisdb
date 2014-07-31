@@ -39,7 +39,7 @@ func zaddCommand(c *client) error {
 	if n, err := c.db.ZAdd(key, params...); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -54,7 +54,7 @@ func zcardCommand(c *client) error {
 	if n, err := c.db.ZCard(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -68,12 +68,12 @@ func zscoreCommand(c *client) error {
 
 	if s, err := c.db.ZScore(args[0], args[1]); err != nil {
 		if err == ledis.ErrScoreMiss {
-			c.writeBulk(nil)
+			c.resp.writeBulk(nil)
 		} else {
 			return err
 		}
 	} else {
-		c.writeBulk(ledis.StrPutInt64(s))
+		c.resp.writeBulk(ledis.StrPutInt64(s))
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func zremCommand(c *client) error {
 	if n, err := c.db.ZRem(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -110,7 +110,7 @@ func zincrbyCommand(c *client) error {
 	if v, err := c.db.ZIncrBy(key, delta, args[2]); err != nil {
 		return err
 	} else {
-		c.writeBulk(ledis.StrPutInt64(v))
+		c.resp.writeBulk(ledis.StrPutInt64(v))
 	}
 
 	return nil
@@ -190,14 +190,14 @@ func zcountCommand(c *client) error {
 	}
 
 	if min > max {
-		c.writeInteger(0)
+		c.resp.writeInteger(0)
 		return nil
 	}
 
 	if n, err := c.db.ZCount(args[0], min, max); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -212,9 +212,9 @@ func zrankCommand(c *client) error {
 	if n, err := c.db.ZRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
-		c.writeBulk(nil)
+		c.resp.writeBulk(nil)
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -229,9 +229,9 @@ func zrevrankCommand(c *client) error {
 	if n, err := c.db.ZRevRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
-		c.writeBulk(nil)
+		c.resp.writeBulk(nil)
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -253,7 +253,7 @@ func zremrangebyrankCommand(c *client) error {
 	if n, err := c.db.ZRemRangeByRank(key, start, stop); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -274,7 +274,7 @@ func zremrangebyscoreCommand(c *client) error {
 	if n, err := c.db.ZRemRangeByScore(key, min, max); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -315,7 +315,7 @@ func zrangeGeneric(c *client, reverse bool) error {
 	if datas, err := c.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
 		return err
 	} else {
-		c.writeScorePairArray(datas, withScores)
+		c.resp.writeScorePairArray(datas, withScores)
 	}
 	return nil
 }
@@ -383,14 +383,14 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	if offset < 0 {
 		//for ledis, if offset < 0, a empty will return
 		//so here we directly return a empty array
-		c.writeArray([]interface{}{})
+		c.resp.writeArray([]interface{}{})
 		return nil
 	}
 
 	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse); err != nil {
 		return err
 	} else {
-		c.writeScorePairArray(datas, withScores)
+		c.resp.writeScorePairArray(datas, withScores)
 	}
 
 	return nil
@@ -413,7 +413,7 @@ func zclearCommand(c *client) error {
 	if n, err := c.db.ZClear(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -428,7 +428,7 @@ func zmclearCommand(c *client) error {
 	if n, err := c.db.ZMclear(args...); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -448,7 +448,7 @@ func zexpireCommand(c *client) error {
 	if v, err := c.db.ZExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -468,7 +468,7 @@ func zexpireAtCommand(c *client) error {
 	if v, err := c.db.ZExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -483,7 +483,7 @@ func zttlCommand(c *client) error {
 	if v, err := c.db.ZTTL(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -498,7 +498,7 @@ func zpersistCommand(c *client) error {
 	if n, err := c.db.ZPersist(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil

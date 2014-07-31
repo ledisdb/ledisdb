@@ -35,7 +35,7 @@ func slaveofCommand(c *client) error {
 		return err
 	}
 
-	c.writeStatus(OK)
+	c.resp.writeStatus(OK)
 
 	return nil
 }
@@ -56,7 +56,7 @@ func fullsyncCommand(c *client) error {
 
 	dumpFile.Seek(0, os.SEEK_SET)
 
-	c.writeBulkFrom(n, dumpFile)
+	c.resp.writeBulkFrom(n, dumpFile)
 
 	name := dumpFile.Name()
 	dumpFile.Close()
@@ -112,7 +112,7 @@ func syncCommand(c *client) error {
 			return err
 		}
 
-		c.writeBulk(buf)
+		c.resp.writeBulk(buf)
 	}
 
 	return nil

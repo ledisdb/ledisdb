@@ -13,7 +13,7 @@ func getCommand(c *client) error {
 	if v, err := c.db.Get(args[0]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 	return nil
 }
@@ -27,7 +27,7 @@ func setCommand(c *client) error {
 	if err := c.db.Set(args[0], args[1]); err != nil {
 		return err
 	} else {
-		c.writeStatus(OK)
+		c.resp.writeStatus(OK)
 	}
 
 	return nil
@@ -42,7 +42,7 @@ func getsetCommand(c *client) error {
 	if v, err := c.db.GetSet(args[0], args[1]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 
 	return nil
@@ -57,7 +57,7 @@ func setnxCommand(c *client) error {
 	if n, err := c.db.SetNX(args[0], args[1]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -72,7 +72,7 @@ func existsCommand(c *client) error {
 	if n, err := c.db.Exists(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -87,7 +87,7 @@ func incrCommand(c *client) error {
 	if n, err := c.db.Incr(c.args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -102,7 +102,7 @@ func decrCommand(c *client) error {
 	if n, err := c.db.Decr(c.args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -122,7 +122,7 @@ func incrbyCommand(c *client) error {
 	if n, err := c.db.IncryBy(c.args[0], delta); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func decrbyCommand(c *client) error {
 	if n, err := c.db.DecrBy(c.args[0], delta); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -157,7 +157,7 @@ func delCommand(c *client) error {
 	if n, err := c.db.Del(args...); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func msetCommand(c *client) error {
 	if err := c.db.MSet(kvs...); err != nil {
 		return err
 	} else {
-		c.writeStatus(OK)
+		c.resp.writeStatus(OK)
 	}
 
 	return nil
@@ -197,7 +197,7 @@ func mgetCommand(c *client) error {
 	if v, err := c.db.MGet(args...); err != nil {
 		return err
 	} else {
-		c.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
@@ -217,7 +217,7 @@ func expireCommand(c *client) error {
 	if v, err := c.db.Expire(args[0], duration); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -237,7 +237,7 @@ func expireAtCommand(c *client) error {
 	if v, err := c.db.ExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -252,7 +252,7 @@ func ttlCommand(c *client) error {
 	if v, err := c.db.TTL(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -267,7 +267,7 @@ func persistCommand(c *client) error {
 	if n, err := c.db.Persist(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil

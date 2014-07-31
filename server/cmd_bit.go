@@ -14,7 +14,7 @@ func bgetCommand(c *client) error {
 	if v, err := c.db.BGet(args[0]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 	return nil
 }
@@ -28,7 +28,7 @@ func bdeleteCommand(c *client) error {
 	if n, err := c.db.BDelete(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func bsetbitCommand(c *client) error {
 	if ori, err := c.db.BSetBit(args[0], offset, uint8(val)); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(ori))
+		c.resp.writeInteger(int64(ori))
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func bgetbitCommand(c *client) error {
 	if v, err := c.db.BGetBit(args[0], offset); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(v))
+		c.resp.writeInteger(int64(v))
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func bmsetbitCommand(c *client) error {
 	if place, err := c.db.BMSetBit(key, pairs...); err != nil {
 		return err
 	} else {
-		c.writeInteger(place)
+		c.resp.writeInteger(place)
 	}
 	return nil
 }
@@ -151,7 +151,7 @@ func bcountCommand(c *client) error {
 	if cnt, err := c.db.BCount(args[0], start, end); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(cnt))
+		c.resp.writeInteger(int64(cnt))
 	}
 	return nil
 }
@@ -183,7 +183,7 @@ func boptCommand(c *client) error {
 	if blen, err := c.db.BOperation(op, dstKey, srcKeys...); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(blen))
+		c.resp.writeInteger(int64(blen))
 	}
 	return nil
 }
@@ -202,7 +202,7 @@ func bexpireCommand(c *client) error {
 	if v, err := c.db.BExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -222,7 +222,7 @@ func bexpireatCommand(c *client) error {
 	if v, err := c.db.BExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -237,7 +237,7 @@ func bttlCommand(c *client) error {
 	if v, err := c.db.BTTL(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
@@ -252,7 +252,7 @@ func bpersistCommand(c *client) error {
 	if n, err := c.db.BPersist(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil

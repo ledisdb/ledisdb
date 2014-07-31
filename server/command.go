@@ -21,7 +21,7 @@ func register(name string, f CommandFunc) {
 }
 
 func pingCommand(c *client) error {
-	c.writeStatus(PONG)
+	c.resp.writeStatus(PONG)
 	return nil
 }
 
@@ -30,7 +30,7 @@ func echoCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	c.writeBulk(c.args[0])
+	c.resp.writeBulk(c.args[0])
 	return nil
 }
 
@@ -46,7 +46,7 @@ func selectCommand(c *client) error {
 			return err
 		} else {
 			c.db = db
-			c.writeStatus(OK)
+			c.resp.writeStatus(OK)
 		}
 	}
 	return nil
