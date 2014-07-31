@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-func slaveofCommand(c *client) error {
-	args := c.args
+func slaveofCommand(req *requestContext) error {
+	args := req.args
 
 	if len(args) != 2 {
 		return ErrCmdParams
@@ -31,23 +31,23 @@ func slaveofCommand(c *client) error {
 		masterAddr = fmt.Sprintf("%s:%s", args[0], args[1])
 	}
 
-	if err := c.app.slaveof(masterAddr); err != nil {
+	if err := req.app.slaveof(masterAddr); err != nil {
 		return err
 	}
 
-	c.resp.writeStatus(OK)
+	req.resp.writeStatus(OK)
 
 	return nil
 }
 
-func fullsyncCommand(c *client) error {
+func fullsyncCommand(req *requestContext) error {
 	//todo, multi fullsync may use same dump file
-	dumpFile, err := ioutil.TempFile(c.app.cfg.DataDir, "dump_")
+	dumpFile, err := ioutil.TempFile(req.app.cfg.DataDir, "dump_")
 	if err != nil {
 		return err
 	}
 
-	if err = c.app.ldb.Dump(dumpFile); err != nil {
+	if err = req.app.ldb.Dump(dumpFile); err != nil {
 		return err
 	}
 
@@ -56,7 +56,7 @@ func fullsyncCommand(c *client) error {
 
 	dumpFile.Seek(0, os.SEEK_SET)
 
-	c.resp.writeBulkFrom(n, dumpFile)
+	req.resp.writeBulkFrom(n, dumpFile)
 
 	name := dumpFile.Name()
 	dumpFile.Close()
@@ -68,8 +68,8 @@ func fullsyncCommand(c *client) error {
 
 var reserveInfoSpace = make([]byte, 16)
 
-func syncCommand(c *client) error {
-	args := c.args
+func syncCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -87,32 +87,32 @@ func syncCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	c.syncBuf.Reset()
+	req.syncBuf.Reset()
 
 	//reserve space to write master info
-	if _, err := c.syncBuf.Write(reserveInfoSpace); err != nil {
+	if _, err := req.syncBuf.Write(reserveInfoSpace); err != nil {
 		return err
 	}
 
 	m := &ledis.MasterInfo{logIndex, logPos}
 
-	if _, err := c.app.ldb.ReadEventsTo(m, &c.syncBuf); err != nil {
+	if _, err := req.app.ldb.ReadEventsTo(m, &req.syncBuf); err != nil {
 		return err
 	} else {
-		buf := c.syncBuf.Bytes()
+		buf := req.syncBuf.Bytes()
 
 		binary.BigEndian.PutUint64(buf[0:], uint64(m.LogFileIndex))
 		binary.BigEndian.PutUint64(buf[8:], uint64(m.LogPos))
 
-		if len(c.compressBuf) < snappy.MaxEncodedLen(len(buf)) {
-			c.compressBuf = make([]byte, snappy.MaxEncodedLen(len(buf)))
+		if len(req.compressBuf) < snappy.MaxEncodedLen(len(buf)) {
+			req.compressBuf = make([]byte, snappy.MaxEncodedLen(len(buf)))
 		}
 
-		if buf, err = snappy.Encode(c.compressBuf, buf); err != nil {
+		if buf, err = snappy.Encode(req.compressBuf, buf); err != nil {
 			return err
 		}
 
-		c.resp.writeBulk(buf)
+		req.resp.writeBulk(buf)
 	}
 
 	return nil

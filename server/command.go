@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type CommandFunc func(c *client) error
+type CommandFunc func(req *requestContext) error
 
 var regCmds = map[string]CommandFunc{}
 
@@ -20,33 +20,33 @@ func register(name string, f CommandFunc) {
 	regCmds[name] = f
 }
 
-func pingCommand(c *client) error {
-	c.resp.writeStatus(PONG)
+func pingCommand(req *requestContext) error {
+	req.resp.writeStatus(PONG)
 	return nil
 }
 
-func echoCommand(c *client) error {
-	if len(c.args) != 1 {
+func echoCommand(req *requestContext) error {
+	if len(req.args) != 1 {
 		return ErrCmdParams
 	}
 
-	c.resp.writeBulk(c.args[0])
+	req.resp.writeBulk(req.args[0])
 	return nil
 }
 
-func selectCommand(c *client) error {
-	if len(c.args) != 1 {
+func selectCommand(req *requestContext) error {
+	if len(req.args) != 1 {
 		return ErrCmdParams
 	}
 
-	if index, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
+	if index, err := strconv.Atoi(ledis.String(req.args[0])); err != nil {
 		return err
 	} else {
-		if db, err := c.ldb.Select(index); err != nil {
+		if db, err := req.ldb.Select(index); err != nil {
 			return err
 		} else {
-			c.db = db
-			c.resp.writeStatus(OK)
+			req.db = db
+			req.resp.writeStatus(OK)
 		}
 	}
 	return nil

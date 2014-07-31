@@ -12,8 +12,8 @@ import (
 
 var errScoreOverflow = errors.New("zset score overflow")
 
-func zaddCommand(c *client) error {
-	args := c.args
+func zaddCommand(req *requestContext) error {
+	args := req.args
 	if len(args) < 3 {
 		return ErrCmdParams
 	}
@@ -36,66 +36,66 @@ func zaddCommand(c *client) error {
 		params[i].Member = args[2*i+1]
 	}
 
-	if n, err := c.db.ZAdd(key, params...); err != nil {
+	if n, err := req.db.ZAdd(key, params...); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zcardCommand(c *client) error {
-	args := c.args
+func zcardCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZCard(args[0]); err != nil {
+	if n, err := req.db.ZCard(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zscoreCommand(c *client) error {
-	args := c.args
+func zscoreCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
-	if s, err := c.db.ZScore(args[0], args[1]); err != nil {
+	if s, err := req.db.ZScore(args[0], args[1]); err != nil {
 		if err == ledis.ErrScoreMiss {
-			c.resp.writeBulk(nil)
+			req.resp.writeBulk(nil)
 		} else {
 			return err
 		}
 	} else {
-		c.resp.writeBulk(ledis.StrPutInt64(s))
+		req.resp.writeBulk(ledis.StrPutInt64(s))
 	}
 
 	return nil
 }
 
-func zremCommand(c *client) error {
-	args := c.args
+func zremCommand(req *requestContext) error {
+	args := req.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZRem(args[0], args[1:]...); err != nil {
+	if n, err := req.db.ZRem(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zincrbyCommand(c *client) error {
-	args := c.args
+func zincrbyCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -107,10 +107,10 @@ func zincrbyCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.db.ZIncrBy(key, delta, args[2]); err != nil {
+	if v, err := req.db.ZIncrBy(key, delta, args[2]); err != nil {
 		return err
 	} else {
-		c.resp.writeBulk(ledis.StrPutInt64(v))
+		req.resp.writeBulk(ledis.StrPutInt64(v))
 	}
 
 	return nil
@@ -178,8 +178,8 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 	return
 }
 
-func zcountCommand(c *client) error {
-	args := c.args
+func zcountCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -190,77 +190,77 @@ func zcountCommand(c *client) error {
 	}
 
 	if min > max {
-		c.resp.writeInteger(0)
+		req.resp.writeInteger(0)
 		return nil
 	}
 
-	if n, err := c.db.ZCount(args[0], min, max); err != nil {
+	if n, err := req.db.ZCount(args[0], min, max); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zrankCommand(c *client) error {
-	args := c.args
+func zrankCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZRank(args[0], args[1]); err != nil {
+	if n, err := req.db.ZRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
-		c.resp.writeBulk(nil)
+		req.resp.writeBulk(nil)
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zrevrankCommand(c *client) error {
-	args := c.args
+func zrevrankCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZRevRank(args[0], args[1]); err != nil {
+	if n, err := req.db.ZRevRank(args[0], args[1]); err != nil {
 		return err
 	} else if n == -1 {
-		c.resp.writeBulk(nil)
+		req.resp.writeBulk(nil)
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zremrangebyrankCommand(c *client) error {
-	args := c.args
+func zremrangebyrankCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
 
 	key := args[0]
 
-	start, stop, err := zparseRange(c, args[1], args[2])
+	start, stop, err := zparseRange(req, args[1], args[2])
 	if err != nil {
 		return err
 	}
 
-	if n, err := c.db.ZRemRangeByRank(key, start, stop); err != nil {
+	if n, err := req.db.ZRemRangeByRank(key, start, stop); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zremrangebyscoreCommand(c *client) error {
-	args := c.args
+func zremrangebyscoreCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -271,16 +271,16 @@ func zremrangebyscoreCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.ZRemRangeByScore(key, min, max); err != nil {
+	if n, err := req.db.ZRemRangeByScore(key, min, max); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zparseRange(c *client, a1 []byte, a2 []byte) (start int, stop int, err error) {
+func zparseRange(req *requestContext, a1 []byte, a2 []byte) (start int, stop int, err error) {
 	if start, err = strconv.Atoi(ledis.String(a1)); err != nil {
 		return
 	}
@@ -292,15 +292,15 @@ func zparseRange(c *client, a1 []byte, a2 []byte) (start int, stop int, err erro
 	return
 }
 
-func zrangeGeneric(c *client, reverse bool) error {
-	args := c.args
+func zrangeGeneric(req *requestContext, reverse bool) error {
+	args := req.args
 	if len(args) < 3 {
 		return ErrCmdParams
 	}
 
 	key := args[0]
 
-	start, stop, err := zparseRange(c, args[1], args[2])
+	start, stop, err := zparseRange(req, args[1], args[2])
 	if err != nil {
 		return err
 	}
@@ -312,24 +312,24 @@ func zrangeGeneric(c *client, reverse bool) error {
 		withScores = true
 	}
 
-	if datas, err := c.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
+	if datas, err := req.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
 		return err
 	} else {
-		c.resp.writeScorePairArray(datas, withScores)
+		req.resp.writeScorePairArray(datas, withScores)
 	}
 	return nil
 }
 
-func zrangeCommand(c *client) error {
-	return zrangeGeneric(c, false)
+func zrangeCommand(req *requestContext) error {
+	return zrangeGeneric(req, false)
 }
 
-func zrevrangeCommand(c *client) error {
-	return zrangeGeneric(c, true)
+func zrevrangeCommand(req *requestContext) error {
+	return zrangeGeneric(req, true)
 }
 
-func zrangebyscoreGeneric(c *client, reverse bool) error {
-	args := c.args
+func zrangebyscoreGeneric(req *requestContext, reverse bool) error {
+	args := req.args
 	if len(args) < 3 {
 		return ErrCmdParams
 	}
@@ -383,59 +383,59 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	if offset < 0 {
 		//for ledis, if offset < 0, a empty will return
 		//so here we directly return a empty array
-		c.resp.writeArray([]interface{}{})
+		req.resp.writeArray([]interface{}{})
 		return nil
 	}
 
-	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse); err != nil {
+	if datas, err := req.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse); err != nil {
 		return err
 	} else {
-		c.resp.writeScorePairArray(datas, withScores)
+		req.resp.writeScorePairArray(datas, withScores)
 	}
 
 	return nil
 }
 
-func zrangebyscoreCommand(c *client) error {
-	return zrangebyscoreGeneric(c, false)
+func zrangebyscoreCommand(req *requestContext) error {
+	return zrangebyscoreGeneric(req, false)
 }
 
-func zrevrangebyscoreCommand(c *client) error {
-	return zrangebyscoreGeneric(c, true)
+func zrevrangebyscoreCommand(req *requestContext) error {
+	return zrangebyscoreGeneric(req, true)
 }
 
-func zclearCommand(c *client) error {
-	args := c.args
+func zclearCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZClear(args[0]); err != nil {
+	if n, err := req.db.ZClear(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zmclearCommand(c *client) error {
-	args := c.args
+func zmclearCommand(req *requestContext) error {
+	args := req.args
 	if len(args) < 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZMclear(args...); err != nil {
+	if n, err := req.db.ZMclear(args...); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func zexpireCommand(c *client) error {
-	args := c.args
+func zexpireCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -445,17 +445,17 @@ func zexpireCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.db.ZExpire(args[0], duration); err != nil {
+	if v, err := req.db.ZExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func zexpireAtCommand(c *client) error {
-	args := c.args
+func zexpireAtCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -465,40 +465,40 @@ func zexpireAtCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.db.ZExpireAt(args[0], when); err != nil {
+	if v, err := req.db.ZExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func zttlCommand(c *client) error {
-	args := c.args
+func zttlCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.ZTTL(args[0]); err != nil {
+	if v, err := req.db.ZTTL(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func zpersistCommand(c *client) error {
-	args := c.args
+func zpersistCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZPersist(args[0]); err != nil {
+	if n, err := req.db.ZPersist(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil

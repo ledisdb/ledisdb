@@ -3,58 +3,81 @@ package server
 import (
 	"bufio"
 	"errors"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
+	"runtime"
 	"strconv"
+	"strings"
 )
 
-type tcpContext struct {
+var errReadRequest = errors.New("invalid request protocol")
+
+type respClient struct {
+	app *App
+	ldb *ledis.Ledis
+	db  *ledis.DB
+
 	conn net.Conn
+	rb   *bufio.Reader
+
+	req *requestContext
+	hdl *requestHandler
 }
 
-type tcpWriter struct {
+type respWriter struct {
 	buff *bufio.Writer
 }
 
-type tcpReader struct {
-	buff *bufio.Reader
+func newClientRESP(conn net.Conn, app *App) {
+	c := new(respClient)
+
+	c.app = app
+	c.conn = conn
+	c.ldb = app.ldb
+	c.db, _ = app.ldb.Select(0)
+
+	c.rb = bufio.NewReaderSize(conn, 256)
+
+	c.req = newRequestContext(app)
+	c.req.resp = newWriterRESP(conn)
+
+	c.hdl = newRequestHandler(app)
+
+	go c.run()
 }
 
-//	tcp context
+func (c *respClient) run() {
+	defer func() {
+		if e := recover(); e != nil {
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[0:n]
 
-func newTcpContext(conn net.Conn) *tcpContext {
-	ctx := new(tcpContext)
-	ctx.conn = conn
-	return ctx
-}
+			log.Fatal("client run panic %s:%v", buf, e)
+		}
 
-func (ctx *tcpContext) addr() string {
-	return ctx.conn.RemoteAddr().String()
-}
+		c.conn.Close()
+	}()
 
-func (ctx *tcpContext) release() {
-	if ctx.conn != nil {
-		ctx.conn.Close()
-		ctx.conn = nil
+	for {
+		reqData, err := c.readRequest()
+		if err != nil {
+			return
+		}
+
+		c.handleRequest(reqData)
 	}
 }
 
-//	tcp reader
-
-func newTcpReader(conn net.Conn) *tcpReader {
-	r := new(tcpReader)
-	r.buff = bufio.NewReaderSize(conn, 256)
-	return r
-}
-
-func (r *tcpReader) readLine() ([]byte, error) {
-	return ReadLine(r.buff)
+func (c *respClient) readLine() ([]byte, error) {
+	return ReadLine(c.rb)
 }
 
 //A client sends to the Redis server a RESP Array consisting of just Bulk Strings.
-func (r *tcpReader) read() ([][]byte, error) {
-	l, err := r.readLine()
+func (c *respClient) readRequest() ([][]byte, error) {
+	l, err := c.readLine()
 	if err != nil {
 		return nil, err
 	} else if len(l) == 0 || l[0] != '*' {
@@ -68,10 +91,10 @@ func (r *tcpReader) read() ([][]byte, error) {
 		return nil, errReadRequest
 	}
 
-	reqData := make([][]byte, 0, nparams)
+	req := make([][]byte, 0, nparams)
 	var n int
 	for i := 0; i < nparams; i++ {
-		if l, err = r.readLine(); err != nil {
+		if l, err = c.readLine(); err != nil {
 			return nil, err
 		}
 
@@ -82,20 +105,20 @@ func (r *tcpReader) read() ([][]byte, error) {
 			if n, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
 				return nil, err
 			} else if n == -1 {
-				reqData = append(reqData, nil)
+				req = append(req, nil)
 			} else {
 				buf := make([]byte, n)
-				if _, err = io.ReadFull(r.buff, buf); err != nil {
+				if _, err = io.ReadFull(c.rb, buf); err != nil {
 					return nil, err
 				}
 
-				if l, err = r.readLine(); err != nil {
+				if l, err = c.readLine(); err != nil {
 					return nil, err
 				} else if len(l) != 0 {
 					return nil, errors.New("bad bulk string format")
 				}
 
-				reqData = append(reqData, buf)
+				req = append(req, buf)
 
 			}
 
@@ -104,18 +127,35 @@ func (r *tcpReader) read() ([][]byte, error) {
 		}
 	}
 
-	return reqData, nil
+	return req, nil
 }
 
-//	tcp writer
+func (c *respClient) handleRequest(reqData [][]byte) {
+	req := c.req
 
-func newTcpWriter(conn net.Conn) *tcpWriter {
-	w := new(tcpWriter)
+	req.db = c.db
+	req.remoteAddr = c.conn.RemoteAddr().String()
+
+	if len(reqData) == 0 {
+		c.req.cmd = ""
+		c.req.args = reqData[0:0]
+	} else {
+		c.req.cmd = strings.ToLower(ledis.String(reqData[0]))
+		c.req.args = reqData[1:]
+	}
+
+	c.hdl.postRequest(req)
+}
+
+//	response writer
+
+func newWriterRESP(conn net.Conn) *respWriter {
+	w := new(respWriter)
 	w.buff = bufio.NewWriterSize(conn, 256)
 	return w
 }
 
-func (w *tcpWriter) writeError(err error) {
+func (w *respWriter) writeError(err error) {
 	w.buff.Write(ledis.Slice("-ERR"))
 	if err != nil {
 		w.buff.WriteByte(' ')
@@ -124,19 +164,19 @@ func (w *tcpWriter) writeError(err error) {
 	w.buff.Write(Delims)
 }
 
-func (w *tcpWriter) writeStatus(status string) {
+func (w *respWriter) writeStatus(status string) {
 	w.buff.WriteByte('+')
 	w.buff.Write(ledis.Slice(status))
 	w.buff.Write(Delims)
 }
 
-func (w *tcpWriter) writeInteger(n int64) {
+func (w *respWriter) writeInteger(n int64) {
 	w.buff.WriteByte(':')
 	w.buff.Write(ledis.StrPutInt64(n))
 	w.buff.Write(Delims)
 }
 
-func (w *tcpWriter) writeBulk(b []byte) {
+func (w *respWriter) writeBulk(b []byte) {
 	w.buff.WriteByte('$')
 	if b == nil {
 		w.buff.Write(NullBulk)
@@ -149,7 +189,7 @@ func (w *tcpWriter) writeBulk(b []byte) {
 	w.buff.Write(Delims)
 }
 
-func (w *tcpWriter) writeArray(lst []interface{}) {
+func (w *respWriter) writeArray(lst []interface{}) {
 	w.buff.WriteByte('*')
 	if lst == nil {
 		w.buff.Write(NullArray)
@@ -175,7 +215,7 @@ func (w *tcpWriter) writeArray(lst []interface{}) {
 	}
 }
 
-func (w *tcpWriter) writeSliceArray(lst [][]byte) {
+func (w *respWriter) writeSliceArray(lst [][]byte) {
 	w.buff.WriteByte('*')
 	if lst == nil {
 		w.buff.Write(NullArray)
@@ -190,7 +230,7 @@ func (w *tcpWriter) writeSliceArray(lst [][]byte) {
 	}
 }
 
-func (w *tcpWriter) writeFVPairArray(lst []ledis.FVPair) {
+func (w *respWriter) writeFVPairArray(lst []ledis.FVPair) {
 	w.buff.WriteByte('*')
 	if lst == nil {
 		w.buff.Write(NullArray)
@@ -206,7 +246,7 @@ func (w *tcpWriter) writeFVPairArray(lst []ledis.FVPair) {
 	}
 }
 
-func (w *tcpWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool) {
+func (w *respWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool) {
 	w.buff.WriteByte('*')
 	if lst == nil {
 		w.buff.Write(NullArray)
@@ -231,7 +271,7 @@ func (w *tcpWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool) 
 	}
 }
 
-func (w *tcpWriter) writeBulkFrom(n int64, rb io.Reader) {
+func (w *respWriter) writeBulkFrom(n int64, rb io.Reader) {
 	w.buff.WriteByte('$')
 	w.buff.Write(ledis.Slice(strconv.FormatInt(n, 10)))
 	w.buff.Write(Delims)
@@ -240,6 +280,6 @@ func (w *tcpWriter) writeBulkFrom(n int64, rb io.Reader) {
 	w.buff.Write(Delims)
 }
 
-func (w *tcpWriter) flush() {
+func (w *respWriter) flush() {
 	w.buff.Flush()
 }

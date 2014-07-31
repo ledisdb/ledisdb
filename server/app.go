@@ -123,7 +123,7 @@ func (app *App) Run() {
 			continue
 		}
 
-		newTcpClient(conn, app)
+		newClientRESP(conn, app)
 	}
 }
 
