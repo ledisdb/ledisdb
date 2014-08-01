@@ -210,7 +210,7 @@ func bexpireCommand(req *requestContext) error {
 
 func bexpireatCommand(req *requestContext) error {
 	args := req.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
@@ -230,7 +230,7 @@ func bexpireatCommand(req *requestContext) error {
 
 func bttlCommand(req *requestContext) error {
 	args := req.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
