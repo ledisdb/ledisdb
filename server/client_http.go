@@ -35,8 +35,6 @@ type httpWriter struct {
 	w           http.ResponseWriter
 }
 
-// http context
-
 func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
 	var err error
 	c := new(httpClient)
@@ -90,7 +88,11 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	}
 
 	req.cmd = strings.ToLower(cmd)
-	req.args = args
+
+	if req.cmd == "slaveof" || req.cmd == "fullsync" || req.cmd == "sync" {
+		return nil, fmt.Errorf("unsupported command: '%s'", cmd)
+	}
+
 	req.remoteAddr = c.addr(r)
 	req.resp = &httpWriter{contentType, cmd, w}
 	return req, nil
