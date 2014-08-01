@@ -33,10 +33,6 @@ type requestContext struct {
 
 	syncBuf     bytes.Buffer
 	compressBuf []byte
-}
-
-type requestHandler struct {
-	app *App
 
 	reqErr chan error
 
@@ -51,20 +47,12 @@ func newRequestContext(app *App) *requestContext {
 	req.db, _ = app.ldb.Select(0) //use default db
 
 	req.compressBuf = make([]byte, 256)
+	req.reqErr = make(chan error)
 
 	return req
 }
 
-func newRequestHandler(app *App) *requestHandler {
-	hdl := new(requestHandler)
-
-	hdl.app = app
-	hdl.reqErr = make(chan error)
-
-	return hdl
-}
-
-func (h *requestHandler) handle(req *requestContext) {
+func (req *requestContext) perform() {
 	var err error
 
 	start := time.Now()
@@ -75,26 +63,30 @@ func (h *requestHandler) handle(req *requestContext) {
 		err = ErrNotFound
 	} else {
 		go func() {
-			h.reqErr <- exeCmd(req)
+			req.reqErr <- exeCmd(req)
 		}()
 
-		err = <-h.reqErr
+		err = <-req.reqErr
 	}
 
 	duration := time.Since(start)
 
-	if h.app.access != nil {
-		fullCmd := h.catGenericCommand(req)
+	if req.app.access != nil {
+		fullCmd := req.catGenericCommand()
 		cost := duration.Nanoseconds() / 1000000
 
-		h.app.access.Log(req.remoteAddr, cost, fullCmd[:256], err)
+		truncateLen := len(fullCmd)
+		if truncateLen > 256 {
+			truncateLen = 256
+		}
+
+		req.app.access.Log(req.remoteAddr, cost, fullCmd[:truncateLen], err)
 	}
 
 	if err != nil {
 		req.resp.writeError(err)
 	}
 	req.resp.flush()
-
 	return
 }
 
@@ -109,8 +101,8 @@ func (h *requestHandler) handle(req *requestContext) {
 // 	return h.catGenericCommand(req)
 // }
 
-func (h *requestHandler) catGenericCommand(req *requestContext) []byte {
-	buffer := h.buf
+func (req *requestContext) catGenericCommand() []byte {
+	buffer := req.buf
 	buffer.Reset()
 
 	buffer.Write([]byte(req.cmd))

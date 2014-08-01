@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
-	. "github.com/siddontang/ledisdb/server/http"
 	"net"
 	"net/http"
 	"path"
@@ -134,7 +133,9 @@ func (app *App) httpServe() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", &CmdHandler{app.Ledis()})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		newClientHTTP(app, w, r)
+	})
 
 	svr := http.Server{Handler: mux}
 	svr.Serve(app.httpListener)

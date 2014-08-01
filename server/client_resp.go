@@ -23,7 +23,6 @@ type respClient struct {
 	rb   *bufio.Reader
 
 	req *requestContext
-	hdl *requestHandler
 }
 
 type respWriter struct {
@@ -43,8 +42,6 @@ func newClientRESP(conn net.Conn, app *App) {
 	c.req = newRequestContext(app)
 	c.req.resp = newWriterRESP(conn)
 	c.req.remoteAddr = conn.RemoteAddr().String()
-
-	c.hdl = newRequestHandler(app)
 
 	go c.run()
 }
@@ -144,7 +141,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 
 	req.db = c.db
 
-	c.hdl.handle(req)
+	c.req.perform()
 
 	c.db = req.db // "SELECT"
 
