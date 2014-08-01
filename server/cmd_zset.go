@@ -121,14 +121,15 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 		min = math.MinInt64
 	} else {
 		var lopen bool = false
-		if minBuf[0] == '(' {
-			lopen = true
-			minBuf = minBuf[1:]
-		}
 
 		if len(minBuf) == 0 {
 			err = ErrCmdParams
 			return
+		}
+
+		if minBuf[0] == '(' {
+			lopen = true
+			minBuf = minBuf[1:]
 		}
 
 		min, err = ledis.StrInt64(minBuf, nil)
@@ -150,14 +151,14 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 		max = math.MaxInt64
 	} else {
 		var ropen = false
-		if maxBuf[0] == '(' {
-			ropen = true
-			maxBuf = maxBuf[1:]
-		}
 
 		if len(maxBuf) == 0 {
 			err = ErrCmdParams
 			return
+		}
+		if maxBuf[0] == '(' {
+			ropen = true
+			maxBuf = maxBuf[1:]
 		}
 
 		max, err = ledis.StrInt64(maxBuf, nil)
