@@ -42,6 +42,7 @@ func newClientRESP(conn net.Conn, app *App) {
 
 	c.req = newRequestContext(app)
 	c.req.resp = newWriterRESP(conn)
+	c.req.remoteAddr = conn.RemoteAddr().String()
 
 	c.hdl = newRequestHandler(app)
 
@@ -133,9 +134,6 @@ func (c *respClient) readRequest() ([][]byte, error) {
 func (c *respClient) handleRequest(reqData [][]byte) {
 	req := c.req
 
-	req.db = c.db
-	req.remoteAddr = c.conn.RemoteAddr().String()
-
 	if len(reqData) == 0 {
 		c.req.cmd = ""
 		c.req.args = reqData[0:0]
@@ -144,7 +142,13 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.req.args = reqData[1:]
 	}
 
-	c.hdl.postRequest(req)
+	req.db = c.db
+
+	c.hdl.handle(req)
+
+	c.db = req.db // "SELECT"
+
+	return
 }
 
 //	response writer
