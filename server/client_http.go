@@ -89,7 +89,7 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 		args[i] = []byte(arg)
 	}
 
-	req.cmd = cmd
+	req.cmd = strings.ToLower(cmd)
 	req.args = args
 	req.remoteAddr = c.addr(r)
 	req.resp = &httpWriter{contentType, cmd, w}
