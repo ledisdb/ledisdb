@@ -107,87 +107,12 @@ db.Get(key)
       <!-- /benchmark-->
       <div class="row benchmark" id="benchmark"> 
       <h2>Benchmark</h2>
+      
+        <div id="container" style="width: 1150px; height: 400px; margin: 0 0 20px 0 "></div>
+        <div id="container_ledis" style="width: 1150px; height: 400px; margin: 0 auto"></div>
 
-        <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+      
 
-        <table class="hide" id="datatable">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Redis</th>
-              <th>SSDB</th>
-              <th>LedisDB</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th>SET</th>
-              <td>42735.04</td>
-              <td>35971.22</td>
-                    <td>38759.69</td>
-            </tr>
-            <tr>
-              <th>GET</th>
-              <td>45871.56</td>
-              <td>47393.37</td>
-              <td>40160.64</td>
-            </tr>
-            <tr>
-              <th>INCR</th>
-              <td>45248.87</td>
-              <td>36630.04</td>
-              <td>36101.08</td>
-            </tr>
-            <tr>
-              <th>LPUSH</th>
-              <td>45045.04</td>
-              <td>37174.72</td>
-              <td>33003.30</td>
-            </tr>
-            <tr>
-              <th>LPOP</th>
-              <td>43103.45</td>
-              <td>38167.94</td>
-              <td>27624.31</td>
-            </tr>
-            <tr>
-              <th>LPUSH-lrange</th>
-              <td>44843.05</td>
-              <td>37593.98</td>
-              <td>32894.74</td>
-            </tr>
-                <tr>
-              <th>LRANGE_100</th>
-              <td>14727.54</td>
-              <td>905.55</td>
-              <td>7352.94</td>
-            </tr>
-                <tr>
-              <th>LRANGE_300</th>
-              <td>6915.63</td>
-              <td>327.78</td>
-              <td>2867.79</td>
-            </tr>
-                 <tr>
-              <th>LRANGE_500</th>
-              <td>5042.86</td>
-              <td>222.36</td>
-              <td>1778.41</td>
-            </tr>
-                 <tr>
-              <th>LRANGE_600</th>
-              <td>3960.40</td>
-              <td>165.30</td>
-              <td>1590.33</td>
-            </tr>
-                 <tr>
-              <th>MSET</th>
-              <td>33003.30</td>
-              <td>33112.59</td>
-              <td>21881.84</td>
-            </tr>
-          </tbody>
-        </table>
         <br>
           <p>For more information, please take a look at <a href="https://github.com/siddontang/ledisdb/wiki/Benchmark"><em>benchmark.md</em></a>.</p>
       </div>
@@ -230,35 +155,97 @@ db.Get(key)
     <script src="http://code.highcharts.com/highcharts.js"></script>
     <script src="http://code.highcharts.com/modules/data.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
-    <script>
-    $(function () {
-         Highcharts.setOptions({
-         colors: ['#df4810', '#3d4c4e', '#45a797']
-    });
-        $('#container').highcharts({
-            data: {
-                table: document.getElementById('datatable')
-            },
-            chart: {
-                type: 'column'
-            },
-            title: {
-                text: 'Redis vs SSDB vs LedisDB'
-            },
-            yAxis: {
-                allowDecimals: false,
-                title: {
-                    text: 'Units'
-                }
-            },
-            tooltip: {
-                formatter: function() {
-                    return '<b>'+ this.series.name +'</b><br/>'+
-                        this.point.y +' '+ this.point.name.toLowerCase();
-                }
-            }
+    
+    <script type="text/javascript">
+    $(document).ready(function() {
+      
+
+      var options = {
+        chart: {
+          renderTo: 'container',
+          type: 'column'
+        },
+        title: {
+          text: 'Redis-Benchmark'
+        },
+        xAxis: {
+          categories: []
+        },
+        yAxis: {
+          title: {
+            text: 'Requests'
+          }
+        },
+        series: [],
+        colors: ['#df4810', '#3d4c4e', '#45a797', "#89C4F4", "#fddd67", "#5fa727"]
+      };
+      
+      var options_ledis = {
+        chart: {
+          renderTo: 'container_ledis',
+          type: 'column'
+        },
+        title: {
+          text: 'Ledis-Benchmark'
+        },
+        xAxis: {
+          categories: []
+        },
+        yAxis: {
+          title: {
+            text: 'Requests'
+          }
+        },
+        series: [],
+        colors: ['#df4810', '#3d4c4e', '#45a797', "#89C4F4", "#fddd67", "#5fa727"]
+      };
+      
+
+      $.get('redis.csv', function (data) {
+        parse(data, options);
+      });
+
+      $.get('ledis.csv', function (data){
+        parse(data, options_ledis)
+      })
+
+
+      function parse(data, options) {
+        // Split the lines
+        var lines = data.split('\n');
+        $.each(lines, function(lineNo, line) {
+          var items = line.split(',');
+          
+          // header line containes categories
+          if (lineNo == 0) {
+            $.each(items, function(itemNo, item) {
+              if (itemNo > 0) options.xAxis.categories.push(item);
+            });
+          }
+          
+          // the rest of the lines contain data with their name in the first position
+          // #HACKS: lineNo < 7. The csv file contains empty line. Ignore the 7th line.
+          else if (lineNo < 7) {
+            var series = { 
+              data: []
+            };
+            $.each(items, function(itemNo, item) {
+              if (itemNo == 0) {
+                series.name = item;
+              } else{
+                series.data.push(parseFloat(item));
+              }
+            });
+            
+            options.series.push(series);
+
+          }
+          
         });
-     
+        
+        var chart = new Highcharts.Chart(options);
+      }
+      
     });
     </script>
 
