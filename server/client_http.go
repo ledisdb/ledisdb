@@ -147,7 +147,11 @@ func (w *httpWriter) writeError(err error) {
 }
 
 func (w *httpWriter) writeStatus(status string) {
-	w.genericWrite(status)
+	var success bool
+	if status == OK || status == PONG {
+		success = true
+	}
+	w.genericWrite([]interface{}{success, status})
 }
 
 func (w *httpWriter) writeInteger(n int64) {
