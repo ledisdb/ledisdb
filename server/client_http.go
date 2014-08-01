@@ -92,6 +92,7 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	if req.cmd == "slaveof" || req.cmd == "fullsync" || req.cmd == "sync" {
 		return nil, fmt.Errorf("unsupported command: '%s'", cmd)
 	}
+	req.args = args
 
 	req.remoteAddr = c.addr(r)
 	req.resp = &httpWriter{contentType, cmd, w}
