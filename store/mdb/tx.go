@@ -45,10 +45,10 @@ func (t *Tx) newIterator() *MDBIterator {
 }
 
 func (t *Tx) NewWriteBatch() driver.IWriteBatch {
-	return &WriteBatch{t, []Write{}}
+	return driver.NewWriteBatch(t)
 }
 
-func (t *Tx) BatchPut(writes []Write) error {
+func (t *Tx) BatchPut(writes []driver.Write) error {
 	itr := t.newIterator()
 
 	for _, w := range writes {
