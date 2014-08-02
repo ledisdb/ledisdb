@@ -14,4 +14,7 @@ type Config struct {
 
 	//for lmdb
 	MapSize int `json:"map_size"`
+
+	//for boltdb
+	NoSync bool `json:"nosync"`
 }
