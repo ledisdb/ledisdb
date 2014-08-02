@@ -221,79 +221,79 @@ func TestHashErrorParams(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
-	if _, err := c.Do("hset", "test_hset"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hset", "test_hset"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hget", "test_hget"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hget", "test_hget"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hexists", "test_hexists"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hexists", "test_hexists"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hdel", "test_hdel"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hdel", "test_hdel"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hlen", "test_hlen", "a"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hlen", "test_hlen", "a"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hincrby", "test_hincrby"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hincrby", "test_hincrby"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hmset", "test_hmset"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hmset", "test_hmset"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hmset", "test_hmset", "f1", "v1", "f2"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hmset", "test_hmset", "f1", "v1", "f2"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hmget", "test_hget"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hmget", "test_hget"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hgetall"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hgetall"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hkeys"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hkeys"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hvals"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hvals"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hclear"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hclear"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hclear", "test_hclear", "a"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hclear", "test_hclear", "a"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hmclear"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hmclear"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hexpire", "test_hexpire"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hexpire", "test_hexpire"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hexpireat", "test_hexpireat"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hexpireat", "test_hexpireat"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("httl"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("httl"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("hpersist"); err == nil || err.Error() != SErrCmdParams {
+	if _, err := c.Do("hpersist"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
 

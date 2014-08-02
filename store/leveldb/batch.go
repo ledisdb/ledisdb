@@ -17,6 +17,8 @@ type WriteBatch struct {
 
 func (w *WriteBatch) Close() error {
 	C.leveldb_writebatch_destroy(w.wbatch)
+	w.wbatch = nil
+
 	return nil
 }
 

@@ -7,4 +7,5 @@ go get github.com/siddontang/go-snappy/snappy
 go get github.com/siddontang/copier
 
 go get github.com/siddontang/goleveldb/leveldb
-go get github.com/influxdb/gomdb
+
+go get -d github.com/siddontang/gomdb

@@ -4,6 +4,6 @@ import (
 	"github.com/siddontang/ledisdb/store/driver"
 )
 
-type WriteBatch interface {
-	driver.IWriteBatch
+type Tx interface {
+	driver.Tx
 }

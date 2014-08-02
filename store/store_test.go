@@ -59,7 +59,6 @@ func testBatch(db *DB, t *testing.T) {
 	db.Put(key2, value)
 
 	wb := db.NewWriteBatch()
-	defer wb.Close()
 
 	wb.Delete(key2)
 	wb.Put(key1, []byte("hello world2"))

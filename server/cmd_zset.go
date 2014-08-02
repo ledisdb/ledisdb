@@ -134,6 +134,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 
 		min, err = ledis.StrInt64(minBuf, nil)
 		if err != nil {
+			err = ErrValue
 			return
 		}
 
@@ -164,6 +165,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 
 		max, err = ledis.StrInt64(maxBuf, nil)
 		if err != nil {
+			err = ErrValue
 			return
 		}
 
@@ -188,7 +190,7 @@ func zcountCommand(c *client) error {
 
 	min, max, err := zparseScoreRange(args[1], args[2])
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if min > max {
@@ -249,7 +251,7 @@ func zremrangebyrankCommand(c *client) error {
 
 	start, stop, err := zparseRange(c, args[1], args[2])
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	if n, err := c.db.ZRemRangeByRank(key, start, stop); err != nil {
@@ -304,14 +306,21 @@ func zrangeGeneric(c *client, reverse bool) error {
 
 	start, stop, err := zparseRange(c, args[1], args[2])
 	if err != nil {
-		return err
+		return ErrValue
 	}
 
 	args = args[3:]
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(ledis.String(args[0])) == "withscores" {
-		withScores = true
+	if len(args) > 0 {
+		if len(args) != 1 {
+			return ErrCmdParams
+		}
+		if strings.ToLower(ledis.String(args[0])) == "withscores" {
+			withScores = true
+		} else {
+			return ErrSyntax
+		}
 	}
 
 	if datas, err := c.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
@@ -356,9 +365,11 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 
 	var withScores bool = false
 
-	if len(args) > 0 && strings.ToLower(ledis.String(args[0])) == "withscores" {
-		withScores = true
-		args = args[1:]
+	if len(args) > 0 {
+		if strings.ToLower(ledis.String(args[0])) == "withscores" {
+			withScores = true
+			args = args[1:]
+		}
 	}
 
 	var offset int = 0
@@ -370,15 +381,15 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 		}
 
 		if strings.ToLower(ledis.String(args[0])) != "limit" {
-			return ErrCmdParams
+			return ErrSyntax
 		}
 
 		if offset, err = strconv.Atoi(ledis.String(args[1])); err != nil {
-			return ErrCmdParams
+			return ErrValue
 		}
 
 		if count, err = strconv.Atoi(ledis.String(args[2])); err != nil {
-			return ErrCmdParams
+			return ErrValue
 		}
 	}
 
@@ -472,7 +483,6 @@ func zexpireAtCommand(c *client) error {
 	} else {
 		c.writeInteger(v)
 	}
-
 	return nil
 }
 

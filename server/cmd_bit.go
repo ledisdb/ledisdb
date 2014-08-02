@@ -44,13 +44,18 @@ func bsetbitCommand(c *client) error {
 	var val int8
 
 	offset, err = ledis.StrInt32(args[1], nil)
+
 	if err != nil {
-		return err
+		return ErrOffset
 	}
 
 	val, err = ledis.StrInt8(args[2], nil)
+	if val != 0 && val != 1 {
+		return ErrBool
+	}
+
 	if err != nil {
-		return err
+		return ErrBool
 	}
 
 	if ori, err := c.db.BSetBit(args[0], offset, uint8(val)); err != nil {
@@ -68,8 +73,9 @@ func bgetbitCommand(c *client) error {
 	}
 
 	offset, err := ledis.StrInt32(args[1], nil)
+
 	if err != nil {
-		return err
+		return ErrOffset
 	}
 
 	if v, err := c.db.BGetBit(args[0], offset); err != nil {
@@ -100,13 +106,18 @@ func bmsetbitCommand(c *client) error {
 	pairs := make([]ledis.BitPair, len(args)>>1)
 	for i := 0; i < len(pairs); i++ {
 		offset, err = ledis.StrInt32(args[i<<1], nil)
+
 		if err != nil {
-			return err
+			return ErrOffset
 		}
 
 		val, err = ledis.StrInt8(args[i<<1+1], nil)
+		if val != 0 && val != 1 {
+			return ErrBool
+		}
+
 		if err != nil {
-			return err
+			return ErrBool
 		}
 
 		pairs[i].Pos = offset
@@ -137,14 +148,14 @@ func bcountCommand(c *client) error {
 	if argCnt > 1 {
 		start, err = ledis.StrInt32(args[1], nil)
 		if err != nil {
-			return err
+			return ErrValue
 		}
 	}
 
 	if argCnt > 2 {
 		end, err = ledis.StrInt32(args[2], nil)
 		if err != nil {
-			return err
+			return ErrValue
 		}
 	}
 
@@ -180,6 +191,9 @@ func boptCommand(c *client) error {
 		return ErrCmdParams
 	}
 
+	if len(srcKeys) == 0 {
+		return ErrCmdParams
+	}
 	if blen, err := c.db.BOperation(op, dstKey, srcKeys...); err != nil {
 		return err
 	} else {
@@ -190,7 +204,7 @@ func boptCommand(c *client) error {
 
 func bexpireCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -208,9 +222,9 @@ func bexpireCommand(c *client) error {
 	return nil
 }
 
-func bexpireatCommand(c *client) error {
+func bexpireAtCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
@@ -230,7 +244,7 @@ func bexpireatCommand(c *client) error {
 
 func bttlCommand(c *client) error {
 	args := c.args
-	if len(args) == 0 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
@@ -267,7 +281,7 @@ func init() {
 	register("bcount", bcountCommand)
 	register("bopt", boptCommand)
 	register("bexpire", bexpireCommand)
-	register("bexpireat", bexpireatCommand)
+	register("bexpireat", bexpireAtCommand)
 	register("bttl", bttlCommand)
 	register("bpersist", bpersistCommand)
 }

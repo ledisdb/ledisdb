@@ -135,3 +135,7 @@ func (db *DB) NewIterator() driver.IIterator {
 
 	return it
 }
+
+func (db *DB) Begin() (driver.Tx, error) {
+	return nil, driver.ErrTxSupport
+}

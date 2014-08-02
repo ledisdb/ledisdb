@@ -1,0 +1,418 @@
+{
+    "BCOUNT": {
+        "arguments": "key [start end]",
+        "group": "Bitmap",
+        "readonly": true
+    },
+    "BDELETE": {
+        "arguments": "key",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "BEXPIRE": {
+        "arguments": "key seconds",
+        "group": "Bitmap",
+        "readonly": false
+    },
+    "BEXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "Bitmap",
+        "readonly": false,
+    },
+    "BGET": {
+        "arguments": "key",
+        "group": "Bitmap",
+        "readonly": true
+    },
+    "BGETBIT": {
+        "arguments": "key offset",
+        "group": "Bitmap",
+        "readonly": true
+    },
+    "BMSETBIT": {
+        "arguments": "key offset value [offset value ...]",
+        "group": "Bitmap",
+        "readonly": false
+    },
+    "BOPT": {
+        "arguments": "operation destkey key [key ...]",
+        "group": "Bitmap",
+        "readonly": false
+    },
+    "BPERSIST": {
+        "arguments": "key",
+        "group": "Bitmap",
+        "readonly": false
+    },
+    "BSETBIT": {
+        "arguments": "key offset value",
+        "group": "Bitmap",
+        "readonly": false
+    },
+    "BTTL": {
+        "arguments": "key",
+        "group": "Bitmap",
+        "readonly": true
+    },
+    "DECR": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": false
+    },
+    "DECRBY": {
+        "arguments": "key decrement",
+        "group": "KV",
+        "readonly": false
+    },
+    "DEL": {
+        "arguments": "key [key ...]",
+        "group": "KV",
+        "readonly": false
+    },
+    "ECHO": {
+        "arguments": "message",
+        "group": "Server",
+        "readonly": true
+    },
+    "EXISTS": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": true
+    },
+    "EXPIRE": {
+        "arguments": "key seconds",
+        "group": "KV",
+        "readonly": false
+    },
+    "EXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "KV",
+        "readonly": false
+    },
+    "FULLSYNC": {
+        "arguments": "-",
+        "group": "Replication",
+        "readonly": false
+
+    },
+    "GET": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": true
+    },
+    "GETSET": {
+        "arguments": " key value",
+        "group": "KV",
+        "readonly": false
+    },
+    "HCLEAR": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HDEL": {
+        "arguments": "key field [field ...]",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HEXISTS": {
+        "arguments": "key field",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HEXPIRE": {
+        "arguments": "key seconds",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HEXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HGET": {
+        "arguments": "key field",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HGETALL": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HINCRBY": {
+        "arguments": "key field increment",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HKEYS": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HLEN": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HMCLEAR": {
+        "arguments": "key [key ...]",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HMGET": {
+        "arguments": "key field [field ...]",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HMSET": {
+        "arguments": "key field value [field value ...]",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HPERSIST": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HSET": {
+        "arguments": "key field value",
+        "group": "Hash",
+        "readonly": false
+    },
+    "HTTL": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": true
+    },
+    "HVALS": {
+        "arguments": "key",
+        "group": "Hash",
+        "readonly": true
+    },
+    "INCR": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": false
+    },
+    "INCRBY": {
+        "arguments": "key increment",
+        "group": "KV",
+        "readonly": false
+    },
+    "LCLEAR": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": false
+    },
+    "LEXPIRE": {
+        "arguments": "key seconds",
+        "group": "List",
+        "readonly": false
+    },
+    "LEXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "List",
+        "readonly": false
+    },
+    "LINDEX": {
+        "arguments": "key index",
+        "group": "List",
+        "readonly": true
+    },
+    "LLEN": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": true
+    },
+    "LMCLEAR": {
+        "arguments": "key [key ...]",
+        "group": "List",
+        "readonly": false
+    },
+    "LPERSIST": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": false
+    },
+    "LPOP": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": false
+    },
+    "LPUSH": {
+        "arguments": "key value [value ...]",
+        "group": "List",
+        "readonly": false
+    },
+    "LRANGE": {
+        "arguments": "key start stop",
+        "group": "List",
+        "readonly": true
+    },
+    "LTTL": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": true
+    },
+    "MGET": {
+        "arguments": "key [key ...]",
+        "group": "KV",
+        "readonly": true
+    },
+    "MSET": {
+        "arguments": "key value [key value ...]",
+        "group": "KV",
+        "readonly": false
+    },
+    "PERSIST": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": false
+    },
+    "PING": {
+        "arguments": "-",
+        "group": "Server",
+        "readonly": true
+    },
+    "RPOP": {
+        "arguments": "key",
+        "group": "List",
+        "readonly": false
+    },
+    "RPUSH": {
+        "arguments": "key value [value ...]",
+        "group": "List",
+        "readonly": false
+    },
+    "SELECT": {
+        "arguments": "index",
+        "group": "Server",
+        "readonly": false
+    },
+    "SET": {
+        "arguments": "key value",
+        "group": "KV",
+        "readonly": false
+    },
+    "SETNX": {
+        "arguments": "key value",
+        "group": "KV",
+        "readonly": false
+    },
+    "SLAVEOF": {
+        "arguments": "host port",
+        "group": "Replication",
+        "readonly": false
+    },
+    "SYNC": {
+        "arguments": "index offset",
+        "group": "Replication",
+        "readonly": false
+    },
+    "TTL": {
+        "arguments": "key",
+        "group": "KV",
+        "readonly": true
+    },
+    "ZADD": {
+        "arguments": "key score member [score member ...]",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZCARD": {
+        "arguments": "key",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZCLEAR": {
+        "arguments": "key",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZCOUNT": {
+        "arguments": "key min max",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZEXPIRE": {
+        "arguments": "key seconds",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZEXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZINCRBY": {
+        "arguments": "key increment member",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZMCLEAR": {
+        "arguments": "key [key ...]",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZPERSIST": {
+        "arguments": "key",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZRANGE": {
+        "arguments": "key start stop [WITHSCORES]",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZRANGEBYSCORE": {
+        "arguments": "key min max [WITHSCORES] [LIMIT offset count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZRANK": {
+        "arguments": "key member",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZREM": {
+        "arguments": "key member [member ...]",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZREMRANGEBYRANK": {
+        "arguments": "key start stop",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZREMRANGEBYSCORE": {
+        "arguments": "key min max",
+        "group": "ZSet",
+        "readonly": false
+    },
+    "ZREVRANGE": {
+        "arguments": "key start stop [WITHSCORES]",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZREVRANGEBYSCORE": {
+        "arguments": "key max min  [WITHSCORES][LIMIT offset count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZREVRANK": {
+        "arguments": "key member",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZSCORE": {
+        "arguments": "key member",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZTTL": {
+        "arguments": "key",
+        "group": "ZSet",
+        "readonly": true
+    }
+}

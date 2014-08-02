@@ -17,6 +17,7 @@ type WriteBatch struct {
 
 func (w *WriteBatch) Close() error {
 	C.rocksdb_writebatch_destroy(w.wbatch)
+	w.wbatch = nil
 	return nil
 }
 

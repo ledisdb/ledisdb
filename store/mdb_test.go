@@ -1,3 +1,5 @@
+// +build !windows
+
 package store
 
 import (
@@ -27,6 +29,14 @@ func TestLMDB(t *testing.T) {
 	db := newTestLMDB()
 
 	testStore(db, t)
+
+	db.Close()
+}
+
+func TestLMDBTx(t *testing.T) {
+	db := newTestLMDB()
+
+	testTx(db, t)
 
 	db.Close()
 }
