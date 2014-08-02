@@ -85,7 +85,7 @@ func (db MDB) Put(key, value []byte) error {
 	return itr.Close()
 }
 
-func (db MDB) BatchPut(writes []Write) error {
+func (db MDB) BatchPut(writes []driver.Write) error {
 	itr := db.iterator(false)
 
 	for _, w := range writes {
@@ -258,7 +258,7 @@ func (db MDB) NewIterator() driver.IIterator {
 }
 
 func (db MDB) NewWriteBatch() driver.IWriteBatch {
-	return &WriteBatch{&db, []Write{}}
+	return driver.NewWriteBatch(db)
 }
 
 func (db MDB) Begin() (driver.Tx, error) {

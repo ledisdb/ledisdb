@@ -1,6 +1,6 @@
-package mdb
+package driver
 
-type batchPut interface {
+type BatchPuter interface {
 	BatchPut([]Write) error
 }
 
@@ -10,7 +10,7 @@ type Write struct {
 }
 
 type WriteBatch struct {
-	batch batchPut
+	batch BatchPuter
 	wb    []Write
 }
 
@@ -32,4 +32,8 @@ func (w *WriteBatch) Commit() error {
 func (w *WriteBatch) Rollback() error {
 	w.wb = w.wb[0:0]
 	return nil
+}
+
+func NewWriteBatch(puter BatchPuter) IWriteBatch {
+	return &WriteBatch{puter, []Write{}}
 }
