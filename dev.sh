@@ -35,7 +35,7 @@ CGO_LDFLAGS=
 # check dependent libray, now we only check simply, maybe later add proper checking way.
 
 # check snappy 
-if [ -f $LEVELDB_DIR/include/snappy.h ]; then
+if [ -f $SNAPPY_DIR/include/snappy.h ]; then
     CGO_CFLAGS="$CGO_CFLAGS -I$SNAPPY_DIR/include"
     CGO_CXXFLAGS="$CGO_CXXFLAGS -I$SNAPPY_DIR/include"
     CGO_LDFLAGS="$CGO_LDFLAGS -L$SNAPPY_DIR/lib -lsnappy"
