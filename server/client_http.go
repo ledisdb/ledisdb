@@ -23,6 +23,7 @@ var unsopportedCommands = map[string]struct{}{
 	"slaveof":  struct{}{},
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
+	"quit":     struct{}{},
 }
 
 type httpClient struct {

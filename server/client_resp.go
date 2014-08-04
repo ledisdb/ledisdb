@@ -138,6 +138,11 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.req.cmd = strings.ToLower(ledis.String(reqData[0]))
 		c.req.args = reqData[1:]
 	}
+	if c.req.cmd == "quit" {
+		c.req.resp.writeStatus(OK)
+		c.req.resp.flush()
+		c.conn.Close()
+	}
 
 	req.db = c.db
 
