@@ -5,36 +5,36 @@ import (
 	"strings"
 )
 
-func bgetCommand(c *client) error {
-	args := c.args
+func bgetCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.BGet(args[0]); err != nil {
+	if v, err := req.db.BGet(args[0]); err != nil {
 		return err
 	} else {
-		c.writeBulk(v)
+		req.resp.writeBulk(v)
 	}
 	return nil
 }
 
-func bdeleteCommand(c *client) error {
-	args := c.args
+func bdeleteCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.BDelete(args[0]); err != nil {
+	if n, err := req.db.BDelete(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 	return nil
 }
 
-func bsetbitCommand(c *client) error {
-	args := c.args
+func bsetbitCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -58,16 +58,16 @@ func bsetbitCommand(c *client) error {
 		return ErrBool
 	}
 
-	if ori, err := c.db.BSetBit(args[0], offset, uint8(val)); err != nil {
+	if ori, err := req.db.BSetBit(args[0], offset, uint8(val)); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(ori))
+		req.resp.writeInteger(int64(ori))
 	}
 	return nil
 }
 
-func bgetbitCommand(c *client) error {
-	args := c.args
+func bgetbitCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -78,16 +78,16 @@ func bgetbitCommand(c *client) error {
 		return ErrOffset
 	}
 
-	if v, err := c.db.BGetBit(args[0], offset); err != nil {
+	if v, err := req.db.BGetBit(args[0], offset); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(v))
+		req.resp.writeInteger(int64(v))
 	}
 	return nil
 }
 
-func bmsetbitCommand(c *client) error {
-	args := c.args
+func bmsetbitCommand(req *requestContext) error {
+	args := req.args
 	if len(args) < 3 {
 		return ErrCmdParams
 	}
@@ -124,16 +124,16 @@ func bmsetbitCommand(c *client) error {
 		pairs[i].Val = uint8(val)
 	}
 
-	if place, err := c.db.BMSetBit(key, pairs...); err != nil {
+	if place, err := req.db.BMSetBit(key, pairs...); err != nil {
 		return err
 	} else {
-		c.writeInteger(place)
+		req.resp.writeInteger(place)
 	}
 	return nil
 }
 
-func bcountCommand(c *client) error {
-	args := c.args
+func bcountCommand(req *requestContext) error {
+	args := req.args
 	argCnt := len(args)
 
 	if !(argCnt > 0 && argCnt <= 3) {
@@ -159,16 +159,16 @@ func bcountCommand(c *client) error {
 		}
 	}
 
-	if cnt, err := c.db.BCount(args[0], start, end); err != nil {
+	if cnt, err := req.db.BCount(args[0], start, end); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(cnt))
+		req.resp.writeInteger(int64(cnt))
 	}
 	return nil
 }
 
-func boptCommand(c *client) error {
-	args := c.args
+func boptCommand(req *requestContext) error {
+	args := req.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
@@ -194,16 +194,16 @@ func boptCommand(c *client) error {
 	if len(srcKeys) == 0 {
 		return ErrCmdParams
 	}
-	if blen, err := c.db.BOperation(op, dstKey, srcKeys...); err != nil {
+	if blen, err := req.db.BOperation(op, dstKey, srcKeys...); err != nil {
 		return err
 	} else {
-		c.writeInteger(int64(blen))
+		req.resp.writeInteger(int64(blen))
 	}
 	return nil
 }
 
-func bexpireCommand(c *client) error {
-	args := c.args
+func bexpireCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -213,17 +213,17 @@ func bexpireCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.BExpire(args[0], duration); err != nil {
+	if v, err := req.db.BExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func bexpireAtCommand(c *client) error {
-	args := c.args
+func bexpireAtCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -233,40 +233,40 @@ func bexpireAtCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.BExpireAt(args[0], when); err != nil {
+	if v, err := req.db.BExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func bttlCommand(c *client) error {
-	args := c.args
+func bttlCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.BTTL(args[0]); err != nil {
+	if v, err := req.db.BTTL(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(v)
+		req.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func bpersistCommand(c *client) error {
-	args := c.args
+func bpersistCommand(req *requestContext) error {
+	args := req.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.BPersist(args[0]); err != nil {
+	if n, err := req.db.BPersist(args[0]); err != nil {
 		return err
 	} else {
-		c.writeInteger(n)
+		req.resp.writeInteger(n)
 	}
 
 	return nil
