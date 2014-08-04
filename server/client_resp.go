@@ -142,6 +142,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.req.resp.writeStatus(OK)
 		c.req.resp.flush()
 		c.conn.Close()
+		return
 	}
 
 	req.db = c.db
