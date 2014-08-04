@@ -94,6 +94,14 @@ You must known that changing store database runtime is very dangerous, LedisDB w
     ledis 127.0.0.1:6380> get a
     "1"
 
+    //use curl
+    curl http://127.0.0.1:11181/SET/hello/world
+    → {"SET":[true,"OK"]}
+
+    curl http://127.0.0.1:11181/0/GET/hello?type=json
+    → {"GET":"world"}
+
+
 ## Package Example
     
     import "github.com/siddontang/ledisdb/ledis"
