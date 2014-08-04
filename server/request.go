@@ -107,12 +107,9 @@ func (req *requestContext) catGenericCommand() []byte {
 
 	buffer.Write([]byte(req.cmd))
 
-	nargs := len(req.args)
-	for i, arg := range req.args {
+	for _, arg := range req.args {
+		buffer.WriteByte(' ')
 		buffer.Write(arg)
-		if i != nargs-1 {
-			buffer.WriteByte(' ')
-		}
 	}
 
 	return buffer.Bytes()
