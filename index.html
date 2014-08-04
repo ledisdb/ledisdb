@@ -51,7 +51,8 @@
           <p>Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.</p>
           
           <h3>Various Backend </h3>
-          <p>Various backend databases to choose: LevelDB, goleveldb, LMDB, RocksDB.</p>
+          <p>Various backend databases to choose: </p>
+          <p>LevelDB, goleveldb, LMDB, RocksDB & BoltDB</p>
 
           <h3>Expiration & TTL</h3>
           <p>Supports expiration and ttl in all kinds of data structures.</p>
@@ -74,6 +75,10 @@
 
           <h3>Useful Tools</h3>
           <p>Supplies tools to load, dump, and repair database.</p>
+
+          <h3>RESTful API</h3>
+          <p>HTTP interfaces, can be directly accessed by HTTP Clients</p>
+
 
         </div>
       </div>
@@ -177,7 +182,7 @@ db.Get(key)
           }
         },
         series: [],
-        colors: ['#df4810', '#3d4c4e', '#45a797', "#89C4F4", "#fddd67", "#5fa727"]
+          colors: ['#45a797', "#89C4F4", "#9B59B6", "#fddd67", "#5fa727",'#df4810', '#3d4c4e']
       };
       
       var options_ledis = {
@@ -197,7 +202,7 @@ db.Get(key)
           }
         },
         series: [],
-        colors: ['#df4810', '#3d4c4e', '#45a797', "#89C4F4", "#fddd67", "#5fa727"]
+        colors: ['#45a797', "#89C4F4", "#9B59B6", "#fddd67", "#5fa727",'#df4810', '#3d4c4e']
       };
       
 
@@ -213,6 +218,7 @@ db.Get(key)
       function parse(data, options) {
         // Split the lines
         var lines = data.split('\n');
+        console.log(lines.length);
         $.each(lines, function(lineNo, line) {
           var items = line.split(',');
           
@@ -224,8 +230,7 @@ db.Get(key)
           }
           
           // the rest of the lines contain data with their name in the first position
-          // #HACKS: lineNo < 7. The csv file contains empty line. Ignore the 7th line.
-          else if (lineNo < 7) {
+          else if (lineNo < lines.length - 1) {
             var series = { 
               data: []
             };
