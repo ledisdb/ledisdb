@@ -52,7 +52,7 @@
           
           <h3>Various Backend </h3>
           <p>Various backend databases to choose: </p>
-          <p>LevelDB, goleveldb, LMDB, RocksDB & BoltDB.</p>
+          <p>LevelDB, goleveldb, LMDB, RocksDB or BoltDB.</p>
 
           <h3>Expiration & TTL</h3>
           <p>Supports expiration and ttl in all kinds of data structures.</p>
@@ -85,7 +85,8 @@
       </div>
 
       <div class="row examples" id="examples">
-        <h2>Examples</h2>
+        <div class="exmaple">
+        <h2>CLI Example</h2>
         <pre><code class="Bash">
 ./ledis-server -config=/etc/ledis.json
 
@@ -97,7 +98,21 @@ OK
 ledis 127.0.0.1:6380&gt; get a
 "1"
         </code></pre>
+      </div>
 
+      <div class"example">
+        <h2>RESTful Example</h2>
+        <pre><code class="Bash">
+//use curl
+curl http://127.0.0.1:11181/SET/hello/world
+→ {"SET":[true,"OK"]}
+
+curl http://127.0.0.1:11181/0/GET/hello?type=json
+→ {"GET":"world"}
+        </code></pre>
+      </div>
+
+      <div class="example">
         <h2>Lib Example</h2>
         <pre><code class="Bash">
 import "github.com/siddontang/ledisdb/ledis"
@@ -108,6 +123,7 @@ db.Set(key, value)
 
 db.Get(key)
           </code></pre>
+      </div>
       </div>
 
       <!-- /benchmark-->
