@@ -19,6 +19,9 @@ var allowedContentTypes = map[string]struct{}{
 	"bson":    struct{}{},
 	"msgpack": struct{}{},
 }
+var unsopportedCommands = map[string]struct{}{
+	"": struct{}{},
+}
 
 type httpClient struct {
 	app *App
@@ -55,14 +58,7 @@ func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *httpClient) addr(r *http.Request) string {
-	addr := r.Header.Get("X-Forwarded-For")
-	if addr == "" {
-		addr = r.Header.Get("X-Real-IP")
-		if addr == "" {
-			addr = r.Header.Get("Remote-Addr")
-		}
-	}
-	return addr
+	return r.RemoteAddr
 }
 
 func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWriter) (*requestContext, error) {
