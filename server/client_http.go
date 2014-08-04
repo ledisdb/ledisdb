@@ -20,7 +20,9 @@ var allowedContentTypes = map[string]struct{}{
 	"msgpack": struct{}{},
 }
 var unsopportedCommands = map[string]struct{}{
-	"": struct{}{},
+	"slaveof":  struct{}{},
+	"fullsync": struct{}{},
+	"sync":     struct{}{},
 }
 
 type httpClient struct {
@@ -84,10 +86,10 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	}
 
 	req.cmd = strings.ToLower(cmd)
-
-	if req.cmd == "slaveof" || req.cmd == "fullsync" || req.cmd == "sync" {
+	if _, ok := unsopportedCommands[req.cmd]; ok {
 		return nil, fmt.Errorf("unsupported command: '%s'", cmd)
 	}
+
 	req.args = args
 
 	req.remoteAddr = c.addr(r)
