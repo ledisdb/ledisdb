@@ -8,6 +8,6 @@ go get github.com/siddontang/copier
 
 go get github.com/siddontang/goleveldb/leveldb
 
-go get -d github.com/siddontang/gomdb
+go get github.com/szferi/gomdb
 
 go get github.com/boltdb/bolt

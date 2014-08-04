@@ -1,8 +1,8 @@
 package mdb
 
 import (
-	mdb "github.com/siddontang/gomdb"
 	"github.com/siddontang/ledisdb/store/driver"
+	mdb "github.com/szferi/gomdb"
 )
 
 type Tx struct {
@@ -53,7 +53,7 @@ func (t *Tx) BatchPut(writes []driver.Write) error {
 
 	for _, w := range writes {
 		if w.Value == nil {
-			itr.key, itr.value, itr.err = itr.c.Get(w.Key, mdb.SET)
+			itr.key, itr.value, itr.err = itr.c.Get(w.Key, nil, mdb.SET)
 			if itr.err == nil {
 				itr.err = itr.c.Del(0)
 			}
