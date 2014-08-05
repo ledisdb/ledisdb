@@ -2,7 +2,7 @@
 
 Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash, zset, bitmap, and may be alternative for Redis.
 
-LedisDB now supports multi database as backend to store data, you can test and choose the proper one for you.
+LedisDB now supports multi databases as backend to store data, you can test and choose the proper one for you.
 
 ## Features
 
@@ -60,7 +60,7 @@ Create a workspace and checkout ledisdb source
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, it will choose goleveldb as default to store data if you not set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, it will choose goleveldb as default to store data if you not set.
 
 Choosing a store database to use is very simple, you have two ways:
 
