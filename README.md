@@ -1,18 +1,19 @@
 # LedisDB
 
-Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash and zset, and may be alternative for Redis.
+Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash, zset, bitmap, and may be alternative for Redis.
 
 LedisDB now supports multi database as backend to store data, you can test and choose the proper one for you.
 
 ## Features
 
-+ Rich advanced data structure: KV, List, Hash, ZSet, Bit.
++ Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB.  
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB.  
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multi client API supports, including Golang, Python, Lua(Openresty). 
 + Easy to embed in Golang application. 
++ Restful API support, json/bson/msgpack output.
 + Replication to guarantee data safe.
 + Supplies tools to load, dump, repair database. 
 
@@ -93,6 +94,14 @@ You must known that changing store database runtime is very dangerous, LedisDB w
     OK
     ledis 127.0.0.1:6380> get a
     "1"
+
+    //use curl
+    curl http://127.0.0.1:11181/SET/hello/world
+    → {"SET":[true,"OK"]}
+
+    curl http://127.0.0.1:11181/0/GET/hello?type=json
+    → {"GET":"world"}
+
 
 ## Package Example
     

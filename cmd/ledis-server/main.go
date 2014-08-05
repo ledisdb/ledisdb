@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"github.com/siddontang/ledisdb/server"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -50,6 +53,10 @@ func main() {
 		<-sc
 
 		app.Close()
+	}()
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	app.Run()

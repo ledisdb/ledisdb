@@ -26,4 +26,14 @@
 //
 // After you send slaveof command, the slave will start to sync master's binlog and replicate from binlog.
 //
+// HTTP Interface
+//
+// LedisDB provides http interfaces for most commands(except the replication commands)
+//
+//  curl http://127.0.0.1:11181/SET/hello/world
+//  → {"SET":[true,"OK"]}
+//
+//  curl http://127.0.0.1:11181/0/GET/hello?type=json
+//  → {"GET":"world"}
+//
 package server

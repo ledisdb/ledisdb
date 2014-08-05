@@ -1,8 +1,8 @@
 package mdb
 
 import (
-	mdb "github.com/siddontang/gomdb"
 	"github.com/siddontang/ledisdb/store/driver"
+	mdb "github.com/szferi/gomdb"
 	"os"
 )
 
@@ -20,7 +20,7 @@ type MDB struct {
 func Open(c *Config) (MDB, error) {
 	path := c.Path
 	if c.MapSize == 0 {
-		c.MapSize = 1024 * 1024 * 1024
+		c.MapSize = 500 * 1024 * 1024
 	}
 
 	env, err := mdb.NewEnv()
@@ -90,7 +90,7 @@ func (db MDB) BatchPut(writes []driver.Write) error {
 
 	for _, w := range writes {
 		if w.Value == nil {
-			itr.key, itr.value, itr.err = itr.c.Get(w.Key, mdb.SET)
+			itr.key, itr.value, itr.err = itr.c.Get(w.Key, nil, mdb.SET)
 			if itr.err == nil {
 				itr.err = itr.c.Del(0)
 			}
@@ -125,7 +125,7 @@ func (db MDB) Delete(key []byte) error {
 	itr := db.iterator(false)
 	defer itr.Close()
 
-	itr.key, itr.value, itr.err = itr.c.Get(key, mdb.SET)
+	itr.key, itr.value, itr.err = itr.c.Get(key, nil, mdb.SET)
 	if itr.err == nil {
 		itr.err = itr.c.Del(0)
 	}
@@ -161,31 +161,31 @@ func (itr *MDBIterator) Error() error {
 }
 
 func (itr *MDBIterator) getCurrent() {
-	itr.key, itr.value, itr.err = itr.c.Get(nil, mdb.GET_CURRENT)
+	itr.key, itr.value, itr.err = itr.c.Get(nil, nil, mdb.GET_CURRENT)
 	itr.setState()
 }
 
 func (itr *MDBIterator) Seek(key []byte) {
-	itr.key, itr.value, itr.err = itr.c.Get(key, mdb.SET_RANGE)
+	itr.key, itr.value, itr.err = itr.c.Get(key, nil, mdb.SET_RANGE)
 	itr.setState()
 }
 func (itr *MDBIterator) Next() {
-	itr.key, itr.value, itr.err = itr.c.Get(nil, mdb.NEXT)
+	itr.key, itr.value, itr.err = itr.c.Get(nil, nil, mdb.NEXT)
 	itr.setState()
 }
 
 func (itr *MDBIterator) Prev() {
-	itr.key, itr.value, itr.err = itr.c.Get(nil, mdb.PREV)
+	itr.key, itr.value, itr.err = itr.c.Get(nil, nil, mdb.PREV)
 	itr.setState()
 }
 
 func (itr *MDBIterator) First() {
-	itr.key, itr.value, itr.err = itr.c.Get(nil, mdb.FIRST)
+	itr.key, itr.value, itr.err = itr.c.Get(nil, nil, mdb.FIRST)
 	itr.setState()
 }
 
 func (itr *MDBIterator) Last() {
-	itr.key, itr.value, itr.err = itr.c.Get(nil, mdb.LAST)
+	itr.key, itr.value, itr.err = itr.c.Get(nil, nil, mdb.LAST)
 	itr.setState()
 }
 

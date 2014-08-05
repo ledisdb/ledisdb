@@ -10,6 +10,8 @@ import (
 type Config struct {
 	Addr string `json:"addr"`
 
+	HttpAddr string `json:"http_addr"`
+
 	DataDir string `json:"data_dir"`
 
 	DB struct {
