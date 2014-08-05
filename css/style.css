@@ -175,3 +175,10 @@ p {
   margin-top: 30px;
 }
 
+.post p{
+  font-size: medium;
+}
+
+p.small.text-muted {
+  font-size: small;
+}
