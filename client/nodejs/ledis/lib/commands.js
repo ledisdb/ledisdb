@@ -69,11 +69,6 @@ module.exports = [
 	"lttl",
 	"lpersist",
 
-	"slaveof",
-	"fullsync",
-	"sync",
-
-
 	"zadd",
 	"zcard",
 	"zcount",
