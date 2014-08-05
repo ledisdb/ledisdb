@@ -4,7 +4,7 @@ This is a modification of [simplegeo/nodejs-redis](https://github.com/simplegeo/
 ###Setup
 Just copy (or move) the ledis directory into your project's **node_modules** directory.
 
-    cp -r /path/to/github.com/src/ledisdb/client/nodejs/ledis   /path/to/your/node_modules/
+    cp -r /path/to/ledisdb/client/nodejs/ledis   /path/to/your/node_modules/
     
 ###Example
 Below is the total content of example.js, including the ledisDB's special commands. 
