@@ -235,7 +235,6 @@ db.Get(key)
       function parse(data, options) {
         // Split the lines
         var lines = data.split('\n');
-        console.log(lines.length);
         $.each(lines, function(lineNo, line) {
           var items = line.split(',');
           
