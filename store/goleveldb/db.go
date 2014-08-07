@@ -5,24 +5,25 @@ import (
 	"github.com/siddontang/goleveldb/leveldb/cache"
 	"github.com/siddontang/goleveldb/leveldb/filter"
 	"github.com/siddontang/goleveldb/leveldb/opt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
+
 	"os"
 )
 
 const defaultFilterBits int = 10
 
-type Config struct {
-	Path string `json:"path"`
+type Store struct {
+}
 
-	Compression     bool `json:"compression"`
-	BlockSize       int  `json:"block_size"`
-	WriteBufferSize int  `json:"write_buffer_size"`
-	CacheSize       int  `json:"cache_size"`
-	MaxOpenFiles    int  `json:"max_open_files"`
+func (s Store) String() string {
+	return "goleveldb"
 }
 
 type DB struct {
-	cfg *Config
+	path string
+
+	cfg *config.LevelDBConfig
 
 	db *leveldb.DB
 
@@ -35,13 +36,14 @@ type DB struct {
 	filter filter.Filter
 }
 
-func Open(cfg *Config) (*DB, error) {
-	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
+func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return nil, err
 	}
 
 	db := new(DB)
-	db.cfg = cfg
+	db.path = path
+	db.cfg = &cfg.LevelDB
 
 	if err := db.open(); err != nil {
 		return nil, err
@@ -50,8 +52,8 @@ func Open(cfg *Config) (*DB, error) {
 	return db, nil
 }
 
-func Repair(cfg *Config) error {
-	db, err := leveldb.RecoverFile(cfg.Path, newOptions(cfg))
+func (s Store) Repair(path string, cfg *config.Config) error {
+	db, err := leveldb.RecoverFile(path, newOptions(&cfg.LevelDB))
 	if err != nil {
 		return err
 	}
@@ -67,18 +69,18 @@ func (db *DB) open() error {
 	db.iteratorOpts.DontFillCache = true
 
 	var err error
-	db.db, err = leveldb.OpenFile(db.cfg.Path, db.opts)
+	db.db, err = leveldb.OpenFile(db.path, db.opts)
 
 	return err
 }
 
-func newOptions(cfg *Config) *opt.Options {
+func newOptions(cfg *config.LevelDBConfig) *opt.Options {
 	opts := &opt.Options{}
 	opts.ErrorIfMissing = false
 
-	if cfg.CacheSize > 0 {
-		opts.BlockCache = cache.NewLRUCache(cfg.CacheSize)
-	}
+	cfg.Adjust()
+
+	opts.BlockCache = cache.NewLRUCache(cfg.CacheSize)
 
 	//we must use bloomfilter
 	opts.Filter = filter.NewBloomFilter(defaultFilterBits)
@@ -89,13 +91,8 @@ func newOptions(cfg *Config) *opt.Options {
 		opts.Compression = opt.SnappyCompression
 	}
 
-	if cfg.BlockSize > 0 {
-		opts.BlockSize = cfg.BlockSize
-	}
-
-	if cfg.WriteBufferSize > 0 {
-		opts.WriteBuffer = cfg.WriteBufferSize
-	}
+	opts.BlockSize = cfg.BlockSize
+	opts.WriteBuffer = cfg.WriteBufferSize
 
 	return opts
 }

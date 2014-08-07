@@ -11,6 +11,7 @@ package leveldb
 import "C"
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"runtime"
@@ -19,23 +20,21 @@ import (
 
 const defaultFilterBits int = 10
 
-type Config struct {
-	Path string `json:"path"`
-
-	Compression     bool `json:"compression"`
-	BlockSize       int  `json:"block_size"`
-	WriteBufferSize int  `json:"write_buffer_size"`
-	CacheSize       int  `json:"cache_size"`
-	MaxOpenFiles    int  `json:"max_open_files"`
+type Store struct {
 }
 
-func Open(cfg *Config) (*DB, error) {
-	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
+func (s Store) String() string {
+	return "leveldb"
+}
+
+func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return nil, err
 	}
 
 	db := new(DB)
-	db.cfg = cfg
+	db.path = path
+	db.cfg = &cfg.LevelDB
 
 	if err := db.open(); err != nil {
 		return nil, err
@@ -44,9 +43,10 @@ func Open(cfg *Config) (*DB, error) {
 	return db, nil
 }
 
-func Repair(cfg *Config) error {
+func (s Store) Repair(path string, cfg *config.Config) error {
 	db := new(DB)
-	db.cfg = cfg
+	db.cfg = &cfg.LevelDB
+	db.path = path
 
 	err := db.open()
 	defer db.Close()
@@ -57,7 +57,7 @@ func Repair(cfg *Config) error {
 	}
 
 	var errStr *C.char
-	ldbname := C.CString(db.cfg.Path)
+	ldbname := C.CString(path)
 	defer C.leveldb_free(unsafe.Pointer(ldbname))
 
 	C.leveldb_repair_db(db.opts.Opt, ldbname, &errStr)
@@ -68,7 +68,9 @@ func Repair(cfg *Config) error {
 }
 
 type DB struct {
-	cfg *Config
+	path string
+
+	cfg *config.LevelDBConfig
 
 	db *C.leveldb_t
 
@@ -88,7 +90,7 @@ func (db *DB) open() error {
 	db.initOptions(db.cfg)
 
 	var errStr *C.char
-	ldbname := C.CString(db.cfg.Path)
+	ldbname := C.CString(db.path)
 	defer C.leveldb_free(unsafe.Pointer(ldbname))
 
 	db.db = C.leveldb_open(db.opts.Opt, ldbname, &errStr)
@@ -99,14 +101,12 @@ func (db *DB) open() error {
 	return nil
 }
 
-func (db *DB) initOptions(cfg *Config) {
+func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	opts := NewOptions()
 
 	opts.SetCreateIfMissing(true)
 
-	if cfg.CacheSize <= 0 {
-		cfg.CacheSize = 4 * 1024 * 1024
-	}
+	cfg.Adjust()
 
 	db.cache = NewLRUCache(cfg.CacheSize)
 	opts.SetCache(db.cache)
@@ -121,21 +121,9 @@ func (db *DB) initOptions(cfg *Config) {
 		opts.SetCompression(SnappyCompression)
 	}
 
-	if cfg.BlockSize <= 0 {
-		cfg.BlockSize = 4 * 1024
-	}
-
 	opts.SetBlockSize(cfg.BlockSize)
 
-	if cfg.WriteBufferSize <= 0 {
-		cfg.WriteBufferSize = 4 * 1024 * 1024
-	}
-
 	opts.SetWriteBufferSize(cfg.WriteBufferSize)
-
-	if cfg.MaxOpenFiles < 1024 {
-		cfg.MaxOpenFiles = 1024
-	}
 
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/config"
 	"os"
 	"sync"
 	"testing"
@@ -28,28 +29,15 @@ func startTestApp() {
 	f := func() {
 		newTestLedisClient()
 
+		cfg := new(config.Config)
+		cfg.DataDir = "/tmp/testdb"
+		os.RemoveAll(cfg.DataDir)
+
+		cfg.Addr = "127.0.0.1:16380"
+
 		os.RemoveAll("/tmp/testdb")
 
-		var d = []byte(`
-            {
-                "data_dir" : "/tmp/testdb",
-                "addr" : "127.0.0.1:16380",
-                "db" : {        
-                    "compression":true,
-                    "block_size" : 32768,
-                    "write_buffer_size" : 2097152,
-                    "cache_size" : 20971520,
-                    "max_open_files" : 1024
-                }    
-            }
-            `)
-
-		cfg, err := NewConfig(d)
-		if err != nil {
-			println(err.Error())
-			panic(err)
-		}
-
+		var err error
 		testApp, err = NewApp(cfg)
 		if err != nil {
 			println(err.Error())

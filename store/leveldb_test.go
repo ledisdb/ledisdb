@@ -3,16 +3,18 @@
 package store
 
 import (
+	"github.com/siddontang/ledisdb/config"
+
 	"os"
 	"testing"
 )
 
 func newTestLevelDB() *DB {
-	cfg := new(Config)
-	cfg.Name = LevelDBName
-	cfg.Path = "/tmp/testdb/leveldb"
+	cfg := new(config.Config)
+	cfg.DBName = "leveldb"
+	cfg.DataDir = "/tmp/testdb"
 
-	os.RemoveAll(cfg.Path)
+	os.RemoveAll(getStorePath(cfg))
 
 	db, err := Open(cfg)
 	if err != nil {

@@ -3,6 +3,7 @@ package ledis
 import (
 	"bytes"
 	"fmt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"os"
 	"path"
@@ -30,26 +31,25 @@ func TestReplication(t *testing.T) {
 	var slave *Ledis
 	var err error
 
-	os.RemoveAll("/tmp/test_repl")
+	cfgM := new(config.Config)
+	cfgM.DataDir = "/tmp/test_repl/master"
 
-	master, err = OpenWithJsonConfig([]byte(`
-        {
-            "data_dir" : "/tmp/test_repl/master",
-            "binlog" : {
-            	"use" : true,
-                "max_file_size" : 50
-            }
-        } 
-        `))
+	cfgM.BinLog.MaxFileNum = 10
+	cfgM.BinLog.MaxFileSize = 50
+
+	os.RemoveAll(cfgM.DataDir)
+
+	master, err = Open(cfgM)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	slave, err = OpenWithJsonConfig([]byte(`
-        {
-            "data_dir" : "/tmp/test_repl/slave"
-        }
-        `))
+	cfgS := new(config.Config)
+	cfgS.DataDir = "/tmp/test_repl/slave"
+
+	os.RemoveAll(cfgS.DataDir)
+
+	slave, err = Open(cfgS)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestReplication(t *testing.T) {
 	db.HSet([]byte("c"), []byte("3"), []byte("value"))
 
 	for _, name := range master.binlog.LogNames() {
-		p := path.Join(master.binlog.cfg.Path, name)
+		p := path.Join(master.binlog.LogPath(), name)
 
 		err = slave.ReplicateFromBinLog(p)
 		if err != nil {

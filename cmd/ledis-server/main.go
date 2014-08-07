@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/server"
 	"log"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"syscall"
 )
 
-var configFile = flag.String("config", "/etc/ledis.json", "ledisdb config file")
+var configFile = flag.String("config", "", "ledisdb config file")
 var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 
 func main() {
@@ -20,19 +21,23 @@ func main() {
 
 	flag.Parse()
 
+	var cfg *config.Config
+	var err error
+
 	if len(*configFile) == 0 {
-		println("must use a config file")
-		return
+		println("no config set, using default config")
+		cfg = config.NewConfigDefault()
+	} else {
+		cfg, err = config.NewConfigWithFile(*configFile)
 	}
 
-	cfg, err := server.NewConfigWithFile(*configFile)
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
 	if len(*dbName) > 0 {
-		cfg.DB.Name = *dbName
+		cfg.DBName = *dbName
 	}
 
 	var app *server.App

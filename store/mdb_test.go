@@ -1,18 +1,19 @@
 package store
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"os"
+
 	"testing"
 )
 
 func newTestLMDB() *DB {
-	cfg := new(Config)
-	cfg.Name = LMDBName
-	cfg.Path = "/tmp/testdb/lmdb"
+	cfg := new(config.Config)
+	cfg.DBName = "lmdb"
+	cfg.DataDir = "/tmp/testdb"
+	cfg.LMDB.MapSize = 10 * 1024 * 1024
 
-	cfg.MapSize = 20 * 1024 * 1024
-
-	os.RemoveAll(cfg.Path)
+	os.RemoveAll(getStorePath(cfg))
 
 	db, err := Open(cfg)
 	if err != nil {
