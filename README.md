@@ -70,7 +70,7 @@ Choosing a store database to use is very simple, you have two ways:
 
 + Set in command flag
 
-        ledis-server -config=/etc/ledis.toml -db_name=leveldb
+        ledis-server -config=/etc/ledis.conf -db_name=leveldb
 
     Flag command set will overwrite config set.
 
@@ -78,12 +78,18 @@ Choosing a store database to use is very simple, you have two ways:
 
 You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 
+## Configuration
+
+LedisDB uses [toml](https://github.com/toml-lang/toml) as the preferred configuration format, also supports ```json``` because of some history reasons. The basic configuration ```./etc/ledis.conf``` in LedisDB source may help you.
+
+If you don't use a configuration, LedisDB will use the default for you.
+
 ## Server Example
     
     //set run environment if not
     source dev.sh
 
-    ledis-server -config=/etc/ledis.toml
+    ledis-server -config=/etc/ledis.conf
 
     //another shell
     ledis-cli -p 6380
