@@ -2,25 +2,29 @@ package store
 
 import (
 	"fmt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
+	"path"
 )
 
-const DefaultStoreName = "goleveldb"
+type Config config.Config
 
 type Store interface {
-	Open(cfg *Config) (driver.IDB, error)
-	Repair(cfg *Config) error
+	String() string
+	Open(path string, cfg *config.Config) (driver.IDB, error)
+	Repair(paht string, cfg *config.Config) error
 }
 
 var dbs = map[string]Store{}
 
-func Register(name string, store Store) {
+func Register(s Store) {
+	name := s.String()
 	if _, ok := dbs[name]; ok {
-		panic(fmt.Errorf("store %s is registered", name))
+		panic(fmt.Errorf("store %s is registered", s))
 	}
 
-	dbs[name] = store
+	dbs[name] = s
 }
 
 func ListStores() []string {
@@ -32,21 +36,36 @@ func ListStores() []string {
 	return s
 }
 
-func Open(cfg *Config) (*DB, error) {
-	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultStoreName
+func getStore(cfg *config.Config) (Store, error) {
+	if len(cfg.DBName) == 0 {
+		cfg.DBName = config.DefaultDBName
 	}
 
-	s, ok := dbs[cfg.Name]
+	s, ok := dbs[cfg.DBName]
 	if !ok {
-		return nil, fmt.Errorf("store %s is not registered", cfg.Name)
+		return nil, fmt.Errorf("store %s is not registered", cfg.DBName)
 	}
 
-	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
+	return s, nil
+}
+
+func getStorePath(cfg *config.Config) string {
+	return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
+}
+
+func Open(cfg *config.Config) (*DB, error) {
+	s, err := getStore(cfg)
+	if err != nil {
 		return nil, err
 	}
 
-	idb, err := s.Open(cfg)
+	path := getStorePath(cfg)
+
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		return nil, err
+	}
+
+	idb, err := s.Open(path, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +75,13 @@ func Open(cfg *Config) (*DB, error) {
 	return db, nil
 }
 
-func Repair(cfg *Config) error {
-	if len(cfg.Name) == 0 {
-		cfg.Name = DefaultStoreName
+func Repair(cfg *config.Config) error {
+	s, err := getStore(cfg)
+	if err != nil {
+		return err
 	}
 
-	s, ok := dbs[cfg.Name]
-	if !ok {
-		return fmt.Errorf("db %s is not registered", cfg.Name)
-	}
+	path := getStorePath(cfg)
 
-	return s.Repair(cfg)
+	return s.Repair(path, cfg)
 }

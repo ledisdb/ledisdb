@@ -2,46 +2,29 @@ package ledis
 
 import (
 	"bytes"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
 )
 
 func TestDump(t *testing.T) {
-	os.RemoveAll("/tmp/test_ledis_master")
-	os.RemoveAll("/tmp/test_ledis_slave")
+	cfgM := new(config.Config)
+	cfgM.DataDir = "/tmp/test_ledis_master"
 
-	var masterConfig = []byte(`
-    {
-        "data_dir" : "/tmp/test_ledis_master",
-        "data_db" : {
-            "compression":true,
-            "block_size" : 32768,
-            "write_buffer_size" : 2097152,
-            "cache_size" : 20971520
-        }
-    }
-    `)
+	os.RemoveAll(cfgM.DataDir)
 
-	master, err := OpenWithJsonConfig(masterConfig)
+	master, err := Open(cfgM)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var slaveConfig = []byte(`
-    {
-        "data_dir" : "/tmp/test_ledis_slave",
-        "data_db" : {
-            "compression":true,
-            "block_size" : 32768,
-            "write_buffer_size" : 2097152,
-            "cache_size" : 20971520
-        }
-    }
-    `)
+	cfgS := new(config.Config)
+	cfgS.DataDir = "/tmp/test_ledis_slave"
+	os.RemoveAll(cfgM.DataDir)
 
 	var slave *Ledis
-	if slave, err = OpenWithJsonConfig(slaveConfig); err != nil {
+	if slave, err = Open(cfgS); err != nil {
 		t.Fatal(err)
 	}
 

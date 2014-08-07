@@ -1,19 +1,20 @@
 package ledis
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
 func TestBinLog(t *testing.T) {
-	cfg := new(BinLogConfig)
+	cfg := new(config.Config)
 
-	cfg.MaxFileNum = 1
-	cfg.MaxFileSize = 1024
-	cfg.Path = "/tmp/ledis_binlog"
+	cfg.BinLog.MaxFileNum = 1
+	cfg.BinLog.MaxFileSize = 1024
+	cfg.DataDir = "/tmp/ledis_binlog"
 
-	os.RemoveAll(cfg.Path)
+	os.RemoveAll(cfg.DataDir)
 
 	b, err := NewBinLog(cfg)
 	if err != nil {
@@ -28,7 +29,7 @@ func TestBinLog(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if fs, err := ioutil.ReadDir(cfg.Path); err != nil {
+	if fs, err := ioutil.ReadDir(b.LogPath()); err != nil {
 		t.Fatal(err)
 	} else if len(fs) != 2 {
 		t.Fatal(len(fs))

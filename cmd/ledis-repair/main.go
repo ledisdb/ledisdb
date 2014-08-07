@@ -1,14 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
-	"io/ioutil"
 )
 
-var fileName = flag.String("config", "/etc/ledis.json", "ledisdb config file")
+var fileName = flag.String("config", "", "ledisdb config file")
 
 func main() {
 	flag.Parse()
@@ -18,14 +16,9 @@ func main() {
 		return
 	}
 
-	data, err := ioutil.ReadFile(*fileName)
-	if err != nil {
-		println(err.Error())
-		return
-	}
+	cfg, err := config.NewConfigWithFile(*fileName)
 
-	var cfg ledis.Config
-	if err = json.Unmarshal(data, &cfg); err != nil {
+	if err != nil {
 		println(err.Error())
 		return
 	}
@@ -35,7 +28,7 @@ func main() {
 		return
 	}
 
-	if err = store.Repair(cfg.NewDBConfig()); err != nil {
+	if err = store.Repair(cfg); err != nil {
 		println("repair error: ", err.Error())
 	}
 }

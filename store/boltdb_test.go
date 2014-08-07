@@ -1,16 +1,17 @@
 package store
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
 )
 
 func newTestBoltDB() *DB {
-	cfg := new(Config)
-	cfg.Name = BoltDBName
-	cfg.Path = "/tmp/testdb/boltdb"
+	cfg := new(config.Config)
+	cfg.DBName = "boltdb"
+	cfg.DataDir = "/tmp/testdb"
 
-	os.RemoveAll(cfg.Path)
+	os.RemoveAll(getStorePath(cfg))
 
 	db, err := Open(cfg)
 	if err != nil {

@@ -2,6 +2,7 @@ package boltdb
 
 import (
 	"github.com/boltdb/bolt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"path"
@@ -9,27 +10,26 @@ import (
 
 var bucketName = []byte("ledisdb")
 
-type Config struct {
-	Path   string `json:"path"`
-	NoSync bool   `json:"nosync"`
+type Store struct {
 }
 
-type DB struct {
-	cfg *Config
-	db  *bolt.DB
+func (s Store) String() string {
+	return "boltdb"
 }
 
-func Open(cfg *Config) (*DB, error) {
-	os.MkdirAll(cfg.Path, os.ModePerm)
-	name := path.Join(cfg.Path, "ledis_bolt.db")
+func (s Store) Open(dbPath string, cfg *config.Config) (driver.IDB, error) {
+	os.MkdirAll(dbPath, os.ModePerm)
+	name := path.Join(dbPath, "ledis_bolt.db")
 	db := new(DB)
 	var err error
+
+	db.path = name
+	db.cfg = cfg
+
 	db.db, err = bolt.Open(name, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	db.db.NoSync = cfg.NoSync
 
 	var tx *bolt.Tx
 	tx, err = db.db.Begin(true)
@@ -50,8 +50,14 @@ func Open(cfg *Config) (*DB, error) {
 	return db, nil
 }
 
-func Repair(cfg *Config) error {
+func (s Store) Repair(path string, cfg *config.Config) error {
 	return nil
+}
+
+type DB struct {
+	cfg  *config.Config
+	db   *bolt.DB
+	path string
 }
 
 func (db *DB) Close() error {

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"net/http"
@@ -10,7 +10,7 @@ import (
 )
 
 type App struct {
-	cfg *Config
+	cfg *config.Config
 
 	listener     net.Listener
 	httpListener net.Listener
@@ -35,9 +35,10 @@ func netType(s string) string {
 	}
 }
 
-func NewApp(cfg *Config) (*App, error) {
+func NewApp(cfg *config.Config) (*App, error) {
 	if len(cfg.DataDir) == 0 {
-		return nil, fmt.Errorf("must set data_dir first")
+		println("use default datadir %s", config.DefaultDataDir)
+		cfg.DataDir = config.DefaultDataDir
 	}
 
 	app := new(App)
@@ -72,7 +73,7 @@ func NewApp(cfg *Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.Open(cfg.NewLedisConfig()); err != nil {
+	if app.ldb, err = ledis.Open(cfg); err != nil {
 		return nil, err
 	}
 

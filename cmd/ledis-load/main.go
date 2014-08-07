@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
-	"io/ioutil"
 )
 
-var configPath = flag.String("config", "/etc/ledis.json", "ledisdb config file")
+var configPath = flag.String("config", "", "ledisdb config file")
 var dumpPath = flag.String("dump_file", "", "ledisdb dump file")
 
 func main() {
@@ -19,7 +18,7 @@ func main() {
 		return
 	}
 
-	data, err := ioutil.ReadFile(*configPath)
+	cfg, err := config.NewConfigWithFile(*configPath)
 	if err != nil {
 		println(err.Error())
 		return
@@ -30,24 +29,18 @@ func main() {
 		return
 	}
 
-	var cfg ledis.Config
-	if err = json.Unmarshal(data, &cfg); err != nil {
-		println(err.Error())
-		return
-	}
-
 	if len(cfg.DataDir) == 0 {
 		println("must set data dir")
 		return
 	}
 
-	ldb, err := ledis.Open(&cfg)
+	ldb, err := ledis.Open(cfg)
 	if err != nil {
 		println("ledis open error ", err.Error())
 		return
 	}
 
-	err = loadDump(&cfg, ldb)
+	err = loadDump(cfg, ldb)
 	ldb.Close()
 
 	if err != nil {
@@ -58,7 +51,7 @@ func main() {
 	println("Load OK")
 }
 
-func loadDump(cfg *ledis.Config, ldb *ledis.Ledis) error {
+func loadDump(cfg *config.Config, ldb *ledis.Ledis) error {
 	var err error
 	if err = ldb.FlushAll(); err != nil {
 		return err

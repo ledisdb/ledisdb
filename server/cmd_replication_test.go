@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
@@ -29,10 +30,11 @@ func TestReplication(t *testing.T) {
 	data_dir := "/tmp/test_replication"
 	os.RemoveAll(data_dir)
 
-	masterCfg := new(Config)
+	masterCfg := new(config.Config)
 	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
 	masterCfg.Addr = "127.0.0.1:11182"
-	masterCfg.BinLog.Use = true
+	masterCfg.BinLog.MaxFileSize = 1 * 1024 * 1024
+	masterCfg.BinLog.MaxFileNum = 10
 
 	var master *App
 	var slave *App
@@ -42,7 +44,7 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	slaveCfg := new(Config)
+	slaveCfg := new(config.Config)
 	slaveCfg.DataDir = fmt.Sprintf("%s/slave", data_dir)
 	slaveCfg.Addr = "127.0.0.1:11183"
 	slaveCfg.SlaveOf = masterCfg.Addr

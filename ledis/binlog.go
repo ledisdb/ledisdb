@@ -3,23 +3,15 @@ package ledis
 import (
 	"bufio"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"time"
-)
-
-const (
-	MaxBinLogFileSize int = 1024 * 1024 * 1024
-	MaxBinLogFileNum  int = 10000
-
-	DefaultBinLogFileSize int = MaxBinLogFileSize
-	DefaultBinLogFileNum  int = 10
 )
 
 /*
@@ -34,28 +26,10 @@ timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
 
 */
 
-type BinLogConfig struct {
-	Path        string `json:"path"`
-	MaxFileSize int    `json:"max_file_size"`
-	MaxFileNum  int    `json:"max_file_num"`
-}
-
-func (cfg *BinLogConfig) adjust() {
-	if cfg.MaxFileSize <= 0 {
-		cfg.MaxFileSize = DefaultBinLogFileSize
-	} else if cfg.MaxFileSize > MaxBinLogFileSize {
-		cfg.MaxFileSize = MaxBinLogFileSize
-	}
-
-	if cfg.MaxFileNum <= 0 {
-		cfg.MaxFileNum = DefaultBinLogFileNum
-	} else if cfg.MaxFileNum > MaxBinLogFileNum {
-		cfg.MaxFileNum = MaxBinLogFileNum
-	}
-}
-
 type BinLog struct {
-	cfg *BinLogConfig
+	path string
+
+	cfg *config.BinLogConfig
 
 	logFile *os.File
 
@@ -66,24 +40,15 @@ type BinLog struct {
 	lastLogIndex int64
 }
 
-func NewBinLogWithJsonConfig(data json.RawMessage) (*BinLog, error) {
-	var cfg BinLogConfig
-
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-
-	return NewBinLog(&cfg)
-}
-
-func NewBinLog(cfg *BinLogConfig) (*BinLog, error) {
-	cfg.adjust()
-
+func NewBinLog(cfg *config.Config) (*BinLog, error) {
 	l := new(BinLog)
 
-	l.cfg = cfg
+	l.cfg = &cfg.BinLog
+	l.cfg.Adjust()
 
-	if err := os.MkdirAll(cfg.Path, os.ModePerm); err != nil {
+	l.path = path.Join(cfg.DataDir, "bin_log")
+
+	if err := os.MkdirAll(l.path, os.ModePerm); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +88,7 @@ func (l *BinLog) flushIndex() error {
 }
 
 func (l *BinLog) loadIndex() error {
-	l.indexName = path.Join(l.cfg.Path, fmt.Sprintf("ledis-bin.index"))
+	l.indexName = path.Join(l.path, fmt.Sprintf("ledis-bin.index"))
 	if _, err := os.Stat(l.indexName); os.IsNotExist(err) {
 		//no index file, nothing to do
 	} else {
@@ -139,7 +104,7 @@ func (l *BinLog) loadIndex() error {
 				continue
 			}
 
-			if _, err := os.Stat(path.Join(l.cfg.Path, line)); err != nil {
+			if _, err := os.Stat(path.Join(l.path, line)); err != nil {
 				log.Error("load index line %s error %s", line, err.Error())
 				return err
 			} else {
@@ -180,7 +145,7 @@ func (l *BinLog) openNewLogFile() error {
 	var err error
 	lastName := l.getLogFile()
 
-	logPath := path.Join(l.cfg.Path, lastName)
+	logPath := path.Join(l.path, lastName)
 	if l.logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0666); err != nil {
 		log.Error("open new logfile error %s", err.Error())
 		return err
@@ -224,7 +189,7 @@ func (l *BinLog) checkLogFileSize() bool {
 
 func (l *BinLog) purge(n int) {
 	for i := 0; i < n; i++ {
-		logPath := path.Join(l.cfg.Path, l.logNames[i])
+		logPath := path.Join(l.path, l.logNames[i])
 		os.Remove(logPath)
 	}
 
@@ -265,11 +230,11 @@ func (l *BinLog) FormatLogFileName(index int64) string {
 }
 
 func (l *BinLog) FormatLogFilePath(index int64) string {
-	return path.Join(l.cfg.Path, l.FormatLogFileName(index))
+	return path.Join(l.path, l.FormatLogFileName(index))
 }
 
 func (l *BinLog) LogPath() string {
-	return l.cfg.Path
+	return l.path
 }
 
 func (l *BinLog) Purge(n int) error {
