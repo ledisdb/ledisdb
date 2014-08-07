@@ -13,4 +13,5 @@ go get github.com/boltdb/bolt
 
 go get gopkg.in/mgo.v2/bson
 go get github.com/ugorji/go/codec
+go get github.com/BurntSushi/toml
 
