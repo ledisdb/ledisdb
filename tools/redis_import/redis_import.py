@@ -10,6 +10,7 @@ import os
 from collections import OrderedDict as od
 
 import redis
+import ledis
 
 total = 0
 entries = 0
@@ -29,23 +30,39 @@ def scan_available(redis_client):
     return False
 
 
-def copy_key(redis_client, ledis_client, key):
+def set_ttl(redis_client, ledis_client, key, k_type):
+    k_types = {
+        "string": ledis_client.expire,
+        "list": ledis_client.lexpire,
+        "hash": ledis_client.hexpire,
+        "set": ledis_client.zexpire,
+        "zset": ledis_client.zexpire
+    }
+    timeout = redis_client.ttl(key)
+    if timeout > 0:
+        k_types[k_type](key, timeout)
+
+
+def copy_key(redis_client, ledis_client, key, convert=False):
     global entries
     k_type = redis_client.type(key)
     if k_type == "string":
         value = redis_client.get(key)
         ledis_client.set(key, value)
+        set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
 
     elif k_type == "list":
         _list = redis_client.lrange(key, 0, -1)
         for value in _list:
             ledis_client.rpush(key, value)
+        set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
 
     elif k_type == "hash":
         mapping = od(redis_client.hgetall(key))
         ledis_client.hmset(key, mapping)
+        set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
 
     elif k_type == "zset":
@@ -54,24 +71,47 @@ def copy_key(redis_client, ledis_client, key):
         for i in od(out).iteritems():
             pieces[i[0]] = int(i[1])
         ledis_client.zadd(key, **pieces)
+        set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
 
+    elif k_type == "set":
+        if convert:
+            print "Convert set %s to zset\n" % key
+            members = redis_client.smembers(key)
+            set_to_zset(ledis_client, key, members)
+            entries += 1
+        else:
+            print "KEY %s of TYPE %s will not be converted to Zset" % (key, k_type)
+
     else:
-        print "%s is not supported by LedisDB." % k_type
+        print "KEY %s of TYPE %s is not supported by LedisDB." % (key, k_type)
 
 
-def copy_keys(redis_client, ledis_client, keys):
+def copy_keys(redis_client, ledis_client, keys, convert=False):
     for key in keys:
-        copy_key(redis_client, ledis_client, key)
+        copy_key(redis_client, ledis_client, key, convert=convert)
 
 
-def copy(redis_client, ledis_client, redis_db):
-    global total
+def scan(redis_client, count=1000):
+    keys = []
+    total = redis_client.dbsize()
+
+    first = True
+    cursor = 0
+    while cursor != 0 or first:
+        cursor, data = redis_client.scan(cursor, count=count)
+        keys.extend(data)
+        first = False
+    print len(keys)
+    print total
+    assert len(keys) == total
+    return keys, total
+
+
+def copy(redis_client, ledis_client, count=1000, convert=False):
     if scan_available(redis_client):
-        total = redis_client.dbsize()
-        # scan return a
-        keys = redis_client.scan(cursor=0, count=total)[1] 
-        copy_keys(redis_client, ledis_client, keys)
+        keys, total = scan(redis_client, count=count)
+        copy_keys(redis_client, ledis_client, keys, convert=convert)
 
     else:
         msg = """We do not support Redis version less than 2.8.0.
@@ -83,23 +123,33 @@ def copy(redis_client, ledis_client, redis_db):
     print "%d keys, %d entries copied" % (total, entries)
 
 
+def set_to_zset(ledis_client, key, members):
+    d = {}
+    for m in members:
+        d[m] = int(0)
+    ledis_client.zadd(key, **d)
+
+
 def usage():
     usage = """
         Usage:
-        python %s redis_host redis_port redis_db ledis_host ledis_port
+        python %s redis_host redis_port redis_db ledis_host ledis_port [True]
         """
     print usage % os.path.basename(sys.argv[0])
 
 
 def main():
-    if len(sys.argv) != 6:
+    if len(sys.argv) < 6:
         usage()
         sys.exit()
-
-    (redis_host, redis_port, redis_db, ledis_host, ledis_port) = sys.argv[1:]
+    convert = False
+    if len(sys.argv) >= 6:
+        (redis_host, redis_port, redis_db, ledis_host, ledis_port) = sys.argv[1:6]
+        if len(sys.argv) == 7 and sys.argv[-1] == "True" or sys.argv[-1] == "true":
+            convert = True
 
     redis_c = redis.Redis(host=redis_host, port=int(redis_port), db=int(redis_db))
-    ledis_c = redis.Redis(host=ledis_host, port=int(ledis_port), db=int(redis_db))
+    ledis_c = ledis.Ledis(host=ledis_host, port=int(ledis_port), db=int(redis_db))
     try:
         redis_c.ping()
     except redis.ConnectionError:
@@ -112,8 +162,8 @@ def main():
         print "Could not connect to LedisDB Server"
         sys.exit()
 
-    copy(redis_c, ledis_c, redis_db)
-    print "done\n"  
+    copy(redis_c, ledis_c, convert=convert)
+    print "done\n"
 
 
 if __name__ == "__main__":
