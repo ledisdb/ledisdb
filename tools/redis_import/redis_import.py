@@ -95,6 +95,8 @@ def copy_keys(redis_client, ledis_client, keys, convert=False):
 def scan(redis_client, count=1000):
     keys = []
     total = redis_client.dbsize()
+    if total > 1000:
+        print "It may take a while, be patient please."
 
     first = True
     cursor = 0
@@ -102,14 +104,13 @@ def scan(redis_client, count=1000):
         cursor, data = redis_client.scan(cursor, count=count)
         keys.extend(data)
         first = False
-    print len(keys)
-    print total
     assert len(keys) == total
     return keys, total
 
 
 def copy(redis_client, ledis_client, count=1000, convert=False):
     if scan_available(redis_client):
+        print "\nTransfer begin ...\n"
         keys, total = scan(redis_client, count=count)
         copy_keys(redis_client, ledis_client, keys, convert=convert)
 
@@ -138,6 +139,18 @@ def usage():
     print usage % os.path.basename(sys.argv[0])
 
 
+def get_prompt(choice):
+    yes = set(['yes', 'ye', 'y', ''])
+    no = set(['no', 'n'])
+
+    if choice in yes:
+        return True
+    elif choice in no:
+        return False
+    else:
+        sys.stdout.write("Please respond with 'yes' or 'no'")
+
+
 def main():
     if len(sys.argv) < 6:
         usage()
@@ -147,6 +160,10 @@ def main():
         (redis_host, redis_port, redis_db, ledis_host, ledis_port) = sys.argv[1:6]
         if len(sys.argv) == 7 and sys.argv[-1] == "True" or sys.argv[-1] == "true":
             convert = True
+
+    choice = raw_input("[y/N]").lower()
+    if not get_prompt(choice):
+        sys.exit("No proceed")
 
     redis_c = redis.Redis(host=redis_host, port=int(redis_port), db=int(redis_db))
     ledis_c = ledis.Ledis(host=ledis_host, port=int(ledis_port), db=int(redis_db))
@@ -163,7 +180,7 @@ def main():
         sys.exit()
 
     copy(redis_c, ledis_c, convert=convert)
-    print "done\n"
+    print "Done\n"
 
 
 if __name__ == "__main__":

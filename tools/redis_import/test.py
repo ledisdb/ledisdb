@@ -132,7 +132,6 @@ def test_ttl():
         #     invalid.append(key)
 
         assert rds.ttl(key) == ledis_ttl(lds, key, k_type)
-    print len(invalid)
 
 if __name__ == "__main__":
     test()
