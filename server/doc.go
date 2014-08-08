@@ -9,7 +9,7 @@
 //
 // Start a ledis server is very simple:
 //
-//  cfg := new(Config)
+//  cfg := new(config.Config)
 //  cfg.Addr = "127.0.0.1:6380"
 //  cfg.DataDir = "/tmp/ledis"
 //  app := server.NewApp(cfg)

@@ -1,9 +1,9 @@
 package ledis
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
 	"time"
@@ -26,7 +26,7 @@ type DB struct {
 type Ledis struct {
 	sync.Mutex
 
-	cfg *Config
+	cfg *config.Config
 
 	ldb *store.DB
 	dbs [MaxDBNumber]*DB
@@ -37,22 +37,13 @@ type Ledis struct {
 	jobs *sync.WaitGroup
 }
 
-func OpenWithJsonConfig(configJson json.RawMessage) (*Ledis, error) {
-	var cfg Config
-
-	if err := json.Unmarshal(configJson, &cfg); err != nil {
-		return nil, err
-	}
-
-	return Open(&cfg)
-}
-
-func Open(cfg *Config) (*Ledis, error) {
+func Open(cfg *config.Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
-		return nil, fmt.Errorf("must set correct data_dir")
+		fmt.Printf("no datadir set, use default %s\n", config.DefaultDataDir)
+		cfg.DataDir = config.DefaultDataDir
 	}
 
-	ldb, err := store.Open(cfg.NewDBConfig())
+	ldb, err := store.Open(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +55,9 @@ func Open(cfg *Config) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if cfg.BinLog.Use {
+	if cfg.BinLog.MaxFileNum > 0 && cfg.BinLog.MaxFileSize > 0 {
 		println("binlog will be refactored later, use your own risk!!!")
-		l.binlog, err = NewBinLog(cfg.NewBinLogConfig())
+		l.binlog, err = NewBinLog(cfg)
 		if err != nil {
 			return nil, err
 		}

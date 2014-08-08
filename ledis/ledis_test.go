@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"os"
 	"sync"
 	"testing"
@@ -11,27 +12,15 @@ var testLedisOnce sync.Once
 
 func getTestDB() *DB {
 	f := func() {
-		var d = []byte(`
-            {
-            	"data_dir" : "/tmp/test_ledis",
-                "db" : {
-                    "compression":true,
-                    "block_size" : 32768,
-                    "write_buffer_size" : 2097152,
-                    "cache_size" : 20971520
-                },
+		cfg := new(config.Config)
+		cfg.DataDir = "/tmp/test_ledis"
+		cfg.BinLog.MaxFileSize = 1073741824
+		cfg.BinLog.MaxFileNum = 3
 
-                "binlog" : {
-                	"max_file_size" : 1073741824,
-                	"max_file_num" : 3
-                }	
-            }
-            `)
-
-		os.RemoveAll("/tmp/test_ledis")
+		os.RemoveAll(cfg.DataDir)
 
 		var err error
-		testLedis, err = OpenWithJsonConfig(d)
+		testLedis, err = Open(cfg)
 		if err != nil {
 			println(err.Error())
 			panic(err)

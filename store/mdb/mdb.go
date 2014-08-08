@@ -1,26 +1,30 @@
 package mdb
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	mdb "github.com/szferi/gomdb"
 	"os"
 )
 
-type Config struct {
-	Path    string `json:"path"`
-	MapSize int    `json:"map_size"`
+type Store struct {
+}
+
+func (s Store) String() string {
+	return "lmdb"
 }
 
 type MDB struct {
 	env  *mdb.Env
 	db   mdb.DBI
 	path string
+	cfg  *config.Config
 }
 
-func Open(c *Config) (MDB, error) {
-	path := c.Path
-	if c.MapSize == 0 {
-		c.MapSize = 500 * 1024 * 1024
+func (s Store) Open(path string, c *config.Config) (driver.IDB, error) {
+	mapSize := c.LMDB.MapSize
+	if mapSize <= 0 {
+		mapSize = 500 * 1024 * 1024
 	}
 
 	env, err := mdb.NewEnv()
@@ -33,7 +37,7 @@ func Open(c *Config) (MDB, error) {
 		return MDB{}, err
 	}
 
-	if err := env.SetMapSize(uint64(c.MapSize)); err != nil {
+	if err := env.SetMapSize(uint64(mapSize)); err != nil {
 		return MDB{}, err
 	}
 
@@ -72,7 +76,7 @@ func Open(c *Config) (MDB, error) {
 	return db, nil
 }
 
-func Repair(c *Config) error {
+func (s Store) Repair(path string, c *config.Config) error {
 	println("llmd not supports repair")
 	return nil
 }
