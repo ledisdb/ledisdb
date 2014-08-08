@@ -6,3 +6,9 @@
 3. Only Support Redis version greater than  `2.8.0`, because we use `scan` command to scan data.
    Also, you need `redis-py` greater than `2.9.0`
 
+
+
+## Usage
+
+
+       $ python redis_import.py redis_host redis_port redis_db ledis_host ledis_port [True]
