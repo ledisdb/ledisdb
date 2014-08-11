@@ -17,7 +17,7 @@
     "BEXPIREAT": {
         "arguments": "key timestamp",
         "group": "Bitmap",
-        "readonly": false,
+        "readonly": false
     },
     "BGET": {
         "arguments": "key",
