@@ -139,7 +139,6 @@ See [Issues todo](https://github.com/siddontang/ledisdb/issues?labels=todo&page=
 ## Links
 
 + [Official Website](http://ledisdb.com)
-+ [Author's Chinese Blog](http://blog.csdn.net/siddontang/article/category/2264003)
 + [GoDoc](https://godoc.org/github.com/siddontang/ledisdb)
 + [Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands)
 
