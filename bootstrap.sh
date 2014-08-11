@@ -11,7 +11,7 @@ go get github.com/szferi/gomdb
 
 go get github.com/boltdb/bolt
 
-go get gopkg.in/mgo.v2/bson
 go get github.com/ugorji/go/codec
 go get github.com/BurntSushi/toml
 
+go get github.com/siddontang/go-bson/bson

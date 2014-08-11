@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"encoding/json"
+	"github.com/siddontang/go-bson/bson"
 	"github.com/ugorji/go/codec"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var allowedContentTypes = map[string]struct{}{
