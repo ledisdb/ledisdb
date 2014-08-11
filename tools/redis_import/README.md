@@ -12,8 +12,7 @@
 ## Usage
 
 
-       $ python redis_import.py redis_host redis_port redis_db ledis_host ledis_port [True]
+       $ python redis_import.py redis_host redis_port redis_db ledis_host ledis_port
 
-The option `True` means convert `set` to `zset` or not, if not, set it to `False`.
 
-We will use the same db index as redis. That's to say, data in redis[0] will be transfer to ledisdb[0].
+We will use the same db index as redis. That's to say, data in redis[0] will be transfer to ledisdb[0]. But if redis db `index >= 16`, we will refuse to transfer, because ledisdb only support db `index < 16`.

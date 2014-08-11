@@ -47,10 +47,6 @@ def random_zset(client, words, length=1000):
     client.zadd("zsetName", **d)
 
 
-def random_set(client, words, length=1000):
-    client.sadd("setName", *words)
-
-
 def test():
     words = get_words()
     print "Flush all redis data before insert new."
@@ -68,13 +64,10 @@ def test():
     random_zset(rds, words)
     print "random_zset done"
 
-    random_set(rds, words)
-    print "random_set done"
 
     lds.lclear("listName")
     lds.hclear("hashName")
     lds.zclear("zsetName")
-    lds.zclear("setName")
     copy(rds, lds, convert=True)
 
     # for all keys
@@ -101,11 +94,6 @@ def test():
     z2 = lds.zrange("zsetName", 0, -1, withscores=True)
     assert z1 == z2
 
-    # fo set
-    assert set(rds.smembers("setName")) == set(lds.zrange("setName", 0, -1))
-    for key in lds.zrange("setName", 0, -1):
-        assert int(lds.zscore("setName", key)) == 0
-
 
 def ledis_ttl(ledis_client, key, k_type):
     ttls = {
@@ -113,7 +101,6 @@ def ledis_ttl(ledis_client, key, k_type):
         "list": lds.lttl,
         "hash": lds.httl,
         "zset": lds.zttl,
-        "set": lds.zttl
     }
     return ttls[k_type](key)
 

@@ -74,15 +74,6 @@ def copy_key(redis_client, ledis_client, key, convert=False):
         set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
 
-    elif k_type == "set":
-        if convert:
-            print "Convert set %s to zset\n" % key
-            members = redis_client.smembers(key)
-            set_to_zset(ledis_client, key, members)
-            entries += 1
-        else:
-            print "KEY %s of TYPE %s will not be converted to Zset" % (key, k_type)
-
     else:
         print "KEY %s of TYPE %s is not supported by LedisDB." % (key, k_type)
 
@@ -124,17 +115,10 @@ def copy(redis_client, ledis_client, count=1000, convert=False):
     print "%d keys, %d entries copied" % (total, entries)
 
 
-def set_to_zset(ledis_client, key, members):
-    d = {}
-    for m in members:
-        d[m] = int(0)
-    ledis_client.zadd(key, **d)
-
-
 def usage():
     usage = """
         Usage:
-        python %s redis_host redis_port redis_db ledis_host ledis_port [True]
+        python %s redis_host redis_port redis_db ledis_host ledis_port
         """
     print usage % os.path.basename(sys.argv[0])
 
@@ -158,8 +142,9 @@ def main():
     convert = False
     if len(sys.argv) >= 6:
         (redis_host, redis_port, redis_db, ledis_host, ledis_port) = sys.argv[1:6]
-        if len(sys.argv) == 7 and sys.argv[-1] == "True" or sys.argv[-1] == "true":
-            convert = True
+        if int(redis_db) >= 16:
+            print redis_db
+            sys.exit("LedisDB only support 16 databases([0-15]")
 
     choice = raw_input("[y/N]").lower()
     if not get_prompt(choice):
