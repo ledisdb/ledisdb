@@ -11,7 +11,7 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 + Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
-+ Multiple client API supports, including Go, Python, Lua(Openresty), Node.js. 
++ Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
 + Easy to embed in your own Go application. 
 + Restful API support, json/bson/msgpack output.
 + Replication to guarantee data safe.
