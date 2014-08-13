@@ -899,7 +899,7 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 		for _, pair := range scorePairs {
 			if score, ok := destMap[String(pair.Member)]; !ok {
-				destMap[String(pair.Member)] = pair.Score
+				destMap[String(pair.Member)] = pair.Score * weights[i]
 			} else {
 				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
 			}
@@ -966,7 +966,7 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 		for _, pair := range scorePairs {
 			if score, ok := destMap[String(pair.Member)]; !ok {
-				destMap[String(pair.Member)] = pair.Score
+				destMap[String(pair.Member)] = pair.Score * weights[i]
 			} else {
 				keptMembers = append(keptMembers, pair.Member)
 				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])

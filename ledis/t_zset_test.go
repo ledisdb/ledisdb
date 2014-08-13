@@ -338,7 +338,7 @@ func TestZInterStore(t *testing.T) {
 	db.ZAdd(key2, ScorePair{2, []byte("three")})
 
 	keys := [][]byte{key1, key2}
-	weights := []int64{1, 2}
+	weights := []int64{2, 3}
 	out := []byte("out")
 
 	n, err := db.ZInterStore(out, keys, weights, AggregateSum)
@@ -352,7 +352,7 @@ func TestZInterStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	if v != 5 {
+	if v != 8 {
 		t.Fatal("invalid value ", v)
 	}
 
@@ -370,7 +370,7 @@ func TestZInterStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	if v != 1 {
+	if v != 2 {
 		t.Fatal("invalid value ", v)
 	}
 
