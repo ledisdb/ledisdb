@@ -599,3 +599,109 @@ func TestZsetErrorParams(t *testing.T) {
 	}
 
 }
+
+func TestZUnionStore(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	if _, err := c.Do("zadd", "k1", "1", "one"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k1", "2", "two"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k2", "1", "two"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k2", "2", "three"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 3 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2", "aggregate", "min")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 3 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "aggregate", "max")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 3 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 2 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+}
+
+func TestZInterStore(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	if _, err := c.Do("zadd", "k1", "1", "one"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k1", "2", "two"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k2", "1", "two"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if _, err := c.Do("zadd", "k2", "2", "three"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 1 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "min", "weights", "1", "2")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 1 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "sum")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 1 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 3 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+}

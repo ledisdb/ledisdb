@@ -520,6 +520,120 @@ func zpersistCommand(req *requestContext) error {
 	return nil
 }
 
+func zparseZsetoptStore(args [][]byte) (destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte, err error) {
+	destKey = args[0]
+	nKeys, err := strconv.Atoi(ledis.String(args[1]))
+	if err != nil {
+		err = ErrValue
+		return
+	}
+	args = args[2:]
+	if len(args) < nKeys {
+		err = ErrSyntax
+		return
+	}
+
+	srcKeys = args[:nKeys]
+
+	args = args[nKeys:]
+
+	var weightsFlag = false
+	var aggregateFlag = false
+
+	for len(args) > 0 {
+		if strings.ToLower(ledis.String(args[0])) == "weights" {
+			if weightsFlag {
+				err = ErrSyntax
+				return
+			}
+
+			args = args[1:]
+			if len(args) < nKeys {
+				err = ErrSyntax
+				return
+			}
+
+			weights = make([]int64, nKeys)
+			for i, arg := range args[:nKeys] {
+				if weights[i], err = ledis.StrInt64(arg, nil); err != nil {
+					err = ErrValue
+					return
+				}
+			}
+			args = args[nKeys:]
+
+			weightsFlag = true
+
+		} else if strings.ToLower(ledis.String(args[0])) == "aggregate" {
+			if aggregateFlag {
+				err = ErrSyntax
+				return
+			}
+			if len(args) < 2 {
+				err = ErrSyntax
+				return
+			}
+
+			if strings.ToLower(ledis.String(args[1])) == "sum" {
+				aggregate = ledis.AggregateSum
+			} else if strings.ToLower(ledis.String(args[1])) == "min" {
+				aggregate = ledis.AggregateMin
+			} else if strings.ToLower(ledis.String(args[1])) == "max" {
+				aggregate = ledis.AggregateMax
+			} else {
+				err = ErrSyntax
+				return
+			}
+			args = args[2:]
+			aggregateFlag = true
+		} else {
+			err = ErrSyntax
+			return
+		}
+	}
+	if !aggregateFlag {
+		aggregate = ledis.AggregateSum
+	}
+	return
+}
+
+func zunionstoreCommand(req *requestContext) error {
+	args := req.args
+	if len(args) < 2 {
+		return ErrCmdParams
+	}
+
+	destKey, srcKeys, weights, aggregate, err := zparseZsetoptStore(args)
+	if err != nil {
+		return err
+	}
+	if n, err := req.db.ZUnionStore(destKey, srcKeys, weights, aggregate); err != nil {
+		return err
+	} else {
+		req.resp.writeInteger(n)
+	}
+
+	return nil
+}
+
+func zinterstoreCommand(req *requestContext) error {
+	args := req.args
+	if len(args) < 2 {
+		return ErrCmdParams
+	}
+
+	destKey, srcKeys, weights, aggregate, err := zparseZsetoptStore(args)
+	if err != nil {
+		return err
+	}
+	if n, err := req.db.ZInterStore(destKey, srcKeys, weights, aggregate); err != nil {
+		return err
+	} else {
+		req.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -535,6 +649,9 @@ func init() {
 	register("zrevrank", zrevrankCommand)
 	register("zrevrangebyscore", zrevrangebyscoreCommand)
 	register("zscore", zscoreCommand)
+
+	register("zunionstore", zunionstoreCommand)
+	register("zinterstore", zinterstoreCommand)
 
 	//ledisdb special command
 
