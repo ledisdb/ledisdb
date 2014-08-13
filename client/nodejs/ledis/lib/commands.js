@@ -83,6 +83,8 @@ module.exports = [
 	"zrevrank",
 	"zrevrangebyscore",
 	"zscore",
+    "zunionstore",
+    "zinterstore",
 
 
 	"zclear",

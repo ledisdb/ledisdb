@@ -35,4 +35,17 @@ client.bget("bit key 3", function(err, result){
     }
 });
 
-client.quit();
+//test zunionstore & zinterstore 
+client.zadd("zset1", 1, "one")
+client.zadd("zset1", 2, "two")
+
+client.zadd("zset2", 1, "one")
+client.zadd("zset2", 2, "two")
+client.zadd("zset2", 3, "three")
+
+client.zunionstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print)
+client.zrange("out", 0, -1, "withscores", ledis.print) 
+
+client.zinterstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print)
+client.zrange("out", 0, -1, "withscores", ledis.print) 
+client.quit()
