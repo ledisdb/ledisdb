@@ -931,8 +931,7 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	}
 
 	//todo add binlog
-	err := t.Commit()
-	if err != nil {
+	if err := t.Commit(); err != nil {
 		return 0, err
 	}
 	return int64(len(destMap)), nil
@@ -994,6 +993,11 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 			//add new
 			num++
 		}
+	}
+
+	//todo add binlog
+	if err := t.Commit(); err != nil {
+		return 0, err
 	}
 	return int64(len(keptMembers)), nil
 }
