@@ -995,6 +995,9 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
+	if _, err := db.zIncrSize(t, destKey, num); err != nil {
+		return 0, err
+	}
 	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err

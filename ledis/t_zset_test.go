@@ -314,6 +314,16 @@ func TestZUnionStore(t *testing.T) {
 	if v != 4 {
 		t.Fatal("invalid value ", v)
 	}
+
+	pairs, _ := db.ZRange(out, 0, -1)
+	n, err = db.ZCount(out, 0, 0XFFFE)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 3 {
+		t.Fatal("invalid value ", v)
+	}
 }
 
 func TestZInterStore(t *testing.T) {
@@ -363,6 +373,14 @@ func TestZInterStore(t *testing.T) {
 	}
 	if v != 1 {
 		t.Fatal("invalid value ", v)
+	}
+
+	n, err = db.ZCount(out, 0, 0XFFFF)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 1 {
+		t.Fatal("invalid value ", n)
 	}
 
 }
