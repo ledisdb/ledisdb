@@ -315,7 +315,6 @@ func TestZUnionStore(t *testing.T) {
 		t.Fatal("invalid value ", v)
 	}
 
-	pairs, _ := db.ZRange(out, 0, -1)
 	n, err = db.ZCount(out, 0, 0XFFFE)
 
 	if err != nil {
