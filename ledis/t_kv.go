@@ -2,7 +2,6 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 

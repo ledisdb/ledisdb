@@ -12,10 +12,10 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 	var minKey, maxKey []byte
 	var err error
 	if key != nil {
-		if err = db.checkKeySize(key); err != nil {
+		if err = checkKeySize(key); err != nil {
 			return nil, err
 		}
-		if minKey, err = db.encodeOffsetKey(dataType, key); err != nil {
+		if minKey, err = db.encodeMetaKey(dataType, key); err != nil {
 			return nil, err
 		}
 
@@ -41,7 +41,15 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 	}
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
+	if dataType == BitMetaType {
+		println(minKey[1])
+		println(maxKey[1])
+		it = db.db.RangeIterator(minKey, maxKey, rangeType)
+	}
+
+	//println(TypeName[dataType])
 	for ; it.Valid(); it.Next() {
+		println(TypeName[dataType])
 		if k, err := db.decodeMetaKey(dataType, it.Key()); err != nil {
 			continue
 		} else {
@@ -53,11 +61,14 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 }
 
 func (db *DB) encodeMinKey(dataType byte) ([]byte, error) {
-	return db.encodeOffsetKey(dataType, nil)
+	return db.encodeMetaKey(dataType, nil)
 }
 
 func (db *DB) encodeMaxKey(dataType byte) ([]byte, error) {
-	k := db.encodeOffsetKey(dataType, nil)
+	k, err := db.encodeMetaKey(dataType, nil)
+	if err != nil {
+		return nil, err
+	}
 	k[len(k)-1] = dataType + 1
 	return k, nil
 }
@@ -75,10 +86,10 @@ func (db *DB) encodeMetaKey(dataType byte, key []byte) ([]byte, error) {
 	case BitMetaType:
 		return db.bEncodeMetaKey(key), nil
 	default:
-		return nil, errInvalidDataType
+		return nil, errDataType
 	}
 }
-func (db *DB) decodeMetaKey(dataType, byte, ek []byte) ([]byte, error) {
+func (db *DB) decodeMetaKey(dataType byte, ek []byte) ([]byte, error) {
 	if len(ek) < 2 || ek[0] != db.index || ek[1] != dataType {
 		return nil, errMetaKey
 	}
