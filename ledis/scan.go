@@ -41,15 +41,8 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 	}
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	if dataType == BitMetaType {
-		println(minKey[1])
-		println(maxKey[1])
-		it = db.db.RangeIterator(minKey, maxKey, rangeType)
-	}
 
-	//println(TypeName[dataType])
 	for ; it.Valid(); it.Next() {
-		println(TypeName[dataType])
 		if k, err := db.decodeMetaKey(dataType, it.Key()); err != nil {
 			continue
 		} else {
