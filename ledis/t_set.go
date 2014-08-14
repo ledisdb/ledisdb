@@ -13,6 +13,9 @@ var errSSizeKey = errors.New("invalid ssize key")
 const (
 	setStartSep byte = ':'
 	setStopSep  byte = setStartSep + 1
+	UnionType   byte = 51
+	DiffType    byte = 52
+	InterType   byte = 53
 )
 
 func checkSetKMSize(key []byte, member []byte) error {
@@ -101,9 +104,25 @@ func (db *DB) sEncodeStopKey(key []byte) []byte {
 	return k
 }
 
-// func (db *DB) sFlush() {
+func (db *DB) sFlush() (drop int64, err error) {
+	minKey := make([]byte, 2)
+	minKey[0] = db.index
+	minKey[1] = SetType
 
-// }
+	maxKey := make([]byte, 2)
+	maxKey[0] = db.index
+	maxKey[1] = SSizeType + 1
+
+	t := db.setTx
+	t.Lock()
+	defer t.Unlock()
+
+	drop, err = db.flushRegion(t, minKey, maxKey)
+	err = db.expFlush(t, SetType)
+
+	err = t.Commit()
+	return
+}
 
 func (db *DB) sDelete(t *tx, key []byte) int64 {
 	sk := db.sEncodeSizeKey(key)
@@ -223,24 +242,124 @@ func (db *DB) SCard(key []byte) (int64, error) {
 	return Int64(db.db.Get(sk))
 }
 
-// TODO
-// func (db *DB) sDiffGeneric()
+func (db *DB) sDiffGeneric(keys ...[]byte) ([][]byte, error) {
+	destMap := make(map[string]bool)
 
-// func (db *DB) SDiff() {
+	members, err := db.SMembers(keys[0])
+	if err != nil {
+		return nil, err
+	}
 
-// }
+	for _, m := range members {
+		destMap[String(m)] = true
+	}
 
-// func (db *DB) SDiffStore() {
+	for _, k := range keys[1:] {
+		members, err := db.SMembers(k)
+		if err != nil {
+			return nil, err
+		}
 
-// }
+		for _, m := range members {
+			if _, ok := destMap[String(m)]; !ok {
+				continue
+			} else if ok {
+				delete(destMap, String(m))
+			}
+		}
+		// O - A = O, O is zero set.
+		if len(destMap) == 0 {
+			return nil, nil
+		}
+	}
 
-// func (db *DB) SInter() {
+	slice := make([][]byte, len(destMap))
+	idx := 0
+	for k, v := range destMap {
+		if !v {
+			continue
+		}
+		slice[idx] = []byte(k)
+		idx++
+	}
 
-// }
+	return slice, nil
+}
 
-// func (db *DB) SInterStore() {
+func (db *DB) SDiff(keys ...[]byte) ([][]byte, error) {
+	v, err := db.sDiffGeneric(keys...)
+	return v, err
+}
 
-// }
+func (db *DB) SDiffStore(dstKey []byte, keys ...[]byte) (int64, error) {
+	n, err := db.sStoreGeneric(dstKey, DiffType, keys...)
+	return n, err
+}
+
+func (db *DB) sInterGeneric(keys ...[]byte) ([][]byte, error) {
+	destMap := make(map[string]bool)
+
+	members, err := db.SMembers(keys[0])
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range members {
+		destMap[String(m)] = true
+	}
+
+	for _, key := range keys[1:] {
+		if err := checkKeySize(key); err != nil {
+			return nil, err
+		}
+
+		members, err := db.SMembers(key)
+		if err != nil {
+			return nil, err
+		} else if len(members) == 0 {
+			return nil, err
+		}
+
+		tempMap := make(map[string]bool)
+		for _, member := range members {
+			if err := checkKeySize(member); err != nil {
+				return nil, err
+			}
+			if _, ok := destMap[String(member)]; ok {
+				tempMap[String(member)] = true //mark this item as selected
+			}
+		}
+		destMap = tempMap //reduce the size of the result set
+		if len(destMap) == 0 {
+			return nil, nil
+		}
+	}
+
+	slice := make([][]byte, len(destMap))
+	idx := 0
+	for k, v := range destMap {
+		if !v {
+			continue
+		}
+
+		slice[idx] = []byte(k)
+		idx++
+	}
+
+	return slice, nil
+
+}
+
+func (db *DB) SInter(keys ...[]byte) ([][]byte, error) {
+	v, err := db.sInterGeneric(keys...)
+	return v, err
+
+}
+
+func (db *DB) SInterStore(dstKey []byte, keys ...[]byte) (int64, error) {
+	n, err := db.sStoreGeneric(dstKey, InterType, keys...)
+	return n, err
+}
 
 func (db *DB) SIsMember(key []byte, member []byte) (int64, error) {
 	ek := db.sEncodeSetKey(key, member)
@@ -317,35 +436,100 @@ func (db *DB) SRem(key []byte, args ...[]byte) (int64, error) {
 
 }
 
-// TODO
-// func (db *DB) sUnionGeneric(keys ...[]byte) ([][]byte, error) {
+func (db *DB) sUnionGeneric(keys ...[]byte) ([][]byte, error) {
+	dstMap := make(map[string]bool)
 
-// 	for _, key := range keys {
-// 		if err := checkKeySize(key); err != nil {
-// 			return nil, err
-// 		}
+	for _, key := range keys {
+		if err := checkKeySize(key); err != nil {
+			return nil, err
+		}
 
-// 	}
-// }
+		members, err := db.SMembers(key)
+		if err != nil {
+			return nil, err
+		}
 
-// func (db *DB) SUnion(keys ...[]byte) ([][]byte, error) {
+		for _, member := range members {
+			dstMap[String(member)] = true
+		}
+	}
 
-// 	if v, err := db.sUnionGeneric(keys); err != nil {
-// 		return nil, err
-// 	} else if v == nil {
-// 		return nil, nil
-// 	} else {
-// 		return v, nil
-// 	}
+	slice := make([][]byte, len(dstMap))
+	idx := 0
+	for k, v := range dstMap {
+		if !v {
+			continue
+		}
+		slice[idx] = []byte(k)
+		idx++
+	}
 
-// }
+	return slice, nil
+}
 
-// func (db *DB) SUnionStore(dstkey []byte, keys []byte) (int64, error) {
-// 	if err := checkKeySize(dstkey); err != nil {
-// 		return 0, err
-// 	}
+func (db *DB) SUnion(keys ...[]byte) ([][]byte, error) {
+	v, err := db.sUnionGeneric(keys...)
+	return v, err
+}
 
-// }
+func (db *DB) SUnionStore(dstKey []byte, keys ...[]byte) (int64, error) {
+	n, err := db.sStoreGeneric(dstKey, UnionType, keys...)
+	return n, err
+}
+
+func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64, error) {
+	if err := checkKeySize(dstKey); err != nil {
+		return 0, err
+	}
+
+	t := db.setTx
+	t.Lock()
+	defer t.Unlock()
+
+	db.sDelete(t, dstKey)
+
+	var err error
+	var ek []byte
+	var num int64 = 0
+	var v [][]byte
+
+	switch optType {
+	case UnionType:
+		v, err = db.sUnionGeneric(keys...)
+	case DiffType:
+		v, err = db.sDiffGeneric(keys...)
+	case InterType:
+		v, err = db.sInterGeneric(keys...)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	for _, m := range v {
+		if err := checkSetKMSize(dstKey, m); err != nil {
+			return 0, err
+		}
+
+		ek = db.sEncodeSetKey(dstKey, m)
+
+		if v, err := db.db.Get(ek); err != nil {
+			return 0, err
+		} else if v == nil {
+			num++
+		}
+
+		t.Put(ek, nil)
+
+	}
+
+	if _, err = db.sIncrSize(dstKey, num); err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
+	return num, err
+}
 
 func (db *DB) SClear(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {

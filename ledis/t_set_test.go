@@ -126,3 +126,203 @@ func TestDBSet(t *testing.T) {
 	}
 
 }
+
+func TestSetOperation(t *testing.T) {
+	db := getTestDB()
+	// testUnion(db, t)
+	testInter(db, t)
+	// testDiff(db, t)
+
+}
+
+func testUnion(db *DB, t *testing.T) {
+
+	key := []byte("testdb_set_union_1")
+	key1 := []byte("testdb_set_union_2")
+	key2 := []byte("testdb_set_union_2")
+	// member1 := []byte("testdb_set_m1")
+	// member2 := []byte("testdb_set_m2")
+
+	m1 := []byte("m1")
+	m2 := []byte("m2")
+	m3 := []byte("m3")
+	db.SAdd(key, m1, m2)
+	db.SAdd(key1, m1, m3)
+	db.SAdd(key2, m2, m3)
+	if _, err := db.sUnionGeneric(key, key2); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := db.SUnion(key, key2); err != nil {
+		t.Fatal(err)
+	}
+
+	dstkey := []byte("union_dsk")
+	if num, err := db.SUnionStore(dstkey, key1, key2); err != nil {
+		t.Fatal(err)
+	} else if num != 3 {
+		t.Fatal(num)
+	}
+	if _, err := db.SMembers(dstkey); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := db.SCard(dstkey); err != nil {
+		t.Fatal(err)
+	} else if n != 3 {
+		t.Fatal(n)
+	}
+
+	v1, _ := db.SUnion(key1, key2)
+	v2, _ := db.SUnion(key2, key1)
+	if len(v1) != len(v2) {
+		t.Fatal(v1, v2)
+	}
+
+	v1, _ = db.SUnion(key, key1, key2)
+	v2, _ = db.SUnion(key, key2, key1)
+	if len(v1) != len(v2) {
+		t.Fatal(v1, v2)
+	}
+
+	if v, err := db.SUnion(key, key); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(v)
+	}
+
+	empKey := []byte("0")
+	if v, err := db.SUnion(key, empKey); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(v)
+	}
+}
+
+func testInter(db *DB, t *testing.T) {
+	key1 := []byte("testdb_set_inter_1")
+	key2 := []byte("testdb_set_inter_2")
+	key3 := []byte("testdb_set_inter_3")
+
+	m1 := []byte("m1")
+	m2 := []byte("m2")
+	m3 := []byte("m3")
+	m4 := []byte("m4")
+
+	db.SAdd(key1, m1, m2)
+	db.SAdd(key2, m2, m3, m4)
+	db.SAdd(key3, m2, m4)
+
+	if v, err := db.sInterGeneric(key1, key2); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(v)
+	}
+
+	if v, err := db.SInter(key1, key2); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(v)
+	}
+
+	dstKey := []byte("inter_dsk")
+	if n, err := db.SInterStore(dstKey, key1, key2); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	v1, _ := db.SInter(key1, key2)
+	v2, _ := db.SInter(key2, key1)
+	if len(v1) != len(v2) {
+		t.Fatal(v1, v2)
+	}
+
+	v1, _ = db.SInter(key1, key2, key3)
+	v2, _ = db.SInter(key2, key3, key1)
+	if len(v1) != len(v2) {
+		t.Fatal(v1, v2)
+	}
+
+	if v, err := db.SInter(key1, key1); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(v)
+	}
+
+	empKey := []byte("0")
+	if v, err := db.SInter(key1, empKey); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(v)
+	}
+
+	if v, err := db.SInter(empKey, key2); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(v)
+	}
+}
+
+func testDiff(db *DB, t *testing.T) {
+	key0 := []byte("testdb_set_diff_0")
+	key1 := []byte("testdb_set_diff_1")
+	key2 := []byte("testdb_set_diff_2")
+	key3 := []byte("testdb_set_diff_3")
+
+	m1 := []byte("m1")
+	m2 := []byte("m2")
+	m3 := []byte("m3")
+	m4 := []byte("m4")
+
+	db.SAdd(key1, m1, m2)
+	db.SAdd(key2, m2, m3, m4)
+	db.SAdd(key3, m3)
+
+	if _, err := db.sDiffGeneric(key1, key2); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, err := db.SDiff(key1, key2); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(v)
+	}
+
+	dstKey := []byte("diff_dsk")
+	if n, err := db.SDiffStore(dstKey, key1, key2); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if v, err := db.SDiff(key2, key1); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(v)
+	}
+
+	if v, err := db.SDiff(key1, key2, key3); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(v) //return 1
+	}
+
+	if v, err := db.SDiff(key2, key2); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(v)
+	}
+
+	if v, err := db.SDiff(key0, key1); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(v)
+	}
+
+	if v, err := db.SDiff(key1, key0); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal(v)
+	}
+}

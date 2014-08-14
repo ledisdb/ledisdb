@@ -10,7 +10,8 @@ func (db *DB) FlushAll() (drop int64, err error) {
 		db.lFlush,
 		db.hFlush,
 		db.zFlush,
-		db.bFlush}
+		db.bFlush,
+		db.sFlush}
 
 	for _, flush := range all {
 		if n, e := flush(); e != nil {
