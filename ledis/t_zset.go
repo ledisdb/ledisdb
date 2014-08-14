@@ -939,7 +939,6 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 
 func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
 
-	var destMap = map[string]int64{}
 	aggregateFunc := getAggregateFunc(aggregate)
 	if aggregateFunc == nil {
 		return 0, errInvalidAggregate
@@ -958,20 +957,27 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
-	var keptMembers [][]byte
-	for i, key := range srcKeys {
+	var destMap = map[string]int64{}
+	scorePairs, err := db.ZRange(srcKeys[0], 0, -1)
+	if err != nil {
+		return 0, err
+	}
+	for _, pair := range scorePairs {
+		destMap[String(pair.Member)] = pair.Score * weights[0]
+	}
+
+	for i, key := range srcKeys[1:] {
 		scorePairs, err := db.ZRange(key, 0, -1)
 		if err != nil {
 			return 0, err
 		}
+		tmpMap := map[string]int64{}
 		for _, pair := range scorePairs {
-			if score, ok := destMap[String(pair.Member)]; !ok {
-				destMap[String(pair.Member)] = pair.Score * weights[i]
-			} else {
-				keptMembers = append(keptMembers, pair.Member)
-				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
+			if score, ok := destMap[String(pair.Member)]; ok {
+				tmpMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
 			}
 		}
+		destMap = tmpMap
 	}
 
 	t := db.zsetTx
@@ -981,13 +987,12 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	db.zDelete(t, destKey)
 
 	var num int64 = 0
-	for _, member := range keptMembers {
-		score := destMap[String(member)]
-		if err := checkZSetKMSize(destKey, member); err != nil {
+	for member, score := range destMap {
+		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
 			return 0, err
 		}
 
-		if n, err := db.zSetItem(t, destKey, score, member); err != nil {
+		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
 			return 0, err
 		} else if n == 0 {
 			//add new
@@ -1002,5 +1007,5 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return int64(len(keptMembers)), nil
+	return int64(len(destMap)), nil
 }
