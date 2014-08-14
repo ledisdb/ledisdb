@@ -139,10 +139,6 @@ func (db *DB) sIncrSize(key []byte, delta int64) (int64, error) {
 			db.rmExpire(t, SetType, key)
 		} else {
 			t.Put(sk, PutInt64(size))
-			//FIXME
-			if err := t.Commit(); err != nil {
-				return 0, err
-			}
 		}
 	}
 
@@ -189,22 +185,32 @@ func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
+	var err error
+	var ek []byte
 	var num int64 = 0
 	for i := 0; i < len(args); i++ {
-		member := args[i]
-		if err := checkSetKMSize(key, member); err != nil {
+		if err := checkSetKMSize(key, args[i]); err != nil {
 			return 0, err
 		}
 
-		if n, err := db.sSetItem(key, member); err != nil {
+		ek = db.sEncodeSetKey(key, args[i])
+
+		if v, err := db.db.Get(ek); err != nil {
 			return 0, err
-		} else if n == 1 {
+		} else if v == nil {
 			num++
 		}
+
+		t.Put(ek, nil)
 	}
 
-	err := t.Commit()
+	if _, err = db.sIncrSize(key, num); err != nil {
+		return 0, err
+	}
+
+	err = t.Commit()
 	return num, err
+
 }
 
 func (db *DB) SCard(key []byte) (int64, error) {

@@ -82,21 +82,18 @@ func TestDBSet(t *testing.T) {
 
 	db.SAdd(key1, member1, member2)
 
-	// tx := db.setTx
-
-	// if n := db.sDelete(tx, key1); n != 2 {
-	// 	t.Fatal(n)
-	// }
-
 	if n, err := db.SClear(key1); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	db.SAdd(key2, member1, member2)
 	db.SAdd(key1, member1, member2)
+	db.SAdd(key2, member1, member2, []byte("xxx"))
 
+	if n, _ := db.SCard(key2); n != 3 {
+		t.Fatal(n)
+	}
 	if n, err := db.SMclear(key1, key2); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
