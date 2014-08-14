@@ -472,24 +472,32 @@ func (db *DB) hFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPair, error) {
+func (db *DB) hEncodeMinKey() []byte {
+	return db.hEncodeSizeKey(nil)
+}
+
+func (db *DB) hEncodeMaxKey() []byte {
+	ek := db.hEncodeSizeKey(nil)
+	ek[len(ek)-1] = HSizeType + 1
+	return ek
+}
+
+func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
 	var minKey []byte
-	if field != nil {
-		if err := checkHashKFSize(key, field); err != nil {
-			return nil, err
-		}
-		minKey = db.hEncodeHashKey(key, field)
+	if key != nil {
+		minKey = db.hEncodeSizeKey(key)
+
 	} else {
-		minKey = db.hEncodeStartKey(key)
+		minKey = db.hEncodeMinKey()
 	}
 
-	maxKey := db.hEncodeStopKey(key)
+	maxKey := db.hEncodeMaxKey()
 
 	if count <= 0 {
 		count = defaultScanCount
 	}
 
-	v := make([]FVPair, 0, count)
+	v := make([][]byte, 0, count)
 
 	rangeType := store.RangeROpen
 	if !inclusive {
@@ -498,14 +506,13 @@ func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPa
 
 	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
 	for ; it.Valid(); it.Next() {
-		if _, f, err := db.hDecodeHashKey(it.Key()); err != nil {
+		if k, err := db.hDecodeSizeKey(it.Key()); err != nil {
 			continue
 		} else {
-			v = append(v, FVPair{Field: f, Value: it.Value()})
+			v = append(v, k)
 		}
 	}
 	it.Close()
-
 	return v, nil
 }
 
