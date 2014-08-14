@@ -472,48 +472,8 @@ func (db *DB) hFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) hEncodeMinKey() []byte {
-	return db.hEncodeSizeKey(nil)
-}
-
-func (db *DB) hEncodeMaxKey() []byte {
-	ek := db.hEncodeSizeKey(nil)
-	ek[len(ek)-1] = HSizeType + 1
-	return ek
-}
-
 func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	var minKey []byte
-	if key != nil {
-		minKey = db.hEncodeSizeKey(key)
-
-	} else {
-		minKey = db.hEncodeMinKey()
-	}
-
-	maxKey := db.hEncodeMaxKey()
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([][]byte, 0, count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if k, err := db.hDecodeSizeKey(it.Key()); err != nil {
-			continue
-		} else {
-			v = append(v, k)
-		}
-	}
-	it.Close()
-	return v, nil
+	return db.scan(HSizeType, key, count, inclusive)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {

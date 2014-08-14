@@ -484,3 +484,17 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	err = t.Commit()
 	return n, err
 }
+
+func (db *DB) LScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(LMetaType, key, count, inclusive)
+}
+
+func (db *DB) lEncodeMinKey() []byte {
+	return db.lEncodeMetaKey(nil)
+}
+
+func (db *DB) lEncodeMaxKey() []byte {
+	ek := db.lEncodeMetaKey(nil)
+	ek[len(ek)-1] = LMetaType + 1
+	return ek
+}

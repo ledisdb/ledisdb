@@ -1004,3 +1004,7 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	}
 	return int64(len(keptMembers)), nil
 }
+
+func (db *DB) ZScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(ZSizeType, key, count, inclusive)
+}

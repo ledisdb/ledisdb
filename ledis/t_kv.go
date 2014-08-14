@@ -324,41 +324,8 @@ func (db *DB) flush() (drop int64, err error) {
 }
 
 //if inclusive is true, scan range [key, inf) else (key, inf)
-func (db *DB) Scan(key []byte, count int, inclusive bool) ([]KVPair, error) {
-	var minKey []byte
-	if key != nil {
-		if err := checkKeySize(key); err != nil {
-			return nil, err
-		}
-		minKey = db.encodeKVKey(key)
-	} else {
-		minKey = db.encodeKVMinKey()
-	}
-
-	maxKey := db.encodeKVMaxKey()
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([]KVPair, 0, 2*count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if key, err := db.decodeKVKey(it.Key()); err != nil {
-			continue
-		} else {
-			v = append(v, KVPair{Key: key, Value: it.Value()})
-		}
-	}
-	it.Close()
-
-	return v, nil
+func (db *DB) Scan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(KVType, key, count, inclusive)
 }
 
 func (db *DB) Expire(key []byte, duration int64) (int64, error) {
