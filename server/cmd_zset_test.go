@@ -704,4 +704,36 @@ func TestZInterStore(t *testing.T) {
 			t.Fatal("invalid value ", n)
 		}
 	}
+
+	if _, err := c.Do("zadd", "k3", "3", "three"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if n, err := ledis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 0 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if _, err := c.Do("zadd", "k3", "3", "two"); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if n, err := ledis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum", "weights", "3", "2", "2")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 1 {
+			t.Fatal("invalid value ", n)
+		}
+	}
+
+	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+		t.Fatal(err.Error())
+	} else {
+		if n != 14 {
+			t.Fatal("invalid value ", n)
+		}
+	}
 }
