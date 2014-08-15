@@ -472,41 +472,8 @@ func (db *DB) hFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPair, error) {
-	var minKey []byte
-	if field != nil {
-		if err := checkHashKFSize(key, field); err != nil {
-			return nil, err
-		}
-		minKey = db.hEncodeHashKey(key, field)
-	} else {
-		minKey = db.hEncodeStartKey(key)
-	}
-
-	maxKey := db.hEncodeStopKey(key)
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([]FVPair, 0, count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if _, f, err := db.hDecodeHashKey(it.Key()); err != nil {
-			continue
-		} else {
-			v = append(v, FVPair{Field: f, Value: it.Value()})
-		}
-	}
-	it.Close()
-
-	return v, nil
+func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(HSizeType, key, count, inclusive)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {

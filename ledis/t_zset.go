@@ -766,45 +766,6 @@ func (db *DB) zFlush() (drop int64, err error) {
 	return
 }
 
-func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]ScorePair, error) {
-	var minKey []byte
-	if member != nil {
-		if err := checkZSetKMSize(key, member); err != nil {
-			return nil, err
-		}
-
-		minKey = db.zEncodeSetKey(key, member)
-	} else {
-		minKey = db.zEncodeStartSetKey(key)
-	}
-
-	maxKey := db.zEncodeStopSetKey(key)
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([]ScorePair, 0, 2*count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if _, m, err := db.zDecodeSetKey(it.Key()); err != nil {
-			continue
-		} else {
-			score, _ := Int64(it.Value(), nil)
-			v = append(v, ScorePair{Member: m, Score: score})
-		}
-	}
-	it.Close()
-
-	return v, nil
-}
-
 func (db *DB) ZExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue
@@ -1008,4 +969,8 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		return 0, err
 	}
 	return int64(len(destMap)), nil
+}
+
+func (db *DB) ZScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(ZSizeType, key, count, inclusive)
 }
