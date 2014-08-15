@@ -310,6 +310,91 @@
         "group": "Replication",
         "readonly": false
     },
+    "SADD" :{
+        "arguments": "key member [member ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SCARD": {
+        "arguments": "key",
+        "group": "Set",
+        "readonly": true
+    },
+    "SDIFF": {
+        "arguments": "key [key ...]",
+        "group": "Set",
+        "readonly": true
+    },
+    "SDIFFSTORE": {
+        "arguments": "destination key [key ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SINTER": {
+        "arguments": "key [key ...]",
+        "group": "Set",
+        "readonly": true
+    },
+    "SINTERSTORE": {
+        "arguments": "destination key [key ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SISMEMBER": {
+        "arguments": "key member",
+        "group": "Set",
+        "readonly": true
+    },
+    "SMEMBERS": {
+        "arguments": "key",
+        "group": "Set",
+        "readonly": true
+    },
+    "SREM": {
+        "arguments": "key member [member ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SUNION": {
+        "arguments": "key [key ...]",
+        "group": "Set",
+        "readonly": true
+    },
+    "SUNIONSTORE": {
+        "arguments": "destination key [key ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SCLEAR": {
+        "arguments": "key",
+        "group": "Set",
+        "readonly": false
+    },
+    "SMCLEAR": {
+        "arguments": "key [key ...]",
+        "group": "Set",
+        "readonly": false
+    },
+    "SEXPIRE": {
+        "arguments": "key seconds",
+        "group": "Set",
+        "readonly": false
+    },
+    "SEXPIREAT": {
+        "arguments": "key timestamp",
+        "group": "Set",
+        "readonly": false
+    },
+    "STTL": {
+        "arguments": "key",
+        "group": "Set",
+        "readonly": true
+    },
+    "SPERSIST": {
+        "arguments": "key",
+        "group": "Set",
+        "readonly": false
+    },
     "TTL": {
         "arguments": "key",
         "group": "KV",

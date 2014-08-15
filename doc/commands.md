@@ -58,6 +58,25 @@ Table of Contents
 	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
 	- [LTTL key](#lttl-key)
 	- [LPERSIST key](#lpersist-key)
+- [Set](#set)
+	- [SADD key member [member ...]](#sadd-key-member-member-)
+	- [SCARD key](#scard-key)
+	- [SDIFF key [key ...]](#sdiff-key-key-)
+	- [SDIFFSTORE destination key [key ...]](#sdiffstore-destination-key-key-)
+	- [SINTER key [key ...]](#sinter-key-key-)
+	- [SINTERSTORE destination key [key ...]](#sinterstore-destination-key-key-)
+	- [SISMEMBER key member](#sismember-key-member)
+	- [SMEMBERS key](#smembers-key)
+	- [SREM key member [member]](#srem-key-member-member-)
+	- [SUNION key [key ...]](#sunion-key-key-)
+	- [SUNIONSTORE destination key [key ...]](#sunionstore-destination-key-key-)
+	- [SCLEAR key](#sclear-key)
+	- [SMCLEAR key [key...]](#smclear-key-key)
+	- [SEXPIRE key seconds](#sexpire-key-seconds)
+	- [SEXPIREAT key timestamp](#sexpireat-key-timestamp)
+	- [STTL key](#sttl-key)
+	- [SPERSIST key](#spersist-key)
+
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
 	- [ZCARD key](#zcard-key)
@@ -660,7 +679,7 @@ ledis> HVALS myhash
 
 ### HCLEAR key 
 
-Deletes the specified hash keys
+Deletes the specified hash key
 
 **Return value**
 
@@ -1088,6 +1107,427 @@ ledis> LPERSIST b
 ```
 
 
+## Set
+
+### SADD key member [member ...]
+Add the specified members to the set stored at key. Specified members that are already a member of this set are ignored. If key does not exist, a new set is created before adding the specified members.
+
+**Return value**
+
+int64: the number of elements that were added to the set, not including all the elements already present into the set.
+
+**Examples**
+
+```
+ledis> SADD myset hello
+(integer) 1
+ledis> SADD myset world
+(integer) 1
+ledis> SADD myset hello
+(integer) 0
+ledis> SMEMBERS myset
+1) "hello"
+2) "world"
+```
+
+
+### SCARD key
+
+Returns the set cardinality (number of elements) of the set stored at key.
+
+**Return value**
+
+int64: the cardinality (number of elements) of the set, or 0 if key does not exist.
+
+**Examples**
+
+```
+ledis> SADD myset hello
+(integer) 1
+ledis> SADD myset world
+(integer) 1
+ledis> SADD myset hello
+(integer) 0
+ledis> SCARD myset
+(integer) 2
+```
+
+
+### SDIFF key [key ...]
+Returns the members of the set resulting from the difference between the first set and all the successive sets.
+For example:
+
+```
+key1 = {a,b,c,d}
+key2 = {c}
+key3 = {a,c,e}
+SDIFF key1 key2 key3 = {b,d}
+```
+
+Keys that do not exist are considered to be empty sets.
+
+
+**Return value**
+
+bulk: list with members of the resulting set.
+
+**Examples**
+
+```
+ledis> SADD key1 a b c 
+(integer) 3
+ledis> SADD key2 c d e
+(integer) 3
+ledis> SDIFF key1 key2
+1) "a"
+2) "b"
+ledis> SDIFF key2 key1
+1) "d"
+2) "e"
+```
+
+### SDIFFSTORE destination key [key ...]
+This command is equal to `SDIFF`, but instead of returning the resulting set, it is stored in destination.
+If destination already exists, it is overwritten.
+
+**Return value**
+
+int64:  the number of elements in the resulting set.
+
+**Examples**
+
+```
+ledis> SADD key1 a b c 
+(integer) 3
+ledis> SADD key2 c d e
+(integer) 3
+ledis> SDIFF key1 key2
+1) "a"
+2) "b"
+ledis> SDIFFSTORE key key1 key2
+(integer) 2
+ledis> SMEMBERS key
+1) "a"
+2) "b"
+```
+
+### SINTER key [key ...]
+
+Returns the members of the set resulting from the intersection of all the given sets.
+For example:
+
+```
+key1 = {a,b,c,d}
+key2 = {c}
+key3 = {a,c,e}
+SINTER key1 key2 key3 = {c}
+```
+
+Keys that do not exist are considered to be empty sets. With one of the keys being an empty set, the resulting set is also empty (since set intersection with an empty set always results in an empty set).
+
+**Return value**
+
+bulk: list with members of the resulting set.
+
+**Examples**
+
+```
+ledis> SADD key1 a b c 
+(integer) 3
+ledis> SADD key2 c d e
+(integer) 3
+ledis> SINTER key1 key2
+1) "c"
+ledis> SINTER key2 key_empty
+(nil)
+```
+
+
+### SINTERSTORE  destination key [key ...]
+
+This command is equal to `SINTER`, but instead of returning the resulting set, it is stored in destination.
+If destination already exists, it is overwritten.
+
+**Return value**
+
+int64: the number of elements in the resulting set.
+
+**Examples**
+
+```
+ledis> SADD key1 a b c 
+(integer) 3
+ledis> SADD key2 c d e
+(integer) 3
+ledis> SINTERSTORE key key1 key2
+(integer) 1
+ledis> SMEMBERS key
+1) "c"
+```
+
+
+### SISMEMBER  key member
+Returns if member is a member of the set stored at key.
+
+**Return value**
+
+Int64 reply, specifically:
+
+- 1 if the element is a member of the set.
+- 0 if the element is not a member of the set, or if key does not exist.
+
+**Examples**
+
+```
+ledis> SADD myset hello
+(integer) 1
+ledis> SISMEMBER myset hello
+(integer) 1
+ledis> SISMEMBER myset hell
+(integer) 0
+```
+
+### SMEMBERS key 
+Returns all the members of the set value stored at key.
+This has the same effect as running `SINTER` with one argument key.
+
+**Return value**
+
+bulk: all elements of the set.
+
+**Examples**
+
+```
+ledis> SADD myset hello
+(integer) 1
+ledis> SADD myset world
+(integer) 1
+ledis> SMEMBERS myset
+1) "hello"
+2) "world"
+```
+
+### SREM  key member [member ...]
+
+Remove the specified members from the set stored at key. Specified members that are not a member of this set are ignored. If key does not exist, it is treated as an empty set and this command returns 0.
+
+**Return value**
+
+int64: the number of members that were removed from the set, not including non existing members.
+
+**Examples**
+
+```
+ledis> SADD myset one
+(integer) 1
+ledis> SADD myset two
+(integer) 1
+ledis> SADD myset three
+(integer) 1
+ledis> SREM myset one
+(integer) 1
+ledis> SREM myset four
+(integer) 0
+ledis> SMEMBERS myset
+1) "three"
+2) "two"
+```
+
+### SUNION key [key ...]
+
+Returns the members of the set resulting from the union of all the given sets.
+For example:
+
+```
+key1 = {a,b,c,d}
+key2 = {c}
+key3 = {a,c,e}
+SUNION key1 key2 key3 = {a,b,c,d,e}
+```
+Keys that do not exist are considered to be empty sets.
+
+
+**Return value**
+
+bulk: list with members of the resulting set.
+
+**Examples**
+
+```
+ledis> SMEMBERS key1
+1) "a"
+2) "b"
+3) "c"
+ledis> SMEMBERS key2
+1) "c"
+2) "d"
+3) "e"
+ledis> SUNION key1 key2
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+5) "e"
+```
+
+### SUNIONSTORE destination key [key]
+
+This command is equal to SUNION, but instead of returning the resulting set, it is stored in destination.
+If destination already exists, it is overwritten.
+
+**Return value**
+
+int64: the number of elements in the resulting set.
+
+**Examples**
+
+```
+ledis> SMEMBERS key1
+1) "a"
+2) "b"
+3) "c"
+ledis> SMEMBERS key2
+1) "c"
+2) "d"
+3) "e"
+ledis> SUNIONSTORE key key1 key2
+(integer) 5
+ledis> SMEMBERS key
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+5) "e"
+```
+
+
+### SCLEAR key
+
+Deletes the specified set key
+
+**Return value**
+
+int64: the number of fields in the hash stored at key
+
+**Examples**
+
+```
+ledis> SMEMBERS key
+1) "a"
+2) "b"
+3) "c"
+4) "d"
+5) "e"
+ledis> SCLEAR key
+(integer) 5
+```
+
+### SMCLEAR key [key ...]
+
+Deletes the specified set keys.
+
+**Return value**
+
+int64: the number of input keys
+
+**Examples**
+
+```
+ledis> SMCLEAR key1 key2
+(integer) 2
+ledis> SMCLEAR em1 em2
+(integer) 2
+```
+
+### SEXPIRE key seconds
+
+Sets a set key’s time to live in seconds, like expire similarly.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis> SADD key 1 2 
+(integer) 2
+ledis> SEXPIRE key 100
+(integer) 1
+ledis> STTL key
+(integer) 95
+```
+
+
+### SEXPIREAT key timestamp
+
+Sets the expiration for a set key as a unix timestamp, like expireat similarly.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was set
+- 0 if key does not exist or the timeout could not be set
+
+**Examples**
+
+```
+ledis> SADD key 1 2 
+(integer) 2
+ledis> SEXPIREAT key 1408094999
+(integer) 1
+ledis> STTL key
+(integer) 908
+```
+
+
+### STTL key
+
+Returns the remaining time to live of a key that has a timeout. If the key was not set a timeout, -1 returns.
+
+**Return value**
+
+int64: TTL in seconds
+
+**Examples**
+
+```
+ledis> SADD key 1 2 
+(integer) 2
+ledis> SEXPIREAT key 1408094999
+(integer) 1
+ledis> STTL key
+(integer) 908
+```
+
+
+### SPERSIST key 
+Remove the expiration from a set key, like persist similarly. Remove the existing timeout on key.
+
+**Return value**
+
+int64:
+
+- 1 if the timeout was removed
+- 0 if key does not exist or does not have an timeout
+
+**Examples**
+
+```
+ledis> SEXPIREAT key 1408094999
+(integer) 1
+ledis> STTL key
+(integer) 908
+ledis> SPERSIST key
+(integer) 1
+ledis> STTL key
+(integer) -1
+```
+
 ## ZSet
 
 ### ZADD key score member [score member ...]
@@ -1109,13 +1549,13 @@ The number of elements added to the sorted sets, **not** including elements alre
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 1 'uno'
+ledis> ZADD myzset 1 'uno'
 (integer) 1
-ledis> ZADD myset 2 'two' 3 'three'
+ledis> ZADD myzset 2 'two' 3 'three'
 (integer) 2
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1136,13 +1576,13 @@ int64: the cardinality (number of elements) of the sorted set, or `0` if key doe
 **Examples**
 
 ```
-edis > ZADD myset 1 'one'
+edis > ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 1 'uno'
+ledis> ZADD myzset 1 'uno'
 (integer) 1
-ledis> ZADD myset 2 'two' 3 'three'
+ledis> ZADD myzset 2 'two' 3 'three'
 (integer) 2
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1151,7 +1591,7 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> ZCARD myset
+ledis> ZCARD myzset
 (integer) 4
 ```
 
@@ -1166,13 +1606,13 @@ int64: the number of elements in the specified score range.
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 1 'uno'
+ledis> ZADD myzset 1 'uno'
 (integer) 1
-ledis> ZADD myset 2 'two' 3 'three'
+ledis> ZADD myzset 2 'two' 3 'three'
 (integer) 2
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "one"
 2) "1"
 3) "uno"
@@ -1181,9 +1621,9 @@ ledis> ZRANGE myset 0 -1 WITHSCORES
 6) "2"
 7) "three"
 8) "3"
-ledis> ZCOUNT myset -inf +inf
+ledis> ZCOUNT myzset -inf +inf
 (integer) 4
-ledis> ZCOUNT myset (1 3
+ledis> ZCOUNT myzset (1 3
 (integer) 2
 ```
 
@@ -1200,13 +1640,13 @@ bulk: the new score of member (an int64 number), represented as string.
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 2 'two'
+ledis> ZADD myzset 2 'two'
 (integer) 1
-ledis> ZINCRBY myset 2 'one'
+ledis> ZINCRBY myzset 2 'one'
 3
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "two"
 2) "2"
 3) "one"
@@ -1223,19 +1663,19 @@ array: list of elements in the specified range (optionally with their scores).
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 2 'two'
+ledis> ZADD myzset 2 'two'
 (integer) 1
-ledis> ZADD myset 3 'three'
+ledis> ZADD myzset 3 'three'
 (integer) 1
-ledis> ZRANGE myset 0 -1
+ledis> ZRANGE myzset 0 -1
 1) "one"
 2) "two"
 3) "three"
-ledis> ZRANGE myset 2 3
+ledis> ZRANGE myzset 2 3
 1) "three"
-ledis> ZRANGE myset -2 -1
+ledis> ZRANGE myzset -2 -1
 1) "two"
 2) "three"
 ```
@@ -1335,16 +1775,16 @@ The number of members removed from the sorted set, not including non existing me
 **Examples**
 
 ```
-ledis> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myzset 1 one 2 two 3 three 4 four
 (integer) 3
-ledis> ZRANGE myset 0 -1
+ledis> ZRANGE myzset 0 -1
 1) "one"
 2) "two"
 3) "three"
 4) "four"
-ledis> ZREM myset three
+ledis> ZREM myzset three
 (integer) 1
-ledis> ZREM myset one four three
+ledis> ZREM myzset one four three
 (integer) 2
 ```
 
@@ -1358,11 +1798,11 @@ int64: the number of elements removed.
 **Examples**
 
 ```
-ledis> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myzset 1 one 2 two 3 three 4 four
 (integer) 3
-ledis> ZREMRANGEBYRANK myset 0 2
+ledis> ZREMRANGEBYRANK myzset 0 2
 (integer) 3
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "four"
 2) "4"
 ```
@@ -1378,11 +1818,11 @@ int64: the number of elements removed.
 **Examples**
 
 ```
-ledis> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myzset 1 one 2 two 3 three 4 four
 (integer) 4
-ledis> ZREMRANGEBYSCORE myset -inf (2
+ledis> ZREMRANGEBYSCORE myzset -inf (2
 (integer) 1
-ledis> ZRANGE myset 0 -1 WITHSCORES
+ledis> ZRANGE myzset 0 -1 WITHSCORES
 1) "two"
 2) "2"
 3) "three"
@@ -1402,9 +1842,9 @@ array: list of elements in the specified range (optionally with their scores).
 **Examples**
 
 ```
-ledis> ZADD myset 1 one 2 two 3 three 4 four
+ledis> ZADD myzset 1 one 2 two 3 three 4 four
 (integer) 4
-ledis> ZREVRANGE myset 0 -1
+ledis> ZREVRANGE myzset 0 -1
 1) "four"
 2) "three"
 3) "two"
@@ -1423,21 +1863,21 @@ array: list of elements in the specified score range (optionally with their scor
 **Examples**
 
 ```
-ledis>  ZADD myset 1 one 2 two 3 three 4 four
+ledis>  ZADD myzset 1 one 2 two 3 three 4 four
 (integer) 4
-ledis> ZREVRANGEBYSCORE myset +inf -inf
+ledis> ZREVRANGEBYSCORE myzset +inf -inf
 1) "four"
 2) "three"
 3) "two"
 4) "one"
-ledis> ZREVRANGEBYSCORE myset 2 1
+ledis> ZREVRANGEBYSCORE myzset 2 1
 1) "two"
 2) "one"
-ledis> ZREVRANGEBYSCORE myset 2 (1
+ledis> ZREVRANGEBYSCORE myzset 2 (1
 1) "two"
-ledis> ZREVRANGEBYSCORE myset (2 (1
+ledis> ZREVRANGEBYSCORE myzset (2 (1
 (empty list or set)
-ledis> ZREVRANGEBYSCORE myset +inf -inf WITHSCORES LIMIT 1 2
+ledis> ZREVRANGEBYSCORE myzset +inf -inf WITHSCORES LIMIT 1 2
 1) "three"
 2) "3"
 3) "two"
@@ -1457,13 +1897,13 @@ Use ZRANK to get the rank of an element with the scores ordered from low to high
 **Examples**
 
 ```
-ledis> ZADD myset 1 one
+ledis> ZADD myzset 1 one
 (integer) 1
-ledis> ZADD myset 2 two
+ledis> ZADD myzset 2 two
 (integer) 1
-ledis> ZREVRANK myset one
+ledis> ZREVRANK myzset one
 (integer) 1
-ledis> ZREVRANK myset three
+ledis> ZREVRANK myzset three
 (nil)
 ```
 
@@ -1479,9 +1919,9 @@ bulk: the score of member (an `int64` number), represented as string.
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZSCORE myset 'one'
+ledis> ZSCORE myzset 'one'
 1
 ```
 
@@ -1495,17 +1935,17 @@ int64: the number of members in the zset stored at key
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZADD myset 2 'two'
+ledis> ZADD myzset 2 'two'
 (integer) 1
-ledis> ZADD myset 3 'three'
+ledis> ZADD myzset 3 'three'
 (integer) 1
-ledis> ZRANGE myset 0 -1
+ledis> ZRANGE myzset 0 -1
 1) "one"
 2) "two"
 3) "three"
-ledis> ZCLEAR myset
+ledis> ZCLEAR myzset
 (integer) 3
 ```
 
@@ -1519,11 +1959,11 @@ int64: the number of input keys
 **Examples**
 
 ```
-ledis> ZADD myset1 1 'one'
+ledis> ZADD myzset1 1 'one'
 (integer) 1
-ledis> ZADD myset2 2 'two'
+ledis> ZADD myzset2 2 'two'
 (integer) 1
-ledis> ZMCLEAR myset1 myset2
+ledis> ZMCLEAR myzset1 myzset2
 (integer) 2
 ```
 
@@ -1542,17 +1982,17 @@ int64:
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZEXPIRE myset 100
+ledis> ZEXPIRE myzset 100
 (integer) 1
-ledis> ZTTL myset
+ledis> ZTTL myzset
 (integer) 97
-ledis> ZPERSIST myset
+ledis> ZPERSIST myzset
 (integer) 1
 ledis> ZTTL mset
 (integer) -1
-ledis> ZEXPIRE myset1 100
+ledis> ZEXPIRE myzset1 100
 (integer) 0
 ```
 
@@ -1569,17 +2009,17 @@ int64:
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZEXPIREAT myset 1404149999
+ledis> ZEXPIREAT myzset 1404149999
 (integer) 1
-ledis> ZTTL myset
+ledis> ZTTL myzset
 (integer) 7155
-ledis> ZPERSIST myset
+ledis> ZPERSIST myzset
 (integer) 1
 ledis> ZTTL mset
 (integer) -1
-ledis> ZEXPIREAT myset1 1404149999
+ledis> ZEXPIREAT myzset1 1404149999
 (integer) 0
 ```
 
@@ -1594,13 +2034,13 @@ int64: TTL in seconds
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZEXPIRE myset 100
+ledis> ZEXPIRE myzset 100
 (integer) 1
-ledis> ZTTL myset
+ledis> ZTTL myzset
 (integer) 97
-ledis> ZTTL myset2
+ledis> ZTTL myzset2
 (integer) -1
 ```
 
@@ -1617,13 +2057,13 @@ int64:
 **Examples**
 
 ```
-ledis> ZADD myset 1 'one'
+ledis> ZADD myzset 1 'one'
 (integer) 1
-ledis> ZEXPIRE myset 100
+ledis> ZEXPIRE myzset 100
 (integer) 1
-ledis> ZTTL myset
+ledis> ZTTL myzset
 (integer) 97
-ledis> ZPERSIST myset
+ledis> ZPERSIST myzset
 (integer) 1
 ledis> ZTTL mset
 (integer) -1
