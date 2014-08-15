@@ -41,6 +41,7 @@ func TestBinary(t *testing.T) {
 	testOpXor(t)
 	testOpNot(t)
 	testMSetBit(t)
+	testBitExpire(t)
 }
 
 func testSimple(t *testing.T) {
@@ -517,4 +518,21 @@ func testMSetBit(t *testing.T) {
 	}
 
 	return
+}
+
+func testBitExpire(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	key := []byte("test_b_ttl")
+
+	db.BSetBit(key, 0, 1)
+
+	if res, err := db.BExpire(key, 100); res != 1 || err != nil {
+		t.Fatal(false)
+	}
+
+	if ttl, err := db.BTTL(key); ttl != 100 || err != nil {
+		t.Fatal(false)
+	}
 }

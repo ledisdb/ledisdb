@@ -231,15 +231,20 @@ func (db *DB) bSetMeta(t *tx, key []byte, tailSeq uint32, tailOff uint32) {
 }
 
 func (db *DB) bUpdateMeta(t *tx, key []byte, seq uint32, off uint32) (tailSeq uint32, tailOff uint32, err error) {
-	var ts, to int32
-	if ts, to, err = db.bGetMeta(key); err != nil {
+	var tseq, toff int32
+	var update bool = false
+
+	if tseq, toff, err = db.bGetMeta(key); err != nil {
 		return
+	} else if tseq < 0 {
+		update = true
 	} else {
-		tailSeq = uint32(MaxInt32(ts, 0))
-		tailOff = uint32(MaxInt32(to, 0))
+		tailSeq = uint32(MaxInt32(tseq, 0))
+		tailOff = uint32(MaxInt32(toff, 0))
+		update = (seq > tailSeq || (seq == tailSeq && off > tailOff))
 	}
 
-	if seq > tailSeq || (seq == tailSeq && off > tailOff) {
+	if update {
 		db.bSetMeta(t, key, seq, off)
 		tailSeq = seq
 		tailOff = off
