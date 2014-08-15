@@ -17,7 +17,7 @@
     "BEXPIREAT": {
         "arguments": "key timestamp",
         "group": "Bitmap",
-        "readonly": false,
+        "readonly": false
     },
     "BGET": {
         "arguments": "key",
@@ -414,5 +414,16 @@
         "arguments": "key",
         "group": "ZSet",
         "readonly": true
+    },
+    "ZUNIONSTORE":{
+        "arguments": "destkey numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]",
+        "group": "ZSet",
+        "readonly": false
+    },
+
+    "ZINTERSTORE":{
+        "arguments": "destkey numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]",
+        "group": "ZSet",
+        "readonly": false
     }
 }

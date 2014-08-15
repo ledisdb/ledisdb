@@ -264,3 +264,122 @@ func TestZSetPersist(t *testing.T) {
 		t.Fatal(n)
 	}
 }
+
+func TestZUnionStore(t *testing.T) {
+	db := getTestDB()
+	key1 := []byte("key1")
+	key2 := []byte("key2")
+
+	db.ZAdd(key1, ScorePair{1, []byte("one")})
+	db.ZAdd(key1, ScorePair{1, []byte("two")})
+
+	db.ZAdd(key2, ScorePair{2, []byte("two")})
+	db.ZAdd(key2, ScorePair{2, []byte("three")})
+
+	keys := [][]byte{key1, key2}
+	weights := []int64{1, 2}
+
+	out := []byte("out")
+	n, err := db.ZUnionStore(out, keys, weights, AggregateSum)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 3 {
+		t.Fatal("invalid value ", n)
+	}
+
+	v, err := db.ZScore(out, []byte("two"))
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 5 {
+		t.Fatal("invalid value ", v)
+	}
+
+	out = []byte("out")
+	n, err = db.ZUnionStore(out, keys, weights, AggregateMax)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 3 {
+		t.Fatal("invalid value ", n)
+	}
+
+	v, err = db.ZScore(out, []byte("two"))
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 4 {
+		t.Fatal("invalid value ", v)
+	}
+
+	n, err = db.ZCount(out, 0, 0XFFFE)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 3 {
+		t.Fatal("invalid value ", v)
+	}
+}
+
+func TestZInterStore(t *testing.T) {
+	db := getTestDB()
+
+	key1 := []byte("key1")
+	key2 := []byte("key2")
+
+	db.ZAdd(key1, ScorePair{1, []byte("one")})
+	db.ZAdd(key1, ScorePair{1, []byte("two")})
+
+	db.ZAdd(key2, ScorePair{2, []byte("two")})
+	db.ZAdd(key2, ScorePair{2, []byte("three")})
+
+	keys := [][]byte{key1, key2}
+	weights := []int64{2, 3}
+	out := []byte("out")
+
+	n, err := db.ZInterStore(out, keys, weights, AggregateSum)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 1 {
+		t.Fatal("invalid value ", n)
+	}
+	v, err := db.ZScore(out, []byte("two"))
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 8 {
+		t.Fatal("invalid value ", v)
+	}
+
+	out = []byte("out")
+	n, err = db.ZInterStore(out, keys, weights, AggregateMin)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 1 {
+		t.Fatal("invalid value ", n)
+	}
+
+	v, err = db.ZScore(out, []byte("two"))
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 2 {
+		t.Fatal("invalid value ", v)
+	}
+
+	n, err = db.ZCount(out, 0, 0XFFFF)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 1 {
+		t.Fatal("invalid value ", n)
+	}
+
+}

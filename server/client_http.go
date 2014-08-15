@@ -19,7 +19,7 @@ var allowedContentTypes = map[string]struct{}{
 	"bson":    struct{}{},
 	"msgpack": struct{}{},
 }
-var unsopportedCommands = map[string]struct{}{
+var unsupportedCommands = map[string]struct{}{
 	"slaveof":  struct{}{},
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
@@ -87,7 +87,7 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	}
 
 	req.cmd = strings.ToLower(cmd)
-	if _, ok := unsopportedCommands[req.cmd]; ok {
+	if _, ok := unsupportedCommands[req.cmd]; ok {
 		return nil, fmt.Errorf("unsupported command: '%s'", cmd)
 	}
 
@@ -210,7 +210,7 @@ func (w *httpWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool)
 }
 
 func (w *httpWriter) writeBulkFrom(n int64, rb io.Reader) {
-	w.writeError(fmt.Errorf("unsuport"))
+	w.writeError(fmt.Errorf("unsupport"))
 }
 
 func (w *httpWriter) flush() {

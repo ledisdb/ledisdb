@@ -34,7 +34,8 @@ type LevelDBConfig struct {
 }
 
 type LMDBConfig struct {
-	MapSize int `toml:"map_size" json:"map_size"`
+	MapSize int  `toml:"map_size" json:"map_size"`
+	NoSync  bool `toml:"nosync" json:"nosync"`
 }
 
 type BinLogConfig struct {

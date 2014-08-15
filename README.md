@@ -2,16 +2,16 @@
 
 Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash, zset, bitmap, and may be alternative for Redis.
 
-LedisDB now supports multi databases as backend to store data, you can test and choose the proper one for you.
+LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
 
 ## Features
 
 + Rich advanced data structure: KV, List, Hash, ZSet, Bitmap.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB.  
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
-+ Multi client API supports, including Go, Python, Lua(Openresty). 
++ Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
 + Easy to embed in your own Go application. 
 + Restful API support, json/bson/msgpack output.
 + Replication to guarantee data safe.
@@ -51,16 +51,29 @@ Create a workspace and checkout ledisdb source
 
 ## RocksDB support
 
-+ Install rocksdb(shared_lib) and snappy first.
++ [Install rocksdb](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)(`make shared_lib`) and snappy first.
 
     LedisDB has not supplied a simple script to install, maybe later.
 
-+ Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
++ Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in `dev.sh`.
 + ```make```
+
+
+
+
+## HyperLevelDB support
+
++ [Install hyperleveldb](https://github.com/rescrv/HyperLevelDB/blob/master/README) and snappy first.
+    
+    LedisDB has not supplied a simple script to install, maybe later.
+
++ Set `HYPERLEVELDB` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
++ `make`
+    
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, it will choose goleveldb as default to store data if you not set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb. it will choose goleveldb as default to store data if you not set.
 
 Choosing a store database to use is very simple, you have two ways:
 
@@ -139,7 +152,6 @@ See [Issues todo](https://github.com/siddontang/ledisdb/issues?labels=todo&page=
 ## Links
 
 + [Official Website](http://ledisdb.com)
-+ [Author's Chinese Blog](http://blog.csdn.net/siddontang/article/category/2264003)
 + [GoDoc](https://godoc.org/github.com/siddontang/ledisdb)
 + [Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands)
 

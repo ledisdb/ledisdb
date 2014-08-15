@@ -12,6 +12,10 @@ const (
 	MinScore     int64 = -1<<63 + 1
 	MaxScore     int64 = 1<<63 - 1
 	InvalidScore int64 = -1 << 63
+
+	AggregateSum byte = 0
+	AggregateMin byte = 1
+	AggregateMax byte = 2
 )
 
 type ScorePair struct {
@@ -23,6 +27,9 @@ var errZSizeKey = errors.New("invalid zsize key")
 var errZSetKey = errors.New("invalid zset key")
 var errZScoreKey = errors.New("invalid zscore key")
 var errScoreOverflow = errors.New("zset score overflow")
+var errInvalidAggregate = errors.New("invalid aggregate")
+var errInvalidWeightNum = errors.New("invalid weight number")
+var errInvalidSrcKeyNum = errors.New("invalid src key number")
 
 const (
 	zsetNScoreSep    byte = '<'
@@ -838,4 +845,167 @@ func (db *DB) ZPersist(key []byte) (int64, error) {
 
 	err = t.Commit()
 	return n, err
+}
+
+func getAggregateFunc(aggregate byte) func(int64, int64) int64 {
+	switch aggregate {
+	case AggregateSum:
+		return func(a int64, b int64) int64 {
+			return a + b
+		}
+	case AggregateMax:
+		return func(a int64, b int64) int64 {
+			if a > b {
+				return a
+			}
+			return b
+		}
+	case AggregateMin:
+		return func(a int64, b int64) int64 {
+			if a > b {
+				return b
+			}
+			return a
+		}
+	}
+	return nil
+}
+
+func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
+
+	var destMap = map[string]int64{}
+	aggregateFunc := getAggregateFunc(aggregate)
+	if aggregateFunc == nil {
+		return 0, errInvalidAggregate
+	}
+	if len(srcKeys) < 1 {
+		return 0, errInvalidSrcKeyNum
+	}
+	if weights != nil {
+		if len(srcKeys) != len(weights) {
+			return 0, errInvalidWeightNum
+		}
+	} else {
+		weights = make([]int64, len(srcKeys))
+		for i := 0; i < len(weights); i++ {
+			weights[i] = 1
+		}
+	}
+
+	for i, key := range srcKeys {
+		scorePairs, err := db.ZRange(key, 0, -1)
+		if err != nil {
+			return 0, err
+		}
+		for _, pair := range scorePairs {
+			if score, ok := destMap[String(pair.Member)]; !ok {
+				destMap[String(pair.Member)] = pair.Score * weights[i]
+			} else {
+				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
+			}
+		}
+	}
+
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	db.zDelete(t, destKey)
+
+	var num int64 = 0
+	for member, score := range destMap {
+		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
+			return 0, err
+		}
+
+		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+			return 0, err
+		} else if n == 0 {
+			//add new
+			num++
+		}
+	}
+
+	if _, err := db.zIncrSize(t, destKey, num); err != nil {
+		return 0, err
+	}
+
+	//todo add binlog
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+	return int64(len(destMap)), nil
+}
+
+func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
+
+	aggregateFunc := getAggregateFunc(aggregate)
+	if aggregateFunc == nil {
+		return 0, errInvalidAggregate
+	}
+	if len(srcKeys) < 1 {
+		return 0, errInvalidSrcKeyNum
+	}
+	if weights != nil {
+		if len(srcKeys) != len(weights) {
+			return 0, errInvalidWeightNum
+		}
+	} else {
+		weights = make([]int64, len(srcKeys))
+		for i := 0; i < len(weights); i++ {
+			weights[i] = 1
+		}
+	}
+
+	var destMap = map[string]int64{}
+	scorePairs, err := db.ZRange(srcKeys[0], 0, -1)
+	if err != nil {
+		return 0, err
+	}
+	for _, pair := range scorePairs {
+		destMap[String(pair.Member)] = pair.Score * weights[0]
+	}
+
+	for i, key := range srcKeys[1:] {
+		scorePairs, err := db.ZRange(key, 0, -1)
+		if err != nil {
+			return 0, err
+		}
+		tmpMap := map[string]int64{}
+		for _, pair := range scorePairs {
+			if score, ok := destMap[String(pair.Member)]; ok {
+				tmpMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
+			}
+		}
+		destMap = tmpMap
+	}
+
+	t := db.zsetTx
+	t.Lock()
+	defer t.Unlock()
+
+	db.zDelete(t, destKey)
+
+	var num int64 = 0
+	for member, score := range destMap {
+		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
+			return 0, err
+		}
+
+		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+			return 0, err
+		} else if n == 0 {
+			//add new
+			num++
+		}
+	}
+
+	if _, err := db.zIncrSize(t, destKey, num); err != nil {
+		return 0, err
+	}
+	//todo add binlog
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+	return int64(len(destMap)), nil
 }

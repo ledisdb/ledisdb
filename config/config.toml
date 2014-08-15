@@ -34,6 +34,7 @@ max_open_files = 1024
 
 [lmdb]
 map_size = 524288000
+nosync = true
 
 [binlog]
 max_file_size = 0

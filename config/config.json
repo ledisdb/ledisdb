@@ -14,7 +14,8 @@
     },
 
     "lmdb" : {
-        "map_size" : 524288000
+        "map_size" : 524288000,
+        "nosync" : true
     },
 
     "access_log" : ""
