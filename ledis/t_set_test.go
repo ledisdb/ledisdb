@@ -129,9 +129,9 @@ func TestDBSet(t *testing.T) {
 
 func TestSetOperation(t *testing.T) {
 	db := getTestDB()
-	// testUnion(db, t)
+	testUnion(db, t)
 	testInter(db, t)
-	// testDiff(db, t)
+	testDiff(db, t)
 
 }
 
@@ -227,6 +227,17 @@ func testInter(db *DB, t *testing.T) {
 
 	dstKey := []byte("inter_dsk")
 	if n, err := db.SInterStore(dstKey, key1, key2); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	k1 := []byte("set_k1")
+	k2 := []byte("set_k2")
+
+	db.SAdd(k1, m1, m3, m4)
+	db.SAdd(k2, m2, m3)
+	if n, err := db.SInterStore([]byte("set_xxx"), k1, k2); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
