@@ -25,7 +25,7 @@ type Store struct {
 }
 
 func (s Store) String() string {
-	return "rocksdb"
+	return DBName
 }
 
 func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
@@ -273,4 +273,8 @@ func (db *DB) delete(wo *WriteOptions, key []byte) error {
 
 func (db *DB) Begin() (driver.Tx, error) {
 	return nil, driver.ErrTxSupport
+}
+
+func init() {
+	driver.Register(Store{})
 }

@@ -1,12 +1,12 @@
 # LedisDB
 
-Ledisdb is a high performance NoSQL like Redis written by go. It supports some advanced data structure like kv, list, hash, zset, bitmap,set,  and may be alternative for Redis.
+Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set,  and may be alternative for Redis.
 
 LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
 
 ## Features
 
-+ Rich advanced data structure: KV, List, Hash, ZSet, Bitmap, Set.
++ Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
 + Stores lots of data, over the memory limit. 
 + Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
 + Supports expiration and ttl.

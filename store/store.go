@@ -6,55 +6,21 @@ import (
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"path"
+
+	"github.com/siddontang/ledisdb/store/boltdb"
+	"github.com/siddontang/ledisdb/store/goleveldb"
+	"github.com/siddontang/ledisdb/store/hyperleveldb"
+	"github.com/siddontang/ledisdb/store/leveldb"
+	"github.com/siddontang/ledisdb/store/mdb"
+	"github.com/siddontang/ledisdb/store/rocksdb"
 )
-
-type Config config.Config
-
-type Store interface {
-	String() string
-	Open(path string, cfg *config.Config) (driver.IDB, error)
-	Repair(paht string, cfg *config.Config) error
-}
-
-var dbs = map[string]Store{}
-
-func Register(s Store) {
-	name := s.String()
-	if _, ok := dbs[name]; ok {
-		panic(fmt.Errorf("store %s is registered", s))
-	}
-
-	dbs[name] = s
-}
-
-func ListStores() []string {
-	s := []string{}
-	for k, _ := range dbs {
-		s = append(s, k)
-	}
-
-	return s
-}
-
-func getStore(cfg *config.Config) (Store, error) {
-	if len(cfg.DBName) == 0 {
-		cfg.DBName = config.DefaultDBName
-	}
-
-	s, ok := dbs[cfg.DBName]
-	if !ok {
-		return nil, fmt.Errorf("store %s is not registered", cfg.DBName)
-	}
-
-	return s, nil
-}
 
 func getStorePath(cfg *config.Config) string {
 	return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
 }
 
 func Open(cfg *config.Config) (*DB, error) {
-	s, err := getStore(cfg)
+	s, err := driver.GetStore(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +42,7 @@ func Open(cfg *config.Config) (*DB, error) {
 }
 
 func Repair(cfg *config.Config) error {
-	s, err := getStore(cfg)
+	s, err := driver.GetStore(cfg)
 	if err != nil {
 		return err
 	}
@@ -84,4 +50,13 @@ func Repair(cfg *config.Config) error {
 	path := getStorePath(cfg)
 
 	return s.Repair(path, cfg)
+}
+
+func init() {
+	_ = boltdb.DBName
+	_ = goleveldb.DBName
+	_ = hyperleveldb.DBName
+	_ = leveldb.DBName
+	_ = mdb.DBName
+	_ = rocksdb.DBName
 }

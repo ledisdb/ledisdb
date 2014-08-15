@@ -1,6 +1,7 @@
 package store
 
 import (
+	"github.com/siddontang/ledisdb/store/driver"
 	"testing"
 )
 
@@ -9,6 +10,16 @@ func TestTx(t *testing.T) {
 }
 
 func testTx(db *DB, t *testing.T) {
+	if tx, err := db.Begin(); err != nil {
+		if err == driver.ErrTxSupport {
+			return
+		} else {
+			t.Fatal(err)
+		}
+	} else {
+		tx.Rollback()
+	}
+
 	key1 := []byte("1")
 	key2 := []byte("2")
 	key3 := []byte("3")
