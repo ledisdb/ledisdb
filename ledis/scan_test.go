@@ -1,6 +1,8 @@
 package ledis
 
 import (
+	"fmt"
+	"github.com/siddontang/ledisdb/store"
 	"testing"
 )
 
@@ -176,63 +178,72 @@ func TestDBLScan(t *testing.T) {
 
 }
 
-//func TestDBBScan(t *testing.T) {
-//	db := getTestDB()
-//
-//	db.bFlush()
-//
-//	k1 := []byte("k1")
-//	if _, err := db.BSetBit(k1, 1, 1); err != nil {
-//		t.Fatal(err.Error())
-//	}
-//
-//	k2 := []byte("k2")
-//	if _, err := db.BSetBit(k2, 1, 1); err != nil {
-//		t.Fatal(err.Error())
-//	}
-//
-//	k3 := []byte("k3")
-//	if _, err := db.BSetBit(k3, 1, 0); err != nil {
-//		t.Fatal(err.Error())
-//	}
-//	//ek := db.bEncodeMetaKey([]byte("k3"))
-//	ek2, err := db.encodeMetaKey(LMetaType, []byte("k3"))
-//	if err != nil {
-//		t.Fatal(err.Error())
-//	}
-//
-//	endkey, err := db.encodeMaxKey(LMetaType)
-//
-//	if err != nil {
-//		t.Fatal(err.Error())
-//	}
-//
-//	if v, err := db.BScan(nil, 1, true); err != nil {
-//		t.Fatal(err)
-//	} else if len(v) != 1 {
-//		t.Fatal("invalid length ", len(v))
-//	} else if string(v[0]) != "k1" {
-//		t.Fatal("invalid value ", string(v[0]))
-//	}
-//
-//	if v, err := db.BScan(k1, 2, true); err != nil {
-//		t.Fatal(err)
-//	} else if len(v) != 2 {
-//		t.Fatal("invalid length ", len(v))
-//	} else if string(v[0]) != "k1" {
-//		t.Fatal("invalid value ", string(v[0]))
-//	} else if string(v[1]) != "k2" {
-//		t.Fatal("invalid value ", string(v[1]))
-//	}
-//
-//	if v, err := db.BScan(k1, 2, false); err != nil {
-//		t.Fatal(err)
-//	} else if len(v) != 2 {
-//		t.Fatal("invalid length ", len(v))
-//	} else if string(v[0]) != "k2" {
-//		t.Fatal("invalid value ", string(v[0]))
-//	} else if string(v[1]) != "k3" {
-//		t.Fatal("invalid value ", string(v[1]))
-//	}
-//
-//}
+func TestDBBScan(t *testing.T) {
+	db := getTestDB()
+
+	db.bFlush()
+
+	k1 := []byte("k1")
+	if _, err := db.BSetBit(k1, 1, 1); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	k2 := []byte("k2")
+	if _, err := db.BSetBit(k2, 1, 1); err != nil {
+		t.Fatal(err.Error())
+	}
+	k3 := []byte("k3")
+
+	if _, err := db.BSetBit(k3, 1, 0); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	ek1 := db.bEncodeMetaKey(k1)
+	fmt.Printf("%x\n", ek1)
+	ek2 := db.bEncodeMetaKey(k2)
+	fmt.Printf("%x\n", ek2)
+	ek3 := db.bEncodeMetaKey(k3)
+	fmt.Printf("%x\n", ek3)
+
+	start := db.bEncodeMetaKey(nil)
+	fmt.Printf("start: %x\n", start)
+	end := db.bEncodeMetaKey(nil)
+	end[len(end)-1] = BitMetaType + 1
+	fmt.Printf("end: %x\n", end)
+
+	it := db.db.RangeLimitIterator(start, end, store.RangeClose, 0, 4)
+
+	for ; it.Valid(); it.Next() {
+		fmt.Printf("%x\n", it.RawKey())
+	}
+	it.Close()
+
+	if v, err := db.BScan(nil, 1, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid length ", len(v))
+	} else if string(v[0]) != "k1" {
+		t.Fatal("invalid value ", string(v[0]))
+	}
+
+	if v, err := db.BScan(k1, 2, true); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal("invalid length ", len(v))
+	} else if string(v[0]) != "k1" {
+		t.Fatal("invalid value ", string(v[0]))
+	} else if string(v[1]) != "k2" {
+		t.Fatal("invalid value ", string(v[1]))
+	}
+
+	if v, err := db.BScan(k1, 2, false); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 2 {
+		t.Fatal("invalid length ", len(v))
+	} else if string(v[0]) != "k2" {
+		t.Fatal("invalid value ", string(v[0]))
+	} else if string(v[1]) != "k3" {
+		t.Fatal("invalid value ", string(v[1]))
+	}
+
+}
