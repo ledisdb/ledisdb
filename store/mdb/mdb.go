@@ -23,6 +23,8 @@ type MDB struct {
 
 func (s Store) Open(path string, c *config.Config) (driver.IDB, error) {
 	mapSize := c.LMDB.MapSize
+	noSync := c.LMDB.NoSync
+
 	if mapSize <= 0 {
 		mapSize = 500 * 1024 * 1024
 	}
@@ -48,7 +50,12 @@ func (s Store) Open(path string, c *config.Config) (driver.IDB, error) {
 		}
 	}
 
-	err = env.Open(path, mdb.NOSYNC|mdb.NOMETASYNC|mdb.WRITEMAP|mdb.MAPASYNC|mdb.CREATE, 0755)
+	var flags uint = mdb.CREATE
+	if noSync {
+		flags |= mdb.NOSYNC | mdb.NOMETASYNC | mdb.WRITEMAP | mdb.MAPASYNC
+	}
+
+	err = env.Open(path, flags, 0755)
 	if err != nil {
 		return MDB{}, err
 	}
