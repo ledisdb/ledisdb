@@ -344,22 +344,6 @@ func TestBitErrorParams(t *testing.T) {
 		t.Fatal("invalid err of %v", err)
 	}
 
-	if _, err := c.Do("bexpire", "test_bexpire"); err == nil {
-		t.Fatal("invalid err of %v", err)
-	}
-
-	if _, err := c.Do("bexpireat", "test_bexpireat"); err == nil {
-		t.Fatal("invalid err of %v", err)
-	}
-
-	if _, err := c.Do("bttl"); err == nil {
-		t.Fatal("invalid err of %v", err)
-	}
-
-	if _, err := c.Do("bpersist"); err == nil {
-		t.Fatal("invalid err of %v", err)
-	}
-
 	//bexpire
 	if _, err := c.Do("bexpire", "test_bexpire"); err == nil {
 		t.Fatal("invalid err of %v", err)

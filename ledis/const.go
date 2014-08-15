@@ -16,6 +16,8 @@ const (
 	ZScoreType  byte = 8
 	BitType     byte = 9
 	BitMetaType byte = 10
+	SetType     byte = 11
+	SSizeType   byte = 12
 
 	maxDataType byte = 100
 
@@ -35,6 +37,8 @@ var (
 		ZScoreType:  "zscore",
 		BitType:     "bit",
 		BitMetaType: "bitmeta",
+		SetType:     "set",
+		SSizeType:   "ssize",
 		ExpTimeType: "exptime",
 		ExpMetaType: "expmeta",
 	}
@@ -48,6 +52,7 @@ var (
 	errKeySize        = errors.New("invalid key size")
 	errValueSize      = errors.New("invalid value size")
 	errHashFieldSize  = errors.New("invalid hash field size")
+	errSetMemberSize  = errors.New("invalid set member size")
 	errZSetMemberSize = errors.New("invalid zset member size")
 	errExpireValue    = errors.New("invalid expire value")
 )
@@ -64,6 +69,9 @@ const (
 
 	//max zset member size
 	MaxZSetMemberSize int = 1024
+
+	//max set member size
+	MaxSetMemberSize int = 1024
 
 	//max value size
 	MaxValueSize int = 10 * 1024 * 1024
