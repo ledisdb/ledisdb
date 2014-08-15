@@ -132,7 +132,7 @@ func (db *DB) sDelete(t *tx, key []byte) int64 {
 	var num int64 = 0
 	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.Key())
+		t.Delete(it.RawKey())
 		num++
 	}
 
