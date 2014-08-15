@@ -121,7 +121,7 @@ func (db *DB) bEncodeMetaKey(key []byte) []byte {
 	mk[0] = db.index
 	mk[1] = BitMetaType
 
-	copy(mk, key)
+	copy(mk[2:], key)
 	return mk
 }
 
