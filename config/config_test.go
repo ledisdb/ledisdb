@@ -18,6 +18,7 @@ func TestConfig(t *testing.T) {
 	dstCfg.LevelDB.CacheSize = 524288000
 	dstCfg.LevelDB.MaxOpenFiles = 1024
 	dstCfg.LMDB.MapSize = 524288000
+	dstCfg.LMDB.NoSync = true
 
 	cfg, err := NewConfigWithFile("./config.toml")
 	if err != nil {
