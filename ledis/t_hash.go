@@ -453,22 +453,12 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) hFlush() (drop int64, err error) {
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = HashType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = HSizeType + 1
 
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
 
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, HashType)
-
-	err = t.Commit()
+	//	return  db.flushAll(t *tx, dataType byte, expDataType  byte)
 	return
 }
 

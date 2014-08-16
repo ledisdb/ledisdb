@@ -917,17 +917,19 @@ func (db *DB) bFlush() (drop int64, err error) {
 	t.Lock()
 	defer t.Unlock()
 
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = BitType
+	var startKey []byte = nil
+	var keys [][]byte
+	for keys, err = db.BScan(startKey, 1024, false); len(keys) != 0 || err != nil; {
+		for _, key := range keys {
+			drop += db.bDelete(t, key)
+			db.rmExpire(t, BitType, key)
+		}
 
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = BitMetaType + 1
-
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, BitType)
-
-	err = t.Commit()
+		if err = t.Commit(); err != nil {
+			return
+		}
+		startKey = keys[len(keys)-1]
+		keys, err = db.BScan(startKey, 1024, false)
+	}
 	return
 }

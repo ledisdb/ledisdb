@@ -424,22 +424,22 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) lFlush() (drop int64, err error) {
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = ListType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = LMetaType + 1
-
-	t := db.listTx
+	t := db.binTx
 	t.Lock()
 	defer t.Unlock()
 
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, ListType)
-
-	err = t.Commit()
+	var startKey []byte = nil
+	var keys [][]byte
+	for keys, err = db.LScan(startKey, 1024, false); len(keys) != 0 || err != nil; {
+		var num int64
+		if num, err = db.LMclear(keys...); err != nil {
+			return
+		} else {
+			drop += num
+		}
+		startKey = keys[len(keys)-1]
+		keys, err = db.LScan(startKey, 1024, false)
+	}
 	return
 }
 
