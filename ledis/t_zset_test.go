@@ -253,6 +253,9 @@ func TestZUnionStore(t *testing.T) {
 	weights := []int64{1, 2}
 
 	out := []byte("out")
+
+	db.ZAdd(out, ScorePair{3, []byte("out")})
+
 	n, err := db.ZUnionStore(out, keys, weights, AggregateSum)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -296,6 +299,15 @@ func TestZUnionStore(t *testing.T) {
 	if n != 3 {
 		t.Fatal("invalid value ", v)
 	}
+
+	n, err = db.ZCard(out)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 3 {
+		t.Fatal("invalid value ", n)
+	}
 }
 
 func TestZInterStore(t *testing.T) {
@@ -314,6 +326,8 @@ func TestZInterStore(t *testing.T) {
 	weights := []int64{2, 3}
 	out := []byte("out")
 
+	db.ZAdd(out, ScorePair{3, []byte("out")})
+
 	n, err := db.ZInterStore(out, keys, weights, AggregateSum)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -329,7 +343,6 @@ func TestZInterStore(t *testing.T) {
 		t.Fatal("invalid value ", v)
 	}
 
-	out = []byte("out")
 	n, err = db.ZInterStore(out, keys, weights, AggregateMin)
 	if err != nil {
 		t.Fatal(err.Error())
@@ -355,4 +368,12 @@ func TestZInterStore(t *testing.T) {
 		t.Fatal("invalid value ", n)
 	}
 
+	n, err = db.ZCard(out)
+
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if n != 1 {
+		t.Fatal("invalid value ", n)
+	}
 }

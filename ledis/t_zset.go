@@ -848,29 +848,25 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 
 	db.zDelete(t, destKey)
 
-	var num int64 = 0
 	for member, score := range destMap {
 		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
 			return 0, err
 		}
 
-		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+		if _, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
 			return 0, err
-		} else if n == 0 {
-			//add new
-			num++
 		}
 	}
 
-	if _, err := db.zIncrSize(t, destKey, num); err != nil {
-		return 0, err
-	}
+	var num = int64(len(destMap))
+	sk := db.zEncodeSizeKey(destKey)
+	t.Put(sk, PutInt64(num))
 
 	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return int64(len(destMap)), nil
+	return num, nil
 }
 
 func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
@@ -922,28 +918,23 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 
 	db.zDelete(t, destKey)
 
-	var num int64 = 0
 	for member, score := range destMap {
 		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
 			return 0, err
 		}
-
-		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+		if _, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
 			return 0, err
-		} else if n == 0 {
-			//add new
-			num++
 		}
 	}
 
-	if _, err := db.zIncrSize(t, destKey, num); err != nil {
-		return 0, err
-	}
+	var num int64 = int64(len(destMap))
+	sk := db.zEncodeSizeKey(destKey)
+	t.Put(sk, PutInt64(num))
 	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return int64(len(destMap)), nil
+	return num, nil
 }
 
 func (db *DB) ZScan(key []byte, count int, inclusive bool) ([][]byte, error) {
