@@ -3,17 +3,14 @@
 
 import unittest
 import sys
-import datetime, time
 sys.path.append('..')
 
 import ledis
 from ledis._compat import b, iteritems
+from util import expire_at, expire_at_seconds
+
 
 l = ledis.Ledis(port=6380)
-
-
-def current_time():
-    return datetime.datetime.now()
 
 
 class TestCmdKv(unittest.TestCase):
@@ -31,10 +28,6 @@ class TestCmdKv(unittest.TestCase):
         assert l['a'] == b('-2')
         assert l.decr('a', amount=5) == -7
         assert l['a'] == b('-7')
-
-        #FIXME: how to test exception?
-        # l.set('b', '234293482390480948029348230948')
-        # self.assertRaises(ResponseError, l.delete('b'))
 
     def test_decrby(self):
         assert l.delete('a') == 1
@@ -134,21 +127,17 @@ class TestCmdKv(unittest.TestCase):
         assert not (l.expire('a', 100))
 
     def test_expireat_datetime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.set('a', '1')
-        assert l.expireat('a', expire_at)
+        assert l.expireat('a', expire_at())
         assert 0 < l.ttl('a') <= 61
 
     def test_expireat_unixtime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.set('a', '1')
-        expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert l.expireat('a', expire_at_seconds)
+        assert l.expireat('a', expire_at_seconds())
         assert 0 < l.ttl('a') <= 61
 
     def test_expireat_no_key(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not l.expireat('a', expire_at)
+        assert not l.expireat('a', expire_at())
 
     def test_expireat(self):
         l.set('a', 'hello')

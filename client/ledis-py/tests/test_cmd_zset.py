@@ -3,17 +3,14 @@
 
 import unittest
 import sys
-import datetime, time
 sys.path.append('..')
 
 import ledis
-from ledis._compat import b, iteritems
-from ledis import ResponseError
+from ledis._compat import b
+from util import expire_at, expire_at_seconds
 
 l = ledis.Ledis(port=6380)
 
-def current_time():
-    return datetime.datetime.now()
 
 class TestCmdZset(unittest.TestCase):
     def setUp(self):
@@ -62,7 +59,7 @@ class TestCmdZset(unittest.TestCase):
         assert l.zrangebyscore('a', 2, 4, start=1, num=2) == \
             [b('a3'), b('a4')]
 
-        # withscores 
+        # withscores
         assert l.zrangebyscore('a', 2, 4, withscores=True) == \
             [('a2', 2), ('a3', 3), ('a4', 4)]
 
@@ -145,21 +142,17 @@ class TestCmdZset(unittest.TestCase):
         assert l.zttl('a') == -1
 
     def test_zexpireat_datetime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.zadd('a', a1=1)
-        assert l.zexpireat('a', expire_at)
+        assert l.zexpireat('a', expire_at())
         assert 0 < l.zttl('a') <= 61
 
     def test_zexpireat_unixtime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.zadd('a', a1=1)
-        expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert l.zexpireat('a', expire_at_seconds)
+        assert l.zexpireat('a', expire_at_seconds())
         assert 0 < l.zttl('a') <= 61
 
     def test_zexpireat_no_key(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not l.zexpireat('a', expire_at)
+        assert not l.zexpireat('a', expire_at())
 
     def test_zttl_and_zpersist(self):
         l.zadd('a', a1=1)

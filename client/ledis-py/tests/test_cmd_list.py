@@ -2,18 +2,15 @@
 # Test Cases for list commands
 
 import unittest
-import datetime, time
 import sys
 sys.path.append('..')
 
 import ledis
 from ledis._compat import b
+from util import expire_at, expire_at_seconds
+
 
 l = ledis.Ledis(port=6380)
-
-
-def current_time():
-    return datetime.datetime.now()
 
 
 class TestCmdList(unittest.TestCase):
@@ -84,21 +81,17 @@ class TestCmdList(unittest.TestCase):
         assert l.lttl('mylist') == -1
 
     def test_lexpireat_datetime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.rpush('mylist', '1')
-        assert l.lexpireat('mylist', expire_at)
+        assert l.lexpireat('mylist', expire_at())
         assert 0 < l.lttl('mylist') <= 61
 
     def test_lexpireat_unixtime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.rpush('mylist', '1')
-        expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert l.lexpireat('mylist', expire_at_seconds)
+        assert l.lexpireat('mylist', expire_at_seconds())
         assert l.lttl('mylist') <= 61
 
     def test_lexpireat_no_key(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not l.lexpireat('mylist', expire_at)
+        assert not l.lexpireat('mylist', expire_at())
 
     def test_lttl_and_lpersist(self):
         l.rpush('mylist', '1')
