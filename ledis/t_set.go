@@ -105,23 +105,12 @@ func (db *DB) sEncodeStopKey(key []byte) []byte {
 }
 
 func (db *DB) sFlush() (drop int64, err error) {
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = SetType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = SSizeType + 1
 
 	t := db.setTx
 	t.Lock()
 	defer t.Unlock()
 
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, SetType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, SetType)
 }
 
 func (db *DB) sDelete(t *tx, key []byte) int64 {
@@ -604,4 +593,8 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 	}
 	err = t.Commit()
 	return n, err
+}
+
+func (db *DB) SScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(SSizeType, key, count, inclusive)
 }

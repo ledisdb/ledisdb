@@ -78,6 +78,8 @@ func (db *DB) encodeMetaKey(dataType byte, key []byte) ([]byte, error) {
 		return db.zEncodeSizeKey(key), nil
 	case BitMetaType:
 		return db.bEncodeMetaKey(key), nil
+	case SSizeType:
+		return db.sEncodeSizeKey(key), nil
 	default:
 		return nil, errDataType
 	}

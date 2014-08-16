@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -338,4 +339,35 @@ func testDiff(db *DB, t *testing.T) {
 	} else if len(v) != 2 {
 		t.Fatal(v)
 	}
+}
+
+func TestSFlush(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	for i := 0; i < 2000; i++ {
+		key := fmt.Sprintf("%d", i)
+		if _, err := db.SAdd([]byte(key), []byte("v")); err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	if v, err := db.SScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 2000 {
+		t.Fatal("invalid value ", len(v))
+	}
+
+	if n, err := db.sFlush(); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 2000 {
+		t.Fatal("invalid value ", n)
+	}
+
+	if v, err := db.SScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 0 {
+		t.Fatal("invalid value length ", len(v))
+	}
+
 }

@@ -71,6 +71,9 @@ func (db *DB) flushType(t *tx, dataType byte) (drop int64, err error) {
 	case BitType:
 		deleteFunc = db.bDelete
 		metaDataType = BitMetaType
+	case SetType:
+		deleteFunc = db.sDelete
+		metaDataType = SSizeType
 	default:
 		return 0, fmt.Errorf("invalid data type: %s", TypeName[dataType])
 	}
