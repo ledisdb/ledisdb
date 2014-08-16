@@ -1,8 +1,6 @@
 package ledis
 
 import (
-	"fmt"
-	"github.com/siddontang/ledisdb/store"
 	"testing"
 )
 
@@ -197,26 +195,6 @@ func TestDBBScan(t *testing.T) {
 	if _, err := db.BSetBit(k3, 1, 0); err != nil {
 		t.Fatal(err.Error())
 	}
-
-	ek1 := db.bEncodeMetaKey(k1)
-	fmt.Printf("%x\n", ek1)
-	ek2 := db.bEncodeMetaKey(k2)
-	fmt.Printf("%x\n", ek2)
-	ek3 := db.bEncodeMetaKey(k3)
-	fmt.Printf("%x\n", ek3)
-
-	start := db.bEncodeMetaKey(nil)
-	fmt.Printf("start: %x\n", start)
-	end := db.bEncodeMetaKey(nil)
-	end[len(end)-1] = BitMetaType + 1
-	fmt.Printf("end: %x\n", end)
-
-	it := db.db.RangeLimitIterator(start, end, store.RangeClose, 0, 4)
-
-	for ; it.Valid(); it.Next() {
-		fmt.Printf("%x\n", it.RawKey())
-	}
-	it.Close()
 
 	if v, err := db.BScan(nil, 1, true); err != nil {
 		t.Fatal(err)
