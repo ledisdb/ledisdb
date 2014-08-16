@@ -453,13 +453,10 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) hFlush() (drop int64, err error) {
-
-	t := db.kvTx
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
-
-	//	return  db.flushAll(t *tx, dataType byte, expDataType  byte)
-	return
+	return db.flushType(t, HashType)
 }
 
 func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {

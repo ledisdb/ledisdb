@@ -917,19 +917,5 @@ func (db *DB) bFlush() (drop int64, err error) {
 	t.Lock()
 	defer t.Unlock()
 
-	var startKey []byte = nil
-	var keys [][]byte
-	for keys, err = db.BScan(startKey, 1024, false); len(keys) != 0 || err != nil; {
-		for _, key := range keys {
-			drop += db.bDelete(t, key)
-			db.rmExpire(t, BitType, key)
-		}
-
-		if err = t.Commit(); err != nil {
-			return
-		}
-		startKey = keys[len(keys)-1]
-		keys, err = db.BScan(startKey, 1024, false)
-	}
-	return
+	return db.flushType(t, BitType)
 }

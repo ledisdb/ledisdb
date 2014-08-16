@@ -424,23 +424,10 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) lFlush() (drop int64, err error) {
-	t := db.binTx
+	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
-
-	var startKey []byte = nil
-	var keys [][]byte
-	for keys, err = db.LScan(startKey, 1024, false); len(keys) != 0 || err != nil; {
-		var num int64
-		if num, err = db.LMclear(keys...); err != nil {
-			return
-		} else {
-			drop += num
-		}
-		startKey = keys[len(keys)-1]
-		keys, err = db.LScan(startKey, 1024, false)
-	}
-	return
+	return db.flushType(t, ListType)
 }
 
 func (db *DB) LExpire(key []byte, duration int64) (int64, error) {

@@ -68,7 +68,9 @@ func (db *DB) flushType(t *tx, dataType byte) (drop int64, err error) {
 	case ZSetType:
 		deleteFunc = db.zDelete
 		metaDataType = ZSizeType
-
+	case BitType:
+		deleteFunc = db.bDelete
+		metaDataType = BitMetaType
 	default:
 		return 0, fmt.Errorf("invalid data type: %s", TypeName[dataType])
 	}
@@ -77,12 +79,15 @@ func (db *DB) flushType(t *tx, dataType byte) (drop int64, err error) {
 	keys, err = db.scan(metaDataType, nil, 1024, false)
 	for len(keys) != 0 || err != nil {
 		for _, key := range keys {
-			drop += deleteFunc(t, key)
+			deleteFunc(t, key)
 			db.rmExpire(t, dataType, key)
+
 		}
 
 		if err = t.Commit(); err != nil {
 			return
+		} else {
+			drop += int64(len(keys))
 		}
 		keys, err = db.scan(metaDataType, nil, 1024, false)
 	}

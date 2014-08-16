@@ -738,32 +738,7 @@ func (db *DB) zFlush() (drop int64, err error) {
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
-
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = ZSetType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = ZScoreType + 1
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
-	defer it.Close()
-
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.RawKey())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-
-	db.expFlush(t, ZSetType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, ZSetType)
 }
 
 func (db *DB) ZExpire(key []byte, duration int64) (int64, error) {

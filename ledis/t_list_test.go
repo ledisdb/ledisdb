@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -98,5 +99,60 @@ func TestListPersist(t *testing.T) {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
+	}
+}
+
+func TestLFlush(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	for i := 0; i < 2000; i++ {
+		key := fmt.Sprintf("%d", i)
+		if _, err := db.LPush([]byte(key), []byte("v")); err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	if v, err := db.LScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 2000 {
+		t.Fatal("invalid value ", len(v))
+	}
+
+	if n, err := db.lFlush(); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 2000 {
+		t.Fatal("invalid value ", n)
+	}
+
+	if v, err := db.LScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 0 {
+		t.Fatal("invalid value length ", len(v))
+	}
+
+	for i := 0; i < 2000; i++ {
+		key := fmt.Sprintf("%d", i)
+		if _, err := db.ZAdd([]byte(key), ScorePair{1, []byte("v")}); err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	if v, err := db.ZScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 2000 {
+		t.Fatal("invalid value ", len(v))
+	}
+
+	if n, err := db.zFlush(); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 2000 {
+		t.Fatal("invalid value ", n)
+	}
+
+	if v, err := db.ZScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 0 {
+		t.Fatal("invalid value length ", len(v))
 	}
 }

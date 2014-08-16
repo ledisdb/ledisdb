@@ -308,18 +308,10 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 }
 
 func (db *DB) flush() (drop int64, err error) {
-	minKey := db.encodeKVMinKey()
-	maxKey := db.encodeKVMaxKey()
-
 	t := db.kvTx
 	t.Lock()
 	defer t.Unlock()
-
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, KVType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, KVType)
 }
 
 //if inclusive is true, scan range [key, inf) else (key, inf)
