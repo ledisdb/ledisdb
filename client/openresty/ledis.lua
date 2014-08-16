@@ -113,6 +113,27 @@ local commands = {
     "bttl",
     "bpersist",
 
+    --[[set]]
+    "sadd",
+    "scard",
+    "sdiff",
+    "sdiffstore",
+    "sinter",
+    "sinterstore",
+    "sismember",
+    "smembers",
+    "srem",
+    "sunion",
+    "sunionstore",
+
+
+    "sclear",
+    "smclear",
+    "sexpire",
+    "sexpireat",
+    "sttl",
+    "spersist",
+
     --[[server]]
     "ping",
     "echo",
