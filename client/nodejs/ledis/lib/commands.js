@@ -2,6 +2,10 @@
 module.exports = [
     "quit",
 
+    "ping",
+    "echo",
+    "select",
+
 	"bget",
 	"bdelete",
 	"bsetbit",
