@@ -147,7 +147,7 @@ func testUnion(db *DB, t *testing.T) {
 	m2 := []byte("m2")
 	m3 := []byte("m3")
 	db.SAdd(key, m1, m2)
-	db.SAdd(key1, m1, m3)
+	db.SAdd(key1, m1, m2, m3)
 	db.SAdd(key2, m2, m3)
 	if _, err := db.sUnionGeneric(key, key2); err != nil {
 		t.Fatal(err)
@@ -158,11 +158,13 @@ func testUnion(db *DB, t *testing.T) {
 	}
 
 	dstkey := []byte("union_dsk")
+	db.SAdd(dstkey, []byte("x"))
 	if num, err := db.SUnionStore(dstkey, key1, key2); err != nil {
 		t.Fatal(err)
 	} else if num != 3 {
 		t.Fatal(num)
 	}
+
 	if _, err := db.SMembers(dstkey); err != nil {
 		t.Fatal(err)
 	}

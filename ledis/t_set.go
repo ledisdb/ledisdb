@@ -490,7 +490,6 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 
 	var err error
 	var ek []byte
-	var num int64 = 0
 	var v [][]byte
 
 	switch optType {
@@ -513,22 +512,21 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 
 		ek = db.sEncodeSetKey(dstKey, m)
 
-		if v, err := db.db.Get(ek); err != nil {
+		if _, err := db.db.Get(ek); err != nil {
 			return 0, err
-		} else if v == nil {
-			num++
 		}
 
 		t.Put(ek, nil)
-
 	}
 
-	if _, err = db.sIncrSize(dstKey, num); err != nil {
+	var num = int64(len(v))
+	sk := db.sEncodeSizeKey(dstKey)
+	t.Put(sk, PutInt64(num))
+
+	if err = t.Commit(); err != nil {
 		return 0, err
 	}
-
-	err = t.Commit()
-	return num, err
+	return num, nil
 }
 
 func (db *DB) SClear(key []byte) (int64, error) {

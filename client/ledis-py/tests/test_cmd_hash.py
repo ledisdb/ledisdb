@@ -3,18 +3,15 @@
 
 import unittest
 import sys
-import datetime, time
+
 sys.path.append('..')
 
 import ledis
-from ledis._compat import b, iteritems, itervalues
-from ledis import ResponseError
+from ledis._compat import itervalues
+from util import expire_at, expire_at_seconds
 
 
 l = ledis.Ledis(port=6380)
-
-def current_time():
-    return datetime.datetime.now()
 
 
 class TestCmdHash(unittest.TestCase):
@@ -35,7 +32,7 @@ class TestCmdHash(unittest.TestCase):
         l.hset('myhash', 'field1', 'foo')
         l.hdel('myhash', 'field2')
         assert l.hexists('myhash', 'field1') == 1
-        assert l.hexists('myhash', 'field2') == 0      
+        assert l.hexists('myhash', 'field2') == 0
 
     def test_hget(self):
         l.hset('myhash', 'field1', 'foo')
@@ -110,21 +107,17 @@ class TestCmdHash(unittest.TestCase):
         assert l.httl('myhash') <= 100
 
     def test_hexpireat_datetime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.hset('a', 'f', 'foo')
-        assert l.hexpireat('a', expire_at)
+        assert l.hexpireat('a', expire_at())
         assert 0 < l.httl('a') <= 61
 
     def test_hexpireat_unixtime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.hset('a', 'f', 'foo')
-        expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert l.hexpireat('a', expire_at_seconds)
+        assert l.hexpireat('a', expire_at_seconds())
         assert 0 < l.httl('a') <= 61
 
     def test_hexpireat_no_key(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not l.hexpireat('a', expire_at)
+        assert not l.hexpireat('a', expire_at())
 
     def test_hexpireat(self):
         assert l.hexpireat('myhash', 1577808000) == 0
