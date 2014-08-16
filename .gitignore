@@ -1,0 +1,6 @@
+build
+*.pyc
+.DS_Store
+nohup.out
+build_config.mk
+var/
