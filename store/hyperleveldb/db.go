@@ -24,7 +24,7 @@ type Store struct {
 }
 
 func (s Store) String() string {
-	return Name
+	return DBName
 }
 
 func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
