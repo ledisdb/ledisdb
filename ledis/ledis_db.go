@@ -33,6 +33,7 @@ func (db *DB) newEliminator() *elimination {
 	eliminator.regRetireContext(HashType, db.hashTx, db.hDelete)
 	eliminator.regRetireContext(ZSetType, db.zsetTx, db.zDelete)
 	eliminator.regRetireContext(BitType, db.binTx, db.bDelete)
+	eliminator.regRetireContext(SetType, db.setTx, db.sDelete)
 
 	return eliminator
 }
