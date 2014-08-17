@@ -17,7 +17,7 @@ type Store struct {
 }
 
 func (s Store) String() string {
-	return "goleveldb"
+	return DBName
 }
 
 type DB struct {
@@ -135,4 +135,8 @@ func (db *DB) NewIterator() driver.IIterator {
 
 func (db *DB) Begin() (driver.Tx, error) {
 	return nil, driver.ErrTxSupport
+}
+
+func init() {
+	driver.Register(Store{})
 }

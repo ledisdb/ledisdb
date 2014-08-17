@@ -14,7 +14,7 @@ type Store struct {
 }
 
 func (s Store) String() string {
-	return "boltdb"
+	return DBName
 }
 
 func (s Store) Open(dbPath string, cfg *config.Config) (driver.IDB, error) {
@@ -149,4 +149,8 @@ func (db *DB) BatchPut(writes []driver.Write) error {
 		return nil
 	})
 	return err
+}
+
+func init() {
+	driver.Register(Store{})
 }

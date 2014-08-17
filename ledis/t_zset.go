@@ -738,71 +738,7 @@ func (db *DB) zFlush() (drop int64, err error) {
 	t := db.zsetTx
 	t.Lock()
 	defer t.Unlock()
-
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = ZSetType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = ZScoreType + 1
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
-	defer it.Close()
-
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.RawKey())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-
-	db.expFlush(t, ZSetType)
-
-	err = t.Commit()
-	return
-}
-
-func (db *DB) ZScan(key []byte, member []byte, count int, inclusive bool) ([]ScorePair, error) {
-	var minKey []byte
-	if member != nil {
-		if err := checkZSetKMSize(key, member); err != nil {
-			return nil, err
-		}
-
-		minKey = db.zEncodeSetKey(key, member)
-	} else {
-		minKey = db.zEncodeStartSetKey(key)
-	}
-
-	maxKey := db.zEncodeStopSetKey(key)
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([]ScorePair, 0, 2*count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if _, m, err := db.zDecodeSetKey(it.Key()); err != nil {
-			continue
-		} else {
-			score, _ := Int64(it.Value(), nil)
-			v = append(v, ScorePair{Member: m, Score: score})
-		}
-	}
-	it.Close()
-
-	return v, nil
+	return db.flushType(t, ZSetType)
 }
 
 func (db *DB) ZExpire(key []byte, duration int64) (int64, error) {
@@ -912,29 +848,25 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 
 	db.zDelete(t, destKey)
 
-	var num int64 = 0
 	for member, score := range destMap {
 		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
 			return 0, err
 		}
 
-		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+		if _, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
 			return 0, err
-		} else if n == 0 {
-			//add new
-			num++
 		}
 	}
 
-	if _, err := db.zIncrSize(t, destKey, num); err != nil {
-		return 0, err
-	}
+	var num = int64(len(destMap))
+	sk := db.zEncodeSizeKey(destKey)
+	t.Put(sk, PutInt64(num))
 
 	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return int64(len(destMap)), nil
+	return num, nil
 }
 
 func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
@@ -986,26 +918,25 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 
 	db.zDelete(t, destKey)
 
-	var num int64 = 0
 	for member, score := range destMap {
 		if err := checkZSetKMSize(destKey, []byte(member)); err != nil {
 			return 0, err
 		}
-
-		if n, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
+		if _, err := db.zSetItem(t, destKey, score, []byte(member)); err != nil {
 			return 0, err
-		} else if n == 0 {
-			//add new
-			num++
 		}
 	}
 
-	if _, err := db.zIncrSize(t, destKey, num); err != nil {
-		return 0, err
-	}
+	var num int64 = int64(len(destMap))
+	sk := db.zEncodeSizeKey(destKey)
+	t.Put(sk, PutInt64(num))
 	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return int64(len(destMap)), nil
+	return num, nil
+}
+
+func (db *DB) ZScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(ZSizeType, key, count, inclusive)
 }

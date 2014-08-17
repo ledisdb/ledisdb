@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -43,40 +44,6 @@ func TestDBKV(t *testing.T) {
 
 }
 
-func TestDBScan(t *testing.T) {
-	db := getTestDB()
-
-	db.FlushAll()
-
-	if v, err := db.Scan(nil, 10, true); err != nil {
-		t.Fatal(err)
-	} else if len(v) != 0 {
-		t.Fatal(len(v))
-	}
-
-	db.Set([]byte("a"), []byte{})
-	db.Set([]byte("b"), []byte{})
-	db.Set([]byte("c"), []byte{})
-
-	if v, err := db.Scan(nil, 1, true); err != nil {
-		t.Fatal(err)
-	} else if len(v) != 1 {
-		t.Fatal(len(v))
-	}
-
-	if v, err := db.Scan([]byte("a"), 2, false); err != nil {
-		t.Fatal(err)
-	} else if len(v) != 2 {
-		t.Fatal(len(v))
-	}
-
-	if v, err := db.Scan(nil, 3, true); err != nil {
-		t.Fatal(err)
-	} else if len(v) != 3 {
-		t.Fatal(len(v))
-	}
-}
-
 func TestKVPersist(t *testing.T) {
 	db := getTestDB()
 
@@ -97,5 +64,55 @@ func TestKVPersist(t *testing.T) {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
+	}
+}
+func TestKVFlush(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	for i := 0; i < 2000; i++ {
+		key := fmt.Sprintf("%d", i)
+		if err := db.Set([]byte(key), []byte("v")); err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	if v, err := db.Scan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 2000 {
+		t.Fatal("invalid value ", len(v))
+	}
+
+	for i := 0; i < 2000; i++ {
+		key := fmt.Sprintf("%d", i)
+		if v, err := db.Get([]byte(key)); err != nil {
+			t.Fatal(err.Error())
+		} else if string(v) != "v" {
+			t.Fatal("invalid value ", v)
+		}
+	}
+
+	if n, err := db.flush(); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 2000 {
+		t.Fatal("invalid value ", n)
+	}
+
+	if v, err := db.Scan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 0 {
+		t.Fatal("invalid value length ", len(v))
+	}
+
+	for i := 0; i < 2000; i++ {
+
+		key := []byte(fmt.Sprintf("%d", i))
+
+		if v, err := db.Get(key); err != nil {
+			t.Fatal(err.Error())
+		} else if v != nil {
+
+			t.Fatal("invalid value ", v)
+		}
 	}
 }

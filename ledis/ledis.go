@@ -21,6 +21,7 @@ type DB struct {
 	hashTx *tx
 	zsetTx *tx
 	binTx  *tx
+	setTx  *tx
 }
 
 type Ledis struct {
@@ -88,6 +89,7 @@ func newDB(l *Ledis, index uint8) *DB {
 	d.hashTx = newTx(l)
 	d.zsetTx = newTx(l)
 	d.binTx = newTx(l)
+	d.setTx = newTx(l)
 
 	return d
 }

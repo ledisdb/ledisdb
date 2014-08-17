@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"encoding/binary"
 	"testing"
 )
 
@@ -535,4 +536,57 @@ func testBitExpire(t *testing.T) {
 	if ttl, err := db.BTTL(key); ttl != 100 || err != nil {
 		t.Fatal(false)
 	}
+}
+
+func testBFlush(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	for i := 0; i < 2000; i++ {
+		key := []byte{}
+		binary.LittleEndian.PutUint32(key, uint32(i))
+		if _, err := db.BSetBit(key, 1, 1); err != nil {
+			t.Fatal(err.Error())
+		}
+	}
+
+	if v, err := db.BScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if len(v) != 2000 {
+		t.Fatal("invalid value ", len(v))
+	}
+
+	for i := 0; i < 2000; i++ {
+		key := []byte{}
+		binary.LittleEndian.PutUint32(key, uint32(i))
+		if v, err := db.BGetBit(key, 1); err != nil {
+			t.Fatal(err.Error())
+		} else if v != 1 {
+			t.Fatal("invalid value ", v)
+		}
+	}
+
+	if n, err := db.bFlush(); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 2000 {
+		t.Fatal("invalid value ", n)
+	}
+
+	if v, err := db.BScan(nil, 3000, true); err != nil {
+		t.Fatal(err.Error())
+	} else if v != nil {
+		t.Fatal("invalid value length ", len(v))
+	}
+
+	for i := 0; i < 2000; i++ {
+		key := []byte{}
+		binary.LittleEndian.PutUint32(key, uint32(i))
+		if v, err := db.BGet(key); err != nil {
+			t.Fatal(err.Error())
+		} else if v != nil {
+
+			t.Fatal("invalid value ", v)
+		}
+	}
+
 }

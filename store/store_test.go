@@ -3,17 +3,47 @@ package store
 import (
 	"bytes"
 	"fmt"
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store/driver"
+	"os"
 	"testing"
 )
 
 func TestStore(t *testing.T) {
+	cfg := new(config.Config)
+	cfg.DataDir = "/tmp/testdb"
+	cfg.LMDB.MapSize = 10 * 1024 * 1024
 
+	ns := driver.ListStores()
+	for _, s := range ns {
+		cfg.DBName = s
+
+		os.RemoveAll(getStorePath(cfg))
+
+		db, err := Open(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		testStore(db, t)
+		testClear(db, t)
+		testTx(db, t)
+
+		db.Close()
+	}
 }
 
 func testStore(db *DB, t *testing.T) {
 	testSimple(db, t)
 	testBatch(db, t)
 	testIterator(db, t)
+}
+
+func testClear(db *DB, t *testing.T) {
+	it := db.RangeIterator(nil, nil, RangeClose)
+	for ; it.Valid(); it.Next() {
+		db.Delete(it.RawKey())
+	}
 }
 
 func testSimple(db *DB, t *testing.T) {

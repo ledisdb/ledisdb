@@ -1,3 +1,5 @@
+// +build !windows
+
 package mdb
 
 import (
@@ -11,7 +13,7 @@ type Store struct {
 }
 
 func (s Store) String() string {
-	return "lmdb"
+	return DBName
 }
 
 type MDB struct {
@@ -274,4 +276,8 @@ func (db MDB) NewWriteBatch() driver.IWriteBatch {
 
 func (db MDB) Begin() (driver.Tx, error) {
 	return newTx(db)
+}
+
+func init() {
+	driver.Register(Store{})
 }

@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"fmt"
 	"github.com/siddontang/ledisdb/store"
 )
 
@@ -10,7 +11,8 @@ func (db *DB) FlushAll() (drop int64, err error) {
 		db.lFlush,
 		db.hFlush,
 		db.zFlush,
-		db.bFlush}
+		db.bFlush,
+		db.sFlush}
 
 	for _, flush := range all {
 		if n, e := flush(); e != nil {
@@ -47,5 +49,50 @@ func (db *DB) flushRegion(t *tx, minKey []byte, maxKey []byte) (drop int64, err 
 		}
 	}
 	it.Close()
+	return
+}
+
+func (db *DB) flushType(t *tx, dataType byte) (drop int64, err error) {
+	var deleteFunc func(t *tx, key []byte) int64
+	var metaDataType byte
+	switch dataType {
+	case KVType:
+		deleteFunc = db.delete
+		metaDataType = KVType
+	case ListType:
+		deleteFunc = db.lDelete
+		metaDataType = LMetaType
+	case HashType:
+		deleteFunc = db.hDelete
+		metaDataType = HSizeType
+	case ZSetType:
+		deleteFunc = db.zDelete
+		metaDataType = ZSizeType
+	case BitType:
+		deleteFunc = db.bDelete
+		metaDataType = BitMetaType
+	case SetType:
+		deleteFunc = db.sDelete
+		metaDataType = SSizeType
+	default:
+		return 0, fmt.Errorf("invalid data type: %s", TypeName[dataType])
+	}
+
+	var keys [][]byte
+	keys, err = db.scan(metaDataType, nil, 1024, false)
+	for len(keys) != 0 || err != nil {
+		for _, key := range keys {
+			deleteFunc(t, key)
+			db.rmExpire(t, dataType, key)
+
+		}
+
+		if err = t.Commit(); err != nil {
+			return
+		} else {
+			drop += int64(len(keys))
+		}
+		keys, err = db.scan(metaDataType, nil, 1024, false)
+	}
 	return
 }

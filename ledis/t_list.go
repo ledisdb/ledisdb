@@ -424,23 +424,10 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) lFlush() (drop int64, err error) {
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = ListType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = LMetaType + 1
-
 	t := db.listTx
 	t.Lock()
 	defer t.Unlock()
-
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, ListType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, ListType)
 }
 
 func (db *DB) LExpire(key []byte, duration int64) (int64, error) {
@@ -483,4 +470,18 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 
 	err = t.Commit()
 	return n, err
+}
+
+func (db *DB) LScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(LMetaType, key, count, inclusive)
+}
+
+func (db *DB) lEncodeMinKey() []byte {
+	return db.lEncodeMetaKey(nil)
+}
+
+func (db *DB) lEncodeMaxKey() []byte {
+	ek := db.lEncodeMetaKey(nil)
+	ek[len(ek)-1] = LMetaType + 1
+	return ek
 }

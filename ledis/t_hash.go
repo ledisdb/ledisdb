@@ -453,60 +453,14 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) hFlush() (drop int64, err error) {
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = HashType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = HSizeType + 1
-
-	t := db.kvTx
+	t := db.hashTx
 	t.Lock()
 	defer t.Unlock()
-
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, HashType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, HashType)
 }
 
-func (db *DB) HScan(key []byte, field []byte, count int, inclusive bool) ([]FVPair, error) {
-	var minKey []byte
-	if field != nil {
-		if err := checkHashKFSize(key, field); err != nil {
-			return nil, err
-		}
-		minKey = db.hEncodeHashKey(key, field)
-	} else {
-		minKey = db.hEncodeStartKey(key)
-	}
-
-	maxKey := db.hEncodeStopKey(key)
-
-	if count <= 0 {
-		count = defaultScanCount
-	}
-
-	v := make([]FVPair, 0, count)
-
-	rangeType := store.RangeROpen
-	if !inclusive {
-		rangeType = store.RangeOpen
-	}
-
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-	for ; it.Valid(); it.Next() {
-		if _, f, err := db.hDecodeHashKey(it.Key()); err != nil {
-			continue
-		} else {
-			v = append(v, FVPair{Field: f, Value: it.Value()})
-		}
-	}
-	it.Close()
-
-	return v, nil
+func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(HSizeType, key, count, inclusive)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {

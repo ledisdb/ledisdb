@@ -2,6 +2,10 @@
 module.exports = [
     "quit",
 
+    "ping",
+    "echo",
+    "select",
+
 	"bget",
 	"bdelete",
 	"bsetbit",
@@ -93,4 +97,26 @@ module.exports = [
 	"zexpireat",
 	"zttl",
 	"zpersist",
+
+
+	"sadd",
+	"scard",
+	"sdiff",
+	"sdiffstore",
+	"sinter",
+	"sinterstore",
+	"sismember",
+	"smembers",
+	"srem",
+	"sunion",
+	"sunionstore",
+
+
+	"sclear",
+	"smclear",
+	"sexpire",
+	"sexpireat",
+	"sttl",
+	"spersist"
+
 ];

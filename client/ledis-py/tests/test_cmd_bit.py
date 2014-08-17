@@ -3,19 +3,13 @@
 
 import unittest
 import sys
-import datetime, time
 sys.path.append('..')
 
 import ledis
 from ledis._compat import b
-from ledis import ResponseError
-
+from util import expire_at, expire_at_seconds
 
 l = ledis.Ledis(port=6380)
-
-
-def current_time():
-    return datetime.datetime.now()
 
 
 class TestCmdBit(unittest.TestCase):
@@ -94,21 +88,17 @@ class TestCmdBit(unittest.TestCase):
         assert l.bttl('a') == -1
 
     def test_bexpireat_datetime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.bsetbit('a', 1, True)
-        assert l.bexpireat('a', expire_at)
+        assert l.bexpireat('a', expire_at())
         assert 0 < l.bttl('a') <= 61
 
     def test_bexpireat_unixtime(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
         l.bsetbit('a', 1, True)
-        expire_at_seconds = int(time.mktime(expire_at.timetuple()))
-        assert l.bexpireat('a', expire_at_seconds)
+        assert l.bexpireat('a', expire_at_seconds())
         assert 0 < l.bttl('a') <= 61
 
     def test_bexpireat_no_key(self):
-        expire_at = current_time() + datetime.timedelta(minutes=1)
-        assert not l.bexpireat('a', expire_at)
+        assert not l.bexpireat('a', expire_at())
 
     def test_bttl_and_bpersist(self):
         l.bsetbit('a', 1, True)

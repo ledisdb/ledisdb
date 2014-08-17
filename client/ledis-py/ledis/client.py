@@ -2,14 +2,12 @@ from __future__ import with_statement
 import datetime
 import time as mod_time
 from ledis._compat import (b, izip, imap, iteritems,
-                           basestring, long, nativestr, urlparse, bytes)
+                           basestring, long, nativestr, bytes)
 from ledis.connection import ConnectionPool, UnixDomainSocketConnection
 from ledis.exceptions import (
     ConnectionError,
     DataError,
     LedisError,
-    ResponseError,
-    ExecAbortError,
 )
 
 SYM_EMPTY = b('')
@@ -75,15 +73,18 @@ class Ledis(object):
     """
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
-            'EXISTS EXPIRE EXPIREAT HEXISTS HMSET SETNX '
-            'PERSIST HPERSIST LPERSIST ZPERSIST BEXPIRE '
-            'BEXPIREAT BPERSIST BDELETE',
+            'EXISTS HEXISTS SISMEMBER  HMSET SETNX'
+            'PERSIST HPERSIST LPERSIST ZPERSIST  SPERSIST BPERSIST'
+            'EXPIRE LEXPIRE HEXPIRE SEXPIRE ZEXPIRE BEXPIRE'
+            'EXPIREAT LBEXPIREAT HEXPIREAT SEXPIREAT ZEXPIREAT BEXPIREAT',
             bool
         ),
         string_keys_to_dict(
-            'DECRBY DEL HDEL HLEN INCRBY LLEN '
-            'ZADD ZCARD ZREM ZREMRANGEBYRANK ZREMRANGEBYSCORE'
-            'LMCLEAR HMCLEAR ZMCLEAR BCOUNT BGETBIT BSETBIT BOPT BMSETBIT',
+            'DECRBY DEL HDEL HLEN INCRBY LLEN ZADD ZCARD ZREM'
+            'ZREMRANGEBYRANK ZREMRANGEBYSCORE LMCLEAR HMCLEAR'
+            'ZMCLEAR BCOUNT BGETBIT BSETBIT BOPT BMSETBIT'
+            'SADD SCARD SDIFFSTORE SINTERSTORE SUNIONSTORE SREM'
+            'SCLEAR SMLEAR BDELETE',
             int
         ),
         string_keys_to_dict(
@@ -93,6 +94,10 @@ class Ledis(object):
         string_keys_to_dict(
             'MSET SELECT ',
             lambda r: nativestr(r) == 'OK'
+        ),
+        string_keys_to_dict(
+            'SDIFF SINTER SMEMBERS SUNION',
+            lambda r: r and set(r) or set()
         ),
         string_keys_to_dict(
             'ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
@@ -403,6 +408,103 @@ class Ledis(object):
         return self.execute_command('LPERSIST', name)
 
 
+    #### SET COMMANDS ####
+    def sadd(self, name, *values):
+        "Add ``value(s)`` to set ``name``"
+        return self.execute_command('SADD', name, *values)
+
+    def scard(self, name):
+        "Return the number of elements in set ``name``"
+        return self.execute_command('SCARD', name)
+
+    def sdiff(self, keys, *args):
+        "Return the difference of sets specified by ``keys``"
+        args = list_or_args(keys, args)
+        return self.execute_command('SDIFF', *args)
+
+    def sdiffstore(self, dest, keys, *args):
+        """
+        Store the difference of sets specified by ``keys`` into a new
+        set named ``dest``.  Returns the number of keys in the new set.
+        """
+        args = list_or_args(keys, args)
+        return self.execute_command('SDIFFSTORE', dest, *args)
+
+    def sinter(self, keys, *args):
+        "Return the intersection of sets specified by ``keys``"
+        args = list_or_args(keys, args)
+        return self.execute_command('SINTER', *args)
+
+    def sinterstore(self, dest, keys, *args):
+        """
+        Store the intersection of sets specified by ``keys`` into a new
+        set named ``dest``.  Returns the number of keys in the new set.
+        """
+        args = list_or_args(keys, args)
+        return self.execute_command('SINTERSTORE', dest, *args)
+
+    def sismember(self, name, value):
+        "Return a boolean indicating if ``value`` is a member of set ``name``"
+        return self.execute_command('SISMEMBER', name, value)
+
+    def smembers(self, name):
+        "Return all members of the set ``name``"
+        return self.execute_command('SMEMBERS', name)
+
+    def srem(self, name, *values):
+        "Remove ``values`` from set ``name``"
+        return self.execute_command('SREM', name, *values)
+
+    def sunion(self, keys, *args):
+        "Return the union of sets specified by ``keys``"
+        args = list_or_args(keys, args)
+        return self.execute_command('SUNION', *args)
+
+    def sunionstore(self, dest, keys, *args):
+        """
+        Store the union of sets specified by ``keys`` into a new
+        set named ``dest``.  Returns the number of keys in the new set.
+        """
+        args = list_or_args(keys, args)
+        return self.execute_command('SUNIONSTORE', dest, *args)
+
+    # SPECIAL COMMANDS SUPPORTED BY LEDISDB
+    def sclear(self, name):
+        "Delete key ``name`` from set"
+        return self.execute_command('SCLEAR', name)
+
+    def smclear(self, *names):
+        "Delete multiple keys ``names`` from set"
+        return self.execute_command('SMCLEAR', *names)
+
+    def sexpire(self, name, time):
+        """
+        Set an expire flag on key name for time milliseconds.
+        time can be represented by an integer or a Python timedelta object.
+        """
+        if isinstance(time, datetime.timedelta):
+            time = time.seconds + time.days * 24 * 3600
+        return self.execute_command('SEXPIRE', name, time)
+
+    def sexpireat(self, name, when):
+        """
+        Set an expire flag on key name. when can be represented as an integer
+        representing  unix time in milliseconds (unix time * 1000) or a
+        Python datetime object.
+        """
+        if isinstance(when, datetime.datetime):
+            when = int(mod_time.mktime(when.timetuple()))
+        return self.execute_command('SEXPIREAT', name, when)
+
+    def sttl(self, name):
+        "Returns the number of seconds until the key name will expire"
+        return self.execute_command('STTL', name)
+
+    def spersist(self, name):
+        "Removes an expiration on name"
+        return self.execute_command('SPERSIST', name)
+
+
     #### SORTED SET COMMANDS ####
     def zadd(self, name, *args, **kwargs):
         """
@@ -691,7 +793,6 @@ class Ledis(object):
     def hpersist(self, name):
         "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
-
 
 
     ### BIT COMMANDS

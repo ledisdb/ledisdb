@@ -908,26 +908,14 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-// func (db *DB) BScan(key []byte, count int, inclusive bool) ([]KVPair, error) {
-
-// }
+func (db *DB) BScan(key []byte, count int, inclusive bool) ([][]byte, error) {
+	return db.scan(BitMetaType, key, count, inclusive)
+}
 
 func (db *DB) bFlush() (drop int64, err error) {
 	t := db.binTx
 	t.Lock()
 	defer t.Unlock()
 
-	minKey := make([]byte, 2)
-	minKey[0] = db.index
-	minKey[1] = BitType
-
-	maxKey := make([]byte, 2)
-	maxKey[0] = db.index
-	maxKey[1] = BitMetaType + 1
-
-	drop, err = db.flushRegion(t, minKey, maxKey)
-	err = db.expFlush(t, BitType)
-
-	err = t.Commit()
-	return
+	return db.flushType(t, BitType)
 }

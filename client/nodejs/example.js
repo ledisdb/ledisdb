@@ -36,16 +36,38 @@ client.bget("bit key 3", function(err, result){
 });
 
 //test zunionstore & zinterstore 
-client.zadd("zset1", 1, "one")
-client.zadd("zset1", 2, "two")
+client.zadd("zset1", 1, "one");
+client.zadd("zset1", 2, "two");
 
-client.zadd("zset2", 1, "one")
-client.zadd("zset2", 2, "two")
-client.zadd("zset2", 3, "three")
+client.zadd("zset2", 1, "one");
+client.zadd("zset2", 2, "two");
+client.zadd("zset2", 3, "three");
 
-client.zunionstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print)
-client.zrange("out", 0, -1, "withscores", ledis.print) 
+client.zunionstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print);
+client.zrange("out", 0, -1, "withscores", ledis.print);
 
-client.zinterstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print)
-client.zrange("out", 0, -1, "withscores", ledis.print) 
+client.zinterstore("out", 2, "zset1", "zset2", "weights", 2, 3, ledis.print);
+client.zrange("out", 0, -1, "withscores", ledis.print);
+
+
+//example of set commands
+client.sadd("a", 1, 2, 3);
+client.sadd("b", 3, 4, 5);
+client.sismember("a", 1, ledis.print);
+client.smembers("a", ledis.print);
+client.sdiff("a", "b", ledis.print);
+client.sdiffstore("c", "a", "b", ledis.print);
+client.sinter("a", "b", ledis.print);
+client.sinterstore("c", "a", "b", ledis.print);
+client.sunion("a", "b", ledis.print);
+client.sunionstore("c", "a", "b", ledis.print);
+client.srem("a", 1, ledis.print);
+client.sclear("c", ledis.print);
+client.smclear("a", "b", ledis.print);
+client.sexpire("a", 100, ledis.print);
+client.sexpireat("a", 1577808000, ledis.print);
+client.sttl("a", ledis.print);
+client.spersist("a", ledis.print);
+
+
 client.quit()
