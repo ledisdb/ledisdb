@@ -12,7 +12,7 @@ mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
 if [ ! -f $SNAPPY_DIR/lib/libsnappy.a ]; then
-    (git clone https://github.com/siddontang/snappy.git && \
+    (git clone https://github.com/siddontang/snappy.git ; \
         cd ./snappy && \
         autoreconf --force --install && \
         ./configure --prefix=$SNAPPY_DIR && \
@@ -26,7 +26,7 @@ fi
 cd $BUILD_DIR
 
 if [ ! -f $LEVELDB_DIR/lib/libleveldb.a ]; then
-    (git clone https://github.com/siddontang/leveldb.git && \
+    (git clone https://github.com/siddontang/leveldb.git ; \
         cd ./leveldb && \
         echo "echo \"PLATFORM_CFLAGS+=-I$SNAPPY_DIR/include\" >> build_config.mk" >> build_detect_platform &&
         echo "echo \"PLATFORM_CXXFLAGS+=-I$SNAPPY_DIR/include\" >> build_config.mk" >> build_detect_platform &&

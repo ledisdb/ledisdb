@@ -40,7 +40,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB supplies a simple script to install leveldb and snappy: 
 
-        sh build_tool/build_leveldb.sh
+        sudo build_tool/build_leveldb.sh
 
     It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy.
 
