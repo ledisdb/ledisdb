@@ -908,8 +908,8 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) BScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(BitMetaType, key, count, inclusive)
+func (db *DB) BScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(BitMetaType, key, count, inclusive, match)
 }
 
 func (db *DB) bFlush() (drop int64, err error) {

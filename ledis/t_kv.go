@@ -313,8 +313,8 @@ func (db *DB) flush() (drop int64, err error) {
 }
 
 //if inclusive is true, scan range [key, inf) else (key, inf)
-func (db *DB) Scan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(KVType, key, count, inclusive)
+func (db *DB) Scan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(KVType, key, count, inclusive, match)
 }
 
 func (db *DB) Expire(key []byte, duration int64) (int64, error) {

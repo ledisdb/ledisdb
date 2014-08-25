@@ -472,8 +472,8 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) LScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(LMetaType, key, count, inclusive)
+func (db *DB) LScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(LMetaType, key, count, inclusive, match)
 }
 
 func (db *DB) lEncodeMinKey() []byte {

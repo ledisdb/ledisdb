@@ -146,7 +146,7 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 	}
 
 	var keys [][]byte
-	keys, err = db.scan(metaDataType, nil, 1024, false)
+	keys, err = db.scan(metaDataType, nil, 1024, false, "")
 	for len(keys) != 0 || err != nil {
 		for _, key := range keys {
 			deleteFunc(t, key)
@@ -159,7 +159,7 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 		} else {
 			drop += int64(len(keys))
 		}
-		keys, err = db.scan(metaDataType, nil, 1024, false)
+		keys, err = db.scan(metaDataType, nil, 1024, false, "")
 	}
 	return
 }

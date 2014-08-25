@@ -595,6 +595,6 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) SScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(SSizeType, key, count, inclusive)
+func (db *DB) SScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(SSizeType, key, count, inclusive, match)
 }

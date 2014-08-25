@@ -461,8 +461,8 @@ func (db *DB) hFlush() (drop int64, err error) {
 	return db.flushType(t, HashType)
 }
 
-func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(HSizeType, key, count, inclusive)
+func (db *DB) HScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(HSizeType, key, count, inclusive, match)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {

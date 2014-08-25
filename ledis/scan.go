@@ -1,16 +1,25 @@
 package ledis
 
 import (
+	"bytes"
 	"errors"
-	"github.com/siddontang/ledisdb/store"
+	"regexp"
 )
 
 var errDataType = errors.New("error data type")
 var errMetaKey = errors.New("error meta key")
 
-func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]byte, error) {
+func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	var minKey, maxKey []byte
 	var err error
+	var r *regexp.Regexp
+
+	if len(match) > 0 {
+		if r, err = regexp.Compile(match); err != nil {
+			return nil, err
+		}
+	}
+
 	if key != nil {
 		if err = checkKeySize(key); err != nil {
 			return nil, err
@@ -35,18 +44,23 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 
 	v := make([][]byte, 0, count)
 
-	rangeType := store.RangeROpen
+	it := db.bucket.NewIterator()
+	it.Seek(minKey)
+
 	if !inclusive {
-		rangeType = store.RangeOpen
+		if it.Valid() && bytes.Equal(it.RawKey(), minKey) {
+			it.Next()
+		}
 	}
 
-	it := db.bucket.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
-
-	for ; it.Valid(); it.Next() {
+	for i := 0; it.Valid() && i < count && bytes.Compare(it.RawKey(), maxKey) < 0; it.Next() {
 		if k, err := db.decodeMetaKey(dataType, it.Key()); err != nil {
+			continue
+		} else if r != nil && !r.Match(k) {
 			continue
 		} else {
 			v = append(v, k)
+			i++
 		}
 	}
 	it.Close()
