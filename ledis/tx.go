@@ -111,6 +111,8 @@ type Tx struct {
 	tx *store.Tx
 
 	logs [][]byte
+
+	index uint8
 }
 
 func (db *DB) IsTransaction() bool {
@@ -132,6 +134,7 @@ func (db *DB) Begin() (*Tx, error) {
 	tx.DB.dbLock.Lock()
 
 	tx.DB.l = db.l
+	tx.index = db.index
 
 	tx.DB.sdb = db.sdb
 
@@ -200,4 +203,8 @@ func (tx *Tx) newBatch() *batch {
 	b.tx = tx
 
 	return b
+}
+
+func (tx *Tx) Index() int {
+	return int(tx.index)
 }
