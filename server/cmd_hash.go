@@ -4,87 +4,87 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-func hsetCommand(req *requestContext) error {
-	args := req.args
+func hsetCommand(c *client) error {
+	args := c.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HSet(args[0], args[1], args[2]); err != nil {
+	if n, err := c.db.HSet(args[0], args[1], args[2]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func hgetCommand(req *requestContext) error {
-	args := req.args
+func hgetCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HGet(args[0], args[1]); err != nil {
+	if v, err := c.db.HGet(args[0], args[1]); err != nil {
 		return err
 	} else {
-		req.resp.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 
 	return nil
 }
 
-func hexistsCommand(req *requestContext) error {
-	args := req.args
+func hexistsCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
 	var n int64 = 1
-	if v, err := req.db.HGet(args[0], args[1]); err != nil {
+	if v, err := c.db.HGet(args[0], args[1]); err != nil {
 		return err
 	} else {
 		if v == nil {
 			n = 0
 		}
 
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 	return nil
 }
 
-func hdelCommand(req *requestContext) error {
-	args := req.args
+func hdelCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HDel(args[0], args[1:]...); err != nil {
+	if n, err := c.db.HDel(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func hlenCommand(req *requestContext) error {
-	args := req.args
+func hlenCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HLen(args[0]); err != nil {
+	if n, err := c.db.HLen(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func hincrbyCommand(req *requestContext) error {
-	args := req.args
+func hincrbyCommand(c *client) error {
+	args := c.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -95,16 +95,16 @@ func hincrbyCommand(req *requestContext) error {
 	}
 
 	var n int64
-	if n, err = req.db.HIncrBy(args[0], args[1], delta); err != nil {
+	if n, err = c.db.HIncrBy(args[0], args[1], delta); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 	return nil
 }
 
-func hmsetCommand(req *requestContext) error {
-	args := req.args
+func hmsetCommand(c *client) error {
+	args := c.args
 	if len(args) < 3 {
 		return ErrCmdParams
 	}
@@ -123,107 +123,107 @@ func hmsetCommand(req *requestContext) error {
 		kvs[i].Value = args[2*i+1]
 	}
 
-	if err := req.db.HMset(key, kvs...); err != nil {
+	if err := c.db.HMset(key, kvs...); err != nil {
 		return err
 	} else {
-		req.resp.writeStatus(OK)
+		c.resp.writeStatus(OK)
 	}
 
 	return nil
 }
 
-func hmgetCommand(req *requestContext) error {
-	args := req.args
+func hmgetCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HMget(args[0], args[1:]...); err != nil {
+	if v, err := c.db.HMget(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 }
 
-func hgetallCommand(req *requestContext) error {
-	args := req.args
+func hgetallCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HGetAll(args[0]); err != nil {
+	if v, err := c.db.HGetAll(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeFVPairArray(v)
+		c.resp.writeFVPairArray(v)
 	}
 
 	return nil
 }
 
-func hkeysCommand(req *requestContext) error {
-	args := req.args
+func hkeysCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HKeys(args[0]); err != nil {
+	if v, err := c.db.HKeys(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 }
 
-func hvalsCommand(req *requestContext) error {
-	args := req.args
+func hvalsCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HValues(args[0]); err != nil {
+	if v, err := c.db.HValues(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 }
 
-func hclearCommand(req *requestContext) error {
-	args := req.args
+func hclearCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HClear(args[0]); err != nil {
+	if n, err := c.db.HClear(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func hmclearCommand(req *requestContext) error {
-	args := req.args
+func hmclearCommand(c *client) error {
+	args := c.args
 	if len(args) < 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HMclear(args...); err != nil {
+	if n, err := c.db.HMclear(args...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func hexpireCommand(req *requestContext) error {
-	args := req.args
+func hexpireCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -233,17 +233,17 @@ func hexpireCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.HExpire(args[0], duration); err != nil {
+	if v, err := c.db.HExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func hexpireAtCommand(req *requestContext) error {
-	args := req.args
+func hexpireAtCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -253,40 +253,40 @@ func hexpireAtCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.HExpireAt(args[0], when); err != nil {
+	if v, err := c.db.HExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func httlCommand(req *requestContext) error {
-	args := req.args
+func httlCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.HTTL(args[0]); err != nil {
+	if v, err := c.db.HTTL(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func hpersistCommand(req *requestContext) error {
-	args := req.args
+func hpersistCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.HPersist(args[0]); err != nil {
+	if n, err := c.db.HPersist(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil

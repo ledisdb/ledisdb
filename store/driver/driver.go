@@ -20,7 +20,15 @@ type IDB interface {
 
 	NewWriteBatch() IWriteBatch
 
+	NewSnapshot() (ISnapshot, error)
+
 	Begin() (Tx, error)
+}
+
+type ISnapshot interface {
+	Get(key []byte) ([]byte, error)
+	NewIterator() IIterator
+	Close()
 }
 
 type IIterator interface {

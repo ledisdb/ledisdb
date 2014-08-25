@@ -4,83 +4,83 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-func lpushCommand(req *requestContext) error {
-	args := req.args
+func lpushCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.LPush(args[0], args[1:]...); err != nil {
+	if n, err := c.db.LPush(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func rpushCommand(req *requestContext) error {
-	args := req.args
+func rpushCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.RPush(args[0], args[1:]...); err != nil {
+	if n, err := c.db.RPush(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func lpopCommand(req *requestContext) error {
-	args := req.args
+func lpopCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.LPop(args[0]); err != nil {
+	if v, err := c.db.LPop(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 
 	return nil
 }
 
-func rpopCommand(req *requestContext) error {
-	args := req.args
+func rpopCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.RPop(args[0]); err != nil {
+	if v, err := c.db.RPop(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 
 	return nil
 }
 
-func llenCommand(req *requestContext) error {
-	args := req.args
+func llenCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.LLen(args[0]); err != nil {
+	if n, err := c.db.LLen(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func lindexCommand(req *requestContext) error {
-	args := req.args
+func lindexCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -90,17 +90,17 @@ func lindexCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.LIndex(args[0], int32(index)); err != nil {
+	if v, err := c.db.LIndex(args[0], int32(index)); err != nil {
 		return err
 	} else {
-		req.resp.writeBulk(v)
+		c.resp.writeBulk(v)
 	}
 
 	return nil
 }
 
-func lrangeCommand(req *requestContext) error {
-	args := req.args
+func lrangeCommand(c *client) error {
+	args := c.args
 	if len(args) != 3 {
 		return ErrCmdParams
 	}
@@ -119,47 +119,47 @@ func lrangeCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.LRange(args[0], int32(start), int32(stop)); err != nil {
+	if v, err := c.db.LRange(args[0], int32(start), int32(stop)); err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 }
 
-func lclearCommand(req *requestContext) error {
-	args := req.args
+func lclearCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.LClear(args[0]); err != nil {
+	if n, err := c.db.LClear(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func lmclearCommand(req *requestContext) error {
-	args := req.args
+func lmclearCommand(c *client) error {
+	args := c.args
 	if len(args) < 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.LMclear(args...); err != nil {
+	if n, err := c.db.LMclear(args...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func lexpireCommand(req *requestContext) error {
-	args := req.args
+func lexpireCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -169,17 +169,17 @@ func lexpireCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.LExpire(args[0], duration); err != nil {
+	if v, err := c.db.LExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func lexpireAtCommand(req *requestContext) error {
-	args := req.args
+func lexpireAtCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -189,40 +189,40 @@ func lexpireAtCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.LExpireAt(args[0], when); err != nil {
+	if v, err := c.db.LExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func lttlCommand(req *requestContext) error {
-	args := req.args
+func lttlCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.LTTL(args[0]); err != nil {
+	if v, err := c.db.LTTL(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func lpersistCommand(req *requestContext) error {
-	args := req.args
+func lpersistCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.LPersist(args[0]); err != nil {
+	if n, err := c.db.LPersist(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil

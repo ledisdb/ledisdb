@@ -278,6 +278,10 @@ func (db MDB) Begin() (driver.Tx, error) {
 	return newTx(db)
 }
 
+func (db MDB) NewSnapshot() (driver.ISnapshot, error) {
+	return newSnapshot(db)
+}
+
 func init() {
 	driver.Register(Store{})
 }

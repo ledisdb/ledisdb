@@ -106,6 +106,8 @@ func NewConfigDefault() *Config {
 	// disable access log
 	cfg.AccessLog = ""
 
+	cfg.LMDB.NoSync = true
+
 	return cfg
 }
 

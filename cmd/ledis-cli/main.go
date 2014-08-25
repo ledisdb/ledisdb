@@ -61,8 +61,8 @@ func main() {
 				args[i] = strings.Trim(string(cmds[1+i]), "\"'")
 			}
 
-			cmd := cmds[0]
-			if strings.ToLower(cmd) == "help" || cmd == "?" {
+			cmd := strings.ToLower(cmds[0])
+			if cmd == "help" || cmd == "?" {
 				printHelp(cmds)
 			} else {
 				if len(cmds) == 2 && strings.ToLower(cmds[0]) == "select" {
@@ -77,7 +77,11 @@ func main() {
 				if err != nil {
 					fmt.Printf("%s", err.Error())
 				} else {
-					printReply(cmd, r)
+					if cmd == "info" {
+						printInfo(r.([]byte))
+					} else {
+						printReply(cmd, r)
+					}
 				}
 
 				fmt.Printf("\n")
@@ -85,6 +89,10 @@ func main() {
 
 		}
 	}
+}
+
+func printInfo(s []byte) {
+	fmt.Printf("%s", s)
 }
 
 func printReply(cmd string, reply interface{}) {

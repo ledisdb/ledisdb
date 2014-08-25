@@ -8,7 +8,7 @@ import (
 type Store interface {
 	String() string
 	Open(path string, cfg *config.Config) (IDB, error)
-	Repair(paht string, cfg *config.Config) error
+	Repair(path string, cfg *config.Config) error
 }
 
 var dbs = map[string]Store{}

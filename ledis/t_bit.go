@@ -204,7 +204,7 @@ func (db *DB) bGetMeta(key []byte) (tailSeq int32, tailOff int32, err error) {
 	var v []byte
 
 	mk := db.bEncodeMetaKey(key)
-	v, err = db.db.Get(mk)
+	v, err = db.bucket.Get(mk)
 	if err != nil {
 		return
 	}
@@ -219,7 +219,7 @@ func (db *DB) bGetMeta(key []byte) (tailSeq int32, tailOff int32, err error) {
 	return
 }
 
-func (db *DB) bSetMeta(t *tx, key []byte, tailSeq uint32, tailOff uint32) {
+func (db *DB) bSetMeta(t *batch, key []byte, tailSeq uint32, tailOff uint32) {
 	ek := db.bEncodeMetaKey(key)
 
 	buf := make([]byte, 8)
@@ -230,7 +230,7 @@ func (db *DB) bSetMeta(t *tx, key []byte, tailSeq uint32, tailOff uint32) {
 	return
 }
 
-func (db *DB) bUpdateMeta(t *tx, key []byte, seq uint32, off uint32) (tailSeq uint32, tailOff uint32, err error) {
+func (db *DB) bUpdateMeta(t *batch, key []byte, seq uint32, off uint32) (tailSeq uint32, tailOff uint32, err error) {
 	var tseq, toff int32
 	var update bool = false
 
@@ -252,13 +252,13 @@ func (db *DB) bUpdateMeta(t *tx, key []byte, seq uint32, off uint32) (tailSeq ui
 	return
 }
 
-func (db *DB) bDelete(t *tx, key []byte) (drop int64) {
+func (db *DB) bDelete(t *batch, key []byte) (drop int64) {
 	mk := db.bEncodeMetaKey(key)
 	t.Delete(mk)
 
 	minKey := db.bEncodeBinKey(key, minSeq)
 	maxKey := db.bEncodeBinKey(key, maxSeq)
-	it := db.db.RangeIterator(minKey, maxKey, store.RangeClose)
+	it := db.bucket.RangeIterator(minKey, maxKey, store.RangeClose)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.RawKey())
 		drop++
@@ -270,7 +270,7 @@ func (db *DB) bDelete(t *tx, key []byte) (drop int64) {
 
 func (db *DB) bGetSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 	bk := db.bEncodeBinKey(key, seq)
-	segment, err := db.db.Get(bk)
+	segment, err := db.bucket.Get(bk)
 	if err != nil {
 		return bk, nil, err
 	}
@@ -288,7 +288,7 @@ func (db *DB) bAllocateSegment(key []byte, seq uint32) ([]byte, []byte, error) {
 func (db *DB) bIterator(key []byte) *store.RangeLimitIterator {
 	sk := db.bEncodeBinKey(key, minSeq)
 	ek := db.bEncodeBinKey(key, maxSeq)
-	return db.db.RangeIterator(sk, ek, store.RangeClose)
+	return db.bucket.RangeIterator(sk, ek, store.RangeClose)
 }
 
 func (db *DB) bSegAnd(a []byte, b []byte, res *[]byte) {
@@ -361,7 +361,7 @@ func (db *DB) bSegXor(a []byte, b []byte, res *[]byte) {
 }
 
 func (db *DB) bExpireAt(key []byte, when int64) (int64, error) {
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -451,7 +451,7 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 
 	minKey := db.bEncodeBinKey(key, minSeq)
 	maxKey := db.bEncodeBinKey(key, tailSeq)
-	it := db.db.RangeIterator(minKey, maxKey, store.RangeClose)
+	it := db.bucket.RangeIterator(minKey, maxKey, store.RangeClose)
 
 	var seq, s, e uint32
 	for ; it.Valid(); it.Next() {
@@ -474,7 +474,7 @@ func (db *DB) BDelete(key []byte) (drop int64, err error) {
 		return
 	}
 
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -504,7 +504,7 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 	if segment != nil {
 		ori = getBit(segment, off)
 		if setBit(segment, off, val) {
-			t := db.binTx
+			t := db.binBatch
 			t.Lock()
 
 			t.Put(bk, segment)
@@ -554,7 +554,7 @@ func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int64, err error) {
 	}
 
 	//	#2 : execute bit set in order
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -667,7 +667,7 @@ func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) 
 	skey := db.bEncodeBinKey(key, sseq)
 	ekey := db.bEncodeBinKey(key, eseq)
 
-	it := db.db.RangeIterator(skey, ekey, store.RangeOpen)
+	it := db.bucket.RangeIterator(skey, ekey, store.RangeOpen)
 	for ; it.Valid(); it.Next() {
 		segment = it.RawValue()
 		for _, bt := range segment {
@@ -715,7 +715,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 		return
 	}
 
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -895,7 +895,7 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -913,7 +913,7 @@ func (db *DB) BScan(key []byte, count int, inclusive bool) ([][]byte, error) {
 }
 
 func (db *DB) bFlush() (drop int64, err error) {
-	t := db.binTx
+	t := db.binBatch
 	t.Lock()
 	defer t.Unlock()
 

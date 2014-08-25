@@ -117,6 +117,10 @@ module.exports = [
 	"sexpire",
 	"sexpireat",
 	"sttl",
-	"spersist"
+	"spersist",
+
+    "begin",
+    "rollback",
+    "commit",
 
 ];

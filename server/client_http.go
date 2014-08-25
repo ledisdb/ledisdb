@@ -18,20 +18,18 @@ var allowedContentTypes = map[string]struct{}{
 	"bson":    struct{}{},
 	"msgpack": struct{}{},
 }
-var unsupportedCommands = map[string]struct{}{
+var httpUnsupportedCommands = map[string]struct{}{
 	"slaveof":  struct{}{},
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
 	"quit":     struct{}{},
+	"begin":    struct{}{},
+	"commit":   struct{}{},
+	"rollback": struct{}{},
 }
 
 type httpClient struct {
-	app *App
-	db  *ledis.DB
-	ldb *ledis.Ledis
-
-	resp responseWriter
-	req  *requestContext
+	*client
 }
 
 type httpWriter struct {
@@ -43,58 +41,51 @@ type httpWriter struct {
 func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
 	var err error
 	c := new(httpClient)
-	c.app = app
-	c.ldb = app.ldb
-	c.db, err = c.ldb.Select(0)
-	if err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
+	c.client = newClient(app)
 
-	c.req, err = c.makeRequest(app, r, w)
+	err = c.makeRequest(app, r, w)
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	c.req.perform()
+	c.perform()
 }
 
 func (c *httpClient) addr(r *http.Request) string {
 	return r.RemoteAddr
 }
 
-func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWriter) (*requestContext, error) {
+func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWriter) error {
 	var err error
 
 	db, cmd, argsStr, contentType := c.parseReqPath(r)
 
 	c.db, err = app.ldb.Select(db)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	contentType = strings.ToLower(contentType)
 
 	if _, ok := allowedContentTypes[contentType]; !ok {
-		return nil, fmt.Errorf("unsupported content type: '%s', only json, bson, msgpack are supported", contentType)
+		return fmt.Errorf("unsupported content type: '%s', only json, bson, msgpack are supported", contentType)
 	}
 
-	req := newRequestContext(app)
 	args := make([][]byte, len(argsStr))
 	for i, arg := range argsStr {
 		args[i] = []byte(arg)
 	}
 
-	req.cmd = strings.ToLower(cmd)
-	if _, ok := unsupportedCommands[req.cmd]; ok {
-		return nil, fmt.Errorf("unsupported command: '%s'", cmd)
+	c.cmd = strings.ToLower(cmd)
+	if _, ok := httpUnsupportedCommands[c.cmd]; ok {
+		return fmt.Errorf("unsupported command: '%s'", cmd)
 	}
 
-	req.args = args
+	c.args = args
 
-	req.remoteAddr = c.addr(r)
-	req.resp = &httpWriter{contentType, cmd, w}
-	return req, nil
+	c.remoteAddr = c.addr(r)
+	c.resp = &httpWriter{contentType, cmd, w}
+	return nil
 }
 
 func (c *httpClient) parseReqPath(r *http.Request) (db int, cmd string, args []string, contentType string) {

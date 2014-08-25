@@ -105,6 +105,14 @@ func (ro *ReadOptions) SetFillCache(b bool) {
 	C.leveldb_readoptions_set_fill_cache(ro.Opt, boolToUchar(b))
 }
 
+func (ro *ReadOptions) SetSnapshot(snap *Snapshot) {
+	var s *C.leveldb_snapshot_t
+	if snap != nil {
+		s = snap.snap
+	}
+	C.leveldb_readoptions_set_snapshot(ro.Opt, s)
+}
+
 func (wo *WriteOptions) Close() {
 	C.leveldb_writeoptions_destroy(wo.Opt)
 }

@@ -137,6 +137,20 @@ func (db *DB) Begin() (driver.Tx, error) {
 	return nil, driver.ErrTxSupport
 }
 
+func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
+	snapshot, err := db.db.GetSnapshot()
+	if err != nil {
+		return nil, err
+	}
+
+	s := &Snapshot{
+		db:  db,
+		snp: snapshot,
+	}
+
+	return s, nil
+}
+
 func init() {
 	driver.Register(Store{})
 }

@@ -40,7 +40,7 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool) ([][]by
 		rangeType = store.RangeOpen
 	}
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
+	it := db.bucket.RangeLimitIterator(minKey, maxKey, rangeType, 0, count)
 
 	for ; it.Valid(); it.Next() {
 		if k, err := db.decodeMetaKey(dataType, it.Key()); err != nil {

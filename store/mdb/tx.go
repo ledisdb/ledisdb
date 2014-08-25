@@ -22,7 +22,11 @@ func newTx(db MDB) (*Tx, error) {
 }
 
 func (t *Tx) Get(key []byte) ([]byte, error) {
-	return t.tx.Get(t.db, key)
+	v, err := t.tx.Get(t.db, key)
+	if err == mdb.NotFound {
+		return nil, nil
+	}
+	return v, err
 }
 
 func (t *Tx) Put(key []byte, value []byte) error {

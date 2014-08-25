@@ -59,9 +59,16 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("b"), []byte("value"))
 	db.Set([]byte("c"), []byte("value"))
 
-	db.HSet([]byte("a"), []byte("1"), []byte("value"))
-	db.HSet([]byte("b"), []byte("2"), []byte("value"))
-	db.HSet([]byte("c"), []byte("3"), []byte("value"))
+	if tx, err := db.Begin(); err == nil {
+		tx.HSet([]byte("a"), []byte("1"), []byte("value"))
+		tx.HSet([]byte("b"), []byte("2"), []byte("value"))
+		tx.HSet([]byte("c"), []byte("3"), []byte("value"))
+		tx.Commit()
+	} else {
+		db.HSet([]byte("a"), []byte("1"), []byte("value"))
+		db.HSet([]byte("b"), []byte("2"), []byte("value"))
+		db.HSet([]byte("c"), []byte("3"), []byte("value"))
+	}
 
 	for _, name := range master.binlog.LogNames() {
 		p := path.Join(master.binlog.LogPath(), name)
@@ -78,13 +85,20 @@ func TestReplication(t *testing.T) {
 
 	slave.FlushAll()
 
-	db.Set([]byte("a1"), []byte("1"))
-	db.Set([]byte("b1"), []byte("2"))
-	db.Set([]byte("c1"), []byte("3"))
+	db.Set([]byte("a1"), []byte("value"))
+	db.Set([]byte("b1"), []byte("value"))
+	db.Set([]byte("c1"), []byte("value"))
 
 	db.HSet([]byte("a1"), []byte("1"), []byte("value"))
 	db.HSet([]byte("b1"), []byte("2"), []byte("value"))
 	db.HSet([]byte("c1"), []byte("3"), []byte("value"))
+
+	if tx, err := db.Begin(); err == nil {
+		tx.HSet([]byte("a1"), []byte("1"), []byte("value1"))
+		tx.HSet([]byte("b1"), []byte("2"), []byte("value1"))
+		tx.HSet([]byte("c1"), []byte("3"), []byte("value1"))
+		tx.Rollback()
+	}
 
 	info := new(MasterInfo)
 	info.LogFileIndex = 1
