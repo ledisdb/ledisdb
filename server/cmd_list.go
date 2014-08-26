@@ -228,6 +228,27 @@ func lpersistCommand(c *client) error {
 	return nil
 }
 
+func lscanCommand(c *client) error {
+	key, inclusive, match, count, err := parseScanArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.LScan(key, count, inclusive, match); err != nil {
+		return err
+	} else {
+		data := make([]interface{}, 2)
+		if len(ay) < count {
+			data[0] = ""
+		} else {
+			data[0] = append([]byte{'('}, ay[len(ay)-1]...)
+		}
+		data[1] = ay
+		c.resp.writeArray(data)
+	}
+	return nil
+}
+
 func init() {
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
@@ -245,4 +266,5 @@ func init() {
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
+	register("lscan", lscanCommand)
 }

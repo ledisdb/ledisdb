@@ -638,6 +638,27 @@ func zinterstoreCommand(c *client) error {
 	return err
 }
 
+func zscanCommand(c *client) error {
+	key, inclusive, match, count, err := parseScanArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.ZScan(key, count, inclusive, match); err != nil {
+		return err
+	} else {
+		data := make([]interface{}, 2)
+		if len(ay) < count {
+			data[0] = ""
+		} else {
+			data[0] = append([]byte{'('}, ay[len(ay)-1]...)
+		}
+		data[1] = ay
+		c.resp.writeArray(data)
+	}
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -665,4 +686,5 @@ func init() {
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
 	register("zpersist", zpersistCommand)
+	register("zscan", zscanCommand)
 }

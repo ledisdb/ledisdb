@@ -262,6 +262,27 @@ func spersistCommand(c *client) error {
 	return nil
 }
 
+func sscanCommand(c *client) error {
+	key, inclusive, match, count, err := parseScanArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.SScan(key, count, inclusive, match); err != nil {
+		return err
+	} else {
+		data := make([]interface{}, 2)
+		if len(ay) < count {
+			data[0] = ""
+		} else {
+			data[0] = append([]byte{'('}, ay[len(ay)-1]...)
+		}
+		data[1] = ay
+		c.resp.writeArray(data)
+	}
+	return nil
+}
+
 func init() {
 	register("sadd", saddCommand)
 	register("scard", scardCommand)
@@ -280,4 +301,5 @@ func init() {
 	register("sexpireat", sexpireAtCommand)
 	register("sttl", sttlCommand)
 	register("spersist", spersistCommand)
+	register("sscan", sscanCommand)
 }

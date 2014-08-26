@@ -203,6 +203,8 @@ func (w *respWriter) writeArray(lst []interface{}) {
 			switch v := lst[i].(type) {
 			case []interface{}:
 				w.writeArray(v)
+			case [][]byte:
+				w.writeSliceArray(v)
 			case []byte:
 				w.writeBulk(v)
 			case nil:

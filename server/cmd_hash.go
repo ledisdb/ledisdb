@@ -292,6 +292,27 @@ func hpersistCommand(c *client) error {
 	return nil
 }
 
+func hscanCommand(c *client) error {
+	key, inclusive, match, count, err := parseScanArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.HScan(key, count, inclusive, match); err != nil {
+		return err
+	} else {
+		data := make([]interface{}, 2)
+		if len(ay) < count {
+			data[0] = ""
+		} else {
+			data[0] = append([]byte{'('}, ay[len(ay)-1]...)
+		}
+		data[1] = ay
+		c.resp.writeArray(data)
+	}
+	return nil
+}
+
 func init() {
 	register("hdel", hdelCommand)
 	register("hexists", hexistsCommand)
@@ -313,4 +334,5 @@ func init() {
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
 	register("hpersist", hpersistCommand)
+	register("hscan", hscanCommand)
 }

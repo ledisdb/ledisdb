@@ -20,7 +20,7 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 		}
 	}
 
-	if key != nil {
+	if len(key) > 0 {
 		if err = checkKeySize(key); err != nil {
 			return nil, err
 		}

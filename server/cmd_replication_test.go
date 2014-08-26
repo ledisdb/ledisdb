@@ -43,6 +43,7 @@ func TestReplication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer master.Close()
 
 	slaveCfg := new(config.Config)
 	slaveCfg.DataDir = fmt.Sprintf("%s/slave", data_dir)
@@ -53,6 +54,7 @@ func TestReplication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer slave.Close()
 
 	go master.Run()
 
