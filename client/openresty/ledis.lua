@@ -137,7 +137,12 @@ local commands = {
     --[[server]]
     "ping",
     "echo",
-    "select"
+    "select",
+
+    -- [[transaction]]
+    "begin",
+    "commit",
+    "rollback"
 }
 
 
