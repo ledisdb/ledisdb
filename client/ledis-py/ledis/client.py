@@ -173,21 +173,6 @@ class Ledis(object):
         "Set a custom Response Callback"
         self.response_callbacks[command] = callback
  
-
-    # def pipeline(self, transaction=True, shard_hint=None):
-    #     """
-    #     Return a new pipeline object that can queue multiple commands for
-    #     later execution. ``transaction`` indicates whether all commands
-    #     should be executed atomically. Apart from making a group of operations
-    #     atomic, pipelines are useful for reducing the back-and-forth overhead
-    #     between the client and server.
-    #     """
-    #     return StrictPipeline(
-    #         self.connection_pool,
-    #         self.response_callbacks,
-    #         transaction,
-    #         shard_hint)
-
     def tx(self):
         return Transaction(
             self.connection_pool,
