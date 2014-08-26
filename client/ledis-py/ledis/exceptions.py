@@ -16,6 +16,10 @@ class BusyLoadingError(ConnectionError):
     pass
 
 
+class TimeoutError(LedisError):
+    pass
+
+
 class InvalidResponse(ServerError):
     pass
 
@@ -29,4 +33,7 @@ class DataError(LedisError):
 
 
 class ExecAbortError(ResponseError):
+    pass
+
+class TxNotBeginError(LedisError):
     pass
