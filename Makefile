@@ -2,7 +2,7 @@ INSTALL_PATH ?= $(CURDIR)
 
 $(shell ./bootstrap.sh)
 
-$(shell ./build_tool/build_config.sh build_config.mk $INSTALL_PATH)
+$(shell ./tools/build_config.sh build_config.mk $INSTALL_PATH)
 
 include build_config.mk
 
