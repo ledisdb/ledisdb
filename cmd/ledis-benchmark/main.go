@@ -53,8 +53,8 @@ func bench(cmd string, f func()) {
 }
 
 func benchSet() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("set", n, n)
 	}
 
@@ -62,8 +62,8 @@ func benchSet() {
 }
 
 func benchGet() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("get", n)
 	}
 
@@ -71,8 +71,8 @@ func benchGet() {
 }
 
 func benchIncr() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("incr", n)
 	}
 
@@ -80,8 +80,8 @@ func benchIncr() {
 }
 
 func benchPushList() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("rpush", "mytestlist", n)
 	}
 
