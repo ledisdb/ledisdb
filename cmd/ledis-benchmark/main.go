@@ -121,9 +121,8 @@ func benchPopList() {
 }
 
 func benchHset() {
-	n := rand.Int()
-
 	f := func() {
+		n := rand.Int()
 		waitBench("hset", "myhashkey", n, n)
 	}
 
@@ -131,8 +130,8 @@ func benchHset() {
 }
 
 func benchHIncr() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("hincrby", "myhashkey", n, 1)
 	}
 
@@ -140,8 +139,8 @@ func benchHIncr() {
 }
 
 func benchHGet() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("hget", "myhashkey", n)
 	}
 
@@ -149,8 +148,8 @@ func benchHGet() {
 }
 
 func benchHDel() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("hdel", "myhashkey", n)
 	}
 
@@ -158,8 +157,8 @@ func benchHDel() {
 }
 
 func benchZAdd() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("zadd", "myzsetkey", n, n)
 	}
 
@@ -167,8 +166,8 @@ func benchZAdd() {
 }
 
 func benchZDel() {
-	n := rand.Int()
 	f := func() {
+		n := rand.Int()
 		waitBench("zrem", "myzsetkey", n)
 	}
 
@@ -176,9 +175,8 @@ func benchZDel() {
 }
 
 func benchZIncr() {
-	n := rand.Int()
-
 	f := func() {
+		n := rand.Int()
 		waitBench("zincrby", "myzsetkey", 1, n)
 	}
 
