@@ -14,6 +14,8 @@ var txUnsupportedCmds = map[string]struct{}{
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
 	"begin":    struct{}{},
+	"flushall": struct{}{},
+	"flushdb":  struct{}{},
 }
 
 type responseWriter interface {

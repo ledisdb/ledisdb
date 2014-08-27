@@ -126,6 +126,9 @@ Table of Contents
 	- [PING](#ping)
 	- [ECHO message](#echo-message)
 	- [SELECT index](#select-index)
+	- [FLUSHALL](#flushall)
+	- [FLUSHDB](#flushdb)
+	- [INFO [section]](#info-section)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -2467,6 +2470,33 @@ OK
 ledis> SELECT 16
 ERR invalid db index 16
 ```
+
+### FLUSHALL
+
+Delete all the keys of all the existing databases, not just the currently selected one. This command never fails.
+
+Very dangerous to use!!!
+
+### FLUSHDB
+
+Delete all the keys of the currently selected DB. This command never fails.
+
+Very dangerous to use!!!
+
+### INFO [section]
+
+Return information and statistic about the server in a format that is simple to parse by computers and easy to read by humans.
+
+The optional parameter can be used to select a specific section of information:
+
++ server: General information about the Redis server
++ client: Client connections section
++ mem: Memory consumption related information
++ cpu: CPU consumption statistics
++ goroutine: Goroutine num
++ persistence: Strorage related information
+
+When no parameter is provided, all will return.
 
 ## Transaction
 

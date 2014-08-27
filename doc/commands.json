@@ -531,36 +531,54 @@
     "SCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "KV",
-        "readonly": false
+        "readonly": true
     },
 
     "HSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Hash",
-        "readonly": false
+        "readonly": true
     },
 
     "LSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "List",
-        "readonly": false
+        "readonly": true
     },
 
     "SSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Set",
-        "readonly": false
+        "readonly": true
     },
 
     "ZSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "ZSet",
-        "readonly": false
+        "readonly": true
     },
 
     "BSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Bitmap",
+        "readonly": true
+    },
+
+    "FLUSHALL": {
+        "arguments": "-",
+        "group": "Server",
         "readonly": false
+    },
+
+    "FLUSHDB": {
+        "arguments": "-",
+        "group": "Server",
+        "readonly": false
+    },
+
+    "INFO": {
+        "arguments": "[section]",
+        "group": "Server",
+        "readonly": true
     }
 }

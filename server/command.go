@@ -67,10 +67,31 @@ func infoCommand(c *client) error {
 	return nil
 }
 
-func init() {
+func flushallCommand(c *client) error {
+	err := c.ldb.FlushAll()
+	if err != nil {
+		return err
+	}
 
+	c.resp.writeStatus(OK)
+	return nil
+}
+
+func flushdbCommand(c *client) error {
+	_, err := c.db.FlushAll()
+	if err != nil {
+		return err
+	}
+
+	c.resp.writeStatus(OK)
+	return nil
+}
+
+func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)
 	register("select", selectCommand)
 	register("info", infoCommand)
+	register("flushall", flushallCommand)
+	register("flushdb", flushdbCommand)
 }

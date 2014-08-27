@@ -95,7 +95,7 @@ class Ledis(object):
             lambda r: isinstance(r, long) and r or nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
-            'MSET SELECT ',
+            'MSET SELECT',
             lambda r: nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
@@ -219,6 +219,16 @@ class Ledis(object):
             db = 0
         return self.execute_command('SELECT', db)
 
+    def info(self, section):
+        return self.execute_command('PING', section)
+
+    def flushall(self):
+        return self.execute_command('FLUSHALL')
+
+    def flushdb(self):
+        return self.execute_command('FLUSHDB')
+
+
     #### BASIC KEY COMMANDS ####
     def decr(self, name, amount=1):
         """
@@ -340,6 +350,9 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('PERSIST', name)
 
+    def scan(self, key, match = "", count = 10):
+        return self.execute_command("SCAN", key, match, count)
+
     #### LIST COMMANDS ####
     def lindex(self, name, index):
         """
@@ -414,6 +427,9 @@ class Ledis(object):
     def lpersist(self, name):
         "Removes an expiration on ``name``"
         return self.execute_command('LPERSIST', name)
+
+    def lscan(self, key, match = "", count = 10):
+        return self.execute_command("LSCAN", key, match, count)
 
 
     #### SET COMMANDS ####
@@ -511,6 +527,9 @@ class Ledis(object):
     def spersist(self, name):
         "Removes an expiration on name"
         return self.execute_command('SPERSIST', name)
+
+    def sscan(self, key, match = "", count = 10):
+        return self.execute_command("SSCAN", key, match, count)
 
 
     #### SORTED SET COMMANDS ####
@@ -708,6 +727,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('ZPERSIST', name)
 
+    def zscan(self, key, match = "", count = 10):
+        return self.execute_command("ZSCAN", key, match, count)
 
 
     #### HASH COMMANDS ####
@@ -802,6 +823,9 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
 
+    def hscan(self, key, match = "", count = 10):
+        return self.execute_command("HSCAN", key, match, count)
+
 
     ### BIT COMMANDS
     def bget(self, name):
@@ -878,6 +902,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('BPERSIST', name)
 
+    def bscan(self, key, match = "", count = 10):
+        return self.execute_command("BSCAN", key, match, count)
 
 class Transaction(Ledis):
     def __init__(self, connection_pool, response_callbacks):
