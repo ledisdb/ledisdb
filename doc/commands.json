@@ -526,5 +526,41 @@
         "arguments": "-",
         "group": "Transaction",
         "readonly": false
+    },
+
+    "SCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "KV",
+        "readonly": false
+    },
+
+    "HSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Hash",
+        "readonly": false
+    },
+
+    "LSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "List",
+        "readonly": false
+    },
+
+    "SSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Set",
+        "readonly": false
+    },
+
+    "ZSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "ZSet",
+        "readonly": false
+    },
+
+    "BSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Bitmap",
+        "readonly": false
     }
 }

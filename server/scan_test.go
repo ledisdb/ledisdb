@@ -29,6 +29,12 @@ func TestScan(t *testing.T) {
 	defer c.Close()
 
 	testKVScan(t, c)
+	testHashScan(t, c)
+	testListScan(t, c)
+	testZSetScan(t, c)
+	testSetScan(t, c)
+	testBitScan(t, c)
+
 }
 
 func checkScanValues(t *testing.T, ay interface{}, values ...int) {
@@ -48,14 +54,8 @@ func checkScanValues(t *testing.T, ay interface{}, values ...int) {
 	}
 }
 
-func testKVScan(t *testing.T, c *ledis.Client) {
-	for i := 0; i < 10; i++ {
-		if _, err := c.Do("set", fmt.Sprintf("%d", i), []byte("value")); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if ay, err := ledis.Values(c.Do("scan", "", "count", 5)); err != nil {
+func checkScan(t *testing.T, c *ledis.Client, cmd string) {
+	if ay, err := ledis.Values(c.Do(cmd, "", "count", 5)); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -65,7 +65,7 @@ func testKVScan(t *testing.T, c *ledis.Client) {
 		checkScanValues(t, ay[1], 0, 1, 2, 3, 4)
 	}
 
-	if ay, err := ledis.Values(c.Do("scan", "4", "count", 6)); err != nil {
+	if ay, err := ledis.Values(c.Do(cmd, "4", "count", 6)); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -75,14 +75,64 @@ func testKVScan(t *testing.T, c *ledis.Client) {
 		checkScanValues(t, ay[1], 5, 6, 7, 8, 9)
 	}
 
-	if ay, err := ledis.Values(c.Do("scan", "4", "count", 6, "inclusive")); err != nil {
-		t.Fatal(err)
-	} else if len(ay) != 2 {
-		t.Fatal(len(ay))
-	} else if n := ay[0].([]byte); string(n) != "9" {
-		t.Fatal(string(n))
-	} else {
-		checkScanValues(t, ay[1], 4, 5, 6, 7, 8, 9)
+}
+
+func testKVScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("set", fmt.Sprintf("%d", i), []byte("value")); err != nil {
+			t.Fatal(err)
+		}
 	}
 
+	checkScan(t, c, "scan")
+}
+
+func testHashScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("hset", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i), []byte("value")); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	checkScan(t, c, "hscan")
+}
+
+func testListScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("lpush", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	checkScan(t, c, "lscan")
+}
+
+func testZSetScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("zadd", fmt.Sprintf("%d", i), i, []byte("value")); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	checkScan(t, c, "zscan")
+}
+
+func testSetScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("sadd", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	checkScan(t, c, "sscan")
+}
+
+func testBitScan(t *testing.T, c *ledis.Client) {
+	for i := 0; i < 10; i++ {
+		if _, err := c.Do("bsetbit", fmt.Sprintf("%d", i), 1024, 1); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	checkScan(t, c, "bscan")
 }

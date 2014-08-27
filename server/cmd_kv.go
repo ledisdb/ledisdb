@@ -275,10 +275,9 @@ func persistCommand(c *client) error {
 	return nil
 }
 
-func parseScanArgs(c *client) (key []byte, inclusive bool, match string, count int, err error) {
+func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 	args := c.args
 	count = 10
-	inclusive = false
 
 	switch len(args) {
 	case 0:
@@ -287,14 +286,6 @@ func parseScanArgs(c *client) (key []byte, inclusive bool, match string, count i
 	case 1, 3, 5:
 		key = args[0]
 		break
-	case 2, 4, 6:
-		key = args[0]
-		if strings.ToLower(ledis.String(args[len(args)-1])) != "inclusive" {
-			err = ErrCmdParams
-			return
-		}
-		inclusive = true
-		args = args[0 : len(args)-1]
 	default:
 		err = ErrCmdParams
 		return
@@ -330,12 +321,12 @@ func parseScanArgs(c *client) (key []byte, inclusive bool, match string, count i
 }
 
 func scanCommand(c *client) error {
-	key, inclusive, match, count, err := parseScanArgs(c)
+	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
 	}
 
-	if ay, err := c.db.Scan(key, count, inclusive, match); err != nil {
+	if ay, err := c.db.Scan(key, count, false, match); err != nil {
 		return err
 	} else {
 		data := make([]interface{}, 2)

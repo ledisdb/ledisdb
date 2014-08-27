@@ -229,19 +229,19 @@ func lpersistCommand(c *client) error {
 }
 
 func lscanCommand(c *client) error {
-	key, inclusive, match, count, err := parseScanArgs(c)
+	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
 	}
 
-	if ay, err := c.db.LScan(key, count, inclusive, match); err != nil {
+	if ay, err := c.db.LScan(key, count, false, match); err != nil {
 		return err
 	} else {
 		data := make([]interface{}, 2)
 		if len(ay) < count {
-			data[0] = ""
+			data[0] = []byte("")
 		} else {
-			data[0] = append([]byte{'('}, ay[len(ay)-1]...)
+			data[0] = ay[len(ay)-1]
 		}
 		data[1] = ay
 		c.resp.writeArray(data)
