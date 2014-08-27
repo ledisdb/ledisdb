@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
 )
@@ -26,41 +25,41 @@ const (
 )
 
 type LevelDBConfig struct {
-	Compression     bool `toml:"compression" json:"compression"`
-	BlockSize       int  `toml:"block_size" json:"block_size"`
-	WriteBufferSize int  `toml:"write_buffer_size" json:"write_buffer_size"`
-	CacheSize       int  `toml:"cache_size" json:"cache_size"`
-	MaxOpenFiles    int  `toml:"max_open_files" json:"max_open_files"`
+	Compression     bool `toml:"compression"`
+	BlockSize       int  `toml:"block_size"`
+	WriteBufferSize int  `toml:"write_buffer_size"`
+	CacheSize       int  `toml:"cache_size"`
+	MaxOpenFiles    int  `toml:"max_open_files"`
 }
 
 type LMDBConfig struct {
-	MapSize int  `toml:"map_size" json:"map_size"`
-	NoSync  bool `toml:"nosync" json:"nosync"`
+	MapSize int  `toml:"map_size"`
+	NoSync  bool `toml:"nosync"`
 }
 
 type BinLogConfig struct {
-	MaxFileSize int `toml:"max_file_size" json:"max_file_size"`
-	MaxFileNum  int `toml:"max_file_num" json:"max_file_num"`
+	MaxFileSize int `toml:"max_file_size"`
+	MaxFileNum  int `toml:"max_file_num"`
 }
 
 type Config struct {
-	Addr string `toml:"addr" json:"addr"`
+	Addr string `toml:"addr"`
 
-	HttpAddr string `toml:"http_addr" json:"http_addr"`
+	HttpAddr string `toml:"http_addr"`
 
-	DataDir string `toml:"data_dir" json:"data_dir"`
+	DataDir string `toml:"data_dir"`
 
-	DBName string `toml:"db_name" json:"db_name"`
+	DBName string `toml:"db_name"`
 
-	LevelDB LevelDBConfig `toml:"leveldb" json:"leveldb"`
+	LevelDB LevelDBConfig `toml:"leveldb"`
 
-	LMDB LMDBConfig `toml:"lmdb" json:"lmdb"`
+	LMDB LMDBConfig `toml:"lmdb"`
 
-	BinLog BinLogConfig `toml:"binlog" json:"binlog"`
+	BinLog BinLogConfig `toml:"binlog"`
 
-	SlaveOf string `toml:"slaveof" json:"slaveof"`
+	SlaveOf string `toml:"slaveof"`
 
-	AccessLog string `toml:"access_log" json:"access_log"`
+	AccessLog string `toml:"access_log"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -77,10 +76,7 @@ func NewConfigWithData(data []byte) (*Config, error) {
 
 	_, err := toml.Decode(string(data), cfg)
 	if err != nil {
-		//try json
-		if err = json.Unmarshal(data, cfg); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return cfg, nil

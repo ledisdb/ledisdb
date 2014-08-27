@@ -95,7 +95,7 @@ Choosing a store database to use is very simple, you have two ways:
 
 ## Configuration
 
-LedisDB uses [toml](https://github.com/toml-lang/toml) as the preferred configuration format, also supports ```json``` because of some history reasons. The basic configuration ```./etc/ledis.conf``` in LedisDB source may help you.
+LedisDB uses [toml](https://github.com/toml-lang/toml) as the configuration format. The basic configuration ```./etc/ledis.conf``` in LedisDB source may help you.
 
 If you don't use a configuration, LedisDB will use the default for you.
 
