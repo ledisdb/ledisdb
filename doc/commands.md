@@ -2,7 +2,7 @@
 
 ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
 
-ledisdb all commands return RESP fomrat and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
+ledisdb all commands return RESP format and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
 
 Table of Contents
 =================
@@ -26,6 +26,7 @@ Table of Contents
 	- [EXPIREAT key timestamp](#expireat-key-timestamp)
 	- [TTL key](#ttl-key)
 	- [PERSIST key](#persist-key)
+	- [SCAN key [MATCH match] [COUNT count]](#scan-key-match-match-count-count)
 - [Hash](#hash)
 	- [HDEL key field [field ...]](#hdel-key-field-field-)
 	- [HEXISTS key field](#hexists-key-field)
@@ -44,6 +45,7 @@ Table of Contents
 	- [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
 	- [HTTL key](#httl-key)
 	- [HPERSIST key](#hpersist-key)
+	- [HSCAN key [MATCH match] [COUNT count]](#hscan-key-match-match-count-count)
 - [List](#list)
 	- [LINDEX key index](#lindex-key-index)
 	- [LLEN key](#llen-key)
@@ -58,6 +60,7 @@ Table of Contents
 	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
 	- [LTTL key](#lttl-key)
 	- [LPERSIST key](#lpersist-key)
+	- [LSCAN key [MATCH match] [COUNT count]](#lscan-key-match-match-count-count)
 - [Set](#set)
 	- [SADD key member [member ...]](#sadd-key-member-member-)
 	- [SCARD key](#scard-key)
@@ -76,7 +79,7 @@ Table of Contents
 	- [SEXPIREAT key timestamp](#sexpireat-key-timestamp)
 	- [STTL key](#sttl-key)
 	- [SPERSIST key](#spersist-key)
-
+	- [SSCAN key [MATCH match] [COUNT count]](#sscan-key-match-match-count-count)
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
 	- [ZCARD key](#zcard-key)
@@ -102,9 +105,8 @@ Table of Contents
 ](#zunionstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
     - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
-
+	- [ZSCAN key [MATCH match] [COUNT count]](#zscan-key-match-match-count-count)
 - [Bitmap](#bitmap)
-
 	- [BGET key](#bget-key)
 	- [BGETBIT key offset](#bgetbit-key-offset)
 	- [BSETBIT key offset value](#bsetbit-key-offset-value)
@@ -115,7 +117,7 @@ Table of Contents
 	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
 	- [BTTL key](#bttl-key)
 	- [BPERSIST key](#bpersist-key)
-
+	- [BSCAN key [MATCH match] [COUNT count]](#bscan-key-match-match-count-count)
 - [Replication](#replication)
 	- [SLAVEOF host port](#slaveof-host-port)
 	- [FULLSYNC](#fullsync)
@@ -124,6 +126,13 @@ Table of Contents
 	- [PING](#ping)
 	- [ECHO message](#echo-message)
 	- [SELECT index](#select-index)
+	- [FLUSHALL](#flushall)
+	- [FLUSHDB](#flushdb)
+	- [INFO [section]](#info-section)
+- [Transaction](#transaction)
+	- [BEGIN](#begin)
+	- [ROLLBACK](#rollback)
+	- [COMMIT](#commit)
 
 
 ## KV 
@@ -455,6 +464,43 @@ ledis> TTL mykey
 (integer) -1
 ```
 
+### SCAN key [MATCH match] [COUNT count] 
+
+Iterate KV keys incrementally.
+
+Key is the start for the current iteration.
+Match is the regexp for checking matched key.
+Count is the maximum retrieved elememts number, default is 10.
+
+**Return value**
+
+an array of two values, first value is the key for next iteration, second value is an array of elements.
+
+**Examples**
+
+```
+ledis>set a 1
+OK
+ledis>set b 2
+OK
+ledis>set c 3
+OK
+127.0.0.1:6380>scan "" 
+1) ""
+2) ["a" "b" "c"]
+ledis>scan "" count 1
+1) "a"
+2) ["a"]
+ledis>scan "a" count 1
+1) "b"
+2) ["b"]
+ledis>scan "b" count 1
+1) "c"
+2) ["c"]
+ledis>scan "c" count 1
+1) ""
+2) []
+```
 
 ## Hash
 
@@ -819,6 +865,11 @@ ledis> HPERSIST not_exists_key
 (integer) 0
 ```
 
+### HSCAN key [MATCH match] [COUNT count] 
+
+Iterate Hash keys incrementally.
+
+See `SCAN` for more information.
 
 ## List
 
@@ -1110,6 +1161,12 @@ ledis> LTTL a
 ledis> LPERSIST b
 (integer) 0
 ```
+
+### LSCAN key [MATCH match] [COUNT count] 
+
+Iterate list keys incrementally.
+
+See `SCAN` for more information.
 
 
 ## Set
@@ -1532,6 +1589,13 @@ ledis> SPERSIST key
 ledis> STTL key
 (integer) -1
 ```
+
+### SSCAN key [MATCH match] [COUNT count] 
+
+Iterate Set keys incrementally.
+
+See `SCAN` for more information.
+
 
 ## ZSet
 
@@ -2152,6 +2216,12 @@ ledis> ZRANGE out 0 -1 WITHSCORES
 4) "10"
 ```
 
+### ZSCAN key [MATCH match] [COUNT count] 
+
+Iterate ZSet keys incrementally.
+
+See `SCAN` for more information.
+
 
 ## Bitmap
 
@@ -2312,6 +2382,13 @@ ledis> BCOUNT flag 5 6
 (refer to [PERSIST](#persist-key) api for other types)
 
 
+### BSCAN key [MATCH match] [COUNT count] 
+
+Iterate Bitmap keys incrementally.
+
+See `SCAN` for more information.
+
+
 ## Replication
 
 ### SLAVEOF host port
@@ -2392,6 +2469,97 @@ ledis> SELECT 15
 OK
 ledis> SELECT 16
 ERR invalid db index 16
+```
+
+### FLUSHALL
+
+Delete all the keys of all the existing databases, not just the currently selected one. This command never fails.
+
+Very dangerous to use!!!
+
+### FLUSHDB
+
+Delete all the keys of the currently selected DB. This command never fails.
+
+Very dangerous to use!!!
+
+### INFO [section]
+
+Return information and statistic about the server in a format that is simple to parse by computers and easy to read by humans.
+
+The optional parameter can be used to select a specific section of information:
+
++ server: General information about the Redis server
++ client: Client connections section
++ mem: Memory consumption related information
++ cpu: CPU consumption statistics
++ goroutine: Goroutine num
++ persistence: Strorage related information
+
+When no parameter is provided, all will return.
+
+## Transaction
+
+### BEGIN
+
+Marks the start of a transaction block. Subsequent commands will be in a transaction context util using COMMIT or ROLLBACK.
+
+You must known that `BEGIN` will block any other write operators before you `COMMIT` or `ROLLBACK`. Don't use long-time transaction.
+
+**Return value**
+
+Returns `OK` if the backend store engine in use supports transaction, otherwise, returns `Err`. 
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> COMMIT
+OK
+```
+
+### ROLLBACK
+
+Discards all the changes of previously commands in a transaction and restores the connection state to normal.
+
+**Return value**
+Returns `OK` if in a transaction context, otherwise, `Err`
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> GET HELLO
+"WORLD"
+ledis> ROLLBACK
+OK
+ledis> GET HELLO
+(nil)
+```
+
+### COMMIT
+
+Persists the changes of all the commands in a transaction and restores the connection state to normal.
+
+**Return value**
+Returns `OK` if in a transaction context, otherwise, `Err`
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> GET HELLO
+"WORLD"
+ledis> COMMIT
+OK
+ledis> GET HELLO
+"WORLD"
 ```
 
 Thanks [doctoc](http://doctoc.herokuapp.com/)

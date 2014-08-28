@@ -184,6 +184,20 @@ func formatDataKey(buf []byte, k []byte) ([]byte, error) {
 		} else {
 			buf = strconv.AppendQuote(buf, String(key))
 		}
+	case SetType:
+		if key, member, err := db.sDecodeSetKey(k); err != nil {
+			return nil, err
+		} else {
+			buf = strconv.AppendQuote(buf, String(key))
+			buf = append(buf, ' ')
+			buf = strconv.AppendQuote(buf, String(member))
+		}
+	case SSizeType:
+		if key, err := db.sDecodeSizeKey(k); err != nil {
+			return nil, err
+		} else {
+			buf = strconv.AppendQuote(buf, String(key))
+		}
 	case ExpTimeType:
 		if tp, key, t, err := db.expDecodeTimeKey(k); err != nil {
 			return nil, err

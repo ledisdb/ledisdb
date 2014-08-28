@@ -5,51 +5,18 @@ import (
 )
 
 type DB struct {
-	db driver.IDB
-}
-
-// Close database
-//
-// Caveat
-//  Any other DB operations like Get, Put, etc... may cause a panic after Close
-//
-func (db *DB) Close() error {
-	if db.db == nil {
-		return nil
-	}
-
-	err := db.db.Close()
-	db.db = nil
-
-	return err
-}
-
-// Get Value with Key
-func (db *DB) Get(key []byte) ([]byte, error) {
-	return db.db.Get(key)
-}
-
-// Put value with key
-func (db *DB) Put(key []byte, value []byte) error {
-	err := db.db.Put(key, value)
-	return err
-}
-
-// Delete by key
-func (db *DB) Delete(key []byte) error {
-	err := db.db.Delete(key)
-	return err
+	driver.IDB
 }
 
 func (db *DB) NewIterator() *Iterator {
 	it := new(Iterator)
-	it.it = db.db.NewIterator()
+	it.it = db.IDB.NewIterator()
 
 	return it
 }
 
 func (db *DB) NewWriteBatch() WriteBatch {
-	return db.db.NewWriteBatch()
+	return db.IDB.NewWriteBatch()
 }
 
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
@@ -74,11 +41,11 @@ func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, off
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-func (db *DB) Begin() (Tx, error) {
-	tx, err := db.db.Begin()
+func (db *DB) Begin() (*Tx, error) {
+	tx, err := db.IDB.Begin()
 	if err != nil {
 		return nil, err
 	}
 
-	return tx, nil
+	return &Tx{tx}, nil
 }

@@ -288,7 +288,7 @@
     "SELECT": {
         "arguments": "index",
         "group": "Server",
-        "readonly": false
+        "readonly": true
     },
     "SET": {
         "arguments": "key value",
@@ -448,7 +448,7 @@
     "ZRANGE": {
         "arguments": "key start stop [WITHSCORES]",
         "group": "ZSet",
-        "readonly": false
+        "readonly": true
     },
     "ZRANGEBYSCORE": {
         "arguments": "key min max [WITHSCORES] [LIMIT offset count]",
@@ -510,5 +510,75 @@
         "arguments": "destkey numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]",
         "group": "ZSet",
         "readonly": false
+    },
+    
+    "BEGIN": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+    "COMMIT": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+    "ROLLBACK": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+
+    "SCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "KV",
+        "readonly": true
+    },
+
+    "HSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Hash",
+        "readonly": true
+    },
+
+    "LSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "List",
+        "readonly": true
+    },
+
+    "SSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Set",
+        "readonly": true
+    },
+
+    "ZSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "BSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Bitmap",
+        "readonly": true
+    },
+
+    "FLUSHALL": {
+        "arguments": "-",
+        "group": "Server",
+        "readonly": false
+    },
+
+    "FLUSHDB": {
+        "arguments": "-",
+        "group": "Server",
+        "readonly": false
+    },
+
+    "INFO": {
+        "arguments": "[section]",
+        "group": "Server",
+        "readonly": true
     }
 }

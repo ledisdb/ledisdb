@@ -84,7 +84,7 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	var size int32
 	var err error
 
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -139,7 +139,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 		return nil, err
 	}
 
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -161,7 +161,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	}
 
 	itemKey := db.lEncodeListKey(key, seq)
-	value, err = db.db.Get(itemKey)
+	value, err = db.bucket.Get(itemKey)
 	if err != nil {
 		return nil, err
 	}
@@ -184,14 +184,14 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 
 //	ps : here just focus on deleting the list data,
 //		 any other likes expire is ignore.
-func (db *DB) lDelete(t *tx, key []byte) int64 {
+func (db *DB) lDelete(t *batch, key []byte) int64 {
 	mk := db.lEncodeMetaKey(key)
 
 	var headSeq int32
 	var tailSeq int32
 	var err error
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	headSeq, tailSeq, _, err = db.lGetMeta(it, mk)
@@ -219,7 +219,7 @@ func (db *DB) lGetMeta(it *store.Iterator, ek []byte) (headSeq int32, tailSeq in
 	if it != nil {
 		v = it.Find(ek)
 	} else {
-		v, err = db.db.Get(ek)
+		v, err = db.bucket.Get(ek)
 	}
 	if err != nil {
 		return
@@ -237,7 +237,7 @@ func (db *DB) lGetMeta(it *store.Iterator, ek []byte) (headSeq int32, tailSeq in
 }
 
 func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
-	t := db.listTx
+	t := db.listBatch
 
 	var size int32 = tailSeq - headSeq + 1
 	if size < 0 {
@@ -257,7 +257,7 @@ func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
 }
 
 func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -284,7 +284,7 @@ func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 
 	metaKey := db.lEncodeMetaKey(key)
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	headSeq, tailSeq, _, err = db.lGetMeta(it, metaKey)
@@ -333,7 +333,7 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 
 	metaKey := db.lEncodeMetaKey(key)
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	if headSeq, _, llen, err = db.lGetMeta(it, metaKey); err != nil {
@@ -393,7 +393,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -405,7 +405,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 }
 
 func (db *DB) LMclear(keys ...[]byte) (int64, error) {
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -424,7 +424,7 @@ func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) lFlush() (drop int64, err error) {
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 	return db.flushType(t, ListType)
@@ -459,7 +459,7 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.listTx
+	t := db.listBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -472,8 +472,8 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) LScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(LMetaType, key, count, inclusive)
+func (db *DB) LScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(LMetaType, key, count, inclusive, match)
 }
 
 func (db *DB) lEncodeMinKey() []byte {

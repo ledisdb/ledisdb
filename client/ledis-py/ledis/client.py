@@ -1,6 +1,7 @@
 from __future__ import with_statement
 import datetime
 import time as mod_time
+from itertools import chain, starmap
 from ledis._compat import (b, izip, imap, iteritems,
                            basestring, long, nativestr, bytes)
 from ledis.connection import ConnectionPool, UnixDomainSocketConnection
@@ -8,6 +9,8 @@ from ledis.exceptions import (
     ConnectionError,
     DataError,
     LedisError,
+    ResponseError,
+    TxNotBeginError
 )
 
 SYM_EMPTY = b('')
@@ -92,7 +95,7 @@ class Ledis(object):
             lambda r: isinstance(r, long) and r or nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
-            'MSET SELECT ',
+            'MSET SELECT',
             lambda r: nativestr(r) == 'OK'
         ),
         string_keys_to_dict(
@@ -169,6 +172,11 @@ class Ledis(object):
     def set_response_callback(self, command, callback):
         "Set a custom Response Callback"
         self.response_callbacks[command] = callback
+ 
+    def tx(self):
+        return Transaction(
+            self.connection_pool,
+            self.response_callbacks)
 
     #### COMMAND EXECUTION AND PROTOCOL PARSING ####
 
@@ -210,6 +218,16 @@ class Ledis(object):
         except ValueError:
             db = 0
         return self.execute_command('SELECT', db)
+
+    def info(self, section):
+        return self.execute_command('PING', section)
+
+    def flushall(self):
+        return self.execute_command('FLUSHALL')
+
+    def flushdb(self):
+        return self.execute_command('FLUSHDB')
+
 
     #### BASIC KEY COMMANDS ####
     def decr(self, name, amount=1):
@@ -332,6 +350,9 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('PERSIST', name)
 
+    def scan(self, key, match = "", count = 10):
+        return self.execute_command("SCAN", key, match, count)
+
     #### LIST COMMANDS ####
     def lindex(self, name, index):
         """
@@ -406,6 +427,9 @@ class Ledis(object):
     def lpersist(self, name):
         "Removes an expiration on ``name``"
         return self.execute_command('LPERSIST', name)
+
+    def lscan(self, key, match = "", count = 10):
+        return self.execute_command("LSCAN", key, match, count)
 
 
     #### SET COMMANDS ####
@@ -503,6 +527,9 @@ class Ledis(object):
     def spersist(self, name):
         "Removes an expiration on name"
         return self.execute_command('SPERSIST', name)
+
+    def sscan(self, key, match = "", count = 10):
+        return self.execute_command("SSCAN", key, match, count)
 
 
     #### SORTED SET COMMANDS ####
@@ -700,6 +727,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('ZPERSIST', name)
 
+    def zscan(self, key, match = "", count = 10):
+        return self.execute_command("ZSCAN", key, match, count)
 
 
     #### HASH COMMANDS ####
@@ -794,6 +823,9 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
 
+    def hscan(self, key, match = "", count = 10):
+        return self.execute_command("HSCAN", key, match, count)
+
 
     ### BIT COMMANDS
     def bget(self, name):
@@ -869,3 +901,45 @@ class Ledis(object):
     def bpersist(self, name):
         "Removes an expiration on name"
         return self.execute_command('BPERSIST', name)
+
+    def bscan(self, key, match = "", count = 10):
+        return self.execute_command("BSCAN", key, match, count)
+
+class Transaction(Ledis):
+    def __init__(self, connection_pool, response_callbacks):
+        self.connection_pool = connection_pool
+        self.response_callbacks = response_callbacks
+        self.connection = None
+
+    def execute_command(self, *args, **options):
+        "Execute a command and return a parsed response"
+        command_name = args[0]
+
+        connection = self.connection
+        if self.connection is None:
+            raise TxNotBeginError
+
+        try:
+            connection.send_command(*args)
+            return self.parse_response(connection, command_name, **options)
+        except ConnectionError:
+            connection.disconnect()
+            connection.send_command(*args)
+            return self.parse_response(connection, command_name, **options)
+
+    def begin(self):
+        self.connection = self.connection_pool.get_connection('begin')
+        return self.execute_command("BEGIN")
+
+    def commit(self):
+        res = self.execute_command("COMMIT")
+        self.connection_pool.release(self.connection)
+        self.connection = None
+        return res
+
+    def rollback(self):
+        res = self.execute_command("ROLLBACK")
+        self.connection_pool.release(self.connection)
+        self.connection = None
+        return res
+

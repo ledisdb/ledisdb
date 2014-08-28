@@ -1,6 +1,6 @@
 # LedisDB
 
-Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set,  and may be alternative for Redis.
+Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set.
 
 LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
 
@@ -9,6 +9,7 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 + Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
 + Stores lots of data, over the memory limit. 
 + Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
++ Supports transaction using LMDB or BotlDB.
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
@@ -40,7 +41,7 @@ Create a workspace and checkout ledisdb source
 
     LedisDB supplies a simple script to install leveldb and snappy: 
 
-        sh build_tool/build_leveldb.sh
+        sudo sh tools/build_leveldb.sh
 
     It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy.
 
@@ -89,11 +90,12 @@ Choosing a store database to use is very simple, you have two ways:
 
 **Caveat**
 
-You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
++ You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
++ Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
 
 ## Configuration
 
-LedisDB uses [toml](https://github.com/toml-lang/toml) as the preferred configuration format, also supports ```json``` because of some history reasons. The basic configuration ```./etc/ledis.conf``` in LedisDB source may help you.
+LedisDB uses [toml](https://github.com/toml-lang/toml) as the configuration format. The basic configuration ```./etc/ledis.conf``` in LedisDB source may help you.
 
 If you don't use a configuration, LedisDB will use the default for you.
 

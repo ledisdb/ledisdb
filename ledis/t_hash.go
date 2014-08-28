@@ -107,12 +107,12 @@ func (db *DB) hEncodeStopKey(key []byte) []byte {
 }
 
 func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
-	t := db.hashTx
+	t := db.hashBatch
 
 	ek := db.hEncodeHashKey(key, field)
 
 	var n int64 = 1
-	if v, _ := db.db.Get(ek); v != nil {
+	if v, _ := db.bucket.Get(ek); v != nil {
 		n = 0
 	} else {
 		if _, err := db.hIncrSize(key, 1); err != nil {
@@ -126,13 +126,13 @@ func (db *DB) hSetItem(key []byte, field []byte, value []byte) (int64, error) {
 
 //	ps : here just focus on deleting the hash data,
 //		 any other likes expire is ignore.
-func (db *DB) hDelete(t *tx, key []byte) int64 {
+func (db *DB) hDelete(t *batch, key []byte) int64 {
 	sk := db.hEncodeSizeKey(key)
 	start := db.hEncodeStartKey(key)
 	stop := db.hEncodeStopKey(key)
 
 	var num int64 = 0
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
 		num++
@@ -144,7 +144,7 @@ func (db *DB) hDelete(t *tx, key []byte) int64 {
 }
 
 func (db *DB) hExpireAt(key []byte, when int64) (int64, error) {
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -164,7 +164,7 @@ func (db *DB) HLen(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	return Int64(db.db.Get(db.hEncodeSizeKey(key)))
+	return Int64(db.bucket.Get(db.hEncodeSizeKey(key)))
 }
 
 func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
@@ -174,7 +174,7 @@ func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -194,11 +194,11 @@ func (db *DB) HGet(key []byte, field []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return db.db.Get(db.hEncodeHashKey(key, field))
+	return db.bucket.Get(db.hEncodeHashKey(key, field))
 }
 
 func (db *DB) HMset(key []byte, args ...FVPair) error {
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -214,7 +214,7 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 
 		ek = db.hEncodeHashKey(key, args[i].Field)
 
-		if v, err := db.db.Get(ek); err != nil {
+		if v, err := db.bucket.Get(ek); err != nil {
 			return err
 		} else if v == nil {
 			num++
@@ -235,7 +235,7 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 func (db *DB) HMget(key []byte, args ...[]byte) ([][]byte, error) {
 	var ek []byte
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	r := make([][]byte, len(args))
@@ -253,7 +253,7 @@ func (db *DB) HMget(key []byte, args ...[]byte) ([][]byte, error) {
 }
 
 func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
-	t := db.hashTx
+	t := db.hashBatch
 
 	var ek []byte
 	var v []byte
@@ -262,7 +262,7 @@ func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	var num int64 = 0
@@ -292,12 +292,12 @@ func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 }
 
 func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
-	t := db.hashTx
+	t := db.hashBatch
 	sk := db.hEncodeSizeKey(key)
 
 	var err error
 	var size int64 = 0
-	if size, err = Int64(db.db.Get(sk)); err != nil {
+	if size, err = Int64(db.bucket.Get(sk)); err != nil {
 		return 0, err
 	} else {
 		size += delta
@@ -318,7 +318,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 		return 0, err
 	}
 
-	t := db.hashTx
+	t := db.hashBatch
 	var ek []byte
 	var err error
 
@@ -328,7 +328,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 	ek = db.hEncodeHashKey(key, field)
 
 	var n int64 = 0
-	if n, err = StrInt64(db.db.Get(ek)); err != nil {
+	if n, err = StrInt64(db.bucket.Get(ek)); err != nil {
 		return 0, err
 	}
 
@@ -354,7 +354,7 @@ func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 
 	v := make([]FVPair, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -379,7 +379,7 @@ func (db *DB) HKeys(key []byte) ([][]byte, error) {
 
 	v := make([][]byte, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -403,7 +403,7 @@ func (db *DB) HValues(key []byte) ([][]byte, error) {
 
 	v := make([][]byte, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, _, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -423,7 +423,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -435,7 +435,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 }
 
 func (db *DB) HMclear(keys ...[]byte) (int64, error) {
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -453,14 +453,16 @@ func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 }
 
 func (db *DB) hFlush() (drop int64, err error) {
-	t := db.hashTx
+	t := db.hashBatch
+
 	t.Lock()
 	defer t.Unlock()
+
 	return db.flushType(t, HashType)
 }
 
-func (db *DB) HScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(HSizeType, key, count, inclusive)
+func (db *DB) HScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(HSizeType, key, count, inclusive, match)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {
@@ -492,7 +494,7 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.hashTx
+	t := db.hashBatch
 	t.Lock()
 	defer t.Unlock()
 

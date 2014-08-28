@@ -71,14 +71,11 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer t.Rollback()
+
 	b := t.Bucket(bucketName)
 
 	value = b.Get(key)
-	err = t.Rollback()
-
-	if err != nil {
-		return nil, err
-	}
 
 	if value == nil {
 		return nil, nil
@@ -130,6 +127,10 @@ func (db *DB) Begin() (driver.Tx, error) {
 		tx: tx,
 		b:  tx.Bucket(bucketName),
 	}, nil
+}
+
+func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
+	return newSnapshot(db)
 }
 
 func (db *DB) BatchPut(writes []driver.Write) error {

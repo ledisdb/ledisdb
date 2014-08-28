@@ -5,6 +5,9 @@ module.exports = [
     "ping",
     "echo",
     "select",
+    "info",
+    "flushall",
+    "flushdb",
 
 	"bget",
 	"bdelete",
@@ -17,7 +20,7 @@ module.exports = [
 	"bexpireat",
 	"bttl",
 	"bpersist",
-
+	"bscan",
 
 	"hdel",
 	"hexists",
@@ -31,14 +34,13 @@ module.exports = [
 	"hset",
 	"hvals",
 
-
 	"hclear",
 	"hmclear",
 	"hexpire",
 	"hexpireat",
 	"httl",
 	"hpersist",
-
+	"hscan",
 
 	"decr",
 	"decrby",
@@ -56,6 +58,7 @@ module.exports = [
 	"expireat",
 	"ttl",
 	"persist",
+	"scan",
 
 	"lindex",
 	"llen",
@@ -72,6 +75,7 @@ module.exports = [
 	"lexpireat",
 	"lttl",
 	"lpersist",
+	"lscan",
 
 	"zadd",
 	"zcard",
@@ -97,6 +101,7 @@ module.exports = [
 	"zexpireat",
 	"zttl",
 	"zpersist",
+	"zscan",
 
 
 	"sadd",
@@ -117,6 +122,11 @@ module.exports = [
 	"sexpire",
 	"sexpireat",
 	"sttl",
-	"spersist"
+	"spersist",
+	"sscan",
+
+    "begin",
+    "rollback",
+    "commit",
 
 ];

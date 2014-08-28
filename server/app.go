@@ -25,6 +25,8 @@ type App struct {
 
 	//for slave replication
 	m *master
+
+	info *info
 }
 
 func netType(s string) string {
@@ -50,6 +52,10 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.cfg = cfg
 
 	var err error
+
+	if app.info, err = newInfo(app); err != nil {
+		return nil, err
+	}
 
 	if app.listener, err = net.Listen(netType(cfg.Addr), cfg.Addr); err != nil {
 		return nil, err

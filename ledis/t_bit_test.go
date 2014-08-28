@@ -43,6 +43,7 @@ func TestBinary(t *testing.T) {
 	testOpNot(t)
 	testMSetBit(t)
 	testBitExpire(t)
+	testBFlush(t)
 }
 
 func testSimple(t *testing.T) {
@@ -543,21 +544,21 @@ func testBFlush(t *testing.T) {
 	db.FlushAll()
 
 	for i := 0; i < 2000; i++ {
-		key := []byte{}
+		key := make([]byte, 4)
 		binary.LittleEndian.PutUint32(key, uint32(i))
 		if _, err := db.BSetBit(key, 1, 1); err != nil {
 			t.Fatal(err.Error())
 		}
 	}
 
-	if v, err := db.BScan(nil, 3000, true); err != nil {
+	if v, err := db.BScan(nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
 	} else if len(v) != 2000 {
 		t.Fatal("invalid value ", len(v))
 	}
 
 	for i := 0; i < 2000; i++ {
-		key := []byte{}
+		key := make([]byte, 4)
 		binary.LittleEndian.PutUint32(key, uint32(i))
 		if v, err := db.BGetBit(key, 1); err != nil {
 			t.Fatal(err.Error())
@@ -572,14 +573,14 @@ func testBFlush(t *testing.T) {
 		t.Fatal("invalid value ", n)
 	}
 
-	if v, err := db.BScan(nil, 3000, true); err != nil {
+	if v, err := db.BScan(nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
-	} else if v != nil {
+	} else if len(v) != 0 {
 		t.Fatal("invalid value length ", len(v))
 	}
 
 	for i := 0; i < 2000; i++ {
-		key := []byte{}
+		key := make([]byte, 4)
 		binary.LittleEndian.PutUint32(key, uint32(i))
 		if v, err := db.BGet(key); err != nil {
 			t.Fatal(err.Error())

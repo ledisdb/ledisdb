@@ -59,7 +59,7 @@ func testTx(db *DB, t *testing.T) {
 		t.Fatal(string(it.Value()))
 	}
 
-	it.First()
+	it.SeekToFirst()
 
 	if !it.Valid() {
 		t.Fatal("must valid")
@@ -83,7 +83,7 @@ func testTx(db *DB, t *testing.T) {
 		t.Fatal(string(it.Value()))
 	}
 
-	it.Last()
+	it.SeekToLast()
 
 	if !it.Valid() {
 		t.Fatal("must valid")

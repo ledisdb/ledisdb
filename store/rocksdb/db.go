@@ -211,6 +211,20 @@ func (db *DB) NewIterator() driver.IIterator {
 	return it
 }
 
+func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
+	snap := &Snapshot{
+		db:           db,
+		snap:         C.rocksdb_create_snapshot(db.db),
+		readOpts:     NewReadOptions(),
+		iteratorOpts: NewReadOptions(),
+	}
+	snap.readOpts.SetSnapshot(snap)
+	snap.iteratorOpts.SetSnapshot(snap)
+	snap.iteratorOpts.SetFillCache(false)
+
+	return snap, nil
+}
+
 func (db *DB) put(wo *WriteOptions, key, value []byte) error {
 	var errStr *C.char
 	var k, v *C.char

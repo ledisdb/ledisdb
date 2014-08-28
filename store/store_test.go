@@ -37,6 +37,7 @@ func testStore(db *DB, t *testing.T) {
 	testSimple(db, t)
 	testBatch(db, t)
 	testIterator(db, t)
+	testSnapshot(db, t)
 }
 
 func testClear(db *DB, t *testing.T) {
@@ -44,6 +45,7 @@ func testClear(db *DB, t *testing.T) {
 	for ; it.Valid(); it.Next() {
 		db.Delete(it.RawKey())
 	}
+	it.Close()
 }
 
 func testSimple(db *DB, t *testing.T) {
@@ -258,4 +260,66 @@ func testIterator(db *DB, t *testing.T) {
 		t.Fatal(err)
 	}
 	it.Close()
+}
+
+func testSnapshot(db *DB, t *testing.T) {
+	foo := []byte("foo")
+	bar := []byte("bar")
+	v1 := []byte("v1")
+	v2 := []byte("v2")
+
+	db.Put(foo, v1)
+	db.Put(bar, v1)
+
+	snap, err := db.NewSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	i := snap.NewIterator()
+
+	i.Seek([]byte("foo"))
+
+	if !i.Valid() {
+		t.Fatal("must valid")
+	} else if string(i.Value()) != "v1" {
+		t.Fatal(string(i.Value()))
+	}
+	i.Close()
+
+	db.Put(foo, v2)
+	db.Put(bar, v2)
+
+	if v, err := snap.Get(foo); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "v1" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := snap.Get(bar); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "v1" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.Get(foo); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "v2" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.Get(bar); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "v2" {
+		t.Fatal(string(v))
+	}
+
+	snap.Close()
+
+	if v, err := db.Get(foo); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "v2" {
+		t.Fatal(string(v))
+	}
+
 }

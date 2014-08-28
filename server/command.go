@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
-
 	"strings"
 )
 
-type CommandFunc func(req *requestContext) error
+type CommandFunc func(c *client) error
 
 var regCmds = map[string]CommandFunc{}
 
@@ -20,35 +19,71 @@ func register(name string, f CommandFunc) {
 	regCmds[name] = f
 }
 
-func pingCommand(req *requestContext) error {
-	req.resp.writeStatus(PONG)
+func pingCommand(c *client) error {
+	c.resp.writeStatus(PONG)
 	return nil
 }
 
-func echoCommand(req *requestContext) error {
-	if len(req.args) != 1 {
+func echoCommand(c *client) error {
+	if len(c.args) != 1 {
 		return ErrCmdParams
 	}
 
-	req.resp.writeBulk(req.args[0])
+	c.resp.writeBulk(c.args[0])
 	return nil
 }
 
-func selectCommand(req *requestContext) error {
-	if len(req.args) != 1 {
+func selectCommand(c *client) error {
+	if len(c.args) != 1 {
 		return ErrCmdParams
 	}
 
-	if index, err := strconv.Atoi(ledis.String(req.args[0])); err != nil {
+	if index, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
 		return err
 	} else {
-		if db, err := req.ldb.Select(index); err != nil {
+		if db, err := c.ldb.Select(index); err != nil {
 			return err
 		} else {
-			req.db = db
-			req.resp.writeStatus(OK)
+			c.db = db
+			c.resp.writeStatus(OK)
 		}
 	}
+
+	return nil
+}
+
+func infoCommand(c *client) error {
+	if len(c.args) > 1 {
+		return ErrSyntax
+	}
+	var section string
+	if len(c.args) == 1 {
+		section = strings.ToLower(ledis.String(c.args[0]))
+	}
+
+	buf := c.app.info.Dump(section)
+	c.resp.writeBulk(buf)
+
+	return nil
+}
+
+func flushallCommand(c *client) error {
+	err := c.ldb.FlushAll()
+	if err != nil {
+		return err
+	}
+
+	c.resp.writeStatus(OK)
+	return nil
+}
+
+func flushdbCommand(c *client) error {
+	_, err := c.db.FlushAll()
+	if err != nil {
+		return err
+	}
+
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -56,4 +91,7 @@ func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)
 	register("select", selectCommand)
+	register("info", infoCommand)
+	register("flushall", flushallCommand)
+	register("flushdb", flushdbCommand)
 }

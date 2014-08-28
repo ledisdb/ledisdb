@@ -12,11 +12,11 @@ var (
 	errExpTimeKey = errors.New("invalid expire time key")
 )
 
-type retireCallback func(*tx, []byte) int64
+type retireCallback func(*batch, []byte) int64
 
 type elimination struct {
 	db         *DB
-	exp2Tx     []*tx
+	exp2Tx     []*batch
 	exp2Retire []retireCallback
 }
 
@@ -67,11 +67,11 @@ func (db *DB) expDecodeTimeKey(tk []byte) (byte, []byte, int64, error) {
 	return tk[2], tk[11:], int64(binary.BigEndian.Uint64(tk[3:])), nil
 }
 
-func (db *DB) expire(t *tx, dataType byte, key []byte, duration int64) {
+func (db *DB) expire(t *batch, dataType byte, key []byte, duration int64) {
 	db.expireAt(t, dataType, key, time.Now().Unix()+duration)
 }
 
-func (db *DB) expireAt(t *tx, dataType byte, key []byte, when int64) {
+func (db *DB) expireAt(t *batch, dataType byte, key []byte, when int64) {
 	mk := db.expEncodeMetaKey(dataType, key)
 	tk := db.expEncodeTimeKey(dataType, key, when)
 
@@ -82,7 +82,7 @@ func (db *DB) expireAt(t *tx, dataType byte, key []byte, when int64) {
 func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
 	mk := db.expEncodeMetaKey(dataType, key)
 
-	if t, err = Int64(db.db.Get(mk)); err != nil || t == 0 {
+	if t, err = Int64(db.bucket.Get(mk)); err != nil || t == 0 {
 		t = -1
 	} else {
 		t -= time.Now().Unix()
@@ -95,9 +95,9 @@ func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
 	return t, err
 }
 
-func (db *DB) rmExpire(t *tx, dataType byte, key []byte) (int64, error) {
+func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 	mk := db.expEncodeMetaKey(dataType, key)
-	if v, err := db.db.Get(mk); err != nil {
+	if v, err := db.bucket.Get(mk); err != nil {
 		return 0, err
 	} else if v == nil {
 		return 0, nil
@@ -111,7 +111,7 @@ func (db *DB) rmExpire(t *tx, dataType byte, key []byte) (int64, error) {
 	}
 }
 
-func (db *DB) expFlush(t *tx, dataType byte) (err error) {
+func (db *DB) expFlush(t *batch, dataType byte) (err error) {
 	minKey := make([]byte, 3)
 	minKey[0] = db.index
 	minKey[1] = ExpTimeType
@@ -134,12 +134,12 @@ func (db *DB) expFlush(t *tx, dataType byte) (err error) {
 func newEliminator(db *DB) *elimination {
 	eli := new(elimination)
 	eli.db = db
-	eli.exp2Tx = make([]*tx, maxDataType)
+	eli.exp2Tx = make([]*batch, maxDataType)
 	eli.exp2Retire = make([]retireCallback, maxDataType)
 	return eli
 }
 
-func (eli *elimination) regRetireContext(dataType byte, t *tx, onRetire retireCallback) {
+func (eli *elimination) regRetireContext(dataType byte, t *batch, onRetire retireCallback) {
 
 	//	todo .. need to ensure exist - mapExpMetaType[expType]
 
@@ -151,12 +151,12 @@ func (eli *elimination) regRetireContext(dataType byte, t *tx, onRetire retireCa
 func (eli *elimination) active() {
 	now := time.Now().Unix()
 	db := eli.db
-	dbGet := db.db.Get
+	dbGet := db.bucket.Get
 
 	minKey := db.expEncodeTimeKey(NoneType, nil, 0)
 	maxKey := db.expEncodeTimeKey(maxDataType, nil, now)
 
-	it := db.db.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		tk := it.RawKey()
 		mk := it.RawValue()

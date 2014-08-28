@@ -156,12 +156,88 @@ func zsetAdaptor(db *DB) *adaptor {
 	return adp
 }
 
+func setAdaptor(db *DB) *adaptor {
+	adp := new(adaptor)
+	adp.showIdent = func() string {
+		return "set-adaptor"
+	}
+
+	adp.set = func(k []byte, v []byte) (int64, error) {
+		eles := make([][]byte, 0)
+		for i := 0; i < 3; i++ {
+			e := []byte(String(v) + fmt.Sprintf("_%d", i))
+			eles = append(eles, e)
+		}
+
+		if n, err := db.SAdd(k, eles...); err != nil {
+			return 0, err
+		} else {
+			return n, nil
+		}
+
+	}
+
+	adp.exists = func(k []byte) (int64, error) {
+		if slen, err := db.SCard(k); err != nil || slen <= 0 {
+			return 0, err
+		} else {
+			return 1, nil
+		}
+	}
+
+	adp.del = db.SClear
+	adp.expire = db.SExpire
+	adp.expireAt = db.SExpireAt
+	adp.ttl = db.STTL
+
+	return adp
+
+}
+
+func bitAdaptor(db *DB) *adaptor {
+	adp := new(adaptor)
+	adp.showIdent = func() string {
+		return "bit-adaptor"
+	}
+
+	adp.set = func(k []byte, v []byte) (int64, error) {
+		datas := make([]BitPair, 3)
+		datas[0] = BitPair{0, 1}
+		datas[1] = BitPair{2, 1}
+		datas[2] = BitPair{5, 1}
+
+		if _, err := db.BMSetBit(k, datas...); err != nil {
+			return 0, err
+		} else {
+			return int64(len(datas)), nil
+		}
+	}
+
+	adp.exists = func(k []byte) (int64, error) {
+		var start, end int32 = 0, -1
+		if blen, err := db.BCount(k, start, end); err != nil || blen <= 0 {
+			return 0, err
+		} else {
+			return 1, nil
+		}
+	}
+
+	adp.del = db.BDelete
+	adp.expire = db.BExpire
+	adp.expireAt = db.BExpireAt
+	adp.ttl = db.BTTL
+
+	return adp
+}
+
 func allAdaptors(db *DB) []*adaptor {
-	adps := make([]*adaptor, 4)
+	adps := make([]*adaptor, 6)
 	adps[0] = kvAdaptor(db)
 	adps[1] = listAdaptor(db)
 	adps[2] = hashAdaptor(db)
 	adps[3] = zsetAdaptor(db)
+	adps[4] = setAdaptor(db)
+	adps[5] = bitAdaptor(db)
 	return adps
 }
 
@@ -175,8 +251,8 @@ func TestExpire(t *testing.T) {
 	k := []byte("ttl_a")
 	ek := []byte("ttl_b")
 
-	dbEntrys := allAdaptors(db)
-	for _, entry := range dbEntrys {
+	dbEntries := allAdaptors(db)
+	for _, entry := range dbEntries {
 		ident := entry.showIdent()
 
 		entry.set(k, []byte("1"))
@@ -210,8 +286,8 @@ func TestExpireAt(t *testing.T) {
 	k := []byte("ttl_a")
 	ek := []byte("ttl_b")
 
-	dbEntrys := allAdaptors(db)
-	for _, entry := range dbEntrys {
+	dbEntries := allAdaptors(db)
+	for _, entry := range dbEntries {
 		ident := entry.showIdent()
 		now := time.Now().Unix()
 
@@ -246,8 +322,8 @@ func TestTTL(t *testing.T) {
 	k := []byte("ttl_a")
 	ek := []byte("ttl_b")
 
-	dbEntrys := allAdaptors(db)
-	for _, entry := range dbEntrys {
+	dbEntries := allAdaptors(db)
+	for _, entry := range dbEntries {
 		ident := entry.showIdent()
 
 		entry.set(k, []byte("1"))

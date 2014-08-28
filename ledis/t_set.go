@@ -106,20 +106,20 @@ func (db *DB) sEncodeStopKey(key []byte) []byte {
 
 func (db *DB) sFlush() (drop int64, err error) {
 
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
 	return db.flushType(t, SetType)
 }
 
-func (db *DB) sDelete(t *tx, key []byte) int64 {
+func (db *DB) sDelete(t *batch, key []byte) int64 {
 	sk := db.sEncodeSizeKey(key)
 	start := db.sEncodeStartKey(key)
 	stop := db.sEncodeStopKey(key)
 
 	var num int64 = 0
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.RawKey())
 		num++
@@ -132,12 +132,12 @@ func (db *DB) sDelete(t *tx, key []byte) int64 {
 }
 
 func (db *DB) sIncrSize(key []byte, delta int64) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	sk := db.sEncodeSizeKey(key)
 
 	var err error
 	var size int64 = 0
-	if size, err = Int64(db.db.Get(sk)); err != nil {
+	if size, err = Int64(db.bucket.Get(sk)); err != nil {
 		return 0, err
 	} else {
 		size += delta
@@ -154,7 +154,7 @@ func (db *DB) sIncrSize(key []byte, delta int64) (int64, error) {
 }
 
 func (db *DB) sExpireAt(key []byte, when int64) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -172,11 +172,11 @@ func (db *DB) sExpireAt(key []byte, when int64) (int64, error) {
 }
 
 func (db *DB) sSetItem(key []byte, member []byte) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	ek := db.sEncodeSetKey(key, member)
 
 	var n int64 = 1
-	if v, _ := db.db.Get(ek); v != nil {
+	if v, _ := db.bucket.Get(ek); v != nil {
 		n = 0
 	} else {
 		if _, err := db.sIncrSize(key, 1); err != nil {
@@ -189,7 +189,7 @@ func (db *DB) sSetItem(key []byte, member []byte) (int64, error) {
 }
 
 func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -203,7 +203,7 @@ func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
 
 		ek = db.sEncodeSetKey(key, args[i])
 
-		if v, err := db.db.Get(ek); err != nil {
+		if v, err := db.bucket.Get(ek); err != nil {
 			return 0, err
 		} else if v == nil {
 			num++
@@ -228,7 +228,7 @@ func (db *DB) SCard(key []byte) (int64, error) {
 
 	sk := db.sEncodeSizeKey(key)
 
-	return Int64(db.db.Get(sk))
+	return Int64(db.bucket.Get(sk))
 }
 
 func (db *DB) sDiffGeneric(keys ...[]byte) ([][]byte, error) {
@@ -354,7 +354,7 @@ func (db *DB) SIsMember(key []byte, member []byte) (int64, error) {
 	ek := db.sEncodeSetKey(key, member)
 
 	var n int64 = 1
-	if v, err := db.db.Get(ek); err != nil {
+	if v, err := db.bucket.Get(ek); err != nil {
 		return 0, err
 	} else if v == nil {
 		n = 0
@@ -372,7 +372,7 @@ func (db *DB) SMembers(key []byte) ([][]byte, error) {
 
 	v := make([][]byte, 0, 16)
 
-	it := db.db.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		_, m, err := db.sDecodeSetKey(it.Key())
 		if err != nil {
@@ -388,7 +388,7 @@ func (db *DB) SMembers(key []byte) ([][]byte, error) {
 }
 
 func (db *DB) SRem(key []byte, args ...[]byte) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -396,7 +396,7 @@ func (db *DB) SRem(key []byte, args ...[]byte) (int64, error) {
 	var v []byte
 	var err error
 
-	it := db.db.NewIterator()
+	it := db.bucket.NewIterator()
 	defer it.Close()
 
 	var num int64 = 0
@@ -471,7 +471,7 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 		return 0, err
 	}
 
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -501,7 +501,7 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 
 		ek = db.sEncodeSetKey(dstKey, m)
 
-		if _, err := db.db.Get(ek); err != nil {
+		if _, err := db.bucket.Get(ek); err != nil {
 			return 0, err
 		}
 
@@ -523,7 +523,7 @@ func (db *DB) SClear(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -535,7 +535,7 @@ func (db *DB) SClear(key []byte) (int64, error) {
 }
 
 func (db *DB) SMclear(keys ...[]byte) (int64, error) {
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -583,7 +583,7 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 		return 0, err
 	}
 
-	t := db.setTx
+	t := db.setBatch
 	t.Lock()
 	defer t.Unlock()
 
@@ -595,6 +595,6 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) SScan(key []byte, count int, inclusive bool) ([][]byte, error) {
-	return db.scan(SSizeType, key, count, inclusive)
+func (db *DB) SScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scan(SSizeType, key, count, inclusive, match)
 }

@@ -4,23 +4,23 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-func saddCommand(req *requestContext) error {
-	args := req.args
+func saddCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SAdd(args[0], args[1:]...); err != nil {
+	if n, err := c.db.SAdd(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func soptGeneric(req *requestContext, optType byte) error {
-	args := req.args
+func soptGeneric(c *client, optType byte) error {
+	args := c.args
 	if len(args) < 1 {
 		return ErrCmdParams
 	}
@@ -30,25 +30,25 @@ func soptGeneric(req *requestContext, optType byte) error {
 
 	switch optType {
 	case ledis.UnionType:
-		v, err = req.db.SUnion(args...)
+		v, err = c.db.SUnion(args...)
 	case ledis.DiffType:
-		v, err = req.db.SDiff(args...)
+		v, err = c.db.SDiff(args...)
 	case ledis.InterType:
-		v, err = req.db.SInter(args...)
+		v, err = c.db.SInter(args...)
 	}
 
 	if err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 
 }
 
-func soptStoreGeneric(req *requestContext, optType byte) error {
-	args := req.args
+func soptStoreGeneric(c *client, optType byte) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
@@ -58,141 +58,141 @@ func soptStoreGeneric(req *requestContext, optType byte) error {
 
 	switch optType {
 	case ledis.UnionType:
-		n, err = req.db.SUnionStore(args[0], args[1:]...)
+		n, err = c.db.SUnionStore(args[0], args[1:]...)
 	case ledis.DiffType:
-		n, err = req.db.SDiffStore(args[0], args[1:]...)
+		n, err = c.db.SDiffStore(args[0], args[1:]...)
 	case ledis.InterType:
-		n, err = req.db.SInterStore(args[0], args[1:]...)
+		n, err = c.db.SInterStore(args[0], args[1:]...)
 	}
 
 	if err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func scardCommand(req *requestContext) error {
-	args := req.args
+func scardCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SCard(args[0]); err != nil {
+	if n, err := c.db.SCard(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func sdiffCommand(req *requestContext) error {
-	return soptGeneric(req, ledis.DiffType)
+func sdiffCommand(c *client) error {
+	return soptGeneric(c, ledis.DiffType)
 }
 
-func sdiffstoreCommand(req *requestContext) error {
-	return soptStoreGeneric(req, ledis.DiffType)
+func sdiffstoreCommand(c *client) error {
+	return soptStoreGeneric(c, ledis.DiffType)
 }
 
-func sinterCommand(req *requestContext) error {
-	return soptGeneric(req, ledis.InterType)
+func sinterCommand(c *client) error {
+	return soptGeneric(c, ledis.InterType)
 
 }
 
-func sinterstoreCommand(req *requestContext) error {
-	return soptStoreGeneric(req, ledis.InterType)
+func sinterstoreCommand(c *client) error {
+	return soptStoreGeneric(c, ledis.InterType)
 }
 
-func sismemberCommand(req *requestContext) error {
-	args := req.args
+func sismemberCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SIsMember(args[0], args[1]); err != nil {
+	if n, err := c.db.SIsMember(args[0], args[1]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func smembersCommand(req *requestContext) error {
-	args := req.args
+func smembersCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.SMembers(args[0]); err != nil {
+	if v, err := c.db.SMembers(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeSliceArray(v)
+		c.resp.writeSliceArray(v)
 	}
 
 	return nil
 
 }
 
-func sremCommand(req *requestContext) error {
-	args := req.args
+func sremCommand(c *client) error {
+	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SRem(args[0], args[1:]...); err != nil {
+	if n, err := c.db.SRem(args[0], args[1:]...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 
 }
 
-func sunionCommand(req *requestContext) error {
-	return soptGeneric(req, ledis.UnionType)
+func sunionCommand(c *client) error {
+	return soptGeneric(c, ledis.UnionType)
 }
 
-func sunionstoreCommand(req *requestContext) error {
-	return soptStoreGeneric(req, ledis.UnionType)
+func sunionstoreCommand(c *client) error {
+	return soptStoreGeneric(c, ledis.UnionType)
 }
 
-func sclearCommand(req *requestContext) error {
-	args := req.args
+func sclearCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SClear(args[0]); err != nil {
+	if n, err := c.db.SClear(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func smclearCommand(req *requestContext) error {
-	args := req.args
+func smclearCommand(c *client) error {
+	args := c.args
 	if len(args) < 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SMclear(args...); err != nil {
+	if n, err := c.db.SMclear(args...); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
 	return nil
 }
 
-func sexpireCommand(req *requestContext) error {
-	args := req.args
+func sexpireCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -202,17 +202,17 @@ func sexpireCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.SExpire(args[0], duration); err != nil {
+	if v, err := c.db.SExpire(args[0], duration); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func sexpireAtCommand(req *requestContext) error {
-	args := req.args
+func sexpireAtCommand(c *client) error {
+	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
@@ -222,43 +222,64 @@ func sexpireAtCommand(req *requestContext) error {
 		return ErrValue
 	}
 
-	if v, err := req.db.SExpireAt(args[0], when); err != nil {
+	if v, err := c.db.SExpireAt(args[0], when); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 }
 
-func sttlCommand(req *requestContext) error {
-	args := req.args
+func sttlCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := req.db.STTL(args[0]); err != nil {
+	if v, err := c.db.STTL(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(v)
+		c.resp.writeInteger(v)
 	}
 
 	return nil
 
 }
 
-func spersistCommand(req *requestContext) error {
-	args := req.args
+func spersistCommand(c *client) error {
+	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if n, err := req.db.SPersist(args[0]); err != nil {
+	if n, err := c.db.SPersist(args[0]); err != nil {
 		return err
 	} else {
-		req.resp.writeInteger(n)
+		c.resp.writeInteger(n)
 	}
 
+	return nil
+}
+
+func sscanCommand(c *client) error {
+	key, match, count, err := parseScanArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.SScan(key, count, false, match); err != nil {
+		return err
+	} else {
+		data := make([]interface{}, 2)
+		if len(ay) < count {
+			data[0] = []byte("")
+		} else {
+			data[0] = ay[len(ay)-1]
+		}
+		data[1] = ay
+		c.resp.writeArray(data)
+	}
 	return nil
 }
 
@@ -280,4 +301,5 @@ func init() {
 	register("sexpireat", sexpireAtCommand)
 	register("sttl", sttlCommand)
 	register("spersist", spersistCommand)
+	register("sscan", sscanCommand)
 }

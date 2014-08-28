@@ -9,7 +9,7 @@ func TestDBScan(t *testing.T) {
 
 	db.FlushAll()
 
-	if v, err := db.Scan(nil, 10, true); err != nil {
+	if v, err := db.Scan(nil, 10, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 0 {
 		t.Fatal(len(v))
@@ -19,23 +19,42 @@ func TestDBScan(t *testing.T) {
 	db.Set([]byte("b"), []byte{})
 	db.Set([]byte("c"), []byte{})
 
-	if v, err := db.Scan(nil, 1, true); err != nil {
+	if v, err := db.Scan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal(len(v))
 	}
 
-	if v, err := db.Scan([]byte("a"), 2, false); err != nil {
+	if v, err := db.Scan([]byte("a"), 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal(len(v))
 	}
 
-	if v, err := db.Scan(nil, 3, true); err != nil {
+	if v, err := db.Scan(nil, 3, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 3 {
 		t.Fatal(len(v))
 	}
+
+	if v, err := db.Scan(nil, 3, true, "b"); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.Scan(nil, 3, true, "."); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 3 {
+		t.Fatal(len(v))
+	}
+
+	if v, err := db.Scan(nil, 3, true, "a+"); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal(len(v))
+	}
+
 }
 
 func TestDBHScan(t *testing.T) {
@@ -52,7 +71,7 @@ func TestDBHScan(t *testing.T) {
 	k3 := []byte("k3")
 	db.HSet(k3, []byte("3"), []byte{})
 
-	if v, err := db.HScan(nil, 1, true); err != nil {
+	if v, err := db.HScan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal("invalid length ", len(v))
@@ -60,7 +79,7 @@ func TestDBHScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[0]))
 	}
 
-	if v, err := db.HScan(k1, 2, true); err != nil {
+	if v, err := db.HScan(k1, 2, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -70,7 +89,7 @@ func TestDBHScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[1]))
 	}
 
-	if v, err := db.HScan(k1, 2, false); err != nil {
+	if v, err := db.HScan(k1, 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -96,7 +115,7 @@ func TestDBZScan(t *testing.T) {
 	k3 := []byte("k3")
 	db.ZAdd(k3, ScorePair{3, []byte("m")})
 
-	if v, err := db.ZScan(nil, 1, true); err != nil {
+	if v, err := db.ZScan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal("invalid length ", len(v))
@@ -104,7 +123,7 @@ func TestDBZScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[0]))
 	}
 
-	if v, err := db.ZScan(k1, 2, true); err != nil {
+	if v, err := db.ZScan(k1, 2, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -114,7 +133,7 @@ func TestDBZScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[1]))
 	}
 
-	if v, err := db.ZScan(k1, 2, false); err != nil {
+	if v, err := db.ZScan(k1, 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -146,7 +165,7 @@ func TestDBLScan(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if v, err := db.LScan(nil, 1, true); err != nil {
+	if v, err := db.LScan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal("invalid length ", len(v))
@@ -154,7 +173,7 @@ func TestDBLScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[0]))
 	}
 
-	if v, err := db.LScan(k1, 2, true); err != nil {
+	if v, err := db.LScan(k1, 2, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -164,7 +183,7 @@ func TestDBLScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[1]))
 	}
 
-	if v, err := db.LScan(k1, 2, false); err != nil {
+	if v, err := db.LScan(k1, 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -196,7 +215,7 @@ func TestDBBScan(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if v, err := db.BScan(nil, 1, true); err != nil {
+	if v, err := db.BScan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal("invalid length ", len(v))
@@ -204,7 +223,7 @@ func TestDBBScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[0]))
 	}
 
-	if v, err := db.BScan(k1, 2, true); err != nil {
+	if v, err := db.BScan(k1, 2, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -214,7 +233,7 @@ func TestDBBScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[1]))
 	}
 
-	if v, err := db.BScan(k1, 2, false); err != nil {
+	if v, err := db.BScan(k1, 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -246,7 +265,7 @@ func TestDBSScan(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if v, err := db.SScan(nil, 1, true); err != nil {
+	if v, err := db.SScan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 1 {
 		t.Fatal("invalid length ", len(v))
@@ -254,7 +273,7 @@ func TestDBSScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[0]))
 	}
 
-	if v, err := db.SScan(k1, 2, true); err != nil {
+	if v, err := db.SScan(k1, 2, true, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))
@@ -264,7 +283,7 @@ func TestDBSScan(t *testing.T) {
 		t.Fatal("invalid value ", string(v[1]))
 	}
 
-	if v, err := db.SScan(k1, 2, false); err != nil {
+	if v, err := db.SScan(k1, 2, false, ""); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 2 {
 		t.Fatal("invalid length ", len(v))

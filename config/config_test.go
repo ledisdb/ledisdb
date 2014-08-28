@@ -28,13 +28,4 @@ func TestConfig(t *testing.T) {
 	if !reflect.DeepEqual(dstCfg, cfg) {
 		t.Fatal("parse toml error")
 	}
-
-	cfg, err = NewConfigWithFile("./config.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(dstCfg, cfg) {
-		t.Fatal("parse json error")
-	}
 }
