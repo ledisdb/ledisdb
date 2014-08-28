@@ -869,7 +869,7 @@ ledis> HPERSIST not_exists_key
 
 Iterate Hash keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 ## List
 
@@ -1166,7 +1166,7 @@ ledis> LPERSIST b
 
 Iterate list keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Set
@@ -1594,7 +1594,7 @@ ledis> STTL key
 
 Iterate Set keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## ZSet
@@ -2220,7 +2220,7 @@ ledis> ZRANGE out 0 -1 WITHSCORES
 
 Iterate ZSet keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Bitmap
@@ -2386,7 +2386,7 @@ ledis> BCOUNT flag 5 6
 
 Iterate Bitmap keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Replication
