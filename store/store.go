@@ -7,12 +7,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/siddontang/ledisdb/store/boltdb"
-	"github.com/siddontang/ledisdb/store/goleveldb"
-	"github.com/siddontang/ledisdb/store/hyperleveldb"
-	"github.com/siddontang/ledisdb/store/leveldb"
-	"github.com/siddontang/ledisdb/store/mdb"
-	"github.com/siddontang/ledisdb/store/rocksdb"
+	_ "github.com/siddontang/ledisdb/store/boltdb"
+	_ "github.com/siddontang/ledisdb/store/goleveldb"
+	_ "github.com/siddontang/ledisdb/store/hyperleveldb"
+	_ "github.com/siddontang/ledisdb/store/leveldb"
+	_ "github.com/siddontang/ledisdb/store/mdb"
+	_ "github.com/siddontang/ledisdb/store/rocksdb"
 )
 
 func getStorePath(cfg *config.Config) string {
@@ -53,10 +53,4 @@ func Repair(cfg *config.Config) error {
 }
 
 func init() {
-	_ = boltdb.DBName
-	_ = goleveldb.DBName
-	_ = hyperleveldb.DBName
-	_ = leveldb.DBName
-	_ = mdb.DBName
-	_ = rocksdb.DBName
 }
