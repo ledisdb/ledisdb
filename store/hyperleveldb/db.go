@@ -234,10 +234,8 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
 	}
 
-	var value *C.char
-
-	c := C.hyperleveldb_get_ext(
-		db.db, ro.Opt, k, C.size_t(len(key)), &value, &vallen, &errStr)
+	value := C.leveldb_get(
+		db.db, ro.Opt, k, C.size_t(len(key)), &vallen, &errStr)
 
 	if errStr != nil {
 		return nil, saveError(errStr)
@@ -247,7 +245,7 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	defer C.hyperleveldb_get_free_ext(unsafe.Pointer(c))
+	defer C.leveldb_free(unsafe.Pointer(value))
 
 	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
 }

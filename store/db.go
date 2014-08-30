@@ -19,6 +19,16 @@ func (db *DB) NewWriteBatch() WriteBatch {
 	return db.IDB.NewWriteBatch()
 }
 
+func (db *DB) NewSnapshot() (*Snapshot, error) {
+	var err error
+	s := &Snapshot{}
+	if s.ISnapshot, err = db.IDB.NewSnapshot(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {
 	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
