@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,8 @@ timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
 */
 
 type BinLog struct {
+	sync.Mutex
+
 	path string
 
 	cfg *config.BinLogConfig
@@ -177,14 +180,18 @@ func (l *BinLog) checkLogFileSize() bool {
 
 	st, _ := l.logFile.Stat()
 	if st.Size() >= int64(l.cfg.MaxFileSize) {
-		l.lastLogIndex++
-
-		l.logFile.Close()
-		l.logFile = nil
+		l.closeLog()
 		return true
 	}
 
 	return false
+}
+
+func (l *BinLog) closeLog() {
+	l.lastLogIndex++
+
+	l.logFile.Close()
+	l.logFile = nil
 }
 
 func (l *BinLog) purge(n int) {
@@ -238,6 +245,9 @@ func (l *BinLog) LogPath() string {
 }
 
 func (l *BinLog) Purge(n int) error {
+	l.Lock()
+	defer l.Unlock()
+
 	if len(l.logNames) == 0 {
 		return nil
 	}
@@ -255,7 +265,18 @@ func (l *BinLog) Purge(n int) error {
 	return l.flushIndex()
 }
 
+func (l *BinLog) PurgeAll() error {
+	l.Lock()
+	defer l.Unlock()
+
+	l.closeLog()
+	return l.openNewLogFile()
+}
+
 func (l *BinLog) Log(args ...[]byte) error {
+	l.Lock()
+	defer l.Unlock()
+
 	var err error
 
 	if l.logFile == nil {

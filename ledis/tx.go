@@ -24,42 +24,49 @@ type batch struct {
 }
 
 type dbBatchLocker struct {
-	sync.Mutex
-	dbLock *sync.RWMutex
+	l      *sync.Mutex
+	wrLock *sync.RWMutex
+}
+
+func (l *dbBatchLocker) Lock() {
+	l.wrLock.RLock()
+	l.l.Lock()
+}
+
+func (l *dbBatchLocker) Unlock() {
+	l.l.Unlock()
+	l.wrLock.RUnlock()
 }
 
 type txBatchLocker struct {
 }
 
-func (l *txBatchLocker) Lock() {
-}
+func (l *txBatchLocker) Lock()   {}
+func (l *txBatchLocker) Unlock() {}
 
-func (l *txBatchLocker) Unlock() {
-}
-
-func (l *dbBatchLocker) Lock() {
-	l.dbLock.RLock()
-	l.Mutex.Lock()
-}
-
-func (l *dbBatchLocker) Unlock() {
-	l.Mutex.Unlock()
-	l.dbLock.RUnlock()
-}
-
-func (db *DB) newBatch() *batch {
+func (l *Ledis) newBatch(wb store.WriteBatch, tx *Tx) *batch {
 	b := new(batch)
+	b.l = l
+	b.WriteBatch = wb
 
-	b.WriteBatch = db.bucket.NewWriteBatch()
-	b.Locker = &dbBatchLocker{dbLock: db.dbLock}
-	b.l = db.l
+	b.tx = tx
+	if tx == nil {
+		b.Locker = &dbBatchLocker{l: &sync.Mutex{}, wrLock: &l.wLock}
+	} else {
+		b.Locker = &txBatchLocker{}
+	}
 
+	b.logs = [][]byte{}
 	return b
 }
 
+func (db *DB) newBatch() *batch {
+	return db.l.newBatch(db.bucket.NewWriteBatch(), nil)
+}
+
 func (b *batch) Commit() error {
-	b.l.Lock()
-	defer b.l.Unlock()
+	b.l.commitLock.Lock()
+	defer b.l.commitLock.Unlock()
 
 	err := b.WriteBatch.Commit()
 
@@ -85,7 +92,7 @@ func (b *batch) Unlock() {
 	if b.l.binlog != nil {
 		b.logs = [][]byte{}
 	}
-	b.Rollback()
+	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
@@ -129,11 +136,10 @@ func (db *DB) Begin() (*Tx, error) {
 	tx := new(Tx)
 
 	tx.DB = new(DB)
-	tx.DB.dbLock = db.dbLock
-
-	tx.DB.dbLock.Lock()
-
 	tx.DB.l = db.l
+
+	tx.l.wLock.Lock()
+
 	tx.index = db.index
 
 	tx.DB.sdb = db.sdb
@@ -141,7 +147,7 @@ func (db *DB) Begin() (*Tx, error) {
 	var err error
 	tx.tx, err = db.sdb.Begin()
 	if err != nil {
-		tx.DB.dbLock.Unlock()
+		tx.l.wLock.Unlock()
 		return nil, err
 	}
 
@@ -151,12 +157,12 @@ func (db *DB) Begin() (*Tx, error) {
 
 	tx.DB.index = db.index
 
-	tx.DB.kvBatch = tx.newBatch()
-	tx.DB.listBatch = tx.newBatch()
-	tx.DB.hashBatch = tx.newBatch()
-	tx.DB.zsetBatch = tx.newBatch()
-	tx.DB.binBatch = tx.newBatch()
-	tx.DB.setBatch = tx.newBatch()
+	tx.DB.kvBatch = tx.newTxBatch()
+	tx.DB.listBatch = tx.newTxBatch()
+	tx.DB.hashBatch = tx.newTxBatch()
+	tx.DB.zsetBatch = tx.newTxBatch()
+	tx.DB.binBatch = tx.newTxBatch()
+	tx.DB.setBatch = tx.newTxBatch()
 
 	return tx, nil
 }
@@ -166,7 +172,7 @@ func (tx *Tx) Commit() error {
 		return ErrTxDone
 	}
 
-	tx.l.Lock()
+	tx.l.commitLock.Lock()
 	err := tx.tx.Commit()
 	tx.tx = nil
 
@@ -174,9 +180,9 @@ func (tx *Tx) Commit() error {
 		tx.l.binlog.Log(tx.logs...)
 	}
 
-	tx.l.Unlock()
+	tx.l.commitLock.Unlock()
 
-	tx.DB.dbLock.Unlock()
+	tx.l.wLock.Unlock()
 	tx.DB = nil
 	return err
 }
@@ -189,20 +195,13 @@ func (tx *Tx) Rollback() error {
 	err := tx.tx.Rollback()
 	tx.tx = nil
 
-	tx.DB.dbLock.Unlock()
+	tx.l.wLock.Unlock()
 	tx.DB = nil
 	return err
 }
 
-func (tx *Tx) newBatch() *batch {
-	b := new(batch)
-
-	b.l = tx.l
-	b.WriteBatch = tx.tx.NewWriteBatch()
-	b.Locker = &txBatchLocker{}
-	b.tx = tx
-
-	return b
+func (tx *Tx) newTxBatch() *batch {
+	return tx.l.newBatch(tx.tx.NewWriteBatch(), tx)
 }
 
 func (tx *Tx) Index() int {

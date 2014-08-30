@@ -3,7 +3,6 @@ package ledis
 import (
 	"fmt"
 	"github.com/siddontang/ledisdb/store"
-	"sync"
 )
 
 type ibucket interface {
@@ -29,8 +28,6 @@ type DB struct {
 
 	bucket ibucket
 
-	dbLock *sync.RWMutex
-
 	index uint8
 
 	kvBatch   *batch
@@ -54,7 +51,6 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.isTx = false
 	d.index = index
-	d.dbLock = &sync.RWMutex{}
 
 	d.kvBatch = d.newBatch()
 	d.listBatch = d.newBatch()

@@ -54,15 +54,6 @@ func decodeBinLogPut(sz []byte) ([]byte, []byte, error) {
 	return sz[3 : 3+keyLen], sz[3+keyLen:], nil
 }
 
-func encodeBinLogCommand(commandType uint8, args ...[]byte) []byte {
-	//to do
-	return nil
-}
-
-func decodeBinLogCommand(sz []byte) (uint8, [][]byte, error) {
-	return 0, nil, errBinLogCommandType
-}
-
 func FormatBinLogEvent(event []byte) (string, error) {
 	logType := uint8(event[0])
 

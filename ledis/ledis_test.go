@@ -14,8 +14,8 @@ func getTestDB() *DB {
 	f := func() {
 		cfg := new(config.Config)
 		cfg.DataDir = "/tmp/test_ledis"
-		cfg.BinLog.MaxFileSize = 1073741824
-		cfg.BinLog.MaxFileNum = 3
+		// cfg.BinLog.MaxFileSize = 1073741824
+		// cfg.BinLog.MaxFileNum = 3
 
 		os.RemoveAll(cfg.DataDir)
 

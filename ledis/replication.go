@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/store/driver"
 	"io"
 	"os"
 )
@@ -19,7 +20,41 @@ var (
 	errInvalidBinLogFile  = errors.New("invalid binlog file")
 )
 
-func (l *Ledis) ReplicateEvent(event []byte) error {
+type replBatch struct {
+	wb         driver.IWriteBatch
+	events     [][]byte
+	createTime uint32
+	l          *Ledis
+}
+
+func (b *replBatch) Commit() error {
+	b.l.commitLock.Lock()
+	defer b.l.commitLock.Unlock()
+
+	err := b.wb.Commit()
+	if err != nil {
+		b.Rollback()
+		return err
+	}
+
+	if b.l.binlog != nil {
+		if err = b.l.binlog.Log(b.events...); err != nil {
+			b.Rollback()
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *replBatch) Rollback() error {
+	b.wb.Rollback()
+	b.events = [][]byte{}
+	b.createTime = 0
+	return nil
+}
+
+func (l *Ledis) replicateEvent(b *replBatch, event []byte) error {
 	if len(event) == 0 {
 		return errInvalidBinLogEvent
 	}
@@ -27,52 +62,42 @@ func (l *Ledis) ReplicateEvent(event []byte) error {
 	logType := uint8(event[0])
 	switch logType {
 	case BinLogTypePut:
-		return l.replicatePutEvent(event)
+		return l.replicatePutEvent(b, event)
 	case BinLogTypeDeletion:
-		return l.replicateDeleteEvent(event)
-	case BinLogTypeCommand:
-		return l.replicateCommandEvent(event)
+		return l.replicateDeleteEvent(b, event)
 	default:
 		return errInvalidBinLogEvent
 	}
 }
 
-func (l *Ledis) replicatePutEvent(event []byte) error {
+func (l *Ledis) replicatePutEvent(b *replBatch, event []byte) error {
 	key, value, err := decodeBinLogPut(event)
 	if err != nil {
 		return err
 	}
 
-	if err = l.ldb.Put(key, value); err != nil {
-		return err
+	b.wb.Put(key, value)
+
+	if b.l.binlog != nil {
+		b.events = append(b.events, event)
 	}
 
-	if l.binlog != nil {
-		err = l.binlog.Log(event)
-	}
-
-	return err
+	return nil
 }
 
-func (l *Ledis) replicateDeleteEvent(event []byte) error {
+func (l *Ledis) replicateDeleteEvent(b *replBatch, event []byte) error {
 	key, err := decodeBinLogDelete(event)
 	if err != nil {
 		return err
 	}
 
-	if err = l.ldb.Delete(key); err != nil {
-		return err
+	b.wb.Delete(key)
+
+	if b.l.binlog != nil {
+		b.events = append(b.events, event)
 	}
 
-	if l.binlog != nil {
-		err = l.binlog.Log(event)
-	}
-
-	return err
-}
-
-func (l *Ledis) replicateCommandEvent(event []byte) error {
-	return errors.New("command event not supported now")
+	return nil
 }
 
 func ReadEventFromReader(rb io.Reader, f func(createTime uint32, event []byte) error) error {
@@ -110,8 +135,23 @@ func ReadEventFromReader(rb io.Reader, f func(createTime uint32, event []byte) e
 }
 
 func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
+	b := new(replBatch)
+
+	b.wb = l.ldb.NewWriteBatch()
+	b.l = l
+
 	f := func(createTime uint32, event []byte) error {
-		err := l.ReplicateEvent(event)
+		if b.createTime == 0 {
+			b.createTime = createTime
+		} else if b.createTime != createTime {
+			if err := b.Commit(); err != nil {
+				log.Fatal("replication error %s, skip to next", err.Error())
+				return ErrSkipEvent
+			}
+			b.createTime = createTime
+		}
+
+		err := l.replicateEvent(b, event)
 		if err != nil {
 			log.Fatal("replication error %s, skip to next", err.Error())
 			return ErrSkipEvent
@@ -119,15 +159,18 @@ func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
 		return nil
 	}
 
-	return ReadEventFromReader(rb, f)
+	err := ReadEventFromReader(rb, f)
+	if err != nil {
+		b.Rollback()
+		return err
+	}
+	return b.Commit()
 }
 
 func (l *Ledis) ReplicateFromData(data []byte) error {
 	rb := bytes.NewReader(data)
 
-	l.Lock()
 	err := l.ReplicateFromReader(rb)
-	l.Unlock()
 
 	return err
 }
@@ -140,16 +183,12 @@ func (l *Ledis) ReplicateFromBinLog(filePath string) error {
 
 	rb := bufio.NewReaderSize(f, 4096)
 
-	l.Lock()
 	err = l.ReplicateFromReader(rb)
-	l.Unlock()
 
 	f.Close()
 
 	return err
 }
-
-const maxSyncEvents = 64
 
 func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
 	n = 0
@@ -205,8 +244,6 @@ func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
 	var createTime uint32
 	var dataLen uint32
 
-	var eventsNum int = 0
-
 	for {
 		if err = binary.Read(f, binary.BigEndian, &createTime); err != nil {
 			if err == io.EOF {
@@ -222,12 +259,9 @@ func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
 			}
 		}
 
-		eventsNum++
 		if lastCreateTime == 0 {
 			lastCreateTime = createTime
 		} else if lastCreateTime != createTime {
-			return
-		} else if eventsNum > maxSyncEvents {
 			return
 		}
 
