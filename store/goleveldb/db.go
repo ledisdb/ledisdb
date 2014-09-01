@@ -5,6 +5,8 @@ import (
 	"github.com/siddontang/goleveldb/leveldb/cache"
 	"github.com/siddontang/goleveldb/leveldb/filter"
 	"github.com/siddontang/goleveldb/leveldb/opt"
+	"github.com/siddontang/goleveldb/leveldb/storage"
+
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 
@@ -18,6 +20,13 @@ type Store struct {
 
 func (s Store) String() string {
 	return DBName
+}
+
+type MemStore struct {
+}
+
+func (s MemStore) String() string {
+	return MemDBName
 }
 
 type DB struct {
@@ -45,7 +54,12 @@ func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
 	db.path = path
 	db.cfg = &cfg.LevelDB
 
-	if err := db.open(); err != nil {
+	db.initOpts()
+
+	var err error
+	db.db, err = leveldb.OpenFile(db.path, db.opts)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -62,16 +76,31 @@ func (s Store) Repair(path string, cfg *config.Config) error {
 	return nil
 }
 
-func (db *DB) open() error {
+func (s MemStore) Open(path string, cfg *config.Config) (driver.IDB, error) {
+	db := new(DB)
+	db.path = path
+	db.cfg = &cfg.LevelDB
+
+	db.initOpts()
+
+	var err error
+	db.db, err = leveldb.Open(storage.NewMemStorage(), db.opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func (s MemStore) Repair(path string, cfg *config.Config) error {
+	return nil
+}
+
+func (db *DB) initOpts() {
 	db.opts = newOptions(db.cfg)
 
 	db.iteratorOpts = &opt.ReadOptions{}
 	db.iteratorOpts.DontFillCache = true
-
-	var err error
-	db.db, err = leveldb.OpenFile(db.path, db.opts)
-
-	return err
 }
 
 func newOptions(cfg *config.LevelDBConfig) *opt.Options {
@@ -153,4 +182,5 @@ func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
 
 func init() {
 	driver.Register(Store{})
+	driver.Register(MemStore{})
 }
