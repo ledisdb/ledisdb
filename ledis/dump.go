@@ -81,8 +81,8 @@ func (l *Ledis) Dump(w io.Writer) error {
 	var key []byte
 	var value []byte
 	for ; it.Valid(); it.Next() {
-		key = it.Key()
-		value = it.Value()
+		key = it.RawKey()
+		value = it.RawValue()
 
 		if key, err = snappy.Encode(compressBuf, key); err != nil {
 			return err
