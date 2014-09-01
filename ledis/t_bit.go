@@ -506,6 +506,7 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 		if setBit(segment, off, val) {
 			t := db.binBatch
 			t.Lock()
+			defer t.Unlock()
 
 			t.Put(bk, segment)
 			if _, _, e := db.bUpdateMeta(t, key, seq, off); e != nil {
@@ -514,7 +515,6 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 			}
 
 			err = t.Commit()
-			t.Unlock()
 		}
 	}
 
