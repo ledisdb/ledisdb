@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/config"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -15,6 +16,65 @@ import (
 	"time"
 )
 
+type BinLogHead struct {
+	CreateTime uint32
+	BatchId    uint32
+	PayloadLen uint32
+}
+
+func (h *BinLogHead) Len() int {
+	return 12
+}
+
+func (h *BinLogHead) Write(w io.Writer) error {
+	if err := binary.Write(w, binary.BigEndian, h.CreateTime); err != nil {
+		return err
+	}
+
+	if err := binary.Write(w, binary.BigEndian, h.BatchId); err != nil {
+		return err
+	}
+
+	if err := binary.Write(w, binary.BigEndian, h.PayloadLen); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *BinLogHead) handleReadError(err error) error {
+	if err == io.EOF {
+		return io.ErrUnexpectedEOF
+	} else {
+		return err
+	}
+}
+
+func (h *BinLogHead) Read(r io.Reader) error {
+	var err error
+	if err = binary.Read(r, binary.BigEndian, &h.CreateTime); err != nil {
+		return err
+	}
+
+	if err = binary.Read(r, binary.BigEndian, &h.BatchId); err != nil {
+		return h.handleReadError(err)
+	}
+
+	if err = binary.Read(r, binary.BigEndian, &h.PayloadLen); err != nil {
+		return h.handleReadError(err)
+	}
+
+	return nil
+}
+
+func (h *BinLogHead) InSameBatch(ho *BinLogHead) bool {
+	if h.CreateTime == ho.CreateTime && h.BatchId == ho.BatchId {
+		return true
+	} else {
+		return false
+	}
+}
+
 /*
 index file format:
 ledis-bin.00001
@@ -23,7 +83,9 @@ ledis-bin.00003
 
 log file format
 
-timestamp(bigendian uint32, seconds)|PayloadLen(bigendian uint32)|PayloadData
+Log: Head|PayloadData
+
+Head: createTime|batchId|payloadData
 
 */
 
@@ -41,6 +103,8 @@ type BinLog struct {
 	indexName    string
 	logNames     []string
 	lastLogIndex int64
+
+	batchId uint32
 }
 
 func NewBinLog(cfg *config.Config) (*BinLog, error) {
@@ -49,7 +113,7 @@ func NewBinLog(cfg *config.Config) (*BinLog, error) {
 	l.cfg = &cfg.BinLog
 	l.cfg.Adjust()
 
-	l.path = path.Join(cfg.DataDir, "bin_log")
+	l.path = path.Join(cfg.DataDir, "binlog")
 
 	if err := os.MkdirAll(l.path, os.ModePerm); err != nil {
 		return nil, err
@@ -285,17 +349,17 @@ func (l *BinLog) Log(args ...[]byte) error {
 		}
 	}
 
-	//we treat log many args as a batch, so use same createTime
-	createTime := uint32(time.Now().Unix())
+	head := &BinLogHead{}
+
+	head.CreateTime = uint32(time.Now().Unix())
+	head.BatchId = l.batchId
+
+	l.batchId++
 
 	for _, data := range args {
-		payLoadLen := uint32(len(data))
+		head.PayloadLen = uint32(len(data))
 
-		if err := binary.Write(l.logWb, binary.BigEndian, createTime); err != nil {
-			return err
-		}
-
-		if err := binary.Write(l.logWb, binary.BigEndian, payLoadLen); err != nil {
+		if err := head.Write(l.logWb); err != nil {
 			return err
 		}
 

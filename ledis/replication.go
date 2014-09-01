@@ -3,12 +3,16 @@ package ledis
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/store/driver"
 	"io"
 	"os"
+)
+
+const (
+	maxReplBatchNum = 100
+	maxReplLogSize  = 1 * 1024 * 1024
 )
 
 var (
@@ -21,10 +25,11 @@ var (
 )
 
 type replBatch struct {
-	wb         driver.IWriteBatch
-	events     [][]byte
-	createTime uint32
-	l          *Ledis
+	wb     driver.IWriteBatch
+	events [][]byte
+	l      *Ledis
+
+	lastHead *BinLogHead
 }
 
 func (b *replBatch) Commit() error {
@@ -50,7 +55,7 @@ func (b *replBatch) Commit() error {
 func (b *replBatch) Rollback() error {
 	b.wb.Rollback()
 	b.events = [][]byte{}
-	b.createTime = 0
+	b.lastHead = nil
 	return nil
 }
 
@@ -100,14 +105,13 @@ func (l *Ledis) replicateDeleteEvent(b *replBatch, event []byte) error {
 	return nil
 }
 
-func ReadEventFromReader(rb io.Reader, f func(createTime uint32, event []byte) error) error {
-	var createTime uint32
-	var dataLen uint32
+func ReadEventFromReader(rb io.Reader, f func(head *BinLogHead, event []byte) error) error {
+	head := &BinLogHead{}
 	var dataBuf bytes.Buffer
 	var err error
 
 	for {
-		if err = binary.Read(rb, binary.BigEndian, &createTime); err != nil {
+		if err = head.Read(rb); err != nil {
 			if err == io.EOF {
 				break
 			} else {
@@ -115,15 +119,11 @@ func ReadEventFromReader(rb io.Reader, f func(createTime uint32, event []byte) e
 			}
 		}
 
-		if err = binary.Read(rb, binary.BigEndian, &dataLen); err != nil {
+		if _, err = io.CopyN(&dataBuf, rb, int64(head.PayloadLen)); err != nil {
 			return err
 		}
 
-		if _, err = io.CopyN(&dataBuf, rb, int64(dataLen)); err != nil {
-			return err
-		}
-
-		err = f(createTime, dataBuf.Bytes())
+		err = f(head, dataBuf.Bytes())
 		if err != nil && err != ErrSkipEvent {
 			return err
 		}
@@ -140,15 +140,15 @@ func (l *Ledis) ReplicateFromReader(rb io.Reader) error {
 	b.wb = l.ldb.NewWriteBatch()
 	b.l = l
 
-	f := func(createTime uint32, event []byte) error {
-		if b.createTime == 0 {
-			b.createTime = createTime
-		} else if b.createTime != createTime {
+	f := func(head *BinLogHead, event []byte) error {
+		if b.lastHead == nil {
+			b.lastHead = head
+		} else if !b.lastHead.InSameBatch(head) {
 			if err := b.Commit(); err != nil {
 				log.Fatal("replication error %s, skip to next", err.Error())
 				return ErrSkipEvent
 			}
-			b.createTime = createTime
+			b.lastHead = head
 		}
 
 		err := l.replicateEvent(b, event)
@@ -240,12 +240,14 @@ func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
 		return
 	}
 
-	var lastCreateTime uint32 = 0
-	var createTime uint32
-	var dataLen uint32
+	var lastHead *BinLogHead = nil
+
+	head := &BinLogHead{}
+
+	batchNum := 0
 
 	for {
-		if err = binary.Read(f, binary.BigEndian, &createTime); err != nil {
+		if err = head.Read(f); err != nil {
 			if err == io.EOF {
 				//we will try to use next binlog
 				if index < l.binlog.LogFileIndex() {
@@ -257,32 +259,30 @@ func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
 			} else {
 				return
 			}
+
 		}
 
-		if lastCreateTime == 0 {
-			lastCreateTime = createTime
-		} else if lastCreateTime != createTime {
+		if lastHead == nil {
+			lastHead = head
+			batchNum++
+		} else if !lastHead.InSameBatch(head) {
+			lastHead = head
+			batchNum++
+			if batchNum > maxReplBatchNum || n > maxReplLogSize {
+				return
+			}
+		}
+
+		if err = head.Write(w); err != nil {
 			return
 		}
 
-		if err = binary.Read(f, binary.BigEndian, &dataLen); err != nil {
+		if _, err = io.CopyN(w, f, int64(head.PayloadLen)); err != nil {
 			return
 		}
 
-		if err = binary.Write(w, binary.BigEndian, createTime); err != nil {
-			return
-		}
-
-		if err = binary.Write(w, binary.BigEndian, dataLen); err != nil {
-			return
-		}
-
-		if _, err = io.CopyN(w, f, int64(dataLen)); err != nil {
-			return
-		}
-
-		n += (8 + int(dataLen))
-		info.LogPos = info.LogPos + 8 + int64(dataLen)
+		n += (head.Len() + int(head.PayloadLen))
+		info.LogPos = info.LogPos + int64(head.Len()) + int64(head.PayloadLen)
 	}
 
 	return
