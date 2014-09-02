@@ -99,6 +99,11 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 	} else {
 		r := luaReplyToLedisReply(l)
 		m.Close()
+
+		if v, ok := r.(error); ok {
+			return v
+		}
+
 		writeValue(c.resp, r)
 	}
 
