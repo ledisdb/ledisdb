@@ -144,6 +144,51 @@ func testTxCommit(t *testing.T, db *DB) {
 	}
 }
 
+func testTxSelect(t *testing.T, db *DB) {
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer tx.Rollback()
+
+	tx.Set([]byte("tx_select_1"), []byte("a"))
+
+	tx.Select(1)
+
+	tx.Set([]byte("tx_select_2"), []byte("b"))
+
+	if err = tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, err := db.Get([]byte("tx_select_1")); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "a" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.Get([]byte("tx_select_2")); err != nil {
+		t.Fatal(err)
+	} else if v != nil {
+		t.Fatal("must nil")
+	}
+
+	db, _ = db.l.Select(1)
+
+	if v, err := db.Get([]byte("tx_select_2")); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "b" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.Get([]byte("tx_select_1")); err != nil {
+		t.Fatal(err)
+	} else if v != nil {
+		t.Fatal("must nil")
+	}
+}
+
 func testTx(t *testing.T, name string) {
 	cfg := new(config.Config)
 	cfg.DataDir = "/tmp/ledis_test_tx"
@@ -164,6 +209,7 @@ func testTx(t *testing.T, name string) {
 
 	testTxRollback(t, db)
 	testTxCommit(t, db)
+	testTxSelect(t, db)
 }
 
 //only lmdb, boltdb support Transaction
