@@ -27,6 +27,8 @@ type App struct {
 	m *master
 
 	info *info
+
+	s *script
 }
 
 func netType(s string) string {
@@ -85,6 +87,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	app.m = newMaster(app)
 
+	app.openScript()
+
 	return app, nil
 }
 
@@ -102,6 +106,8 @@ func (app *App) Close() {
 	if app.httpListener != nil {
 		app.httpListener.Close()
 	}
+
+	app.closeScript()
 
 	app.m.Close()
 

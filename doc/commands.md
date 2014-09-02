@@ -70,7 +70,7 @@ Table of Contents
 	- [SINTERSTORE destination key [key ...]](#sinterstore-destination-key-key-)
 	- [SISMEMBER key member](#sismember-key-member)
 	- [SMEMBERS key](#smembers-key)
-	- [SREM key member [member]](#srem-key-member-member-)
+	- [SREM key member [member ...]](#srem-key-member-member-)
 	- [SUNION key [key ...]](#sunion-key-key-)
 	- [SUNIONSTORE destination key [key ...]](#sunionstore-destination-key-key-)
 	- [SCLEAR key](#sclear-key)
@@ -133,7 +133,12 @@ Table of Contents
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
 	- [COMMIT](#commit)
-
+- [Script](#script)
+	- [EVAL script numkeys key [key ...] arg [arg ...]](#eval-script-numkeys-key-key--arg-arg-)
+	- [EVALSHA sha1 numkeys key [key ...] arg [arg ...]](#evalsha-sha1-numkeys-key-key--arg-arg-)
+	- [SCRIPT LOAD script](#script-load-script)
+	- [SCRIPT EXISTS script [script ...]](#script-exists-script-script-)
+	- [SCRIPT FLUSH](#script-flush)
 
 ## KV 
 
@@ -2561,5 +2566,22 @@ OK
 ledis> GET HELLO
 "WORLD"
 ```
+
+## Script
+
+LedisDB's script is refer to Redis, you can see more [http://redis.io/commands/eval](http://redis.io/commands/eval)
+
+You must notice that executing lua will block any other write operations.
+
+### EVAL script numkeys key [key ...] arg [arg ...]
+
+### EVALSHA sha1 numkeys key [key ...] arg [arg ...]
+
+### SCRIPT LOAD script
+
+### SCRIPT EXISTS script [script ...]
+
+### SCRIPT FLUSH
+
 
 Thanks [doctoc](http://doctoc.herokuapp.com/)

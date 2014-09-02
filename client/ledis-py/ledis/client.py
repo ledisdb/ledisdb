@@ -905,6 +905,21 @@ class Ledis(object):
     def bscan(self, key, match = "", count = 10):
         return self.execute_command("BSCAN", key, match, count)
 
+    def eval(self, script, keys, *args):
+        return self.execute_command('EVAL', script, len(keys), *keys, *args)
+
+    def evalsha(self, sha1, keys, *args):
+        return self.execute_command('EVALSHA', sha1, len(keys), *keys, *args)
+
+    def scriptload(self, script):
+        return self.execute_command('SCRIPT LOAD', script)
+
+    def scriptexists(self, *args):
+        return self.execute_command('SCRIPT EXISTS', *args)
+
+    def scriptflush(self):
+        return self.execute_command('SCRIPT FLUSH')
+
 class Transaction(Ledis):
     def __init__(self, connection_pool, response_callbacks):
         self.connection_pool = connection_pool

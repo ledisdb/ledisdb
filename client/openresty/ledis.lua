@@ -151,7 +151,14 @@ local commands = {
     -- [[transaction]]
     "begin",
     "commit",
-    "rollback"
+    "rollback",
+
+    -- [[script]]
+    "eval",
+    "evalsha",
+    "script load",
+    "script exists",
+    "script flush"
 }
 
 
