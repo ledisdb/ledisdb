@@ -580,5 +580,36 @@
         "arguments": "[section]",
         "group": "Server",
         "readonly": true
+    },
+
+    "EVAL": {
+        "arguments": "script numkeys key [key ...] arg [arg ...]",
+        "group": "Script",
+        "readonly": false
+    },
+
+    "EVALSHA": {
+        "arguments": "sha1 numkeys key [key ...] arg [arg ...]",
+        "group": "Script",
+        "readonly": false
+    },
+
+    "SCRIPT LOAD": {
+        "arguments": "script",
+        "group": "Script",
+        "readonly": false
+    },
+
+    "SCRIPT EXISTS": {
+        "arguments": "script [script ...]",
+        "group": "Script",
+        "readonly": false
+    },
+
+    "SCRIPT FLUSH": {
+        "arguments" : "-",
+        "group": "Script",
+        "readonly": false
     }
+
 }
