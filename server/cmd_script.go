@@ -133,15 +133,19 @@ func scriptCommand(c *client) error {
 
 	args := c.args
 
-	switch strings.ToLower(c.cmd) {
-	case "script load":
+	if len(args) < 1 {
+		return ErrCmdParams
+	}
+
+	switch strings.ToLower(ledis.String(args[0])) {
+	case "load":
 		return scriptLoadCommand(c)
-	case "script exists":
+	case "exists":
 		return scriptExistsCommand(c)
-	case "script flush":
+	case "flush":
 		return scriptFlushCommand(c)
 	default:
-		return fmt.Errorf("invalid script cmd %s", args[0])
+		return fmt.Errorf("invalid script %s", args[0])
 	}
 
 	return nil
@@ -151,14 +155,14 @@ func scriptLoadCommand(c *client) error {
 	s := c.app.s
 	l := s.l
 
-	if len(c.args) != 1 {
+	if len(c.args) != 2 {
 		return ErrCmdParams
 	}
 
-	h := sha1.Sum(c.args[0])
+	h := sha1.Sum(c.args[1])
 	key := hex.EncodeToString(h[0:20])
 
-	if r := l.LoadString(ledis.String(c.args[0])); r != 0 {
+	if r := l.LoadString(ledis.String(c.args[1])); r != 0 {
 		err := fmt.Errorf("%s", l.ToString(-1))
 		l.Pop(1)
 		return err
@@ -176,12 +180,12 @@ func scriptLoadCommand(c *client) error {
 func scriptExistsCommand(c *client) error {
 	s := c.app.s
 
-	if len(c.args) < 1 {
+	if len(c.args) < 2 {
 		return ErrCmdParams
 	}
 
-	ay := make([]interface{}, len(c.args))
-	for i, n := range c.args {
+	ay := make([]interface{}, len(c.args[1:]))
+	for i, n := range c.args[1:] {
 		if _, ok := s.chunks[ledis.String(n)]; ok {
 			ay[i] = int64(1)
 		} else {
@@ -196,6 +200,10 @@ func scriptExistsCommand(c *client) error {
 func scriptFlushCommand(c *client) error {
 	s := c.app.s
 	l := s.l
+
+	if len(c.args) != 1 {
+		return ErrCmdParams
+	}
 
 	for n, _ := range s.chunks {
 		l.PushNil()
@@ -212,7 +220,5 @@ func scriptFlushCommand(c *client) error {
 func init() {
 	register("eval", evalCommand)
 	register("evalsha", evalshaCommand)
-	register("script load", scriptCommand)
-	register("script flush", scriptCommand)
-	register("script exists", scriptCommand)
+	register("script", scriptCommand)
 }

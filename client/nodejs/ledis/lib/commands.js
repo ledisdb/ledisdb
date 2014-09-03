@@ -131,7 +131,5 @@ module.exports = [
 
     "eval",
     "evalsha",
-    "script load",
-    "script exists",
-    "script flush",
+    "script",
 ];

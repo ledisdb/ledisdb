@@ -912,13 +912,13 @@ class Ledis(object):
         return self.execute_command('EVALSHA', sha1, len(keys), *keys, *args)
 
     def scriptload(self, script):
-        return self.execute_command('SCRIPT LOAD', script)
+        return self.execute_command('SCRIPT', 'LOAD', script)
 
     def scriptexists(self, *args):
-        return self.execute_command('SCRIPT EXISTS', *args)
+        return self.execute_command('SCRIPT', 'EXISTS', *args)
 
     def scriptflush(self):
-        return self.execute_command('SCRIPT FLUSH')
+        return self.execute_command('SCRIPT', 'FLUSH')
 
 class Transaction(Ledis):
     def __init__(self, connection_pool, response_callbacks):

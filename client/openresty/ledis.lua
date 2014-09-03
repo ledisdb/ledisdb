@@ -156,9 +156,7 @@ local commands = {
     -- [[script]]
     "eval",
     "evalsha",
-    "script load",
-    "script exists",
-    "script flush"
+    "script"
 }
 
 
@@ -397,7 +395,6 @@ function _M.hmset(self, hashname, ...)
     -- backwards compatibility
     return _do_cmd(self, "hmset", hashname, ...)
 end
-
 
 function _M.array_to_hash(self, t)
     local n = #t
