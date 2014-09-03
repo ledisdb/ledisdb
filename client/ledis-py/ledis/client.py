@@ -906,11 +906,15 @@ class Ledis(object):
         return self.execute_command("BSCAN", key, match, count)
 
     def eval(self, script, keys, *args):
-        return self.execute_command('EVAL', script, len(keys), *keys, *args)
+        n = len(keys)
+        args = list_or_args(keys, args)
+        return self.execute_command('EVAL', script, n, *args)
 
     def evalsha(self, sha1, keys, *args):
-        return self.execute_command('EVALSHA', sha1, len(keys), *keys, *args)
-
+        n = len(keys)
+        args = list_or_args(keys, args)
+        return self.execute_command('EVALSHA', sha1, n, *args)
+        
     def scriptload(self, script):
         return self.execute_command('SCRIPT', 'LOAD', script)
 

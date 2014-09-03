@@ -19,6 +19,7 @@ class TestCmdScript(unittest.TestCase):
     def tearDown(self):
         pass
 
-    
+    def testEval(self):
+        assert l.eval("return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}", ["key1", "key2"], "first", "second") == ["key1", "key2", "first", "second"]
 
     
