@@ -65,14 +65,11 @@ func main() {
 			if cmd == "help" || cmd == "?" {
 				printHelp(cmds)
 			} else {
-				if len(cmds) == 2 && strings.ToLower(cmds[0]) == "select" {
-					if db, _ := strconv.Atoi(cmds[1]); db < 16 && db >= 0 {
-						*dbn = db
-					}
-
-				}
-
 				r, err := c.Do(cmds[0], args...)
+
+				if err == nil && strings.ToLower(cmds[0]) == "select" {
+					*dbn, _ = strconv.Atoi(cmds[1])
+				}
 
 				if err != nil {
 					fmt.Printf("%s", err.Error())
@@ -80,7 +77,7 @@ func main() {
 					if cmd == "info" {
 						printInfo(r.([]byte))
 					} else {
-						printReply(cmd, r)
+						printReply(0, r)
 					}
 				}
 
@@ -95,7 +92,7 @@ func printInfo(s []byte) {
 	fmt.Printf("%s", s)
 }
 
-func printReply(cmd string, reply interface{}) {
+func printReply(level int, reply interface{}) {
 	switch reply := reply.(type) {
 	case int64:
 		fmt.Printf("(integer) %d", reply)
@@ -108,13 +105,14 @@ func printReply(cmd string, reply interface{}) {
 	case ledis.Error:
 		fmt.Printf("%s", string(reply))
 	case []interface{}:
+		if level > 0 {
+			//todo for better pretty
+			fmt.Printf("%q", reply)
+			return
+		}
 		for i, v := range reply {
 			fmt.Printf("%d) ", i+1)
-			if v == nil {
-				fmt.Printf("(nil)")
-			} else {
-				fmt.Printf("%q", v)
-			}
+			printReply(level+1, v)
 			if i != len(reply)-1 {
 				fmt.Printf("\n")
 			}
