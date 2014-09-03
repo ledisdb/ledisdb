@@ -64,6 +64,30 @@ def int_or_none(response):
     return int(response)
 
 
+def parse_info(response):
+
+    info = {}
+    response =  nativestr(response)
+
+    def get_value(value):
+        if ',' not in value or '=' not in value:
+            try:
+                if '.' in value:
+                    return float(value)
+                else:
+                    return int(value)
+            except ValueError:
+                return value
+
+    for line in response.splitlines():
+        if line and not line.startswith('#'):
+            if line.find(':') != -1:
+                key, value = line.split(':', 1)
+                info[key] = get_value(value)
+
+    return info
+
+
 class Ledis(object):
     """
     Implementation of the Redis protocol.
@@ -111,7 +135,8 @@ class Ledis(object):
             'HGETALL': lambda r: r and pairs_to_dict(r) or {},
             'PING': lambda r: nativestr(r) == 'PONG',
             'SET': lambda r: r and nativestr(r) == 'OK',
-        },
+            'INFO': parse_info,
+        }
 
     )
 
@@ -219,8 +244,15 @@ class Ledis(object):
             db = 0
         return self.execute_command('SELECT', db)
 
-    def info(self, section):
-        return self.execute_command('PING', section)
+    def info(self, section=None):
+        """
+        Return 
+        """
+
+        if section is None:
+            return self.execute_command("INFO")
+        else:
+            return self.execute_command('INFO', section)
 
     def flushall(self):
         return self.execute_command('FLUSHALL')
@@ -923,6 +955,7 @@ class Ledis(object):
 
     def scriptflush(self):
         return self.execute_command('SCRIPT', 'FLUSH')
+
 
 class Transaction(Ledis):
     def __init__(self, connection_pool, response_callbacks):
