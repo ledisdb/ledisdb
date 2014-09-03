@@ -159,6 +159,8 @@ func (app *App) openScript() {
 	l.OpenTable()
 	l.OpenPackage()
 
+	l.Register("error", luaErrorHandler)
+
 	s.l = l
 	s.c = newClient(app)
 	s.c.db = nil
@@ -221,6 +223,11 @@ func delMapState(l *lua.State) {
 	defer stateLock.Unlock()
 
 	delete(mapState, l)
+}
+
+func luaErrorHandler(l *lua.State) int {
+	msg := l.ToString(1)
+	panic(fmt.Errorf(msg))
 }
 
 func luaCall(l *lua.State) int {

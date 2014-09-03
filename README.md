@@ -93,6 +93,7 @@ Choosing a store database to use is very simple, you have two ways:
 
 + You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 + Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
++ `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
 
 ## Configuration
 
