@@ -105,13 +105,14 @@ func printReply(level int, reply interface{}) {
 	case ledis.Error:
 		fmt.Printf("%s", string(reply))
 	case []interface{}:
-		if level > 0 {
-			//todo for better pretty
-			fmt.Printf("%q", reply)
-			return
-		}
 		for i, v := range reply {
-			fmt.Printf("%d) ", i+1)
+			if i != 0 {
+				fmt.Printf("%s", strings.Repeat(" ", level*4))
+			}
+
+			s := fmt.Sprintf("%d) ", i+1)
+			fmt.Printf("%-4s", s)
+
 			printReply(level+1, v)
 			if i != len(reply)-1 {
 				fmt.Printf("\n")
