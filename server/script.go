@@ -1,9 +1,11 @@
+// +build lua
+
 package server
 
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/aarzilli/golua/lua"
+	"github.com/siddontang/golua/lua"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"sync"
@@ -158,6 +160,10 @@ func (app *App) openScript() {
 	l.OpenString()
 	l.OpenTable()
 	l.OpenPackage()
+
+	l.OpenCJson()
+	l.OpenCMsgpack()
+	l.OpenStruct()
 
 	l.Register("error", luaErrorHandler)
 

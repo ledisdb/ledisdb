@@ -1,8 +1,10 @@
+// +build lua
+
 package server
 
 import (
 	"fmt"
-	"github.com/aarzilli/golua/lua"
+	"github.com/siddontang/golua/lua"
 	"github.com/siddontang/ledisdb/config"
 
 	"testing"

@@ -1,10 +1,12 @@
+// +build lua
+
 package server
 
 import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/aarzilli/golua/lua"
+	"github.com/siddontang/golua/lua"
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
 	"strings"

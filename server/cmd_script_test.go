@@ -1,3 +1,5 @@
+// +build lua
+
 package server
 
 import (

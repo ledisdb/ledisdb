@@ -16,4 +16,4 @@ go get github.com/BurntSushi/toml
 
 go get github.com/siddontang/go-bson/bson
 
-go get github.com/aarzilli/golua/lua
+go get github.com/siddontang/golua/lua
