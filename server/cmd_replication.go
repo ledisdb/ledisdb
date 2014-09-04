@@ -89,7 +89,7 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Reset()
 
-	//reserve space to write master info
+	//reserve space to write binlog anchor
 	if _, err := c.syncBuf.Write(reserveInfoSpace); err != nil {
 		return err
 	}
