@@ -92,14 +92,16 @@ func (s Store) Repair(path string, c *config.Config) error {
 
 func (db MDB) Put(key, value []byte) error {
 	itr := db.iterator(false)
+	defer itr.Close()
 
 	itr.err = itr.c.Put(key, value, 0)
 	itr.setState()
-	return itr.Close()
+	return itr.err
 }
 
 func (db MDB) BatchPut(writes []driver.Write) error {
 	itr := db.iterator(false)
+	defer itr.Close()
 
 	for _, w := range writes {
 		if w.Value == nil {
@@ -117,7 +119,7 @@ func (db MDB) BatchPut(writes []driver.Write) error {
 	}
 	itr.setState()
 
-	return itr.Close()
+	return itr.err
 }
 
 func (db MDB) Get(key []byte) ([]byte, error) {
@@ -208,6 +210,8 @@ func (itr *MDBIterator) setState() {
 			itr.err = nil
 		}
 		itr.valid = false
+	} else {
+		itr.valid = true
 	}
 }
 
