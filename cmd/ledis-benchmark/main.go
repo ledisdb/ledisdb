@@ -87,7 +87,7 @@ func benchRandGet() {
 		waitBench("get", n)
 	}
 
-	bench("get", f)
+	bench("randget", f)
 }
 
 func benchDel() {
@@ -114,7 +114,7 @@ func benchRangeList10() {
 		waitBench("lrange", "mytestlist", 0, 10)
 	}
 
-	bench("lrange", f)
+	bench("lrange10", f)
 }
 
 func benchRangeList50() {
@@ -122,7 +122,7 @@ func benchRangeList50() {
 		waitBench("lrange", "mytestlist", 0, 50)
 	}
 
-	bench("lrange", f)
+	bench("lrange50", f)
 }
 
 func benchRangeList100() {
@@ -130,7 +130,7 @@ func benchRangeList100() {
 		waitBench("lrange", "mytestlist", 0, 100)
 	}
 
-	bench("lrange", f)
+	bench("lrange100", f)
 }
 
 func benchPopList() {
@@ -173,7 +173,7 @@ func benchHRandGet() {
 		waitBench("hget", "myhashkey", n)
 	}
 
-	bench("hget", f)
+	bench("hrandget", f)
 }
 
 func benchHDel() {
