@@ -20,7 +20,7 @@ class TestCmdSet(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.smclear('a', 'b', 'c')
+        l.flushdb()
 
     def test_sadd(self):
         members = set([b('1'), b('2'), b('3')])

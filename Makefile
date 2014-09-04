@@ -23,3 +23,6 @@ clean:
 
 test:
 	go test -tags '$(GO_BUILD_TAGS)' ./...
+
+pytest:
+	sh client/ledis-py/tests/all.sh

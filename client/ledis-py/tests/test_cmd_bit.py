@@ -17,8 +17,7 @@ class TestCmdBit(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.bdelete('a')
-        l.bdelete('non_exists_key')
+        l.flushdb()
 
     def test_bget(self):
         "bget is the same as get in K/V commands"

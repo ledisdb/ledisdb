@@ -588,3 +588,23 @@ class BlockingConnectionPool(object):
                       timeout=self.timeout,
                       connection_class=self.connection_class,
                       queue_class=self.queue_class, **self.connection_kwargs)
+
+
+class Token(object):
+    """
+    Literal strings in Redis commands, such as the command names and any
+    hard-coded arguments are wrapped in this class so we know not to apply
+    and encoding rules on them.
+    """
+    def __init__(self, value):
+        if isinstance(value, Token):
+            value = value.value
+        self.value = value
+
+    def __repr__(self):
+        return self.value
+
+    def __str__(self):
+        return self.value
+
+

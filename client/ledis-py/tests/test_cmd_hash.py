@@ -19,7 +19,7 @@ class TestCmdHash(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.hmclear('myhash', 'a')
+        l.flushdb()
         
 
     def test_hdel(self):

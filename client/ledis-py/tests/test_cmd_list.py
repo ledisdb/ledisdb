@@ -18,7 +18,7 @@ class TestCmdList(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.lmclear('mylist', 'mylist1', 'mylist2')
+        l.flushdb()
 
     def test_lindex(self):
         l.rpush('mylist', '1', '2', '3')
