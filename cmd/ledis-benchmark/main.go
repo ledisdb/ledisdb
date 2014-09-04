@@ -25,17 +25,13 @@ var client *ledis.Client
 var loop int = 0
 
 func waitBench(cmd string, args ...interface{}) {
-	defer wg.Done()
-
 	c := client.Get()
 	defer c.Close()
 
-	for i := 0; i < loop; i++ {
-		_, err := c.Do(cmd, args...)
-		if err != nil {
-			fmt.Printf("do %s error %s", cmd, err.Error())
-			return
-		}
+	_, err := c.Do(cmd, args...)
+	if err != nil {
+		fmt.Printf("do %s error %s", cmd, err.Error())
+		return
 	}
 }
 
@@ -44,7 +40,12 @@ func bench(cmd string, f func()) {
 
 	t1 := time.Now().UnixNano()
 	for i := 0; i < *clients; i++ {
-		go f()
+		go func() {
+			for i := 0; i < loop; i++ {
+				f()
+			}
+			wg.Done()
+		}()
 	}
 
 	wg.Wait()
@@ -269,6 +270,7 @@ func main() {
 
 	cfg := new(ledis.Config)
 	cfg.Addr = addr
+	cfg.MaxIdleConns = *clients
 	client = ledis.NewClient(cfg)
 
 	if *round <= 0 {
