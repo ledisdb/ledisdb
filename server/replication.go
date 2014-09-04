@@ -271,7 +271,7 @@ func (m *master) fullSync() error {
 		return err
 	}
 
-	var head *ledis.MasterInfo
+	var head *ledis.BinLogAnchor
 	head, err = m.app.ldb.LoadDumpFile(dumpPath)
 
 	if err != nil {

@@ -94,7 +94,7 @@ func syncCommand(c *client) error {
 		return err
 	}
 
-	m := &ledis.MasterInfo{logIndex, logPos}
+	m := &ledis.BinLogAnchor{logIndex, logPos}
 
 	if _, err := c.app.ldb.ReadEventsTo(m, &c.syncBuf); err != nil {
 		return err

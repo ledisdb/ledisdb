@@ -186,7 +186,7 @@ func (l *Ledis) ReplicateFromBinLog(filePath string) error {
 	return err
 }
 
-func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
+func (l *Ledis) ReadEventsTo(info *BinLogAnchor, w io.Writer) (n int, err error) {
 	n = 0
 	if l.binlog == nil {
 		//binlog not supported

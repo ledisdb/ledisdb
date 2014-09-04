@@ -106,7 +106,7 @@ func TestReplication(t *testing.T) {
 		tx.Rollback()
 	}
 
-	info := new(MasterInfo)
+	info := new(BinLogAnchor)
 	info.LogFileIndex = 1
 	info.LogPos = 0
 	var buf bytes.Buffer

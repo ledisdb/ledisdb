@@ -15,12 +15,12 @@ import (
 //
 //key and value are both compressed for fast transfer dump on network using snappy
 
-type MasterInfo struct {
+type BinLogAnchor struct {
 	LogFileIndex int64
 	LogPos       int64
 }
 
-func (m *MasterInfo) WriteTo(w io.Writer) error {
+func (m *BinLogAnchor) WriteTo(w io.Writer) error {
 	if err := binary.Write(w, binary.BigEndian, m.LogFileIndex); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (m *MasterInfo) WriteTo(w io.Writer) error {
 	return nil
 }
 
-func (m *MasterInfo) ReadFrom(r io.Reader) error {
+func (m *BinLogAnchor) ReadFrom(r io.Reader) error {
 	err := binary.Read(r, binary.BigEndian, &m.LogFileIndex)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func (l *Ledis) DumpFile(path string) error {
 }
 
 func (l *Ledis) Dump(w io.Writer) error {
-	var m *MasterInfo = new(MasterInfo)
+	m := new(BinLogAnchor)
 
 	var err error
 
@@ -118,7 +118,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 	return nil
 }
 
-func (l *Ledis) LoadDumpFile(path string) (*MasterInfo, error) {
+func (l *Ledis) LoadDumpFile(path string) (*BinLogAnchor, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -128,11 +128,11 @@ func (l *Ledis) LoadDumpFile(path string) (*MasterInfo, error) {
 	return l.LoadDump(f)
 }
 
-func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
+func (l *Ledis) LoadDump(r io.Reader) (*BinLogAnchor, error) {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()
 
-	info := new(MasterInfo)
+	info := new(BinLogAnchor)
 
 	rb := bufio.NewReaderSize(r, 4096)
 

@@ -57,7 +57,7 @@ func loadDump(cfg *config.Config, ldb *ledis.Ledis) error {
 		return err
 	}
 
-	var head *ledis.MasterInfo
+	var head *ledis.BinLogAnchor
 	head, err = ldb.LoadDumpFile(*dumpPath)
 
 	if err != nil {
