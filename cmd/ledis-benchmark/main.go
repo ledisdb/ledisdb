@@ -1,6 +1,7 @@
 package main
 
 import (
+	crand "crypto/rand"
 	"flag"
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
@@ -15,6 +16,7 @@ var port = flag.Int("port", 6380, "redis/ledis/ssdb server port")
 var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 var reverse = flag.Bool("rev", false, "enable zset rev benchmark")
+var round = flag.Int("r", 1, "benchmark round number")
 
 var wg sync.WaitGroup
 
@@ -61,8 +63,10 @@ var kvDelBase int64 = 0
 
 func benchSet() {
 	f := func() {
+		value := make([]byte, 100)
+		crand.Read(value)
 		n := atomic.AddInt64(&kvSetBase, 1)
-		waitBench("set", n, n)
+		waitBench("set", n, value)
 	}
 
 	bench("set", f)
@@ -86,15 +90,6 @@ func benchRandGet() {
 	bench("get", f)
 }
 
-func benchIncr() {
-	f := func() {
-		n := atomic.AddInt64(&kvIncrBase, 1)
-		waitBench("incr", n)
-	}
-
-	bench("incr", f)
-}
-
 func benchDel() {
 	f := func() {
 		n := atomic.AddInt64(&kvDelBase, 1)
@@ -106,8 +101,9 @@ func benchDel() {
 
 func benchPushList() {
 	f := func() {
-		n := rand.Int()
-		waitBench("rpush", "mytestlist", n)
+		value := make([]byte, 10)
+		crand.Read(value)
+		waitBench("rpush", "mytestlist", value)
 	}
 
 	bench("rpush", f)
@@ -152,20 +148,14 @@ var hashDelBase int64 = 0
 
 func benchHset() {
 	f := func() {
+		value := make([]byte, 100)
+		crand.Read(value)
+
 		n := atomic.AddInt64(&hashSetBase, 1)
-		waitBench("hset", "myhashkey", n, n)
+		waitBench("hset", "myhashkey", n, value)
 	}
 
 	bench("hset", f)
-}
-
-func benchHIncr() {
-	f := func() {
-		n := atomic.AddInt64(&hashIncrBase, 1)
-		waitBench("hincrby", "myhashkey", n, 1)
-	}
-
-	bench("hincrby", f)
 }
 
 func benchHGet() {
@@ -201,8 +191,10 @@ var zsetIncrBase int64 = 0
 
 func benchZAdd() {
 	f := func() {
+		member := make([]byte, 16)
+		crand.Read(member)
 		n := atomic.AddInt64(&zsetAddBase, 1)
-		waitBench("zadd", "myzsetkey", n, n)
+		waitBench("zadd", "myzsetkey", n, member)
 	}
 
 	bench("zadd", f)
@@ -279,35 +271,41 @@ func main() {
 	cfg.Addr = addr
 	client = ledis.NewClient(cfg)
 
-	benchSet()
-	benchIncr()
-	benchGet()
-	benchRandGet()
-	benchDel()
-
-	benchPushList()
-	benchRangeList10()
-	benchRangeList50()
-	benchRangeList100()
-	benchPopList()
-
-	benchHset()
-	benchHGet()
-	benchHIncr()
-	benchHRandGet()
-	benchHDel()
-
-	benchZAdd()
-	benchZIncr()
-	benchZRangeByRank()
-	benchZRangeByScore()
-
-	//rev is too slow in leveldb, rocksdb or other
-	//maybe disable for huge data benchmark
-	if *reverse == true {
-		benchZRevRangeByRank()
-		benchZRevRangeByScore()
+	if *round <= 0 {
+		*round = 1
 	}
 
-	benchZDel()
+	for i := 0; i < *round; i++ {
+		benchSet()
+		benchGet()
+		benchRandGet()
+		benchDel()
+
+		benchPushList()
+		benchRangeList10()
+		benchRangeList50()
+		benchRangeList100()
+		benchPopList()
+
+		benchHset()
+		benchHGet()
+		benchHRandGet()
+		benchHDel()
+
+		benchZAdd()
+		benchZIncr()
+		benchZRangeByRank()
+		benchZRangeByScore()
+
+		//rev is too slow in leveldb, rocksdb or other
+		//maybe disable for huge data benchmark
+		if *reverse == true {
+			benchZRevRangeByRank()
+			benchZRevRangeByScore()
+		}
+
+		benchZDel()
+
+		println("")
+	}
 }
