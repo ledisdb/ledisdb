@@ -17,7 +17,7 @@ class TestCmdZset(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.zclear('a')
+        l.flushdb()
 
     def test_zadd(self):
         l.zadd('a', a1=1, a2=2, a3=3)

@@ -4,7 +4,7 @@ import time as mod_time
 from itertools import chain, starmap
 from ledis._compat import (b, izip, imap, iteritems,
                            basestring, long, nativestr, bytes)
-from ledis.connection import ConnectionPool, UnixDomainSocketConnection
+from ledis.connection import ConnectionPool, UnixDomainSocketConnection, Token
 from ledis.exceptions import (
     ConnectionError,
     DataError,
@@ -87,6 +87,7 @@ def parse_info(response):
 
     return info
 
+# def parse_lscan(response, )
 
 class Ledis(object):
     """
@@ -137,6 +138,7 @@ class Ledis(object):
             'SET': lambda r: r and nativestr(r) == 'OK',
             'INFO': parse_info,
         }
+
 
     )
 
@@ -382,8 +384,21 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('PERSIST', name)
 
-    def scan(self, key, match = "", count = 10):
-        return self.execute_command("SCAN", key, match, count)
+    def scan(self, key="" , match=None, count=10):
+        pieces = [key]
+        if match is not None:
+            pieces.extend(["MATCH", match])
+
+        pieces.extend(["COUNT", count])
+
+        return self.execute_command("SCAN", *pieces)
+
+    def scan_iter(self, match=None, count=10):
+        key = ""
+        while key != "":
+            key, data = self.scan(key=key, match=match, count=count)
+            for item in data:
+                yield item
 
     #### LIST COMMANDS ####
     def lindex(self, name, index):
@@ -460,8 +475,8 @@ class Ledis(object):
         "Removes an expiration on ``name``"
         return self.execute_command('LPERSIST', name)
 
-    def lscan(self, key, match = "", count = 10):
-        return self.execute_command("LSCAN", key, match, count)
+    def lscan(self, key="", match=None, count=10):
+        return self.scan_generic("LSCAN", key=key, match=match, count=count)
 
 
     #### SET COMMANDS ####
@@ -560,8 +575,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('SPERSIST', name)
 
-    def sscan(self, key, match = "", count = 10):
-        return self.execute_command("SSCAN", key, match, count)
+    def sscan(self, key="", match=None, count = 10):
+        return self.scan_generic("SSCAN", key=key, match=match, count=count)
 
 
     #### SORTED SET COMMANDS ####
@@ -759,9 +774,17 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('ZPERSIST', name)
 
-    def zscan(self, key, match = "", count = 10):
-        return self.execute_command("ZSCAN", key, match, count)
 
+    def scan_generic(self, scan_type, key="", match=None, count=10):
+        pieces = [key]
+        if match is not None:
+            pieces.extend([Token("MATCH"), match])
+        pieces.extend([Token("count"), count])
+        scan_type = scan_type.upper()
+        return self.execute_command(scan_type, *pieces)
+
+    def zscan(self, key="", match=None, count=10):
+        return self.scan_generic("ZSCAN", key=key, match=match, count=count)
 
     #### HASH COMMANDS ####
     def hdel(self, name, *keys):
@@ -855,8 +878,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('HPERSIST', name)
 
-    def hscan(self, key, match = "", count = 10):
-        return self.execute_command("HSCAN", key, match, count)
+    def hscan(self, key="", match=None, count=10):
+        return self.scan_generic("HSCAN", key=key, match=match, count=count)
 
 
     ### BIT COMMANDS
@@ -934,8 +957,8 @@ class Ledis(object):
         "Removes an expiration on name"
         return self.execute_command('BPERSIST', name)
 
-    def bscan(self, key, match = "", count = 10):
-        return self.execute_command("BSCAN", key, match, count)
+    def bscan(self, key="", match=None, count=10):
+        return self.scan_generic("BSCAN", key=key, match=match, count=count)
 
     def eval(self, script, keys, *args):
         n = len(keys)

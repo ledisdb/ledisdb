@@ -4,14 +4,21 @@ sys.path.append("..")
 
 import ledis
 
+global_l = ledis.Ledis()
+
+#db that do not support transaction
+dbs = ["leveldb", "rocksdb", "hyperleveldb", "goleveldb"]
+check = global_l.info().get("db_name") in dbs
+
 
 class TestTx(unittest.TestCase):
     def setUp(self):
         self.l = ledis.Ledis(port=6380)
 
     def tearDown(self):
-        self.l.delete("a")
-
+        self.l.flushdb()
+    
+    @unittest.skipIf(check, reason="db not support transaction")
     def test_commit(self):
         tx = self.l.tx()
         self.l.set("a", "no-tx")
@@ -24,6 +31,7 @@ class TestTx(unittest.TestCase):
         tx.commit()
         assert self.l.get("a") == "tx"
 
+    @unittest.skipIf(check, reason="db not support transaction")
     def test_rollback(self):
         tx = self.l.tx()
         self.l.set("a", "no-tx")
