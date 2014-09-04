@@ -76,7 +76,7 @@ fi
 
 #check lua
 CHECK_LUA_FILE="$LEDISTOP/tools/check_lua.go"
-go run $CHECK_LUA_FILE 2>/dev/null  
+go run $CHECK_LUA_FILE >> /dev/null 2>&1 
 if [ "$?" = 0 ]; then
     GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
 fi
