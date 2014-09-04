@@ -8,7 +8,7 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 
 + Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB, Memory.
 + Supports transaction using LMDB or BotlDB.
 + Supports lua scripting.
 + Supports expiration and ttl.
