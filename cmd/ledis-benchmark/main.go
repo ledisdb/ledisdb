@@ -6,6 +6,7 @@ import (
 	"github.com/siddontang/ledisdb/client/go/ledis"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -13,6 +14,7 @@ var ip = flag.String("ip", "127.0.0.1", "redis/ledis/ssdb server ip")
 var port = flag.Int("port", 6380, "redis/ledis/ssdb server port")
 var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
+var reverse = flag.Bool("rev", false, "enable zset rev benchmark")
 
 var wg sync.WaitGroup
 
@@ -52,9 +54,14 @@ func bench(cmd string, f func()) {
 	fmt.Printf("%s: %0.2f requests per second\n", cmd, (float64(*number) / delta))
 }
 
+var kvSetBase int64 = 0
+var kvGetBase int64 = 0
+var kvIncrBase int64 = 0
+var kvDelBase int64 = 0
+
 func benchSet() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&kvSetBase, 1)
 		waitBench("set", n, n)
 	}
 
@@ -62,6 +69,15 @@ func benchSet() {
 }
 
 func benchGet() {
+	f := func() {
+		n := atomic.AddInt64(&kvGetBase, 1)
+		waitBench("get", n)
+	}
+
+	bench("get", f)
+}
+
+func benchRandGet() {
 	f := func() {
 		n := rand.Int()
 		waitBench("get", n)
@@ -72,11 +88,20 @@ func benchGet() {
 
 func benchIncr() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&kvIncrBase, 1)
 		waitBench("incr", n)
 	}
 
 	bench("incr", f)
+}
+
+func benchDel() {
+	f := func() {
+		n := atomic.AddInt64(&kvDelBase, 1)
+		waitBench("del", n)
+	}
+
+	bench("del", f)
 }
 
 func benchPushList() {
@@ -120,9 +145,14 @@ func benchPopList() {
 	bench("lpop", f)
 }
 
+var hashSetBase int64 = 0
+var hashIncrBase int64 = 0
+var hashGetBase int64 = 0
+var hashDelBase int64 = 0
+
 func benchHset() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&hashSetBase, 1)
 		waitBench("hset", "myhashkey", n, n)
 	}
 
@@ -131,7 +161,7 @@ func benchHset() {
 
 func benchHIncr() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&hashIncrBase, 1)
 		waitBench("hincrby", "myhashkey", n, 1)
 	}
 
@@ -139,6 +169,15 @@ func benchHIncr() {
 }
 
 func benchHGet() {
+	f := func() {
+		n := atomic.AddInt64(&hashGetBase, 1)
+		waitBench("hget", "myhashkey", n)
+	}
+
+	bench("hget", f)
+}
+
+func benchHRandGet() {
 	f := func() {
 		n := rand.Int()
 		waitBench("hget", "myhashkey", n)
@@ -149,16 +188,20 @@ func benchHGet() {
 
 func benchHDel() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&hashDelBase, 1)
 		waitBench("hdel", "myhashkey", n)
 	}
 
 	bench("hdel", f)
 }
 
+var zsetAddBase int64 = 0
+var zsetDelBase int64 = 0
+var zsetIncrBase int64 = 0
+
 func benchZAdd() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&zsetAddBase, 1)
 		waitBench("zadd", "myzsetkey", n, n)
 	}
 
@@ -167,7 +210,7 @@ func benchZAdd() {
 
 func benchZDel() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&zsetDelBase, 1)
 		waitBench("zrem", "myzsetkey", n)
 	}
 
@@ -176,7 +219,7 @@ func benchZDel() {
 
 func benchZIncr() {
 	f := func() {
-		n := rand.Int()
+		n := atomic.AddInt64(&zsetIncrBase, 1)
 		waitBench("zincrby", "myzsetkey", 1, n)
 	}
 
@@ -239,6 +282,8 @@ func main() {
 	benchSet()
 	benchIncr()
 	benchGet()
+	benchRandGet()
+	benchDel()
 
 	benchPushList()
 	benchRangeList10()
@@ -249,13 +294,20 @@ func main() {
 	benchHset()
 	benchHGet()
 	benchHIncr()
+	benchHRandGet()
 	benchHDel()
 
 	benchZAdd()
 	benchZIncr()
 	benchZRangeByRank()
 	benchZRangeByScore()
-	benchZRevRangeByRank()
-	benchZRevRangeByScore()
+
+	//rev is too slow in leveldb, rocksdb or other
+	//maybe disable for huge data benchmark
+	if *reverse == true {
+		benchZRevRangeByRank()
+		benchZRevRangeByScore()
+	}
+
 	benchZDel()
 }
