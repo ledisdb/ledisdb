@@ -63,12 +63,12 @@ func main() {
 	}
 }
 
-func printEvent(createTime uint32, event []byte) error {
-	if createTime < startTime || createTime > stopTime {
+func printEvent(head *ledis.BinLogHead, event []byte) error {
+	if head.CreateTime < startTime || head.CreateTime > stopTime {
 		return nil
 	}
 
-	t := time.Unix(int64(createTime), 0)
+	t := time.Unix(int64(head.CreateTime), 0)
 
 	fmt.Printf("%s ", t.Format(TimeFormat))
 

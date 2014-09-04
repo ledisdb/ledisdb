@@ -8,8 +8,9 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 
 + Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB.
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB, Memory.
 + Supports transaction using LMDB or BotlDB.
++ Supports lua scripting.
 + Supports expiration and ttl.
 + Redis clients, like redis-cli, are supported directly.
 + Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
@@ -92,6 +93,7 @@ Choosing a store database to use is very simple, you have two ways:
 
 + You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
 + Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
++ `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
 
 ## Configuration
 

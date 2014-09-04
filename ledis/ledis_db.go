@@ -29,8 +29,6 @@ type DB struct {
 
 	bucket ibucket
 
-	dbLock *sync.RWMutex
-
 	index uint8
 
 	kvBatch   *batch
@@ -40,7 +38,7 @@ type DB struct {
 	binBatch  *batch
 	setBatch  *batch
 
-	isTx bool
+	status uint8
 }
 
 func (l *Ledis) newDB(index uint8) *DB {
@@ -52,9 +50,8 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.bucket = d.sdb
 
-	d.isTx = false
+	d.status = DBAutoCommit
 	d.index = index
-	d.dbLock = &sync.RWMutex{}
 
 	d.kvBatch = d.newBatch()
 	d.listBatch = d.newBatch()
@@ -66,8 +63,16 @@ func (l *Ledis) newDB(index uint8) *DB {
 	return d
 }
 
+func (db *DB) newBatch() *batch {
+	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock}, nil)
+}
+
 func (db *DB) Index() int {
 	return int(db.index)
+}
+
+func (db *DB) IsAutoCommit() bool {
+	return db.status == DBAutoCommit
 }
 
 func (db *DB) FlushAll() (drop int64, err error) {

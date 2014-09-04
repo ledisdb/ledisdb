@@ -70,7 +70,7 @@ Table of Contents
 	- [SINTERSTORE destination key [key ...]](#sinterstore-destination-key-key-)
 	- [SISMEMBER key member](#sismember-key-member)
 	- [SMEMBERS key](#smembers-key)
-	- [SREM key member [member]](#srem-key-member-member-)
+	- [SREM key member [member ...]](#srem-key-member-member-)
 	- [SUNION key [key ...]](#sunion-key-key-)
 	- [SUNIONSTORE destination key [key ...]](#sunionstore-destination-key-key-)
 	- [SCLEAR key](#sclear-key)
@@ -133,7 +133,12 @@ Table of Contents
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
 	- [COMMIT](#commit)
-
+- [Script](#script)
+	- [EVAL script numkeys key [key ...] arg [arg ...]](#eval-script-numkeys-key-key--arg-arg-)
+	- [EVALSHA sha1 numkeys key [key ...] arg [arg ...]](#evalsha-sha1-numkeys-key-key--arg-arg-)
+	- [SCRIPT LOAD script](#script-load-script)
+	- [SCRIPT EXISTS script [script ...]](#script-exists-script-script-)
+	- [SCRIPT FLUSH](#script-flush)
 
 ## KV 
 
@@ -869,7 +874,7 @@ ledis> HPERSIST not_exists_key
 
 Iterate Hash keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 ## List
 
@@ -1166,7 +1171,7 @@ ledis> LPERSIST b
 
 Iterate list keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Set
@@ -1594,7 +1599,7 @@ ledis> STTL key
 
 Iterate Set keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## ZSet
@@ -2220,7 +2225,7 @@ ledis> ZRANGE out 0 -1 WITHSCORES
 
 Iterate ZSet keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Bitmap
@@ -2386,7 +2391,7 @@ ledis> BCOUNT flag 5 6
 
 Iterate Bitmap keys incrementally.
 
-See `SCAN` for more information.
+See [Scan](#scan-key-match-match-count-count) for more information.
 
 
 ## Replication
@@ -2561,5 +2566,22 @@ OK
 ledis> GET HELLO
 "WORLD"
 ```
+
+## Script
+
+LedisDB's script is refer to Redis, you can see more [http://redis.io/commands/eval](http://redis.io/commands/eval)
+
+You must notice that executing lua will block any other write operations.
+
+### EVAL script numkeys key [key ...] arg [arg ...]
+
+### EVALSHA sha1 numkeys key [key ...] arg [arg ...]
+
+### SCRIPT LOAD script
+
+### SCRIPT EXISTS script [script ...]
+
+### SCRIPT FLUSH
+
 
 Thanks [doctoc](http://doctoc.herokuapp.com/)

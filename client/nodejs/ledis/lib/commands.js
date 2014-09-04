@@ -129,4 +129,7 @@ module.exports = [
     "rollback",
     "commit",
 
+    "eval",
+    "evalsha",
+    "script",
 ];

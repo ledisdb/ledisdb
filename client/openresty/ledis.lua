@@ -151,7 +151,12 @@ local commands = {
     -- [[transaction]]
     "begin",
     "commit",
-    "rollback"
+    "rollback",
+
+    -- [[script]]
+    "eval",
+    "evalsha",
+    "script"
 }
 
 
@@ -390,7 +395,6 @@ function _M.hmset(self, hashname, ...)
     -- backwards compatibility
     return _do_cmd(self, "hmset", hashname, ...)
 end
-
 
 function _M.array_to_hash(self, t)
     local n = #t

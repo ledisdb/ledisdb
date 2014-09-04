@@ -74,6 +74,13 @@ if [ -f $HYPERLEVELDB_DIR/include/hyperleveldb/c.h ]; then
     GO_BUILD_TAGS="$GO_BUILD_TAGS hyperleveldb"
 fi
 
+#check lua
+CHECK_LUA_FILE="$LEDISTOP/tools/check_lua.go"
+go run $CHECK_LUA_FILE >> /dev/null 2>&1 
+if [ "$?" = 0 ]; then
+    GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
+fi
+
 export CGO_CFLAGS
 export CGO_CXXFLAGS
 export CGO_LDFLAGS

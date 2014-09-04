@@ -2,8 +2,8 @@ package ledis
 
 import (
 	"errors"
+	"fmt"
 	"github.com/siddontang/ledisdb/store"
-	"sync"
 )
 
 var (
@@ -11,143 +11,44 @@ var (
 	ErrTxDone = errors.New("Transaction has already been committed or rolled back")
 )
 
-type batch struct {
-	l *Ledis
-
-	store.WriteBatch
-
-	sync.Locker
-
-	logs [][]byte
-
-	tx *Tx
-}
-
-type dbBatchLocker struct {
-	sync.Mutex
-	dbLock *sync.RWMutex
-}
-
-type txBatchLocker struct {
-}
-
-func (l *txBatchLocker) Lock() {
-}
-
-func (l *txBatchLocker) Unlock() {
-}
-
-func (l *dbBatchLocker) Lock() {
-	l.dbLock.RLock()
-	l.Mutex.Lock()
-}
-
-func (l *dbBatchLocker) Unlock() {
-	l.Mutex.Unlock()
-	l.dbLock.RUnlock()
-}
-
-func (db *DB) newBatch() *batch {
-	b := new(batch)
-
-	b.WriteBatch = db.bucket.NewWriteBatch()
-	b.Locker = &dbBatchLocker{dbLock: db.dbLock}
-	b.l = db.l
-
-	return b
-}
-
-func (b *batch) Commit() error {
-	b.l.Lock()
-	defer b.l.Unlock()
-
-	err := b.WriteBatch.Commit()
-
-	if b.l.binlog != nil {
-		if err == nil {
-			if b.tx == nil {
-				b.l.binlog.Log(b.logs...)
-			} else {
-				b.tx.logs = append(b.tx.logs, b.logs...)
-			}
-		}
-		b.logs = [][]byte{}
-	}
-
-	return err
-}
-
-func (b *batch) Lock() {
-	b.Locker.Lock()
-}
-
-func (b *batch) Unlock() {
-	if b.l.binlog != nil {
-		b.logs = [][]byte{}
-	}
-	b.Rollback()
-	b.Locker.Unlock()
-}
-
-func (b *batch) Put(key []byte, value []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogPut(key, value)
-		b.logs = append(b.logs, buf)
-	}
-	b.WriteBatch.Put(key, value)
-}
-
-func (b *batch) Delete(key []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogDelete(key)
-		b.logs = append(b.logs, buf)
-	}
-	b.WriteBatch.Delete(key)
-}
-
 type Tx struct {
 	*DB
 
 	tx *store.Tx
 
 	logs [][]byte
-
-	index uint8
 }
 
 func (db *DB) IsTransaction() bool {
-	return db.isTx
+	return db.status == DBInTransaction
 }
 
 // Begin a transaction, it will block all other write operations before calling Commit or Rollback.
 // You must be very careful to prevent long-time transaction.
 func (db *DB) Begin() (*Tx, error) {
-	if db.isTx {
+	if db.IsTransaction() {
 		return nil, ErrNestTx
 	}
 
 	tx := new(Tx)
 
 	tx.DB = new(DB)
-	tx.DB.dbLock = db.dbLock
-
-	tx.DB.dbLock.Lock()
-
 	tx.DB.l = db.l
-	tx.index = db.index
+
+	tx.l.wLock.Lock()
 
 	tx.DB.sdb = db.sdb
 
 	var err error
 	tx.tx, err = db.sdb.Begin()
 	if err != nil {
-		tx.DB.dbLock.Unlock()
+		tx.l.wLock.Unlock()
 		return nil, err
 	}
 
 	tx.DB.bucket = tx.tx
 
-	tx.DB.isTx = true
+	tx.DB.status = DBInTransaction
 
 	tx.DB.index = db.index
 
@@ -166,7 +67,7 @@ func (tx *Tx) Commit() error {
 		return ErrTxDone
 	}
 
-	tx.l.Lock()
+	tx.l.commitLock.Lock()
 	err := tx.tx.Commit()
 	tx.tx = nil
 
@@ -174,10 +75,12 @@ func (tx *Tx) Commit() error {
 		tx.l.binlog.Log(tx.logs...)
 	}
 
-	tx.l.Unlock()
+	tx.l.commitLock.Unlock()
 
-	tx.DB.dbLock.Unlock()
-	tx.DB = nil
+	tx.l.wLock.Unlock()
+
+	tx.DB.bucket = nil
+
 	return err
 }
 
@@ -189,22 +92,21 @@ func (tx *Tx) Rollback() error {
 	err := tx.tx.Rollback()
 	tx.tx = nil
 
-	tx.DB.dbLock.Unlock()
-	tx.DB = nil
+	tx.l.wLock.Unlock()
+	tx.DB.bucket = nil
+
 	return err
 }
 
 func (tx *Tx) newBatch() *batch {
-	b := new(batch)
-
-	b.l = tx.l
-	b.WriteBatch = tx.tx.NewWriteBatch()
-	b.Locker = &txBatchLocker{}
-	b.tx = tx
-
-	return b
+	return tx.l.newBatch(tx.tx.NewWriteBatch(), &txBatchLocker{}, tx)
 }
 
-func (tx *Tx) Index() int {
-	return int(tx.index)
+func (tx *Tx) Select(index int) error {
+	if index < 0 || index >= int(MaxDBNumber) {
+		return fmt.Errorf("invalid db index %d", index)
+	}
+
+	tx.DB.index = uint8(index)
+	return nil
 }

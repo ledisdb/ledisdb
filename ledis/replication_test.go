@@ -70,6 +70,12 @@ func TestReplication(t *testing.T) {
 		db.HSet([]byte("c"), []byte("3"), []byte("value"))
 	}
 
+	m, _ := db.Multi()
+	m.Set([]byte("a1"), []byte("value"))
+	m.Set([]byte("b1"), []byte("value"))
+	m.Set([]byte("c1"), []byte("value"))
+	m.Close()
+
 	for _, name := range master.binlog.LogNames() {
 		p := path.Join(master.binlog.LogPath(), name)
 

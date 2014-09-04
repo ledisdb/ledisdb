@@ -16,6 +16,18 @@ var txUnsupportedCmds = map[string]struct{}{
 	"begin":    struct{}{},
 	"flushall": struct{}{},
 	"flushdb":  struct{}{},
+	"eval":     struct{}{},
+}
+
+var scriptUnsupportedCmds = map[string]struct{}{
+	"slaveof":  struct{}{},
+	"fullsync": struct{}{},
+	"sync":     struct{}{},
+	"begin":    struct{}{},
+	"commit":   struct{}{},
+	"rollback": struct{}{},
+	"flushall": struct{}{},
+	"flushdb":  struct{}{},
 }
 
 type responseWriter interface {
@@ -34,7 +46,8 @@ type responseWriter interface {
 type client struct {
 	app *App
 	ldb *ledis.Ledis
-	db  *ledis.DB
+
+	db *ledis.DB
 
 	remoteAddr string
 	cmd        string
@@ -49,7 +62,8 @@ type client struct {
 
 	buf bytes.Buffer
 
-	tx *ledis.Tx
+	tx     *ledis.Tx
+	script *ledis.Multi
 }
 
 func newClient(app *App) *client {
@@ -59,14 +73,10 @@ func newClient(app *App) *client {
 	c.ldb = app.ldb
 	c.db, _ = app.ldb.Select(0) //use default db
 
-	c.compressBuf = make([]byte, 256)
+	c.compressBuf = []byte{}
 	c.reqErr = make(chan error)
 
 	return c
-}
-
-func (c *client) isInTransaction() bool {
-	return c.tx != nil
 }
 
 func (c *client) perform() {
@@ -79,9 +89,13 @@ func (c *client) perform() {
 	} else if exeCmd, ok := regCmds[c.cmd]; !ok {
 		err = ErrNotFound
 	} else {
-		if c.isInTransaction() {
+		if c.db.IsTransaction() {
 			if _, ok := txUnsupportedCmds[c.cmd]; ok {
 				err = fmt.Errorf("%s not supported in transaction", c.cmd)
+			}
+		} else if c.db.IsInMulti() {
+			if _, ok := scriptUnsupportedCmds[c.cmd]; ok {
+				err = fmt.Errorf("%s not supported in multi", c.cmd)
 			}
 		}
 
@@ -127,4 +141,23 @@ func (c *client) catGenericCommand() []byte {
 	}
 
 	return buffer.Bytes()
+}
+
+func writeValue(w responseWriter, value interface{}) {
+	switch v := value.(type) {
+	case []interface{}:
+		w.writeArray(v)
+	case [][]byte:
+		w.writeSliceArray(v)
+	case []byte:
+		w.writeBulk(v)
+	case string:
+		w.writeStatus(v)
+	case nil:
+		w.writeBulk(nil)
+	case int64:
+		w.writeInteger(v)
+	default:
+		panic("invalid value type")
+	}
 }

@@ -15,3 +15,5 @@ go get github.com/ugorji/go/codec
 go get github.com/BurntSushi/toml
 
 go get github.com/siddontang/go-bson/bson
+
+go get github.com/siddontang/golua/lua

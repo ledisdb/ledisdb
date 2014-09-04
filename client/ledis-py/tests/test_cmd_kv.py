@@ -18,7 +18,7 @@ class TestCmdKv(unittest.TestCase):
         pass
 
     def tearDown(self):
-        l.delete('a', 'b', 'c', 'non_exist_key')
+        l.flushdb()
 
     def test_decr(self):
         assert l.delete('a') == 1

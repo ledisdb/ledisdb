@@ -10,8 +10,6 @@ import (
 )
 
 type Ledis struct {
-	sync.Mutex
-
 	cfg *config.Config
 
 	ldb *store.DB
@@ -21,11 +19,13 @@ type Ledis struct {
 	jobs *sync.WaitGroup
 
 	binlog *BinLog
+
+	wLock      sync.RWMutex //allow one write at same time
+	commitLock sync.Mutex   //allow one write commit at same time
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
-		fmt.Printf("no datadir set, use default %s\n", config.DefaultDataDir)
 		cfg.DataDir = config.DefaultDataDir
 	}
 
@@ -42,7 +42,6 @@ func Open(cfg *config.Config) (*Ledis, error) {
 	l.ldb = ldb
 
 	if cfg.BinLog.MaxFileNum > 0 && cfg.BinLog.MaxFileSize > 0 {
-		println("binlog will be refactored later, use your own risk!!!")
 		l.binlog, err = NewBinLog(cfg)
 		if err != nil {
 			return nil, err

@@ -57,15 +57,16 @@ func (l *Ledis) DumpFile(path string) error {
 
 func (l *Ledis) Dump(w io.Writer) error {
 	var m *MasterInfo = new(MasterInfo)
-	l.Lock()
-	defer l.Unlock()
+
+	var err error
+
+	l.wLock.Lock()
+	defer l.wLock.Unlock()
 
 	if l.binlog != nil {
 		m.LogFileIndex = l.binlog.LogFileIndex()
 		m.LogPos = l.binlog.LogFilePos()
 	}
-
-	var err error
 
 	wb := bufio.NewWriterSize(w, 4096)
 	if err = m.WriteTo(wb); err != nil {
@@ -80,8 +81,8 @@ func (l *Ledis) Dump(w io.Writer) error {
 	var key []byte
 	var value []byte
 	for ; it.Valid(); it.Next() {
-		key = it.Key()
-		value = it.Value()
+		key = it.RawKey()
+		value = it.RawValue()
 
 		if key, err = snappy.Encode(compressBuf, key); err != nil {
 			return err
@@ -128,8 +129,8 @@ func (l *Ledis) LoadDumpFile(path string) (*MasterInfo, error) {
 }
 
 func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
-	l.Lock()
-	defer l.Unlock()
+	l.wLock.Lock()
+	defer l.wLock.Unlock()
 
 	info := new(MasterInfo)
 
@@ -182,16 +183,17 @@ func (l *Ledis) LoadDump(r io.Reader) (*MasterInfo, error) {
 			return nil, err
 		}
 
-		if l.binlog != nil {
-			err = l.binlog.Log(encodeBinLogPut(key, value))
-		}
-
 		keyBuf.Reset()
 		valueBuf.Reset()
 	}
 
 	deKeyBuf = nil
 	deValueBuf = nil
+
+	//if binlog enable, we will delete all binlogs and open a new one for handling simply
+	if l.binlog != nil {
+		l.binlog.PurgeAll()
+	}
 
 	return info, nil
 }

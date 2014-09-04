@@ -22,6 +22,8 @@ slaveof = ""
 #   goleveldb
 #   lmdb
 #   boltdb
+#   hyperleveldb
+#   memory
 #   
 db_name = "leveldb"
 
