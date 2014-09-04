@@ -102,6 +102,7 @@ func NewConfigDefault() *Config {
 	// disable access log
 	cfg.AccessLog = ""
 
+	cfg.LMDB.MapSize = 20 * 1024 * 1024
 	cfg.LMDB.NoSync = true
 
 	return cfg
