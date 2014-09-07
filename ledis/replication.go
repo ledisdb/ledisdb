@@ -8,6 +8,7 @@ import (
 	"github.com/siddontang/ledisdb/store/driver"
 	"io"
 	"os"
+	"time"
 )
 
 const (
@@ -186,7 +187,32 @@ func (l *Ledis) ReplicateFromBinLog(filePath string) error {
 	return err
 }
 
-func (l *Ledis) ReadEventsTo(info *MasterInfo, w io.Writer) (n int, err error) {
+// try to read events, if no events read, try to wait the new event singal until timeout seconds
+func (l *Ledis) ReadEventsToTimeout(info *BinLogAnchor, w io.Writer, timeout int) (n int, err error) {
+	lastIndex := info.LogFileIndex
+	lastPos := info.LogPos
+
+	n = 0
+	if l.binlog == nil {
+		//binlog not supported
+		info.LogFileIndex = 0
+		info.LogPos = 0
+		return
+	}
+
+	n, err = l.ReadEventsTo(info, w)
+	if err == nil && info.LogFileIndex == lastIndex && info.LogPos == lastPos {
+		//no events read
+		select {
+		case <-l.binlog.Wait():
+		case <-time.After(time.Duration(timeout) * time.Second):
+		}
+		return l.ReadEventsTo(info, w)
+	}
+	return
+}
+
+func (l *Ledis) ReadEventsTo(info *BinLogAnchor, w io.Writer) (n int, err error) {
 	n = 0
 	if l.binlog == nil {
 		//binlog not supported

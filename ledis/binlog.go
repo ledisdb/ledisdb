@@ -105,6 +105,8 @@ type BinLog struct {
 	lastLogIndex int64
 
 	batchId uint32
+
+	ch chan struct{}
 }
 
 func NewBinLog(cfg *config.Config) (*BinLog, error) {
@@ -120,6 +122,8 @@ func NewBinLog(cfg *config.Config) (*BinLog, error) {
 	}
 
 	l.logNames = make([]string, 0, 16)
+
+	l.ch = make(chan struct{})
 
 	if err := l.loadIndex(); err != nil {
 		return nil, err
@@ -375,5 +379,12 @@ func (l *BinLog) Log(args ...[]byte) error {
 
 	l.checkLogFileSize()
 
+	close(l.ch)
+	l.ch = make(chan struct{})
+
 	return nil
+}
+
+func (l *BinLog) Wait() <-chan struct{} {
+	return l.ch
 }

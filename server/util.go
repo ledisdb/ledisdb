@@ -29,7 +29,9 @@ func ReadLine(rb *bufio.Reader) ([]byte, error) {
 
 func ReadBulkTo(rb *bufio.Reader, w io.Writer) error {
 	l, err := ReadLine(rb)
-	if len(l) == 0 {
+	if err != nil {
+		return err
+	} else if len(l) == 0 {
 		return errBulkFormat
 	} else if l[0] == '$' {
 		var n int
@@ -39,8 +41,11 @@ func ReadBulkTo(rb *bufio.Reader, w io.Writer) error {
 		} else if n == -1 {
 			return nil
 		} else {
-			if _, err = io.CopyN(w, rb, int64(n)); err != nil {
+			var nn int64
+			if nn, err = io.CopyN(w, rb, int64(n)); err != nil {
 				return err
+			} else if nn != int64(n) {
+				return io.ErrShortWrite
 			}
 
 			if l, err = ReadLine(rb); err != nil {

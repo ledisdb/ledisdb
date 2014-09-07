@@ -89,14 +89,14 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Reset()
 
-	//reserve space to write master info
+	//reserve space to write binlog anchor
 	if _, err := c.syncBuf.Write(reserveInfoSpace); err != nil {
 		return err
 	}
 
-	m := &ledis.MasterInfo{logIndex, logPos}
+	m := &ledis.BinLogAnchor{logIndex, logPos}
 
-	if _, err := c.app.ldb.ReadEventsTo(m, &c.syncBuf); err != nil {
+	if _, err := c.app.ldb.ReadEventsToTimeout(m, &c.syncBuf, 5); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()

@@ -204,7 +204,10 @@ func (m *master) runReplication() {
 		if m.info.LogFileIndex == 0 {
 			//try a fullsync
 			if err := m.fullSync(); err != nil {
-				log.Warn("full sync error %s", err.Error())
+				if m.conn != nil {
+					//if conn == nil, other close the replication, not error
+					log.Warn("full sync error %s", err.Error())
+				}
 				return
 			}
 
@@ -216,24 +219,18 @@ func (m *master) runReplication() {
 		}
 
 		for {
-			for {
-				lastIndex := m.info.LogFileIndex
-				lastPos := m.info.LogPos
-				if err := m.sync(); err != nil {
+			if err := m.sync(); err != nil {
+				if m.conn != nil {
+					//if conn == nil, other close the replication, not error
 					log.Warn("sync error %s", err.Error())
-					return
 				}
-
-				if m.info.LogFileIndex == lastIndex && m.info.LogPos == lastPos {
-					//sync no data, wait 1s and retry
-					break
-				}
+				return
 			}
 
 			select {
 			case <-m.quit:
 				return
-			case <-time.After(1 * time.Second):
+			default:
 				break
 			}
 		}
@@ -271,7 +268,7 @@ func (m *master) fullSync() error {
 		return err
 	}
 
-	var head *ledis.MasterInfo
+	var head *ledis.BinLogAnchor
 	head, err = m.app.ldb.LoadDumpFile(dumpPath)
 
 	if err != nil {
@@ -291,6 +288,7 @@ func (m *master) sync() error {
 
 	cmd := ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIndexStr),
 		logIndexStr, len(logPosStr), logPosStr))
+
 	if _, err := m.conn.Write(cmd); err != nil {
 		return err
 	}
