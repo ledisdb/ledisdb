@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 )
 
 type info struct {
@@ -76,8 +75,6 @@ func (i *info) Dump(section string) []byte {
 		i.dumpServer(buf)
 	case "client":
 		i.dumpClients(buf)
-	case "cpu":
-		i.dumpCPU(buf)
 	case "mem":
 		i.dumpMem(buf)
 	case "persistence":
@@ -103,8 +100,6 @@ func (i *info) dumpAll(buf *bytes.Buffer) {
 	buf.Write(Delims)
 	i.dumpClients(buf)
 	buf.Write(Delims)
-	i.dumpCPU(buf)
-	buf.Write(Delims)
 	i.dumpMem(buf)
 	buf.Write(Delims)
 	i.dumpGoroutine(buf)
@@ -123,18 +118,6 @@ func (i *info) dumpClients(buf *bytes.Buffer) {
 	buf.WriteString("# Client\r\n")
 
 	i.dumpPairs(buf, infoPair{"client_num", i.Clients.ConnectedClients})
-}
-
-func (i *info) dumpCPU(buf *bytes.Buffer) {
-	buf.WriteString("# CPU\r\n")
-
-	var rusage syscall.Rusage
-	if err := syscall.Getrusage(syscall.RUSAGE_SELF, &rusage); err != nil {
-		return
-	}
-
-	i.dumpPairs(buf, infoPair{"cpu_sys", rusage.Stime.Usec},
-		infoPair{"cpu_user", rusage.Utime.Usec})
 }
 
 func (i *info) dumpMem(buf *bytes.Buffer) {
