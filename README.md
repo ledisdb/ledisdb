@@ -60,7 +60,7 @@ Create a workspace and checkout ledisdb source
 + Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in `dev.sh`.
 + ```make```
 
-
+**Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch. **
 
 
 ## HyperLevelDB support

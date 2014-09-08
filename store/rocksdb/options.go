@@ -25,6 +25,10 @@ type WriteOptions struct {
 	Opt *C.rocksdb_writeoptions_t
 }
 
+type BlockBasedTableOptions struct {
+	Opt *C.rocksdb_block_based_table_options_t
+}
+
 func NewOptions() *Options {
 	opt := C.rocksdb_options_create()
 	return &Options{opt}
@@ -40,6 +44,11 @@ func NewWriteOptions() *WriteOptions {
 	return &WriteOptions{opt}
 }
 
+func NewBlockBasedTableOptions() *BlockBasedTableOptions {
+	opt := C.rocksdb_block_based_options_create()
+	return &BlockBasedTableOptions{opt}
+}
+
 func (o *Options) Close() {
 	C.rocksdb_options_destroy(o.Opt)
 }
@@ -51,10 +60,6 @@ func (o *Options) SetComparator(cmp *C.rocksdb_comparator_t) {
 func (o *Options) SetErrorIfExists(error_if_exists bool) {
 	eie := boolToUchar(error_if_exists)
 	C.rocksdb_options_set_error_if_exists(o.Opt, eie)
-}
-
-func (o *Options) SetCache(cache *Cache) {
-	C.rocksdb_options_set_cache(o.Opt, cache.Cache)
 }
 
 func (o *Options) SetEnv(env *Env) {
@@ -73,28 +78,12 @@ func (o *Options) SetMaxOpenFiles(n int) {
 	C.rocksdb_options_set_max_open_files(o.Opt, C.int(n))
 }
 
-func (o *Options) SetBlockSize(s int) {
-	C.rocksdb_options_set_block_size(o.Opt, C.size_t(s))
-}
-
-func (o *Options) SetBlockRestartInterval(n int) {
-	C.rocksdb_options_set_block_restart_interval(o.Opt, C.int(n))
-}
-
 func (o *Options) SetCompression(t CompressionOpt) {
 	C.rocksdb_options_set_compression(o.Opt, C.int(t))
 }
 
 func (o *Options) SetCreateIfMissing(b bool) {
 	C.rocksdb_options_set_create_if_missing(o.Opt, boolToUchar(b))
-}
-
-func (o *Options) SetFilterPolicy(fp *FilterPolicy) {
-	var policy *C.rocksdb_filterpolicy_t
-	if fp != nil {
-		policy = fp.Policy
-	}
-	C.rocksdb_options_set_filter_policy(o.Opt, policy)
 }
 
 func (o *Options) SetMaxWriteBufferNumber(n int) {
@@ -139,6 +128,34 @@ func (o *Options) SetMaxBytesForLevelBase(n int) {
 
 func (o *Options) SetMaxBytesForLevelMultiplier(n int) {
 	C.rocksdb_options_set_max_bytes_for_level_multiplier(o.Opt, C.int(n))
+}
+
+func (o *Options) SetBlockBasedTableFactory(opt *BlockBasedTableOptions) {
+	C.rocksdb_options_set_block_based_table_factory(o.Opt, opt.Opt)
+}
+
+func (o *BlockBasedTableOptions) Close() {
+	C.rocksdb_block_based_options_destroy(o.Opt)
+}
+
+func (o *BlockBasedTableOptions) SetFilterPolicy(fp *FilterPolicy) {
+	var policy *C.rocksdb_filterpolicy_t
+	if fp != nil {
+		policy = fp.Policy
+	}
+	C.rocksdb_block_based_options_set_filter_policy(o.Opt, policy)
+}
+
+func (o *BlockBasedTableOptions) SetBlockSize(s int) {
+	C.rocksdb_block_based_options_set_block_size(o.Opt, C.size_t(s))
+}
+
+func (o *BlockBasedTableOptions) SetBlockRestartInterval(n int) {
+	C.rocksdb_block_based_options_set_block_restart_interval(o.Opt, C.int(n))
+}
+
+func (o *BlockBasedTableOptions) SetCache(cache *Cache) {
+	C.rocksdb_block_based_options_set_block_cache(o.Opt, cache.Cache)
 }
 
 func (ro *ReadOptions) Close() {
