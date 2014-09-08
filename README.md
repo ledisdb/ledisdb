@@ -60,7 +60,7 @@ Create a workspace and checkout ledisdb source
 + Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in `dev.sh`.
 + ```make```
 
-
+**Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch. **
 
 
 ## HyperLevelDB support
@@ -89,11 +89,11 @@ Choosing a store database to use is very simple, you have two ways:
 
     Flag command set will overwrite config set.
 
-**Caveat**
+## Lua support
 
-+ You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
-+ Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
-+ `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
++ You must install lua by yourself first and be sure that `golua` can find and link it.
++ `go get -u github.com/siddontang/golua/lua`
++ `make`
 
 ## Configuration
 
@@ -158,6 +158,12 @@ See [Issues todo](https://github.com/siddontang/ledisdb/issues?labels=todo&page=
 + [Official Website](http://ledisdb.com)
 + [GoDoc](https://godoc.org/github.com/siddontang/ledisdb)
 + [Server Commands](https://github.com/siddontang/ledisdb/wiki/Commands)
+
+## Caveat
+
++ You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
++ Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
++ `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
 
 
 ## Thanks

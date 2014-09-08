@@ -2497,7 +2497,6 @@ The optional parameter can be used to select a specific section of information:
 + server: General information about the Redis server
 + client: Client connections section
 + mem: Memory consumption related information
-+ cpu: CPU consumption statistics
 + goroutine: Goroutine num
 + persistence: Strorage related information
 

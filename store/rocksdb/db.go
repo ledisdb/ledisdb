@@ -77,7 +77,8 @@ type DB struct {
 
 	env *Env
 
-	opts *Options
+	opts      *Options
+	blockOpts *BlockBasedTableOptions
 
 	//for default read and write options
 	readOpts     *ReadOptions
@@ -106,6 +107,7 @@ func (db *DB) open() error {
 
 func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	opts := NewOptions()
+	blockOpts := NewBlockBasedTableOptions()
 
 	opts.SetCreateIfMissing(true)
 
@@ -117,11 +119,11 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	opts.SetEnv(db.env)
 
 	db.cache = NewLRUCache(cfg.CacheSize)
-	opts.SetCache(db.cache)
+	blockOpts.SetCache(db.cache)
 
 	//we must use bloomfilter
 	db.filter = NewBloomFilter(defaultFilterBits)
-	opts.SetFilterPolicy(db.filter)
+	blockOpts.SetFilterPolicy(db.filter)
 
 	if !cfg.Compression {
 		opts.SetCompression(NoCompression)
@@ -129,7 +131,7 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 		opts.SetCompression(SnappyCompression)
 	}
 
-	opts.SetBlockSize(cfg.BlockSize)
+	blockOpts.SetBlockSize(cfg.BlockSize)
 
 	opts.SetWriteBufferSize(cfg.WriteBufferSize)
 
@@ -142,7 +144,10 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	opts.SetLevel0StopWritesTrigger(64)
 	opts.SetTargetFileSizeBase(32 * 1024 * 1024)
 
+	opts.SetBlockBasedTableFactory(blockOpts)
+
 	db.opts = opts
+	db.blockOpts = blockOpts
 
 	db.readOpts = NewReadOptions()
 	db.writeOpts = NewWriteOptions()
@@ -157,19 +162,21 @@ func (db *DB) Close() error {
 		db.db = nil
 	}
 
-	db.opts.Close()
+	if db.filter != nil {
+		db.filter.Close()
+	}
 
 	if db.cache != nil {
 		db.cache.Close()
 	}
 
-	if db.filter != nil {
-		db.filter.Close()
-	}
-
 	if db.env != nil {
 		db.env.Close()
 	}
+
+	//db.blockOpts.Close()
+
+	db.opts.Close()
 
 	db.readOpts.Close()
 	db.writeOpts.Close()
