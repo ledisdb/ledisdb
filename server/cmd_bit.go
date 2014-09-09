@@ -272,7 +272,7 @@ func bpersistCommand(c *client) error {
 	return nil
 }
 
-func bscanCommand(c *client) error {
+func bxscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -305,5 +305,5 @@ func init() {
 	register("bexpireat", bexpireAtCommand)
 	register("bttl", bttlCommand)
 	register("bpersist", bpersistCommand)
-	register("bscan", bscanCommand)
+	register("bxscan", bxscanCommand)
 }

@@ -63,12 +63,12 @@ class TestOtherCommands(unittest.TestCase):
 
     def check_keys(self, scan_type):
         d = {
-            "scan": l.scan,
-            "sscan": l.sscan,
-            "lscan": l.lscan,
-            "hscan": l.hscan,
-            "zscan": l.zscan,
-            "bscan": l.bscan
+            "xscan": l.xscan,
+            "sxscan": l.sxscan,
+            "lxscan": l.lxscan,
+            "hxscan": l.hxscan,
+            "zxscan": l.zxscan,
+            "bxscan": l.bxscan
         }
 
         key, keys = d[scan_type]()
@@ -82,40 +82,40 @@ class TestOtherCommands(unittest.TestCase):
         assert set(keys) == set([b("b"), b("c")])
 
 
-    def test_scan(self):
+    def test_xscan(self):
         d = {"a":1, "b":2, "c": 3}
         l.mset(d)
-        self.check_keys("scan") 
+        self.check_keys("xscan") 
 
 
-    def test_lscan(self):
+    def test_lxscan(self):
         l.rpush("a", 1)
         l.rpush("b", 1)
         l.rpush("c", 1)
-        self.check_keys("lscan")
+        self.check_keys("lxscan")
 
 
-    def test_hscan(self):
+    def test_hxscan(self):
         l.hset("a", "hello", "world")
         l.hset("b", "hello", "world")
         l.hset("c", "hello", "world")
-        self.check_keys("hscan")
+        self.check_keys("hxscan")
 
-    def test_sscan(self):
+    def test_sxscan(self):
         l.sadd("a", 1)
         l.sadd("b", 2)
         l.sadd("c", 3)
-        self.check_keys("sscan")
+        self.check_keys("sxscan")
 
-    def test_zscan(self):
+    def test_zxscan(self):
         l.zadd("a", 1, "a")
         l.zadd("b", 1, "a")
         l.zadd("c", 1, "a")
-        self.check_keys("zscan")
+        self.check_keys("zxscan")
 
-    def test_bscan(self):
+    def test_bxscan(self):
         l.bsetbit("a", 1, 1)
         l.bsetbit("b", 1, 1)
         l.bsetbit("c", 1, 1)
-        self.check_keys("bscan")
+        self.check_keys("bxscan")
 

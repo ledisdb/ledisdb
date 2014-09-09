@@ -638,7 +638,7 @@ func zinterstoreCommand(c *client) error {
 	return err
 }
 
-func zscanCommand(c *client) error {
+func zxscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -686,5 +686,5 @@ func init() {
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
 	register("zpersist", zpersistCommand)
-	register("zscan", zscanCommand)
+	register("zxscan", zxscanCommand)
 }

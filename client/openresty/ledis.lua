@@ -40,7 +40,7 @@ local commands = {
     "expire",
     "expireat",
     "persist",
-    "scan",
+    "xscan",
 
     --[[hash]]
     "hdel", 
@@ -61,7 +61,7 @@ local commands = {
     "hexpireat",
     "httl",
     "hpersist",
-    "hscan",
+    "hxscan",
 
     --[[list]]
     "lindex", 
@@ -78,7 +78,7 @@ local commands = {
     "lexpireat",
     "lttl",
     "lpersist",
-    "lscan",
+    "lxscan",
 
     --[[zset]]
     "zadd", 
@@ -102,7 +102,7 @@ local commands = {
     "zexpireat",
     "zttl",
     "zpersist",
-    "zscan",
+    "zxscan",
 
     --[[bit]]
     "bget",
@@ -116,7 +116,7 @@ local commands = {
     "bexpireat",
     "bttl",
     "bpersist",
-    "bscan",
+    "bxscan",
 
     --[[set]]
     "sadd",
@@ -138,7 +138,7 @@ local commands = {
     "sexpireat",
     "sttl",
     "spersist",
-    "sscan",
+    "sxscan",
 
     --[[server]]
     "ping",

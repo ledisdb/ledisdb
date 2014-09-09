@@ -292,7 +292,7 @@ func hpersistCommand(c *client) error {
 	return nil
 }
 
-func hscanCommand(c *client) error {
+func hxscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -334,5 +334,5 @@ func init() {
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
 	register("hpersist", hpersistCommand)
-	register("hscan", hscanCommand)
+	register("hxscan", hxscanCommand)
 }

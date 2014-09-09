@@ -528,37 +528,37 @@
         "readonly": false
     },
 
-    "SCAN": {
+    "XSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "KV",
         "readonly": true
     },
 
-    "HSCAN": {
+    "HXSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Hash",
         "readonly": true
     },
 
-    "LSCAN": {
+    "LXSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "List",
         "readonly": true
     },
 
-    "SSCAN": {
+    "SXSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Set",
         "readonly": true
     },
 
-    "ZSCAN": {
+    "ZXSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "ZSet",
         "readonly": true
     },
 
-    "BSCAN": {
+    "BXSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "Bitmap",
         "readonly": true

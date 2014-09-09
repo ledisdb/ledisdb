@@ -26,7 +26,7 @@ Table of Contents
 	- [EXPIREAT key timestamp](#expireat-key-timestamp)
 	- [TTL key](#ttl-key)
 	- [PERSIST key](#persist-key)
-	- [SCAN key [MATCH match] [COUNT count]](#scan-key-match-match-count-count)
+	- [XSCAN key [MATCH match] [COUNT count]](#xscan-key-match-match-count-count)
 - [Hash](#hash)
 	- [HDEL key field [field ...]](#hdel-key-field-field-)
 	- [HEXISTS key field](#hexists-key-field)
@@ -45,7 +45,7 @@ Table of Contents
 	- [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
 	- [HTTL key](#httl-key)
 	- [HPERSIST key](#hpersist-key)
-	- [HSCAN key [MATCH match] [COUNT count]](#hscan-key-match-match-count-count)
+	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
 - [List](#list)
 	- [LINDEX key index](#lindex-key-index)
 	- [LLEN key](#llen-key)
@@ -60,7 +60,7 @@ Table of Contents
 	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
 	- [LTTL key](#lttl-key)
 	- [LPERSIST key](#lpersist-key)
-	- [LSCAN key [MATCH match] [COUNT count]](#lscan-key-match-match-count-count)
+	- [LXSCAN key [MATCH match] [COUNT count]](#lxscan-key-match-match-count-count)
 - [Set](#set)
 	- [SADD key member [member ...]](#sadd-key-member-member-)
 	- [SCARD key](#scard-key)
@@ -79,7 +79,7 @@ Table of Contents
 	- [SEXPIREAT key timestamp](#sexpireat-key-timestamp)
 	- [STTL key](#sttl-key)
 	- [SPERSIST key](#spersist-key)
-	- [SSCAN key [MATCH match] [COUNT count]](#sscan-key-match-match-count-count)
+	- [SXSCAN key [MATCH match] [COUNT count]](#sxscan-key-match-match-count-count)
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
 	- [ZCARD key](#zcard-key)
@@ -105,7 +105,7 @@ Table of Contents
 ](#zunionstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
     - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
-	- [ZSCAN key [MATCH match] [COUNT count]](#zscan-key-match-match-count-count)
+	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
 - [Bitmap](#bitmap)
 	- [BGET key](#bget-key)
 	- [BGETBIT key offset](#bgetbit-key-offset)
@@ -117,7 +117,7 @@ Table of Contents
 	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
 	- [BTTL key](#bttl-key)
 	- [BPERSIST key](#bpersist-key)
-	- [BSCAN key [MATCH match] [COUNT count]](#bscan-key-match-match-count-count)
+	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 - [Replication](#replication)
 	- [SLAVEOF host port](#slaveof-host-port)
 	- [FULLSYNC](#fullsync)
@@ -469,7 +469,7 @@ ledis> TTL mykey
 (integer) -1
 ```
 
-### SCAN key [MATCH match] [COUNT count] 
+### XSCAN key [MATCH match] [COUNT count] 
 
 Iterate KV keys incrementally.
 
@@ -490,19 +490,19 @@ ledis>set b 2
 OK
 ledis>set c 3
 OK
-127.0.0.1:6380>scan "" 
+127.0.0.1:6380>xscan "" 
 1) ""
 2) ["a" "b" "c"]
-ledis>scan "" count 1
+ledis>xscan "" count 1
 1) "a"
 2) ["a"]
-ledis>scan "a" count 1
+ledis>xscan "a" count 1
 1) "b"
 2) ["b"]
-ledis>scan "b" count 1
+ledis>xscan "b" count 1
 1) "c"
 2) ["c"]
-ledis>scan "c" count 1
+ledis>xscan "c" count 1
 1) ""
 2) []
 ```
@@ -870,11 +870,11 @@ ledis> HPERSIST not_exists_key
 (integer) 0
 ```
 
-### HSCAN key [MATCH match] [COUNT count] 
+### HXSCAN key [MATCH match] [COUNT count] 
 
 Iterate Hash keys incrementally.
 
-See [Scan](#scan-key-match-match-count-count) for more information.
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## List
 
@@ -1167,11 +1167,11 @@ ledis> LPERSIST b
 (integer) 0
 ```
 
-### LSCAN key [MATCH match] [COUNT count] 
+### LXSCAN key [MATCH match] [COUNT count] 
 
 Iterate list keys incrementally.
 
-See [Scan](#scan-key-match-match-count-count) for more information.
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 
 ## Set
@@ -1595,11 +1595,11 @@ ledis> STTL key
 (integer) -1
 ```
 
-### SSCAN key [MATCH match] [COUNT count] 
+### SXSCAN key [MATCH match] [COUNT count] 
 
 Iterate Set keys incrementally.
 
-See [Scan](#scan-key-match-match-count-count) for more information.
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 
 ## ZSet
@@ -2221,11 +2221,11 @@ ledis> ZRANGE out 0 -1 WITHSCORES
 4) "10"
 ```
 
-### ZSCAN key [MATCH match] [COUNT count] 
+### ZXSCAN key [MATCH match] [COUNT count] 
 
 Iterate ZSet keys incrementally.
 
-See [Scan](#scan-key-match-match-count-count) for more information.
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 
 ## Bitmap
@@ -2387,11 +2387,11 @@ ledis> BCOUNT flag 5 6
 (refer to [PERSIST](#persist-key) api for other types)
 
 
-### BSCAN key [MATCH match] [COUNT count] 
+### BXSCAN key [MATCH match] [COUNT count] 
 
 Iterate Bitmap keys incrementally.
 
-See [Scan](#scan-key-match-match-count-count) for more information.
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 
 ## Replication

@@ -320,7 +320,7 @@ func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 	return
 }
 
-func scanCommand(c *client) error {
+func xscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -358,5 +358,5 @@ func init() {
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)
 	register("persist", persistCommand)
-	register("scan", scanCommand)
+	register("xscan", xscanCommand)
 }

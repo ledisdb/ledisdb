@@ -262,7 +262,7 @@ func spersistCommand(c *client) error {
 	return nil
 }
 
-func sscanCommand(c *client) error {
+func sxscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -301,5 +301,5 @@ func init() {
 	register("sexpireat", sexpireAtCommand)
 	register("sttl", sttlCommand)
 	register("spersist", spersistCommand)
-	register("sscan", sscanCommand)
+	register("sxscan", sxscanCommand)
 }
