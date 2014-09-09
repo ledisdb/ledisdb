@@ -12,7 +12,7 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 + Supports transaction using LMDB or BotlDB.
 + Supports lua scripting.
 + Supports expiration and ttl.
-+ Redis clients, like redis-cli, are supported directly.
++ Supports using redis-cli directly.
 + Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
 + Easy to embed in your own Go application. 
 + Restful API support, json/bson/msgpack output.

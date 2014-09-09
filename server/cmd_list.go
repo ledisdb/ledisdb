@@ -228,7 +228,7 @@ func lpersistCommand(c *client) error {
 	return nil
 }
 
-func lscanCommand(c *client) error {
+func lxscanCommand(c *client) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
@@ -266,5 +266,5 @@ func init() {
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
-	register("lscan", lscanCommand)
+	register("lxscan", lxscanCommand)
 }

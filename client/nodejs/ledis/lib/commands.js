@@ -20,7 +20,7 @@ module.exports = [
 	"bexpireat",
 	"bttl",
 	"bpersist",
-	"bscan",
+	"bxscan",
 
 	"hdel",
 	"hexists",
@@ -40,7 +40,7 @@ module.exports = [
 	"hexpireat",
 	"httl",
 	"hpersist",
-	"hscan",
+	"hxscan",
 
 	"decr",
 	"decrby",
@@ -58,7 +58,7 @@ module.exports = [
 	"expireat",
 	"ttl",
 	"persist",
-	"scan",
+	"xscan",
 
 	"lindex",
 	"llen",
@@ -75,7 +75,7 @@ module.exports = [
 	"lexpireat",
 	"lttl",
 	"lpersist",
-	"lscan",
+	"lxscan",
 
 	"zadd",
 	"zcard",
@@ -101,7 +101,7 @@ module.exports = [
 	"zexpireat",
 	"zttl",
 	"zpersist",
-	"zscan",
+	"zxscan",
 
 
 	"sadd",
@@ -123,7 +123,7 @@ module.exports = [
 	"sexpireat",
 	"sttl",
 	"spersist",
-	"sscan",
+	"sxscan",
 
     "begin",
     "rollback",
