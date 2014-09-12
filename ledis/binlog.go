@@ -256,6 +256,10 @@ func (l *BinLog) checkLogFileSize() bool {
 }
 
 func (l *BinLog) closeLog() {
+	if l.logFile == nil {
+		return
+	}
+
 	l.lastLogIndex++
 
 	l.logFile.Close()
@@ -263,6 +267,9 @@ func (l *BinLog) closeLog() {
 }
 
 func (l *BinLog) purge(n int) {
+	if len(l.logNames) < n {
+		n = len(l.logNames)
+	}
 	for i := 0; i < n; i++ {
 		logPath := path.Join(l.path, l.logNames[i])
 		os.Remove(logPath)
@@ -338,6 +345,9 @@ func (l *BinLog) PurgeAll() error {
 	defer l.Unlock()
 
 	l.closeLog()
+
+	l.purge(len(l.logNames))
+
 	return l.openNewLogFile()
 }
 
