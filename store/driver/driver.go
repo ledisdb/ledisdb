@@ -23,6 +23,8 @@ type IDB interface {
 	NewSnapshot() (ISnapshot, error)
 
 	Begin() (Tx, error)
+
+	Compact() error
 }
 
 type ISnapshot interface {

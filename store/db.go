@@ -6,6 +6,11 @@ import (
 
 type DB struct {
 	driver.IDB
+	name string
+}
+
+func (db *DB) String() string {
+	return db.name
 }
 
 func (db *DB) NewIterator() *Iterator {
@@ -27,6 +32,10 @@ func (db *DB) NewSnapshot() (*Snapshot, error) {
 	}
 
 	return s, nil
+}
+
+func (db *DB) Compact() error {
+	return db.IDB.Compact()
 }
 
 func (db *DB) RangeIterator(min []byte, max []byte, rangeType uint8) *RangeLimitIterator {

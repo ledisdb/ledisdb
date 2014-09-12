@@ -148,6 +148,9 @@ func checkIterator(it *RangeLimitIterator, cv ...int) error {
 	v := make([]string, 0, len(cv))
 	for ; it.Valid(); it.Next() {
 		k := it.Key()
+		if string(it.Value()) != "value" {
+			return fmt.Errorf("invalid value")
+		}
 		v = append(v, string(k))
 	}
 
@@ -175,7 +178,7 @@ func testIterator(db *DB, t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		key := []byte(fmt.Sprintf("key_%d", i))
-		value := []byte("")
+		value := []byte("value")
 		db.Put(key, value)
 	}
 

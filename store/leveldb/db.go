@@ -270,6 +270,11 @@ func (db *DB) Begin() (driver.Tx, error) {
 	return nil, driver.ErrTxSupport
 }
 
+func (db *DB) Compact() error {
+	C.leveldb_compact_range(db.db, nil, 0, nil, 0)
+	return nil
+}
+
 func init() {
 	driver.Register(Store{})
 }
