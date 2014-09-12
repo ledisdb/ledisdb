@@ -238,14 +238,6 @@ class Ledis(object):
         "Ping the Ledis server"
         return self.execute_command('PING')
 
-    def select(self, db):
-        """Select a Ledis db, ``db`` is integer type"""
-        try:
-            db = int(db)
-        except ValueError:
-            db = 0
-        return self.execute_command('SELECT', db)
-
     def info(self, section=None):
         """
         Return 
