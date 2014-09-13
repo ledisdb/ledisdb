@@ -77,6 +77,10 @@ fi
 
 #check lua
 if [ -f $LUA_DIR/include/lua.h ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$LUA_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$LUA_DIR/lib -llua"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LUA_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LUA_DIR/lib)
     GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
 fi
 
