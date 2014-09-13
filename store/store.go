@@ -27,7 +27,7 @@ func Open(cfg *config.Config) (*DB, error) {
 
 	path := getStorePath(cfg)
 
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
 

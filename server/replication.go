@@ -38,7 +38,7 @@ func (m *MasterInfo) Save(filePath string) error {
 	filePathBak := fmt.Sprintf("%s.bak", filePath)
 
 	var fd *os.File
-	fd, err = os.OpenFile(filePathBak, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	fd, err = os.OpenFile(filePathBak, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (m *master) fullSync() error {
 	}
 
 	dumpPath := path.Join(m.app.cfg.DataDir, "master.dump")
-	f, err := os.OpenFile(dumpPath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	f, err := os.OpenFile(dumpPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

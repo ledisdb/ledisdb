@@ -117,7 +117,7 @@ func NewBinLog(cfg *config.Config) (*BinLog, error) {
 
 	l.path = path.Join(cfg.DataDir, "binlog")
 
-	if err := os.MkdirAll(l.path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(l.path, 0755); err != nil {
 		return nil, err
 	}
 
