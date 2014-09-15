@@ -50,6 +50,7 @@ type Config struct {
 	DataDir string `toml:"data_dir"`
 
 	DBName string `toml:"db_name"`
+	DBPath string `toml:"db_path"`
 
 	LevelDB LevelDBConfig `toml:"leveldb"`
 

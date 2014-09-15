@@ -27,6 +27,9 @@ slaveof = ""
 #   
 db_name = "leveldb"
 
+# if not set, use data_dir/"db_name"_data
+db_path = ""
+
 [leveldb]
 compression = false
 block_size = 32768
