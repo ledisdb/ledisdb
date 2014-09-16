@@ -134,4 +134,24 @@ func testLogs(t *testing.T, l Store) {
 	if err := l.GetLog(5, &out); err != ErrLogNotFound {
 		t.Fatalf("err: %v ", err)
 	}
+
+	if err := l.Clear(); err != nil {
+		t.Fatal(err)
+	}
+
+	idx, err = l.FirstID()
+	if err != nil {
+		t.Fatalf("err: %v ", err)
+	}
+	if idx != 0 {
+		t.Fatalf("bad idx: %d", idx)
+	}
+
+	idx, err = l.LastID()
+	if err != nil {
+		t.Fatalf("err: %v ", err)
+	}
+	if idx != 0 {
+		t.Fatalf("bad idx: %d", idx)
+	}
 }
