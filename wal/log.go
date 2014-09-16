@@ -1,6 +1,7 @@
 package wal
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 )
@@ -12,6 +13,23 @@ type Log struct {
 	// 1 for snappy compression
 	Compression uint8
 	Data        []byte
+}
+
+func (l *Log) Marshal() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 17+len(l.Data)))
+	buf.Reset()
+
+	if err := l.Encode(buf); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (l *Log) Unmarshal(b []byte) error {
+	buf := bytes.NewBuffer(b)
+
+	return l.Decode(buf)
 }
 
 func (l *Log) Encode(w io.Writer) error {

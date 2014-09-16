@@ -100,9 +100,12 @@ func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 	w := s.db.NewWriteBatch()
 	defer w.Rollback()
 
-	last := s.last
+	last, err := s.lastID()
+	if err != nil {
+		return err
+	}
 
-	s.reset()
+	s.last = InvalidLogID
 
 	var buf bytes.Buffer
 	for _, log := range logs {
@@ -121,7 +124,12 @@ func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 		w.Put(key, buf.Bytes())
 	}
 
-	return w.Commit()
+	if err := w.Commit(); err != nil {
+		return err
+	}
+
+	s.last = last
+	return nil
 }
 
 func (s *GoLevelDBStore) DeleteRange(min, max uint64) error {
@@ -165,6 +173,7 @@ func (s *GoLevelDBStore) DeleteRange(min, max uint64) error {
 	if err = w.Commit(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -176,6 +185,7 @@ func (s *GoLevelDBStore) Clear() error {
 		s.db.Close()
 	}
 
+	s.reset()
 	os.RemoveAll(s.cfg.DBPath)
 
 	return s.open()

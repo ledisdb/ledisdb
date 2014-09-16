@@ -13,16 +13,6 @@ var (
 	ErrLessLogID   = errors.New("log id is less")
 )
 
-type LogIDGenerator interface {
-	// Force reset to id, if current id is larger than id, nothing reset
-	Reset(id uint64) error
-
-	// ID must be first at 1, and increased monotonously, 0 is invalid
-	GenerateID() (uint64, error)
-
-	Close() error
-}
-
 type Store interface {
 	GetLog(id uint64, log *Log) error
 

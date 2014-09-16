@@ -24,4 +24,17 @@ func TestLog(t *testing.T) {
 	if !reflect.DeepEqual(l1, l2) {
 		t.Fatal("must equal")
 	}
+
+	if buf, err := l1.Marshal(); err != nil {
+		t.Fatal(err)
+	} else {
+		if err = l2.Unmarshal(buf); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if !reflect.DeepEqual(l1, l2) {
+		t.Fatal("must equal")
+	}
+
 }
