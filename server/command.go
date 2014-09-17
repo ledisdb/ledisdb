@@ -5,6 +5,7 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type CommandFunc func(c *client) error
@@ -21,6 +22,11 @@ func register(name string, f CommandFunc) {
 
 func pingCommand(c *client) error {
 	c.resp.writeStatus(PONG)
+	return nil
+}
+
+func timeCommand(c *client) error {
+	c.resp.writeInteger(time.Now().Unix())
 	return nil
 }
 
@@ -103,6 +109,7 @@ func flushdbCommand(c *client) error {
 
 func init() {
 	register("ping", pingCommand)
+	register("time", timeCommand)
 	register("echo", echoCommand)
 	register("select", selectCommand)
 	register("info", infoCommand)
