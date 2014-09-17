@@ -12,9 +12,11 @@ type batch struct {
 
 	sync.Locker
 
-	logs [][]byte
+	eb *eventBatch
 
 	tx *Tx
+
+	noLogging bool
 }
 
 func (b *batch) Commit() error {
@@ -22,17 +24,6 @@ func (b *batch) Commit() error {
 	defer b.l.commitLock.Unlock()
 
 	err := b.WriteBatch.Commit()
-
-	if b.l.binlog != nil {
-		if err == nil {
-			if b.tx == nil {
-				b.l.binlog.Log(b.logs...)
-			} else {
-				b.tx.logs = append(b.tx.logs, b.logs...)
-			}
-		}
-		b.logs = [][]byte{}
-	}
 
 	return err
 }
@@ -42,27 +33,26 @@ func (b *batch) Lock() {
 }
 
 func (b *batch) Unlock() {
-	if b.l.binlog != nil {
-		b.logs = [][]byte{}
-	}
+	b.noLogging = false
 	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
 func (b *batch) Put(key []byte, value []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogPut(key, value)
-		b.logs = append(b.logs, buf)
-	}
 	b.WriteBatch.Put(key, value)
 }
 
 func (b *batch) Delete(key []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogDelete(key)
-		b.logs = append(b.logs, buf)
-	}
+
 	b.WriteBatch.Delete(key)
+}
+
+func (b *batch) LogEanbled() bool {
+	return !b.noLogging && b.l.log != nil
+}
+
+func (b *batch) DisableLog(d bool) {
+	b.noLogging = d
 }
 
 type dbBatchLocker struct {
@@ -100,6 +90,8 @@ func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch
 	b.tx = tx
 	b.Locker = locker
 
-	b.logs = [][]byte{}
+	b.eb = new(eventBatch)
+	b.noLogging = false
+
 	return b
 }

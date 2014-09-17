@@ -38,7 +38,7 @@ func TestDump(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := slave.LoadDumpFile("/tmp/testdb.dump"); err != nil {
+	if err := slave.LoadDumpFile("/tmp/testdb.dump"); err != nil {
 		t.Fatal(err)
 	}
 

@@ -2,6 +2,8 @@ package wal
 
 import (
 	"errors"
+	"github.com/siddontang/ledisdb/config"
+	"path"
 )
 
 const (
@@ -26,11 +28,25 @@ type Store interface {
 	StoreLog(log *Log) error
 	StoreLogs(logs []*Log) error
 
-	// Delete logs [start, stop]
-	DeleteRange(start, stop uint64) error
+	// Delete first n logs
+	Purge(n uint64) error
+
+	// Delete logs before n seconds
+	PurgeExpired(n int) error
 
 	// Clear all logs
 	Clear() error
 
 	Close() error
+}
+
+func NewStore(cfg *config.Config) (Store, error) {
+	//now we only support goleveldb
+
+	base := cfg.WAL.Path
+	if len(base) == 0 {
+		base = path.Join(cfg.DataDir, "wal")
+	}
+
+	return NewGoLevelDBStore(base)
 }

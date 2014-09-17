@@ -30,6 +30,8 @@ db_name = "leveldb"
 # if not set, use data_dir/"db_name"_data
 db_path = ""
 
+use_wal = true
+
 [leveldb]
 compression = false
 block_size = 32768
@@ -41,8 +43,10 @@ max_open_files = 1024
 map_size = 524288000
 nosync = true
 
-[binlog]
-max_file_size = 0
-max_file_num = 0
+[wal]
+# if not set, use data_dir/wal
+path = ""
+
+
 
 

@@ -5,6 +5,7 @@ import (
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
+	"github.com/siddontang/ledisdb/wal"
 	"sync"
 	"time"
 )
@@ -18,10 +19,12 @@ type Ledis struct {
 	quit chan struct{}
 	jobs *sync.WaitGroup
 
-	binlog *BinLog
+	log wal.Store
 
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
+
+	readOnly bool
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
@@ -41,13 +44,10 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if cfg.BinLog.MaxFileNum > 0 && cfg.BinLog.MaxFileSize > 0 {
-		l.binlog, err = NewBinLog(cfg)
-		if err != nil {
+	if cfg.UseWAL {
+		if l.log, err = wal.NewStore(cfg); err != nil {
 			return nil, err
 		}
-	} else {
-		l.binlog = nil
 	}
 
 	for i := uint8(0); i < MaxDBNumber; i++ {
@@ -65,9 +65,9 @@ func (l *Ledis) Close() {
 
 	l.ldb.Close()
 
-	if l.binlog != nil {
-		l.binlog.Close()
-		l.binlog = nil
+	if l.log != nil {
+		l.log.Close()
+		l.log = nil
 	}
 }
 

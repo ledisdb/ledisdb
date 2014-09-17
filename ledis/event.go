@@ -1,97 +1,108 @@
 package ledis
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
+	"io"
 	"strconv"
 )
 
-var (
-	errBinLogDeleteType  = errors.New("invalid bin log delete type")
-	errBinLogPutType     = errors.New("invalid bin log put type")
-	errBinLogCommandType = errors.New("invalid bin log command type")
+const (
+	kTypeDeleteEvent uint8 = 0
+	kTypePutEvent    uint8 = 1
 )
 
-func encodeBinLogDelete(key []byte) []byte {
-	buf := make([]byte, 1+len(key))
-	buf[0] = BinLogTypeDeletion
-	copy(buf[1:], key)
-	return buf
+var (
+	errInvalidPutEvent    = errors.New("invalid put event")
+	errInvalidDeleteEvent = errors.New("invalid delete event")
+	errInvalidEvent       = errors.New("invalid event")
+)
+
+type eventBatch struct {
+	bytes.Buffer
 }
 
-func decodeBinLogDelete(sz []byte) ([]byte, error) {
-	if len(sz) < 1 || sz[0] != BinLogTypeDeletion {
-		return nil, errBinLogDeleteType
+type event struct {
+	key   []byte
+	value []byte //value = nil for delete event
+}
+
+func (b *eventBatch) Put(key []byte, value []byte) {
+	l := uint32(len(key) + len(value) + 1 + 2)
+	binary.Write(b, binary.BigEndian, l)
+	b.WriteByte(kTypePutEvent)
+	keyLen := uint16(len(key))
+	binary.Write(b, binary.BigEndian, keyLen)
+	b.Write(key)
+	b.Write(value)
+}
+
+func (b *eventBatch) Delete(key []byte) {
+	l := uint32(len(key) + 1)
+	binary.Write(b, binary.BigEndian, l)
+	b.WriteByte(kTypeDeleteEvent)
+	b.Write(key)
+}
+
+func decodeEventBatch(data []byte) (ev []event, err error) {
+	ev = make([]event, 0, 16)
+	for {
+		if len(data) == 0 {
+			return ev, nil
+		}
+
+		if len(data) < 4 {
+			return nil, io.ErrUnexpectedEOF
+		}
+
+		l := binary.BigEndian.Uint32(data)
+		data = data[4:]
+		if uint32(len(data)) < l {
+			return nil, io.ErrUnexpectedEOF
+		}
+
+		var e event
+		if err := decodeEvent(&e, data[0:l]); err != nil {
+			return nil, err
+		}
+		ev = append(ev, e)
+		data = data[l:]
+	}
+}
+
+func decodeEvent(e *event, b []byte) error {
+	if len(b) == 0 {
+		return errInvalidEvent
 	}
 
-	return sz[1:], nil
-}
+	switch b[0] {
+	case kTypePutEvent:
+		if len(b[1:]) < 2 {
+			return errInvalidPutEvent
+		}
 
-func encodeBinLogPut(key []byte, value []byte) []byte {
-	buf := make([]byte, 3+len(key)+len(value))
-	buf[0] = BinLogTypePut
-	pos := 1
-	binary.BigEndian.PutUint16(buf[pos:], uint16(len(key)))
-	pos += 2
-	copy(buf[pos:], key)
-	pos += len(key)
-	copy(buf[pos:], value)
+		keyLen := binary.BigEndian.Uint16(b[1:3])
+		b = b[3:]
+		if len(b) < int(keyLen) {
+			return errInvalidPutEvent
+		}
 
-	return buf
-}
-
-func decodeBinLogPut(sz []byte) ([]byte, []byte, error) {
-	if len(sz) < 3 || sz[0] != BinLogTypePut {
-		return nil, nil, errBinLogPutType
-	}
-
-	keyLen := int(binary.BigEndian.Uint16(sz[1:]))
-	if 3+keyLen > len(sz) {
-		return nil, nil, errBinLogPutType
-	}
-
-	return sz[3 : 3+keyLen], sz[3+keyLen:], nil
-}
-
-func FormatBinLogEvent(event []byte) (string, error) {
-	logType := uint8(event[0])
-
-	var err error
-	var k []byte
-	var v []byte
-
-	var buf []byte = make([]byte, 0, 1024)
-
-	switch logType {
-	case BinLogTypePut:
-		k, v, err = decodeBinLogPut(event)
-		buf = append(buf, "PUT "...)
-	case BinLogTypeDeletion:
-		k, err = decodeBinLogDelete(event)
-		buf = append(buf, "DELETE "...)
+		e.key = b[0:keyLen]
+		e.value = b[keyLen:]
+	case kTypeDeleteEvent:
+		e.value = nil
+		e.key = b[1:]
 	default:
-		err = errInvalidBinLogEvent
+		return errInvalidEvent
 	}
 
-	if err != nil {
-		return "", err
-	}
-
-	if buf, err = formatDataKey(buf, k); err != nil {
-		return "", err
-	}
-
-	if v != nil && len(v) != 0 {
-		buf = append(buf, fmt.Sprintf(" %q", v)...)
-	}
-
-	return String(buf), nil
+	return nil
 }
 
-func formatDataKey(buf []byte, k []byte) ([]byte, error) {
+func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 	if len(k) < 2 {
-		return nil, errInvalidBinLogEvent
+		return nil, errInvalidEvent
 	}
 
 	buf = append(buf, fmt.Sprintf("DB:%2d ", k[0])...)
@@ -208,7 +219,7 @@ func formatDataKey(buf []byte, k []byte) ([]byte, error) {
 			buf = strconv.AppendQuote(buf, String(key))
 		}
 	default:
-		return nil, errInvalidBinLogEvent
+		return nil, errInvalidEvent
 	}
 
 	return buf, nil

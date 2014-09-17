@@ -4,19 +4,31 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"time"
 )
 
 type Log struct {
 	ID         uint64
 	CreateTime uint32
-	// 0 for no compression
-	// 1 for snappy compression
-	Compression uint8
-	Data        []byte
+
+	Data []byte
+}
+
+func NewLog(id uint64, data []byte) *Log {
+	l := new(Log)
+	l.ID = id
+	l.CreateTime = uint32(time.Now().Unix())
+	l.Data = data
+
+	return l
+}
+
+func (l *Log) HeadSize() int {
+	return 16
 }
 
 func (l *Log) Marshal() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 17+len(l.Data)))
+	buf := bytes.NewBuffer(make([]byte, l.HeadSize()+len(l.Data)))
 	buf.Reset()
 
 	if err := l.Encode(buf); err != nil {
@@ -33,8 +45,7 @@ func (l *Log) Unmarshal(b []byte) error {
 }
 
 func (l *Log) Encode(w io.Writer) error {
-	length := uint32(17)
-	buf := make([]byte, length)
+	buf := make([]byte, l.HeadSize())
 
 	pos := 0
 	binary.BigEndian.PutUint64(buf[pos:], l.ID)
@@ -42,9 +53,6 @@ func (l *Log) Encode(w io.Writer) error {
 
 	binary.BigEndian.PutUint32(buf[pos:], l.CreateTime)
 	pos += 4
-
-	buf[pos] = l.Compression
-	pos++
 
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(l.Data)))
 
@@ -63,8 +71,7 @@ func (l *Log) Encode(w io.Writer) error {
 }
 
 func (l *Log) Decode(r io.Reader) error {
-	length := uint32(17)
-	buf := make([]byte, length)
+	buf := make([]byte, l.HeadSize())
 
 	if _, err := io.ReadFull(r, buf); err != nil {
 		return err
@@ -77,10 +84,7 @@ func (l *Log) Decode(r io.Reader) error {
 	l.CreateTime = binary.BigEndian.Uint32(buf[pos:])
 	pos += 4
 
-	l.Compression = buf[pos]
-	pos++
-
-	length = binary.BigEndian.Uint32(buf[pos:])
+	length := binary.BigEndian.Uint32(buf[pos:])
 
 	l.Data = make([]byte, length)
 	if _, err := io.ReadFull(r, l.Data); err != nil {

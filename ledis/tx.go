@@ -15,8 +15,6 @@ type Tx struct {
 	*DB
 
 	tx *store.Tx
-
-	logs [][]byte
 }
 
 func (db *DB) IsTransaction() bool {
@@ -70,10 +68,6 @@ func (tx *Tx) Commit() error {
 	tx.l.commitLock.Lock()
 	err := tx.tx.Commit()
 	tx.tx = nil
-
-	if len(tx.logs) > 0 {
-		tx.l.binlog.Log(tx.logs...)
-	}
 
 	tx.l.commitLock.Unlock()
 

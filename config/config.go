@@ -16,14 +16,6 @@ const (
 	DefaultDataDir string = "./var"
 )
 
-const (
-	MaxBinLogFileSize int = 1024 * 1024 * 1024
-	MaxBinLogFileNum  int = 10000
-
-	DefaultBinLogFileSize int = MaxBinLogFileSize
-	DefaultBinLogFileNum  int = 10
-)
-
 type LevelDBConfig struct {
 	Compression     bool `toml:"compression"`
 	BlockSize       int  `toml:"block_size"`
@@ -37,9 +29,8 @@ type LMDBConfig struct {
 	NoSync  bool `toml:"nosync"`
 }
 
-type BinLogConfig struct {
-	MaxFileSize int `toml:"max_file_size"`
-	MaxFileNum  int `toml:"max_file_num"`
+type WALConfig struct {
+	Path string `toml:"path"`
 }
 
 type Config struct {
@@ -52,11 +43,13 @@ type Config struct {
 	DBName string `toml:"db_name"`
 	DBPath string `toml:"db_path"`
 
+	UseWAL bool `toml:use_wal`
+
 	LevelDB LevelDBConfig `toml:"leveldb"`
 
 	LMDB LMDBConfig `toml:"lmdb"`
 
-	BinLog BinLogConfig `toml:"binlog"`
+	WAL WALConfig `toml:wal`
 
 	SlaveOf string `toml:"slaveof"`
 
@@ -93,10 +86,6 @@ func NewConfigDefault() *Config {
 
 	cfg.DBName = DefaultDBName
 
-	// disable binlog
-	cfg.BinLog.MaxFileNum = 0
-	cfg.BinLog.MaxFileSize = 0
-
 	// disable replication
 	cfg.SlaveOf = ""
 
@@ -124,19 +113,5 @@ func (cfg *LevelDBConfig) Adjust() {
 
 	if cfg.MaxOpenFiles < 1024 {
 		cfg.MaxOpenFiles = 1024
-	}
-}
-
-func (cfg *BinLogConfig) Adjust() {
-	if cfg.MaxFileSize <= 0 {
-		cfg.MaxFileSize = DefaultBinLogFileSize
-	} else if cfg.MaxFileSize > MaxBinLogFileSize {
-		cfg.MaxFileSize = MaxBinLogFileSize
-	}
-
-	if cfg.MaxFileNum <= 0 {
-		cfg.MaxFileNum = DefaultBinLogFileNum
-	} else if cfg.MaxFileNum > MaxBinLogFileNum {
-		cfg.MaxFileNum = MaxBinLogFileNum
 	}
 }

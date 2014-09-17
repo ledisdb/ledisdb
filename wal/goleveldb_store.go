@@ -2,11 +2,13 @@ package wal
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"os"
 	"sync"
+	"time"
 )
 
 type GoLevelDBStore struct {
@@ -132,7 +134,7 @@ func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 	return nil
 }
 
-func (s *GoLevelDBStore) DeleteRange(min, max uint64) error {
+func (s *GoLevelDBStore) Purge(n uint64) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -149,28 +151,57 @@ func (s *GoLevelDBStore) DeleteRange(min, max uint64) error {
 		return err
 	}
 
-	min = num.MaxUint64(min, first)
-	max = num.MinUint64(max, last)
+	start := first
+	stop := num.MinUint64(last, first+n)
 
 	w := s.db.NewWriteBatch()
 	defer w.Rollback()
 
-	n := 0
-
 	s.reset()
 
-	for i := min; i <= max; i++ {
+	for i := start; i < stop; i++ {
 		w.Delete(num.Uint64ToBytes(i))
-		n++
-		if n > 1024 {
-			if err = w.Commit(); err != nil {
-				return err
-			}
-			n = 0
-		}
 	}
 
 	if err = w.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *GoLevelDBStore) PurgeExpired(n int) error {
+	if n <= 0 {
+		return fmt.Errorf("invalid expired time %d", n)
+	}
+
+	t := uint32(time.Now().Unix() - int64(n))
+
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	s.reset()
+
+	it := s.db.NewIterator()
+	it.SeekToFirst()
+
+	w := s.db.NewWriteBatch()
+	defer w.Rollback()
+
+	l := new(Log)
+	for ; it.Valid(); it.Next() {
+		v := it.RawValue()
+
+		if err := l.Unmarshal(v); err != nil {
+			return err
+		} else if l.CreateTime > t {
+			break
+		} else {
+			w.Delete(it.RawKey())
+		}
+	}
+
+	if err := w.Commit(); err != nil {
 		return err
 	}
 

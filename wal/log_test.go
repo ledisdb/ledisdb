@@ -36,5 +36,4 @@ func TestLog(t *testing.T) {
 	if !reflect.DeepEqual(l1, l2) {
 		t.Fatal("must equal")
 	}
-
 }
