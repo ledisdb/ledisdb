@@ -20,12 +20,28 @@ type batch struct {
 }
 
 func (b *batch) Commit() error {
+	if b.l.replMode {
+		return ErrWriteInReplMode
+	}
+
 	b.l.commitLock.Lock()
 	defer b.l.commitLock.Unlock()
+
+	if b.LogEanbled() {
+
+	}
 
 	err := b.WriteBatch.Commit()
 
 	return err
+}
+
+// only use in expire cycle
+func (b *batch) expireCommit() error {
+	b.l.commitLock.Lock()
+	defer b.l.commitLock.Unlock()
+
+	return b.WriteBatch.Commit()
 }
 
 func (b *batch) Lock() {
@@ -34,15 +50,22 @@ func (b *batch) Lock() {
 
 func (b *batch) Unlock() {
 	b.noLogging = false
+	b.eb.Reset()
 	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
 func (b *batch) Put(key []byte, value []byte) {
+	if b.LogEanbled() {
+		b.eb.Put(key, value)
+	}
 	b.WriteBatch.Put(key, value)
 }
 
 func (b *batch) Delete(key []byte) {
+	if b.LogEanbled() {
+		b.eb.Delete(key)
+	}
 
 	b.WriteBatch.Delete(key)
 }
@@ -51,8 +74,9 @@ func (b *batch) LogEanbled() bool {
 	return !b.noLogging && b.l.log != nil
 }
 
-func (b *batch) DisableLog(d bool) {
-	b.noLogging = d
+// only for expire cycle
+func (b *batch) disableLog() {
+	b.noLogging = true
 }
 
 type dbBatchLocker struct {
@@ -90,7 +114,11 @@ func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch
 	b.tx = tx
 	b.Locker = locker
 
-	b.eb = new(eventBatch)
+	if tx != nil {
+		b.eb = tx.eb
+	} else {
+		b.eb = new(eventBatch)
+	}
 	b.noLogging = false
 
 	return b

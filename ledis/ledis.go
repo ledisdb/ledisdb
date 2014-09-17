@@ -24,7 +24,7 @@ type Ledis struct {
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
 
-	readOnly bool
+	replMode bool
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
@@ -89,9 +89,10 @@ func (l *Ledis) FlushAll() error {
 	return nil
 }
 
-// very dangerous to use
-func (l *Ledis) DataDB() *store.DB {
-	return l.ldb
+// for replication mode, any write operations will fail,
+// except clear expired data in expire cycle
+func (l *Ledis) SetReplictionMode(b bool) {
+	l.replMode = b
 }
 
 func (l *Ledis) activeExpireCycle() {

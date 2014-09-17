@@ -174,6 +174,8 @@ func (eli *elimination) active() {
 
 		t.Lock()
 
+		t.disableLog()
+
 		if exp, err := Int64(dbGet(mk)); err == nil {
 			// check expire again
 			if exp <= now {
@@ -181,7 +183,7 @@ func (eli *elimination) active() {
 				t.Delete(tk)
 				t.Delete(mk)
 
-				t.Commit()
+				t.expireCommit()
 			}
 
 		}

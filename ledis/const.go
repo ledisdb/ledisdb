@@ -23,6 +23,8 @@ const (
 
 	ExpTimeType byte = 101
 	ExpMetaType byte = 102
+
+	MetaType byte = 201
 )
 
 var (
@@ -78,7 +80,8 @@ const (
 )
 
 var (
-	ErrScoreMiss = errors.New("zset score miss")
+	ErrScoreMiss       = errors.New("zset score miss")
+	ErrWriteInReplMode = errors.New("write in replication mode")
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/siddontang/go-log/log"
-	"github.com/siddontang/ledisdb/store/driver"
+	"github.com/siddontang/ledisdb/store"
 	"io"
 	"os"
 	"time"
@@ -26,7 +26,7 @@ var (
 )
 
 type replBatch struct {
-	wb     driver.IWriteBatch
+	wb     store.WriteBatch
 	events [][]byte
 	l      *Ledis
 

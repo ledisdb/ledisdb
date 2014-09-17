@@ -15,6 +15,8 @@ type Tx struct {
 	*DB
 
 	tx *store.Tx
+
+	eb *eventBatch
 }
 
 func (db *DB) IsTransaction() bool {
