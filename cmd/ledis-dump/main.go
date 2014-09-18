@@ -23,7 +23,7 @@ func main() {
 	var err error
 	var f *os.File
 
-	if f, err = os.OpenFile(*dumpFile, os.O_CREATE|os.O_WRONLY, os.ModePerm); err != nil {
+	if f, err = os.OpenFile(*dumpFile, os.O_CREATE|os.O_WRONLY, 0644); err != nil {
 		println(err.Error())
 		return
 	}
