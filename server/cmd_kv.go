@@ -295,10 +295,8 @@ func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 		switch strings.ToLower(ledis.String(args[1])) {
 		case "match":
 			match = ledis.String(args[2])
-			return
 		case "count":
 			count, err = strconv.Atoi(ledis.String(args[2]))
-			return
 		default:
 			err = ErrCmdParams
 			return
@@ -314,7 +312,10 @@ func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 
 		match = ledis.String(args[2])
 		count, err = strconv.Atoi(ledis.String(args[4]))
-		return
+	}
+
+	if count <= 0 {
+		err = ErrCmdParams
 	}
 
 	return
