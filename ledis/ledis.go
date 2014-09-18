@@ -90,11 +90,6 @@ func (l *Ledis) FlushAll() error {
 	return nil
 }
 
-// very dangerous to use
-func (l *Ledis) DataDB() *store.DB {
-	return l.ldb
-}
-
 func (l *Ledis) activeExpireCycle() {
 	var executors []*elimination = make([]*elimination, len(l.dbs))
 	for i, db := range l.dbs {
