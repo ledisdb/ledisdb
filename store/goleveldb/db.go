@@ -47,7 +47,7 @@ type DB struct {
 }
 
 func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
 

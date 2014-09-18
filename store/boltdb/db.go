@@ -18,7 +18,7 @@ func (s Store) String() string {
 }
 
 func (s Store) Open(dbPath string, cfg *config.Config) (driver.IDB, error) {
-	os.MkdirAll(dbPath, os.ModePerm)
+	os.MkdirAll(dbPath, 0755)
 	name := path.Join(dbPath, "ledis_bolt.db")
 	db := new(DB)
 	var err error

@@ -117,7 +117,7 @@ func NewBinLog(cfg *config.Config) (*BinLog, error) {
 
 	l.path = path.Join(cfg.DataDir, "binlog")
 
-	if err := os.MkdirAll(l.path, os.ModePerm); err != nil {
+	if err := os.MkdirAll(l.path, 0755); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +136,7 @@ func (l *BinLog) flushIndex() error {
 	data := strings.Join(l.logNames, "\n")
 
 	bakName := fmt.Sprintf("%s.bak", l.indexName)
-	f, err := os.OpenFile(bakName, os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(bakName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		log.Error("create binlog bak index error %s", err.Error())
 		return err
@@ -217,7 +217,7 @@ func (l *BinLog) openNewLogFile() error {
 	lastName := l.getLogFile()
 
 	logPath := path.Join(l.path, lastName)
-	if l.logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0666); err != nil {
+	if l.logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0644); err != nil {
 		log.Error("open new logfile error %s", err.Error())
 		return err
 	}
