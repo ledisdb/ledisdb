@@ -41,7 +41,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if cfg.BinLog.MaxFileNum > 0 && cfg.BinLog.MaxFileSize > 0 {
+	if cfg.UseBinLog {
 		println("binlog will be refactored later, use your own risk!!!")
 		l.binlog, err = NewBinLog(cfg)
 		if err != nil {

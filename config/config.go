@@ -51,11 +51,14 @@ type Config struct {
 
 	DBName string `toml:"db_name"`
 
+	DBPath string `toml:"db_path"`
+
 	LevelDB LevelDBConfig `toml:"leveldb"`
 
 	LMDB LMDBConfig `toml:"lmdb"`
 
-	BinLog BinLogConfig `toml:"binlog"`
+	UseBinLog bool         `toml:"use_binlog"`
+	BinLog    BinLogConfig `toml:"binlog"`
 
 	SlaveOf string `toml:"slaveof"`
 

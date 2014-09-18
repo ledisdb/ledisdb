@@ -11,6 +11,7 @@ func TestConfig(t *testing.T) {
 	dstCfg.HttpAddr = "127.0.0.1:11181"
 	dstCfg.DataDir = "/tmp/ledis_server"
 	dstCfg.DBName = "leveldb"
+	dstCfg.UseBinLog = true
 
 	dstCfg.LevelDB.Compression = false
 	dstCfg.LevelDB.BlockSize = 32768

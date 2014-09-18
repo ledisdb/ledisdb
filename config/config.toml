@@ -27,6 +27,12 @@ slaveof = ""
 #   
 db_name = "leveldb"
 
+# If not set, use data_dir/"db_name"_data
+db_path = ""
+
+# enable binlog or not
+use_binlog = true
+
 [leveldb]
 compression = false
 block_size = 32768

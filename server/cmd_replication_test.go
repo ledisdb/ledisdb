@@ -40,8 +40,7 @@ func TestReplication(t *testing.T) {
 	masterCfg := new(config.Config)
 	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
 	masterCfg.Addr = "127.0.0.1:11182"
-	masterCfg.BinLog.MaxFileSize = 1 * 1024 * 1024
-	masterCfg.BinLog.MaxFileNum = 10
+	masterCfg.UseBinLog = true
 
 	var master *App
 	var slave *App

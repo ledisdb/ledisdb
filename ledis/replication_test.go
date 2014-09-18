@@ -34,6 +34,7 @@ func TestReplication(t *testing.T) {
 	cfgM := new(config.Config)
 	cfgM.DataDir = "/tmp/test_repl/master"
 
+	cfgM.UseBinLog = true
 	cfgM.BinLog.MaxFileNum = 10
 	cfgM.BinLog.MaxFileSize = 50
 
