@@ -4,8 +4,8 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/golua/lua"
 	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/lua"
 
 	"testing"
 )

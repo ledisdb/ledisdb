@@ -240,9 +240,6 @@ func (db MDB) Path() string {
 	return db.path
 }
 
-func (db MDB) Compact() {
-}
-
 func (db MDB) iterator(rdonly bool) *MDBIterator {
 	flags := uint(0)
 	if rdonly {
@@ -284,6 +281,10 @@ func (db MDB) Begin() (driver.Tx, error) {
 
 func (db MDB) NewSnapshot() (driver.ISnapshot, error) {
 	return newSnapshot(db)
+}
+
+func (db MDB) Compact() error {
+	return nil
 }
 
 func init() {

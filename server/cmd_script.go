@@ -6,8 +6,8 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/siddontang/golua/lua"
 	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/ledisdb/lua"
 	"strconv"
 	"strings"
 )

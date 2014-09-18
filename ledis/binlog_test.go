@@ -34,4 +34,16 @@ func TestBinLog(t *testing.T) {
 	} else if len(fs) != 2 {
 		t.Fatal(len(fs))
 	}
+
+	if err := b.PurgeAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	if fs, err := ioutil.ReadDir(b.LogPath()); err != nil {
+		t.Fatal(err)
+	} else if len(fs) != 2 {
+		t.Fatal(len(fs))
+	} else if b.LogFilePos() != 0 {
+		t.Fatal(b.LogFilePos())
+	}
 }

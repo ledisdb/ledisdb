@@ -152,6 +152,10 @@ func (db *DB) BatchPut(writes []driver.Write) error {
 	return err
 }
 
+func (db *DB) Compact() error {
+	return nil
+}
+
 func init() {
 	driver.Register(Store{})
 }

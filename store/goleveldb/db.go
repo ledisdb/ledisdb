@@ -6,6 +6,7 @@ import (
 	"github.com/siddontang/goleveldb/leveldb/filter"
 	"github.com/siddontang/goleveldb/leveldb/opt"
 	"github.com/siddontang/goleveldb/leveldb/storage"
+	"github.com/siddontang/goleveldb/leveldb/util"
 
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
@@ -178,6 +179,10 @@ func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
 	}
 
 	return s, nil
+}
+
+func (db *DB) Compact() error {
+	return db.db.CompactRange(util.Range{nil, nil})
 }
 
 func init() {

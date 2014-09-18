@@ -14,6 +14,7 @@ SNAPPY_DIR=/usr/local/snappy
 LEVELDB_DIR=/usr/local/leveldb
 ROCKSDB_DIR=/usr/local/rocksdb
 HYPERLEVELDB_DIR=/usr/local/hyperleveldb
+LUA_DIR=/usr/local/lua
 
 function add_path()
 {
@@ -75,9 +76,11 @@ if [ -f $HYPERLEVELDB_DIR/include/hyperleveldb/c.h ]; then
 fi
 
 #check lua
-CHECK_LUA_FILE="$LEDISTOP/tools/check_lua.go"
-go run $CHECK_LUA_FILE >> /dev/null 2>&1 
-if [ "$?" = 0 ]; then
+if [ -f $LUA_DIR/include/lua.h ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$LUA_DIR/include"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$LUA_DIR/lib -llua"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LUA_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LUA_DIR/lib)
     GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
 fi
 

@@ -48,8 +48,8 @@ Create a workspace and checkout ledisdb source
 
     LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
 
-+ Set ```LEVELDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in dev.sh.
-+ ```make```
++ Set `LEVELDB_DIR` and `SNAPPY_DIR` to the actual install path in dev.sh.
++ `make clean && make` 
 
 ## RocksDB support
 
@@ -57,8 +57,8 @@ Create a workspace and checkout ledisdb source
 
     LedisDB has not supplied a simple script to install, maybe later.
 
-+ Set ```ROCKSDB_DIR``` and ```SNAPPY_DIR``` to the actual install path in `dev.sh`.
-+ ```make```
++ Set `ROCKSDB_DIR` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
++ `make clean && make` 
 
 **Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch. **
 
@@ -70,7 +70,7 @@ Create a workspace and checkout ledisdb source
     LedisDB has not supplied a simple script to install, maybe later.
 
 + Set `HYPERLEVELDB` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
-+ `make`
++ `make clean && make` 
     
 
 ## Choose store database
@@ -91,9 +91,9 @@ Choosing a store database to use is very simple, you have two ways:
 
 ## Lua support
 
-+ You must install lua by yourself first and be sure that `golua` can find and link it.
-+ `go get -u github.com/siddontang/golua/lua`
-+ `make`
++ Compile and install lua
++ Set `LUA_DIR` to the actual path in `dev.sh`
++ `make clean && make` 
 
 ## Configuration
 
