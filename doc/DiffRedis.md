@@ -35,15 +35,6 @@ The same for Del.
 
 ZSet only support int64 score, not double in Redis.
 
-## Transaction
-
-LedisDB supports ACID transaction using LMDB or BoltDB, maybe later it will support `multi`, `exec`, `discard`.
-
-Transaction API:
-
-+ `begin`
-+ `commit`
-+ `rollback`
 
 ## Scan
 

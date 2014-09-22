@@ -23,6 +23,8 @@ const (
 
 	ExpTimeType byte = 101
 	ExpMetaType byte = 102
+
+	MetaType byte = 201
 )
 
 var (
@@ -42,6 +44,11 @@ var (
 		ExpTimeType: "exptime",
 		ExpMetaType: "expmeta",
 	}
+)
+
+const (
+	RDWRMode  = 0
+	ROnlyMode = 1
 )
 
 const (
@@ -78,17 +85,11 @@ const (
 )
 
 var (
-	ErrScoreMiss = errors.New("zset score miss")
+	ErrScoreMiss    = errors.New("zset score miss")
+	ErrWriteInROnly = errors.New("write in readonly mode")
 )
 
 const (
-	BinLogTypeDeletion uint8 = 0x0
-	BinLogTypePut      uint8 = 0x1
-	BinLogTypeCommand  uint8 = 0x2
-)
-
-const (
-	DBAutoCommit    uint8 = 0x0
-	DBInTransaction uint8 = 0x1
-	DBInMulti       uint8 = 0x2
+	DBAutoCommit uint8 = 0x0
+	DBInMulti    uint8 = 0x2
 )

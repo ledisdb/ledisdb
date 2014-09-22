@@ -77,8 +77,6 @@ func (db *DB) incr(key []byte, delta int64) (int64, error) {
 
 	t.Put(key, StrPutInt64(n))
 
-	//todo binlog
-
 	err = t.Commit()
 	return n, err
 }
@@ -244,7 +242,6 @@ func (db *DB) MSet(args ...KVPair) error {
 
 		t.Put(key, value)
 
-		//todo binlog
 	}
 
 	err = t.Commit()
@@ -296,8 +293,6 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 		n = 0
 	} else {
 		t.Put(key, value)
-
-		//todo binlog
 
 		err = t.Commit()
 	}

@@ -41,13 +41,7 @@ func selectCommand(c *client) error {
 	if index, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
 		return err
 	} else {
-		if c.db.IsTransaction() {
-			if err := c.tx.Select(index); err != nil {
-				return err
-			} else {
-				c.db = c.tx.DB
-			}
-		} else if c.db.IsInMulti() {
+		if c.db.IsInMulti() {
 			if err := c.script.Select(index); err != nil {
 				return err
 			} else {

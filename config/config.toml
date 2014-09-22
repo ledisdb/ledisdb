@@ -30,9 +30,6 @@ db_name = "leveldb"
 # If not set, use data_dir/"db_name"_data
 db_path = ""
 
-# enable binlog or not
-use_binlog = true
-
 [leveldb]
 compression = false
 block_size = 32768
@@ -44,8 +41,15 @@ max_open_files = 1024
 map_size = 524288000
 nosync = true
 
-[binlog]
-max_file_size = 0
-max_file_num = 0
+[replication]
+# enable replication or not
+use = true
+
+# Path to store replication information(write ahead log, commit log, etc.)
+# if not set, use data_dir/rpl 
+path = ""
+
+# Expire write ahead logs after the given days
+expired_log_days = 7
 
 

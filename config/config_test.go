@@ -11,7 +11,6 @@ func TestConfig(t *testing.T) {
 	dstCfg.HttpAddr = "127.0.0.1:11181"
 	dstCfg.DataDir = "/tmp/ledis_server"
 	dstCfg.DBName = "leveldb"
-	dstCfg.UseBinLog = true
 
 	dstCfg.LevelDB.Compression = false
 	dstCfg.LevelDB.BlockSize = 32768
@@ -20,6 +19,9 @@ func TestConfig(t *testing.T) {
 	dstCfg.LevelDB.MaxOpenFiles = 1024
 	dstCfg.LMDB.MapSize = 524288000
 	dstCfg.LMDB.NoSync = true
+
+	dstCfg.Replication.Use = true
+	dstCfg.Replication.ExpiredLogDays = 7
 
 	cfg, err := NewConfigWithFile("./config.toml")
 	if err != nil {

@@ -8,17 +8,6 @@ import (
 	"time"
 )
 
-var txUnsupportedCmds = map[string]struct{}{
-	"select":   struct{}{},
-	"slaveof":  struct{}{},
-	"fullsync": struct{}{},
-	"sync":     struct{}{},
-	"begin":    struct{}{},
-	"flushall": struct{}{},
-	"flushdb":  struct{}{},
-	"eval":     struct{}{},
-}
-
 var scriptUnsupportedCmds = map[string]struct{}{
 	"slaveof":  struct{}{},
 	"fullsync": struct{}{},
@@ -62,7 +51,6 @@ type client struct {
 
 	buf bytes.Buffer
 
-	tx     *ledis.Tx
 	script *ledis.Multi
 }
 
@@ -89,11 +77,7 @@ func (c *client) perform() {
 	} else if exeCmd, ok := regCmds[c.cmd]; !ok {
 		err = ErrNotFound
 	} else {
-		if c.db.IsTransaction() {
-			if _, ok := txUnsupportedCmds[c.cmd]; ok {
-				err = fmt.Errorf("%s not supported in transaction", c.cmd)
-			}
-		} else if c.db.IsInMulti() {
+		if c.db.IsInMulti() {
 			if _, ok := scriptUnsupportedCmds[c.cmd]; ok {
 				err = fmt.Errorf("%s not supported in multi", c.cmd)
 			}

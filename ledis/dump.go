@@ -4,41 +4,27 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/go-snappy/snappy"
+	"github.com/siddontang/ledisdb/store"
 	"io"
 	"os"
 )
 
-//dump format
-// fileIndex(bigendian int64)|filePos(bigendian int64)
-// |keylen(bigendian int32)|key|valuelen(bigendian int32)|value......
-//
-//key and value are both compressed for fast transfer dump on network using snappy
-
-type BinLogAnchor struct {
-	LogFileIndex int64
-	LogPos       int64
+type DumpHead struct {
+	CommitID uint64
 }
 
-func (m *BinLogAnchor) WriteTo(w io.Writer) error {
-	if err := binary.Write(w, binary.BigEndian, m.LogFileIndex); err != nil {
+func (h *DumpHead) Read(r io.Reader) error {
+	if err := binary.Read(r, binary.BigEndian, &h.CommitID); err != nil {
 		return err
 	}
 
-	if err := binary.Write(w, binary.BigEndian, m.LogPos); err != nil {
-		return err
-	}
 	return nil
 }
 
-func (m *BinLogAnchor) ReadFrom(r io.Reader) error {
-	err := binary.Read(r, binary.BigEndian, &m.LogFileIndex)
-	if err != nil {
-		return err
-	}
-
-	err = binary.Read(r, binary.BigEndian, &m.LogPos)
-	if err != nil {
+func (h *DumpHead) Write(w io.Writer) error {
+	if err := binary.Write(w, binary.BigEndian, h.CommitID); err != nil {
 		return err
 	}
 
@@ -56,24 +42,35 @@ func (l *Ledis) DumpFile(path string) error {
 }
 
 func (l *Ledis) Dump(w io.Writer) error {
-	m := new(BinLogAnchor)
-
 	var err error
 
-	l.wLock.Lock()
-	defer l.wLock.Unlock()
+	var commitID uint64
+	var snap *store.Snapshot
 
-	if l.binlog != nil {
-		m.LogFileIndex = l.binlog.LogFileIndex()
-		m.LogPos = l.binlog.LogFilePos()
+	{
+		l.wLock.Lock()
+		defer l.wLock.Unlock()
+
+		if l.r != nil {
+			if commitID, err = l.r.LastCommitID(); err != nil {
+				return err
+			}
+		}
+
+		if snap, err = l.ldb.NewSnapshot(); err != nil {
+			return err
+		}
 	}
 
 	wb := bufio.NewWriterSize(w, 4096)
-	if err = m.WriteTo(wb); err != nil {
+
+	h := &DumpHead{commitID}
+
+	if err = h.Write(wb); err != nil {
 		return err
 	}
 
-	it := l.ldb.NewIterator()
+	it := snap.NewIterator()
 	it.SeekToFirst()
 
 	compressBuf := make([]byte, 4096)
@@ -118,7 +115,8 @@ func (l *Ledis) Dump(w io.Writer) error {
 	return nil
 }
 
-func (l *Ledis) LoadDumpFile(path string) (*BinLogAnchor, error) {
+// clear all data and load dump file to db
+func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -128,16 +126,42 @@ func (l *Ledis) LoadDumpFile(path string) (*BinLogAnchor, error) {
 	return l.LoadDump(f)
 }
 
-func (l *Ledis) LoadDump(r io.Reader) (*BinLogAnchor, error) {
+func (l *Ledis) clearAllWhenLoad() error {
+	it := l.ldb.NewIterator()
+	defer it.Close()
+
+	w := l.ldb.NewWriteBatch()
+	defer w.Rollback()
+
+	n := 0
+	for ; it.Valid(); it.Next() {
+		n++
+		if n == 10000 {
+			w.Commit()
+			n = 0
+		}
+		w.Delete(it.RawKey())
+	}
+
+	return w.Commit()
+}
+
+// clear all data and load dump file to db
+func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()
 
-	info := new(BinLogAnchor)
+	var err error
+	if err = l.clearAllWhenLoad(); err != nil {
+		log.Fatal("clear all error when loaddump, err :%s", err.Error())
+		return nil, err
+	}
 
 	rb := bufio.NewReaderSize(r, 4096)
 
-	err := info.ReadFrom(rb)
-	if err != nil {
+	h := new(DumpHead)
+
+	if err = h.Read(rb); err != nil {
 		return nil, err
 	}
 
@@ -190,10 +214,11 @@ func (l *Ledis) LoadDump(r io.Reader) (*BinLogAnchor, error) {
 	deKeyBuf = nil
 	deValueBuf = nil
 
-	//if binlog enable, we will delete all binlogs and open a new one for handling simply
-	if l.binlog != nil {
-		l.binlog.PurgeAll()
+	if l.r != nil {
+		if err := l.r.UpdateCommitID(h.CommitID); err != nil {
+			return nil, err
+		}
 	}
 
-	return info, nil
+	return h, nil
 }

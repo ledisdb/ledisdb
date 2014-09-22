@@ -305,7 +305,6 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 		return 0, err
 	}
 
-	//todo add binlog
 	err := t.Commit()
 	return num, err
 }
@@ -862,7 +861,6 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	sk := db.zEncodeSizeKey(destKey)
 	t.Put(sk, PutInt64(num))
 
-	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
@@ -930,7 +928,7 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	var num int64 = int64(len(destMap))
 	sk := db.zEncodeSizeKey(destKey)
 	t.Put(sk, PutInt64(num))
-	//todo add binlog
+
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}

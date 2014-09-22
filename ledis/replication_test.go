@@ -6,7 +6,6 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store"
 	"os"
-	"path"
 	"testing"
 )
 
@@ -34,9 +33,7 @@ func TestReplication(t *testing.T) {
 	cfgM := new(config.Config)
 	cfgM.DataDir = "/tmp/test_repl/master"
 
-	cfgM.UseBinLog = true
-	cfgM.BinLog.MaxFileNum = 10
-	cfgM.BinLog.MaxFileSize = 50
+	cfgM.Replication.Use = true
 
 	os.RemoveAll(cfgM.DataDir)
 
@@ -47,6 +44,7 @@ func TestReplication(t *testing.T) {
 
 	cfgS := new(config.Config)
 	cfgS.DataDir = "/tmp/test_repl/slave"
+	cfgS.Replication.Use = true
 
 	os.RemoveAll(cfgS.DataDir)
 
@@ -60,35 +58,15 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("b"), []byte("value"))
 	db.Set([]byte("c"), []byte("value"))
 
-	if tx, err := db.Begin(); err == nil {
-		tx.HSet([]byte("a"), []byte("1"), []byte("value"))
-		tx.HSet([]byte("b"), []byte("2"), []byte("value"))
-		tx.HSet([]byte("c"), []byte("3"), []byte("value"))
-		tx.Commit()
-	} else {
-		db.HSet([]byte("a"), []byte("1"), []byte("value"))
-		db.HSet([]byte("b"), []byte("2"), []byte("value"))
-		db.HSet([]byte("c"), []byte("3"), []byte("value"))
-	}
+	db.HSet([]byte("a"), []byte("1"), []byte("value"))
+	db.HSet([]byte("b"), []byte("2"), []byte("value"))
+	db.HSet([]byte("c"), []byte("3"), []byte("value"))
 
 	m, _ := db.Multi()
 	m.Set([]byte("a1"), []byte("value"))
 	m.Set([]byte("b1"), []byte("value"))
 	m.Set([]byte("c1"), []byte("value"))
 	m.Close()
-
-	for _, name := range master.binlog.LogNames() {
-		p := path.Join(master.binlog.LogPath(), name)
-
-		err = slave.ReplicateFromBinLog(p)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if err = checkLedisEqual(master, slave); err != nil {
-		t.Fatal(err)
-	}
 
 	slave.FlushAll()
 
@@ -100,37 +78,27 @@ func TestReplication(t *testing.T) {
 	db.HSet([]byte("b1"), []byte("2"), []byte("value"))
 	db.HSet([]byte("c1"), []byte("3"), []byte("value"))
 
-	if tx, err := db.Begin(); err == nil {
-		tx.HSet([]byte("a1"), []byte("1"), []byte("value1"))
-		tx.HSet([]byte("b1"), []byte("2"), []byte("value1"))
-		tx.HSet([]byte("c1"), []byte("3"), []byte("value1"))
-		tx.Rollback()
-	}
-
-	info := new(BinLogAnchor)
-	info.LogFileIndex = 1
-	info.LogPos = 0
 	var buf bytes.Buffer
 	var n int
-
+	var id uint64 = 1
+	var nid uint64
 	for {
 		buf.Reset()
-		n, err = master.ReadEventsTo(info, &buf)
+		n, id, err = master.ReadLogsTo(id, &buf)
 		if err != nil {
 			t.Fatal(err)
-		} else if info.LogFileIndex == -1 {
-			t.Fatal("invalid log file index -1")
-		} else if info.LogFileIndex == 0 {
-			t.Fatal("invalid log file index 0")
-		} else {
-			if err = slave.ReplicateFromReader(&buf); err != nil {
+		} else if n != 0 {
+			if nid, err = slave.StoreLogsFromReader(&buf); err != nil {
 				t.Fatal(err)
+			} else if nid != id {
+				t.Fatal(nid, id)
 			}
-			if n == 0 {
-				break
-			}
+		} else if n == 0 {
+			break
 		}
 	}
+
+	slave.WaitReplication()
 
 	if err = checkLedisEqual(master, slave); err != nil {
 		t.Fatal(err)

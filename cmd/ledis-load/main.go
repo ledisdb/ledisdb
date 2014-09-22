@@ -57,18 +57,6 @@ func loadDump(cfg *config.Config, ldb *ledis.Ledis) error {
 		return err
 	}
 
-	var head *ledis.BinLogAnchor
-	head, err = ldb.LoadDumpFile(*dumpPath)
-
-	if err != nil {
-		return err
-	}
-
-	//master enable binlog, here output this like mysql
-	if head.LogFileIndex != 0 && head.LogPos != 0 {
-		format := "MASTER_LOG_FILE='binlog.%07d', MASTER_LOG_POS=%d;\n"
-		fmt.Printf(format, head.LogFileIndex, head.LogPos)
-	}
-
-	return nil
+	_, err = ldb.LoadDumpFile(*dumpPath)
+	return err
 }

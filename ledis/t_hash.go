@@ -183,8 +183,6 @@ func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 		return 0, err
 	}
 
-	//todo add binlog
-
 	err = t.Commit()
 	return n, err
 }

@@ -1,6 +1,8 @@
 package ledis
 
 import (
+	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
 )
@@ -12,29 +14,39 @@ type batch struct {
 
 	sync.Locker
 
-	logs [][]byte
-
-	tx *Tx
+	eb *eventBatch
 }
 
 func (b *batch) Commit() error {
+	if b.l.IsReadOnly() {
+		return ErrWriteInROnly
+	}
+
 	b.l.commitLock.Lock()
 	defer b.l.commitLock.Unlock()
 
-	err := b.WriteBatch.Commit()
-
-	if b.l.binlog != nil {
-		if err == nil {
-			if b.tx == nil {
-				b.l.binlog.Log(b.logs...)
-			} else {
-				b.tx.logs = append(b.tx.logs, b.logs...)
-			}
+	var err error
+	if b.l.r != nil {
+		var l *rpl.Log
+		if l, err = b.l.r.Log(b.eb.Bytes()); err != nil {
+			log.Fatal("write wal error %s", err.Error())
+			return err
 		}
-		b.logs = [][]byte{}
-	}
 
-	return err
+		if err = b.WriteBatch.Commit(); err != nil {
+			log.Fatal("commit error %s", err.Error())
+			return err
+		}
+
+		if err = b.l.r.UpdateCommitID(l.ID); err != nil {
+			log.Fatal("update commit id error %s", err.Error())
+			return err
+		}
+
+		return nil
+	} else {
+		return b.WriteBatch.Commit()
+	}
 }
 
 func (b *batch) Lock() {
@@ -42,26 +54,25 @@ func (b *batch) Lock() {
 }
 
 func (b *batch) Unlock() {
-	if b.l.binlog != nil {
-		b.logs = [][]byte{}
-	}
+	b.eb.Reset()
+
 	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
 func (b *batch) Put(key []byte, value []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogPut(key, value)
-		b.logs = append(b.logs, buf)
+	if b.l.r != nil {
+		b.eb.Put(key, value)
 	}
+
 	b.WriteBatch.Put(key, value)
 }
 
 func (b *batch) Delete(key []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogDelete(key)
-		b.logs = append(b.logs, buf)
+	if b.l.r != nil {
+		b.Delete(key)
 	}
+
 	b.WriteBatch.Delete(key)
 }
 
@@ -80,26 +91,20 @@ func (l *dbBatchLocker) Unlock() {
 	l.wrLock.RUnlock()
 }
 
-type txBatchLocker struct {
-}
-
-func (l *txBatchLocker) Lock()   {}
-func (l *txBatchLocker) Unlock() {}
-
 type multiBatchLocker struct {
 }
 
 func (l *multiBatchLocker) Lock()   {}
 func (l *multiBatchLocker) Unlock() {}
 
-func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch {
+func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker) *batch {
 	b := new(batch)
 	b.l = l
 	b.WriteBatch = wb
 
-	b.tx = tx
 	b.Locker = locker
 
-	b.logs = [][]byte{}
+	b.eb = new(eventBatch)
+
 	return b
 }

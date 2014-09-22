@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
 	"time"
@@ -16,15 +17,25 @@ type Ledis struct {
 	dbs [MaxDBNumber]*DB
 
 	quit chan struct{}
-	jobs *sync.WaitGroup
+	wg   sync.WaitGroup
 
-	binlog *BinLog
+	r      *rpl.Replication
+	rc     chan struct{}
+	rbatch store.WriteBatch
+	rwg    sync.WaitGroup
 
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
+
+	// for readonly mode, only replication can write
+	readOnly bool
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
+	return Open2(cfg, RDWRMode)
+}
+
+func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		cfg.DataDir = config.DefaultDataDir
 	}
@@ -36,39 +47,43 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 	l := new(Ledis)
 
+	l.readOnly = (flags&ROnlyMode > 0)
+
 	l.quit = make(chan struct{})
-	l.jobs = new(sync.WaitGroup)
 
 	l.ldb = ldb
 
-	if cfg.UseBinLog {
-		println("binlog will be refactored later, use your own risk!!!")
-		l.binlog, err = NewBinLog(cfg)
-		if err != nil {
+	if cfg.Replication.Use {
+		if l.r, err = rpl.NewReplication(cfg); err != nil {
 			return nil, err
 		}
+
+		l.rc = make(chan struct{})
+		l.rbatch = l.ldb.NewWriteBatch()
+
+		go l.onReplication()
 	} else {
-		l.binlog = nil
+		l.r = nil
 	}
 
 	for i := uint8(0); i < MaxDBNumber; i++ {
 		l.dbs[i] = l.newDB(i)
 	}
 
-	l.activeExpireCycle()
+	go l.onDataExpired()
 
 	return l, nil
 }
 
 func (l *Ledis) Close() {
 	close(l.quit)
-	l.jobs.Wait()
+	l.wg.Wait()
 
 	l.ldb.Close()
 
-	if l.binlog != nil {
-		l.binlog.Close()
-		l.binlog = nil
+	if l.r != nil {
+		l.r.Close()
+		l.r = nil
 	}
 }
 
@@ -90,34 +105,52 @@ func (l *Ledis) FlushAll() error {
 	return nil
 }
 
-func (l *Ledis) activeExpireCycle() {
+func (l *Ledis) IsReadOnly() bool {
+	if l.readOnly {
+		return true
+	} else if l.r != nil {
+		if b, _ := l.r.CommitIDBehind(); b {
+			return true
+		}
+	}
+	return false
+}
+
+func (l *Ledis) SetReadOnly(b bool) {
+	l.readOnly = b
+}
+
+func (l *Ledis) onDataExpired() {
+	l.wg.Add(1)
+	defer l.wg.Done()
+
 	var executors []*elimination = make([]*elimination, len(l.dbs))
 	for i, db := range l.dbs {
 		executors[i] = db.newEliminator()
 	}
 
-	l.jobs.Add(1)
-	go func() {
-		tick := time.NewTicker(1 * time.Second)
-		end := false
-		done := make(chan struct{})
-		for !end {
-			select {
-			case <-tick.C:
-				go func() {
-					for _, eli := range executors {
-						eli.active()
-					}
-					done <- struct{}{}
-				}()
-				<-done
-			case <-l.quit:
-				end = true
+	tick := time.NewTicker(1 * time.Second)
+	defer tick.Stop()
+
+	done := make(chan struct{})
+
+	for {
+		select {
+		case <-tick.C:
+			if l.IsReadOnly() {
 				break
 			}
-		}
 
-		tick.Stop()
-		l.jobs.Done()
-	}()
+			go func() {
+				for _, eli := range executors {
+					eli.active()
+				}
+				done <- struct{}{}
+			}()
+			<-done
+		case <-l.quit:
+			return
+		}
+	}
+
 }

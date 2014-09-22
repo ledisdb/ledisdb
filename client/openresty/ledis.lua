@@ -148,11 +148,6 @@ local commands = {
     "flushall",
     "flushdb",
 
-    -- [[transaction]]
-    "begin",
-    "commit",
-    "rollback",
-
     -- [[script]]
     "eval",
     "evalsha",

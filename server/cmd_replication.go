@@ -70,14 +70,14 @@ var reserveInfoSpace = make([]byte, 16)
 
 func syncCommand(c *client) error {
 	args := c.args
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
 	var logIndex int64
 	var logPos int64
 	var err error
-	logIndex, err = ledis.StrInt64(args[0], nil)
+	logIndex, err = ledis.Str(args[0], nil)
 	if err != nil {
 		return ErrCmdParams
 	}
