@@ -90,7 +90,13 @@ func (l *Log) Decode(r io.Reader) error {
 
 	length := binary.BigEndian.Uint32(buf[pos:])
 
-	l.Data = make([]byte, length)
+	l.Data = l.Data[0:0]
+
+	if cap(l.Data) >= int(length) {
+		l.Data = l.Data[0:length]
+	} else {
+		l.Data = make([]byte, length)
+	}
 	if _, err := io.ReadFull(r, l.Data); err != nil {
 		return err
 	}

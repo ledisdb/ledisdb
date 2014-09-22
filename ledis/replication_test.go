@@ -81,17 +81,14 @@ func TestReplication(t *testing.T) {
 	var buf bytes.Buffer
 	var n int
 	var id uint64 = 1
-	var nid uint64
 	for {
 		buf.Reset()
 		n, id, err = master.ReadLogsTo(id, &buf)
 		if err != nil {
 			t.Fatal(err)
 		} else if n != 0 {
-			if nid, err = slave.StoreLogsFromReader(&buf); err != nil {
+			if err = slave.StoreLogsFromReader(&buf); err != nil {
 				t.Fatal(err)
-			} else if nid != id {
-				t.Fatal(nid, id)
 			}
 		} else if n == 0 {
 			break

@@ -58,7 +58,7 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 			return nil, err
 		}
 
-		l.rc = make(chan struct{})
+		l.rc = make(chan struct{}, 1)
 		l.rbatch = l.ldb.NewWriteBatch()
 
 		go l.onReplication()

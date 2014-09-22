@@ -19,8 +19,11 @@ var (
 )
 
 func (l *Ledis) handleReplication() {
+	l.commitLock.Lock()
+	defer l.commitLock.Unlock()
+
 	l.rwg.Add(1)
-	var rl *rpl.Log
+	rl := &rpl.Log{}
 	for {
 		if err := l.r.NextCommitLog(rl); err != nil {
 			if err != rpl.ErrNoBehindLog {
@@ -59,33 +62,37 @@ func (l *Ledis) onReplication() {
 }
 
 func (l *Ledis) WaitReplication() error {
-	l.rwg.Wait()
+	b, err := l.r.CommitIDBehind()
+	if err != nil {
+		return err
+	} else if b {
+		l.rc <- struct{}{}
+		l.rwg.Wait()
+	}
 
 	return nil
 }
 
-func (l *Ledis) StoreLogsFromReader(rb io.Reader) (uint64, error) {
+func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
 	if l.r == nil {
-		return 0, fmt.Errorf("replication not enable")
+		return fmt.Errorf("replication not enable")
 	}
 
-	var log *rpl.Log
-	var n uint64
+	log := &rpl.Log{}
 
 	for {
 		if err := log.Decode(rb); err != nil {
 			if err == io.EOF {
 				break
 			} else {
-				return 0, err
+				return err
 			}
 		}
 
 		if err := l.r.StoreLog(log); err != nil {
-			return 0, err
+			return err
 		}
 
-		n = log.ID
 	}
 
 	select {
@@ -94,10 +101,10 @@ func (l *Ledis) StoreLogsFromReader(rb io.Reader) (uint64, error) {
 		break
 	}
 
-	return n, nil
+	return nil
 }
 
-func (l *Ledis) StoreLogsFromData(data []byte) (uint64, error) {
+func (l *Ledis) StoreLogsFromData(data []byte) error {
 	rb := bytes.NewReader(data)
 
 	return l.StoreLogsFromReader(rb)
@@ -127,7 +134,7 @@ func (l *Ledis) ReadLogsTo(startLogID uint64, w io.Writer) (n int, nextLogID uin
 		return
 	}
 
-	var log *rpl.Log
+	log := &rpl.Log{}
 	for i := startLogID; i <= lastID; i++ {
 		if err = l.r.GetLog(i, log); err != nil {
 			return
