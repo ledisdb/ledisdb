@@ -216,3 +216,11 @@ func (l *Ledis) AddNewLogEventHandler(h NewLogEventHandler) error {
 
 	return nil
 }
+
+func (l *Ledis) ReplicationStat() (*rpl.Stat, error) {
+	if !l.ReplicationUsed() {
+		return nil, ErrRplNotSupport
+	}
+
+	return l.r.Stat()
+}

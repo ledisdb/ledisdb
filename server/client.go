@@ -49,7 +49,7 @@ type client struct {
 	syncBuf     bytes.Buffer
 	compressBuf []byte
 
-	lastSyncLogID uint64
+	lastLogID uint64
 
 	ack *syncAck
 

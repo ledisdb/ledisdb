@@ -261,7 +261,7 @@ func (app *App) removeSlave(c *client) {
 
 	if c.ack != nil {
 		select {
-		case c.ack.ch <- c.lastSyncLogID:
+		case c.ack.ch <- c.lastLogID:
 		default:
 		}
 	}
@@ -278,7 +278,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 
 	logId := l.ID
 	for s, _ := range app.slaves {
-		if s.lastSyncLogID >= logId {
+		if s.lastLogID >= logId {
 			//slave has already this log
 			ss = []*client{}
 			break

@@ -78,7 +78,7 @@ func syncCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	c.lastSyncLogID = logId - 1
+	c.lastLogID = logId - 1
 
 	if c.ack != nil && logId > c.ack.id {
 		select {
