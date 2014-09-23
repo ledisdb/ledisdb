@@ -2,7 +2,6 @@ package rpl
 
 import (
 	"encoding/binary"
-	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/config"
 	"os"
@@ -10,6 +9,12 @@ import (
 	"sync"
 	"time"
 )
+
+type Stat struct {
+	FirstID  uint64
+	LastID   uint64
+	CommitID uint64
+}
 
 type Replication struct {
 	m sync.Mutex
@@ -24,13 +29,11 @@ type Replication struct {
 	quit chan struct{}
 
 	wg sync.WaitGroup
+
+	nc chan struct{}
 }
 
 func NewReplication(cfg *config.Config) (*Replication, error) {
-	if !cfg.Replication.Use {
-		return nil, fmt.Errorf("replication not enalbed")
-	}
-
 	if len(cfg.Replication.Path) == 0 {
 		cfg.Replication.Path = path.Join(cfg.DataDir, "rpl")
 	}
@@ -40,6 +43,7 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 	r := new(Replication)
 
 	r.quit = make(chan struct{})
+	r.nc = make(chan struct{})
 
 	r.cfg = cfg
 
@@ -105,7 +109,14 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 		return nil, err
 	}
 
+	close(r.nc)
+	r.nc = make(chan struct{})
+
 	return l, nil
+}
+
+func (r *Replication) WaitLog() <-chan struct{} {
+	return r.nc
 }
 
 func (r *Replication) StoreLog(log *Log) error {
@@ -133,22 +144,6 @@ func (r *Replication) LastLogID() (uint64, error) {
 	return id, err
 }
 
-func (r *Replication) NextSyncID() (uint64, error) {
-	r.m.Lock()
-	defer r.m.Unlock()
-
-	lastId, err := r.s.LastID()
-	if err != nil {
-		return 0, err
-	}
-
-	if lastId > r.commitID {
-		return lastId + 1, nil
-	} else {
-		return r.commitID + 1, nil
-	}
-}
-
 func (r *Replication) LastCommitID() (uint64, error) {
 	r.m.Lock()
 	id := r.commitID
@@ -160,6 +155,29 @@ func (r *Replication) UpdateCommitID(id uint64) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 
+	return r.updateCommitID(id)
+}
+
+func (r *Replication) Stat() (*Stat, error) {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	s := &Stat{}
+	var err error
+
+	if s.FirstID, err = r.s.FirstID(); err != nil {
+		return nil, err
+	}
+
+	if s.LastID, err = r.s.LastID(); err != nil {
+		return nil, err
+	}
+
+	s.CommitID = r.commitID
+	return s, nil
+}
+
+func (r *Replication) updateCommitID(id uint64) error {
 	if _, err := r.commitLog.Seek(0, os.SEEK_SET); err != nil {
 		return err
 	}
@@ -189,7 +207,7 @@ func (r *Replication) GetLog(id uint64, log *Log) error {
 	return r.s.GetLog(id, log)
 }
 
-func (r *Replication) NextCommitLog(log *Log) error {
+func (r *Replication) NextNeedCommitLog(log *Log) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -204,6 +222,21 @@ func (r *Replication) NextCommitLog(log *Log) error {
 
 	return r.s.GetLog(r.commitID+1, log)
 
+}
+
+func (r *Replication) Clear() error {
+	return r.ClearWithCommitID(0)
+}
+
+func (r *Replication) ClearWithCommitID(id uint64) error {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	if err := r.s.Clear(); err != nil {
+		return err
+	}
+
+	return r.updateCommitID(id)
 }
 
 func (r *Replication) onPurgeExpired() {

@@ -85,8 +85,10 @@ const (
 )
 
 var (
-	ErrScoreMiss    = errors.New("zset score miss")
-	ErrWriteInROnly = errors.New("write in readonly mode")
+	ErrScoreMiss     = errors.New("zset score miss")
+	ErrWriteInROnly  = errors.New("write not support in readonly mode")
+	ErrRplInRDWR     = errors.New("replication not support in read write mode")
+	ErrRplNotSupport = errors.New("replication not support")
 )
 
 const (

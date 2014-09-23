@@ -33,7 +33,7 @@ func TestReplication(t *testing.T) {
 	cfgM := new(config.Config)
 	cfgM.DataDir = "/tmp/test_repl/master"
 
-	cfgM.Replication.Use = true
+	cfgM.UseReplication = true
 
 	os.RemoveAll(cfgM.DataDir)
 
@@ -44,11 +44,11 @@ func TestReplication(t *testing.T) {
 
 	cfgS := new(config.Config)
 	cfgS.DataDir = "/tmp/test_repl/slave"
-	cfgS.Replication.Use = true
+	cfgS.UseReplication = true
 
 	os.RemoveAll(cfgS.DataDir)
 
-	slave, err = Open(cfgS)
+	slave, err = Open2(cfgS, ROnlyMode)
 	if err != nil {
 		t.Fatal(err)
 	}

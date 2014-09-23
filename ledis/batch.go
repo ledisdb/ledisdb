@@ -33,6 +33,8 @@ func (b *batch) Commit() error {
 			return err
 		}
 
+		b.l.propagate(l)
+
 		if err = b.WriteBatch.Commit(); err != nil {
 			log.Fatal("commit error %s", err.Error())
 			return err

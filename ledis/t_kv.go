@@ -183,7 +183,6 @@ func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	}
 
 	t.Put(key, value)
-	//todo, binlog
 
 	err = t.Commit()
 

@@ -12,9 +12,6 @@ var scriptUnsupportedCmds = map[string]struct{}{
 	"slaveof":  struct{}{},
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
-	"begin":    struct{}{},
-	"commit":   struct{}{},
-	"rollback": struct{}{},
 	"flushall": struct{}{},
 	"flushdb":  struct{}{},
 }
@@ -32,6 +29,11 @@ type responseWriter interface {
 	flush()
 }
 
+type syncAck struct {
+	id uint64
+	ch chan uint64
+}
+
 type client struct {
 	app *App
 	ldb *ledis.Ledis
@@ -46,6 +48,10 @@ type client struct {
 
 	syncBuf     bytes.Buffer
 	compressBuf []byte
+
+	lastSyncLogID uint64
+
+	ack *syncAck
 
 	reqErr chan error
 

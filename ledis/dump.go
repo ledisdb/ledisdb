@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/go-snappy/snappy"
 	"github.com/siddontang/ledisdb/store"
 	"io"
@@ -126,34 +125,13 @@ func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 	return l.LoadDump(f)
 }
 
-func (l *Ledis) clearAllWhenLoad() error {
-	it := l.ldb.NewIterator()
-	defer it.Close()
-
-	w := l.ldb.NewWriteBatch()
-	defer w.Rollback()
-
-	n := 0
-	for ; it.Valid(); it.Next() {
-		n++
-		if n == 10000 {
-			w.Commit()
-			n = 0
-		}
-		w.Delete(it.RawKey())
-	}
-
-	return w.Commit()
-}
-
 // clear all data and load dump file to db
 func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()
 
 	var err error
-	if err = l.clearAllWhenLoad(); err != nil {
-		log.Fatal("clear all error when loaddump, err :%s", err.Error())
+	if err = l.flushAll(); err != nil {
 		return nil, err
 	}
 

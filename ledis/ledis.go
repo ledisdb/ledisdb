@@ -19,10 +19,12 @@ type Ledis struct {
 	quit chan struct{}
 	wg   sync.WaitGroup
 
+	//for replication
 	r      *rpl.Replication
 	rc     chan struct{}
 	rbatch store.WriteBatch
 	rwg    sync.WaitGroup
+	rhs    []NewLogEventHandler
 
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
@@ -53,15 +55,19 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 
 	l.ldb = ldb
 
-	if cfg.Replication.Use {
+	if cfg.UseReplication {
 		if l.r, err = rpl.NewReplication(cfg); err != nil {
 			return nil, err
 		}
 
-		l.rc = make(chan struct{}, 1)
+		l.rc = make(chan struct{}, 8)
 		l.rbatch = l.ldb.NewWriteBatch()
 
 		go l.onReplication()
+
+		//first we must try wait all replication ok
+		//maybe some logs are not committed
+		l.WaitReplication()
 	} else {
 		l.r = nil
 	}
@@ -95,10 +101,43 @@ func (l *Ledis) Select(index int) (*DB, error) {
 	return l.dbs[index], nil
 }
 
+// Flush All will clear all data and replication logs
 func (l *Ledis) FlushAll() error {
-	for index, db := range l.dbs {
-		if _, err := db.FlushAll(); err != nil {
-			log.Error("flush db %d error %s", index, err.Error())
+	l.wLock.Lock()
+	defer l.wLock.Unlock()
+
+	return l.flushAll()
+}
+
+func (l *Ledis) flushAll() error {
+	it := l.ldb.NewIterator()
+	defer it.Close()
+
+	w := l.ldb.NewWriteBatch()
+	defer w.Rollback()
+
+	n := 0
+	for ; it.Valid(); it.Next() {
+		n++
+		if n == 10000 {
+			if err := w.Commit(); err != nil {
+				log.Fatal("flush all commit error: %s", err.Error())
+				return err
+			}
+			n = 0
+		}
+		w.Delete(it.RawKey())
+	}
+
+	if err := w.Commit(); err != nil {
+		log.Fatal("flush all commit error: %s", err.Error())
+		return err
+	}
+
+	if l.r != nil {
+		if err := l.r.Clear(); err != nil {
+			log.Fatal("flush all replication clear error: %s", err.Error())
+			return err
 		}
 	}
 

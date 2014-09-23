@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 )
 
 type App struct {
@@ -29,6 +30,10 @@ type App struct {
 	info *info
 
 	s *script
+
+	// handle slaves
+	slock  sync.Mutex
+	slaves map[*client]struct{}
 }
 
 func netType(s string) string {
@@ -52,6 +57,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.closed = false
 
 	app.cfg = cfg
+
+	app.slaves = make(map[*client]struct{})
 
 	var err error
 
@@ -88,6 +95,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.m = newMaster(app)
 
 	app.openScript()
+
+	app.ldb.AddNewLogEventHandler(app.publishNewLog)
 
 	return app, nil
 }

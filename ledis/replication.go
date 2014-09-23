@@ -3,7 +3,6 @@ package ledis
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/siddontang/go-log/log"
 	"github.com/siddontang/ledisdb/rpl"
 	"io"
@@ -18,6 +17,10 @@ var (
 	ErrLogMissed = errors.New("log is pured in server")
 )
 
+func (l *Ledis) ReplicationUsed() bool {
+	return l.r != nil
+}
+
 func (l *Ledis) handleReplication() {
 	l.commitLock.Lock()
 	defer l.commitLock.Unlock()
@@ -25,7 +28,7 @@ func (l *Ledis) handleReplication() {
 	l.rwg.Add(1)
 	rl := &rpl.Log{}
 	for {
-		if err := l.r.NextCommitLog(rl); err != nil {
+		if err := l.r.NextNeedCommitLog(rl); err != nil {
 			if err != rpl.ErrNoBehindLog {
 				log.Error("get next commit log err, %s", err.Error)
 			} else {
@@ -47,9 +50,7 @@ func (l *Ledis) handleReplication() {
 }
 
 func (l *Ledis) onReplication() {
-	if l.r == nil {
-		return
-	}
+	AsyncNotify(l.rc)
 
 	for {
 		select {
@@ -62,11 +63,19 @@ func (l *Ledis) onReplication() {
 }
 
 func (l *Ledis) WaitReplication() error {
+	if !l.ReplicationUsed() {
+		return ErrRplNotSupport
+
+	}
+	AsyncNotify(l.rc)
+
+	l.rwg.Wait()
+
 	b, err := l.r.CommitIDBehind()
 	if err != nil {
 		return err
 	} else if b {
-		l.rc <- struct{}{}
+		AsyncNotify(l.rc)
 		l.rwg.Wait()
 	}
 
@@ -74,8 +83,10 @@ func (l *Ledis) WaitReplication() error {
 }
 
 func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
-	if l.r == nil {
-		return fmt.Errorf("replication not enable")
+	if !l.ReplicationUsed() {
+		return ErrRplNotSupport
+	} else if !l.readOnly {
+		return ErrRplInRDWR
 	}
 
 	log := &rpl.Log{}
@@ -95,11 +106,7 @@ func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
 
 	}
 
-	select {
-	case l.rc <- struct{}{}:
-	default:
-		break
-	}
+	AsyncNotify(l.rc)
 
 	return nil
 }
@@ -111,9 +118,10 @@ func (l *Ledis) StoreLogsFromData(data []byte) error {
 }
 
 func (l *Ledis) ReadLogsTo(startLogID uint64, w io.Writer) (n int, nextLogID uint64, err error) {
-	if l.r == nil {
+	if !l.ReplicationUsed() {
 		// no replication log
 		nextLogID = 0
+		err = ErrRplNotSupport
 		return
 	}
 
@@ -133,6 +141,8 @@ func (l *Ledis) ReadLogsTo(startLogID uint64, w io.Writer) (n int, nextLogID uin
 	if err != nil {
 		return
 	}
+
+	nextLogID = startLogID
 
 	log := &rpl.Log{}
 	for i := startLogID; i <= lastID; i++ {
@@ -161,14 +171,48 @@ func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (
 	n, nextLogID, err = l.ReadLogsTo(startLogID, w)
 	if err != nil {
 		return
-	} else if n == 0 || nextLogID == 0 {
+	} else if n != 0 {
 		return
 	}
 	//no events read
 	select {
-	//case <-l.binlog.Wait():
+	case <-l.r.WaitLog():
 	case <-time.After(time.Duration(timeout) * time.Second):
 	}
 	return l.ReadLogsTo(startLogID, w)
+}
 
+func (l *Ledis) NextSyncLogID() (uint64, error) {
+	if !l.ReplicationUsed() {
+		return 0, ErrRplNotSupport
+	}
+
+	s, err := l.r.Stat()
+	if err != nil {
+		return 0, err
+	}
+
+	if s.LastID > s.CommitID {
+		return s.LastID + 1, nil
+	} else {
+		return s.CommitID + 1, nil
+	}
+}
+
+func (l *Ledis) propagate(rl *rpl.Log) {
+	for _, h := range l.rhs {
+		h(rl)
+	}
+}
+
+type NewLogEventHandler func(rl *rpl.Log)
+
+func (l *Ledis) AddNewLogEventHandler(h NewLogEventHandler) error {
+	if !l.ReplicationUsed() {
+		return ErrRplNotSupport
+	}
+
+	l.rhs = append(l.rhs, h)
+
+	return nil
 }

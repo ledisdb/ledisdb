@@ -15,7 +15,6 @@ func TestReplication(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	c := new(config.Config)
-	c.Replication.Use = true
 	c.Replication.Path = dir
 
 	r, err := NewReplication(c)

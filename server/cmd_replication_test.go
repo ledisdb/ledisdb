@@ -17,7 +17,7 @@ func checkDataEqual(master *App, slave *App) error {
 	skeys, _ := sdb.Scan(nil, 100, true, "")
 
 	if len(mkeys) != len(skeys) {
-		return fmt.Errorf("keys number not equal")
+		return fmt.Errorf("keys number not equal %d != %d", len(mkeys), len(skeys))
 	} else if !reflect.DeepEqual(mkeys, skeys) {
 		return fmt.Errorf("keys not equal")
 	} else {
@@ -40,7 +40,9 @@ func TestReplication(t *testing.T) {
 	masterCfg := new(config.Config)
 	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
 	masterCfg.Addr = "127.0.0.1:11182"
-	masterCfg.UseBinLog = true
+	masterCfg.UseReplication = true
+	masterCfg.Replication.Sync = true
+	masterCfg.Replication.WaitSyncTime = 5
 
 	var master *App
 	var slave *App
@@ -55,6 +57,7 @@ func TestReplication(t *testing.T) {
 	slaveCfg.DataDir = fmt.Sprintf("%s/slave", data_dir)
 	slaveCfg.Addr = "127.0.0.1:11183"
 	slaveCfg.SlaveOf = masterCfg.Addr
+	slaveCfg.UseReplication = true
 
 	slave, err = NewApp(slaveCfg)
 	if err != nil {
@@ -63,6 +66,9 @@ func TestReplication(t *testing.T) {
 	defer slave.Close()
 
 	go master.Run()
+
+	time.Sleep(1 * time.Second)
+	go slave.Run()
 
 	db, _ := master.ldb.Select(0)
 
@@ -73,10 +79,7 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("c"), value)
 	db.Set([]byte("d"), value)
 
-	go slave.Run()
-
 	time.Sleep(1 * time.Second)
-
 	if err = checkDataEqual(master, slave); err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +89,9 @@ func TestReplication(t *testing.T) {
 	db.Set([]byte("c1"), value)
 	db.Set([]byte("d1"), value)
 
-	time.Sleep(1 * time.Second)
+	//time.Sleep(1 * time.Second)
+	slave.ldb.WaitReplication()
+
 	if err = checkDataEqual(master, slave); err != nil {
 		t.Fatal(err)
 	}
@@ -108,6 +113,7 @@ func TestReplication(t *testing.T) {
 	}
 
 	slave.slaveof(masterCfg.Addr)
+
 	time.Sleep(1 * time.Second)
 
 	if err = checkDataEqual(master, slave); err != nil {

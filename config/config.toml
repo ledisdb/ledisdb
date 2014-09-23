@@ -30,6 +30,9 @@ db_name = "leveldb"
 # If not set, use data_dir/"db_name"_data
 db_path = ""
 
+# enable replication or not
+use_replication = true
+
 [leveldb]
 compression = false
 block_size = 32768
@@ -42,9 +45,6 @@ map_size = 524288000
 nosync = true
 
 [replication]
-# enable replication or not
-use = true
-
 # Path to store replication information(write ahead log, commit log, etc.)
 # if not set, use data_dir/rpl 
 path = ""
@@ -52,4 +52,10 @@ path = ""
 # Expire write ahead logs after the given days
 expired_log_days = 7
 
+# If sync is true, the new log must be sent to some slaves, and then commit. 
+# It may affect performance. 
+sync = true
+
+# If sync is true, wait at last wait_sync_time seconds to check whether slave sync this log
+wait_sync_time = 1
 

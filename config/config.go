@@ -30,9 +30,10 @@ type LMDBConfig struct {
 }
 
 type ReplicationConfig struct {
-	Use            bool   `toml:"use"`
 	Path           string `toml:"path"`
 	ExpiredLogDays int    `toml:"expired_log_days"`
+	Sync           bool   `toml:"sync"`
+	WaitSyncTime   int    `toml:"wait_sync_time"`
 }
 
 type Config struct {
@@ -54,7 +55,8 @@ type Config struct {
 
 	AccessLog string `toml:"access_log"`
 
-	Replication ReplicationConfig `toml:"replication"`
+	UseReplication bool              `toml:"use_replication"`
+	Replication    ReplicationConfig `toml:"replication"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -94,6 +96,8 @@ func NewConfigDefault() *Config {
 
 	cfg.LMDB.MapSize = 20 * 1024 * 1024
 	cfg.LMDB.NoSync = true
+
+	cfg.Replication.WaitSyncTime = 1
 
 	return cfg
 }

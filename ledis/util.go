@@ -74,6 +74,16 @@ func StrInt64(v []byte, err error) (int64, error) {
 	}
 }
 
+func StrUint64(v []byte, err error) (uint64, error) {
+	if err != nil {
+		return 0, err
+	} else if v == nil {
+		return 0, nil
+	} else {
+		return strconv.ParseUint(String(v), 10, 64)
+	}
+}
+
 func StrInt32(v []byte, err error) (int32, error) {
 	if err != nil {
 		return 0, err
@@ -121,5 +131,12 @@ func MaxInt32(a int32, b int32) int32 {
 		return a
 	} else {
 		return b
+	}
+}
+
+func AsyncNotify(ch chan struct{}) {
+	select {
+	case ch <- struct{}{}:
+	default:
 	}
 }
