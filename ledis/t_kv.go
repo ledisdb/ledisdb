@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"errors"
+	"github.com/siddontang/go/num"
 	"time"
 )
 
@@ -75,7 +76,7 @@ func (db *DB) incr(key []byte, delta int64) (int64, error) {
 
 	n += delta
 
-	t.Put(key, StrPutInt64(n))
+	t.Put(key, num.FormatInt64ToSlice(n))
 
 	err = t.Commit()
 	return n, err

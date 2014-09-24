@@ -858,14 +858,14 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
-	var num = int64(len(destMap))
+	var n = int64(len(destMap))
 	sk := db.zEncodeSizeKey(destKey)
-	t.Put(sk, PutInt64(num))
+	t.Put(sk, PutInt64(n))
 
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
@@ -926,14 +926,14 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
-	var num int64 = int64(len(destMap))
+	var n int64 = int64(len(destMap))
 	sk := db.zEncodeSizeKey(destKey)
-	t.Put(sk, PutInt64(num))
+	t.Put(sk, PutInt64(n))
 
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) ZScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {

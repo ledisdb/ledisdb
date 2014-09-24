@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/lua"
 	"io"
@@ -115,7 +116,7 @@ func (w *luaWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool) 
 			w.l.PushString(hack.String(v.Member))
 			w.l.RawSeti(-2, 2*i+1)
 
-			w.l.PushString(hack.String(ledis.StrPutInt64(v.Score)))
+			w.l.PushString(hack.String(num.FormatInt64ToSlice(v.Score)))
 			w.l.RawSeti(-2, 2*i+2)
 		}
 	} else {

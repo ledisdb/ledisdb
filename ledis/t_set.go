@@ -509,14 +509,14 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 		t.Put(ek, nil)
 	}
 
-	var num = int64(len(v))
+	var n = int64(len(v))
 	sk := db.sEncodeSizeKey(dstKey)
-	t.Put(sk, PutInt64(num))
+	t.Put(sk, PutInt64(n))
 
 	if err = t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) SClear(key []byte) (int64, error) {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
@@ -171,7 +172,7 @@ func (w *respWriter) writeStatus(status string) {
 
 func (w *respWriter) writeInteger(n int64) {
 	w.buff.WriteByte(':')
-	w.buff.Write(ledis.StrPutInt64(n))
+	w.buff.Write(num.FormatInt64ToSlice(n))
 	w.buff.Write(Delims)
 }
 
@@ -266,7 +267,7 @@ func (w *respWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool)
 			w.writeBulk(lst[i].Member)
 
 			if withScores {
-				w.writeBulk(ledis.StrPutInt64(lst[i].Score))
+				w.writeBulk(num.FormatInt64ToSlice(lst[i].Score))
 			}
 		}
 	}

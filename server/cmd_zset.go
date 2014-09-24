@@ -3,7 +3,7 @@ package server
 import (
 	"errors"
 	"github.com/siddontang/go/hack"
-
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"math"
 	"strconv"
@@ -75,7 +75,7 @@ func zscoreCommand(c *client) error {
 			return err
 		}
 	} else {
-		c.resp.writeBulk(ledis.StrPutInt64(s))
+		c.resp.writeBulk(num.FormatInt64ToSlice(s))
 	}
 
 	return nil
@@ -112,7 +112,7 @@ func zincrbyCommand(c *client) error {
 	v, err := c.db.ZIncrBy(key, delta, args[2])
 
 	if err == nil {
-		c.resp.writeBulk(ledis.StrPutInt64(v))
+		c.resp.writeBulk(num.FormatInt64ToSlice(v))
 	}
 
 	return err

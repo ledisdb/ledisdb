@@ -4,12 +4,15 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go/hack"
-	"reflect"
 	"strconv"
-	"unsafe"
 )
 
 var errIntNumber = errors.New("invalid integer")
+
+/*
+	Below I forget why I use little endian to store int.
+	Maybe I was foolish at that time.
+*/
 
 func Int64(v []byte, err error) (int64, error) {
 	if err != nil {
@@ -36,11 +39,8 @@ func Uint64(v []byte, err error) (uint64, error) {
 }
 
 func PutInt64(v int64) []byte {
-	var b []byte
-	pbytes := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	pbytes.Data = uintptr(unsafe.Pointer(&v))
-	pbytes.Len = 8
-	pbytes.Cap = 8
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, uint64(v))
 	return b
 }
 
@@ -84,14 +84,6 @@ func StrInt8(v []byte, err error) (int8, error) {
 		res, err := strconv.ParseInt(hack.String(v), 10, 8)
 		return int8(res), err
 	}
-}
-
-func StrPutInt64(v int64) []byte {
-	return strconv.AppendInt(nil, v, 10)
-}
-
-func StrPutUint64(v uint64) []byte {
-	return strconv.AppendUint(nil, v, 10)
 }
 
 func AsyncNotify(ch chan struct{}) {
