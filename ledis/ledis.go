@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"fmt"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"

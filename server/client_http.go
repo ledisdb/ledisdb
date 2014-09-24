@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/siddontang/go-bson/bson"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/bson"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/ugorji/go/codec"
 	"io"

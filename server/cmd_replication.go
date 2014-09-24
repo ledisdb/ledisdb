@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/go-snappy/snappy"
+	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"os"

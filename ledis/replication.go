@@ -3,7 +3,7 @@ package ledis
 import (
 	"bytes"
 	"errors"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/rpl"
 	"io"
 	"time"

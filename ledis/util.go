@@ -110,6 +110,10 @@ func StrPutInt64(v int64) []byte {
 	return strconv.AppendInt(nil, v, 10)
 }
 
+func StrPutUint64(v uint64) []byte {
+	return strconv.AppendUint(nil, v, 10)
+}
+
 func MinUInt32(a uint32, b uint32) uint32 {
 	if a > b {
 		return b

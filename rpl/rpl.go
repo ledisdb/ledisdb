@@ -2,7 +2,7 @@ package rpl
 
 import (
 	"encoding/binary"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"path"

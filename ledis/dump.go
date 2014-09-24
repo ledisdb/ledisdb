@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"github.com/siddontang/go-snappy/snappy"
+	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/store"
 	"io"
 	"os"

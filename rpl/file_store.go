@@ -2,7 +2,7 @@ package rpl
 
 import (
 	"fmt"
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/log"
 	"io/ioutil"
 	"os"
 	"path"

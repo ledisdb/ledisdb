@@ -1,7 +1,7 @@
 package ledis
 
 import (
-	"github.com/siddontang/go-log/log"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
