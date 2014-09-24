@@ -2,10 +2,14 @@ package ledis
 
 import (
 	"fmt"
+	"github.com/siddontang/go/filelock"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
+	"io"
+	"os"
+	"path"
 	"sync"
 	"time"
 )
@@ -31,6 +35,8 @@ type Ledis struct {
 
 	// for readonly mode, only replication can write
 	readOnly bool
+
+	lock io.Closer
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
@@ -42,18 +48,23 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 		cfg.DataDir = config.DefaultDataDir
 	}
 
-	ldb, err := store.Open(cfg)
-	if err != nil {
-		return nil, err
-	}
+	os.MkdirAll(cfg.DataDir, 0755)
+
+	var err error
 
 	l := new(Ledis)
+
+	if l.lock, err = filelock.Lock(path.Join(cfg.DataDir, "LOCK")); err != nil {
+		return nil, err
+	}
 
 	l.readOnly = (flags&ROnlyMode > 0)
 
 	l.quit = make(chan struct{})
 
-	l.ldb = ldb
+	if l.ldb, err = store.Open(cfg); err != nil {
+		return nil, err
+	}
 
 	if cfg.UseReplication {
 		if l.r, err = rpl.NewReplication(cfg); err != nil {
@@ -90,6 +101,11 @@ func (l *Ledis) Close() {
 	if l.r != nil {
 		l.r.Close()
 		l.r = nil
+	}
+
+	if l.lock != nil {
+		l.lock.Close()
+		l.lock = nil
 	}
 }
 

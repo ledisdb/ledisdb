@@ -16,3 +16,4 @@ go get github.com/siddontang/go/bson
 go get github.com/siddontang/go/log
 go get github.com/siddontang/go/snappy
 go get github.com/siddontang/go/num
+go get github.com/siddontang/go/filelock
