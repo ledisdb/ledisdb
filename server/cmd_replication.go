@@ -83,10 +83,7 @@ func syncCommand(c *client) error {
 	c.lastLogID = logId - 1
 
 	if c.ack != nil && logId > c.ack.id {
-		select {
-		case c.ack.ch <- logId:
-		default:
-		}
+		asyncNotifyUint64(c.ack.ch, logId)
 		c.ack = nil
 	}
 

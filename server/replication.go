@@ -54,10 +54,7 @@ func newMaster(app *App) *master {
 }
 
 func (m *master) Close() {
-	select {
-	case m.quit <- struct{}{}:
-	default:
-	}
+	ledis.AsyncNotify(m.quit)
 
 	if m.conn != nil {
 		m.conn.Close()
@@ -262,10 +259,14 @@ func (app *App) removeSlave(c *client) {
 	delete(app.slaves, c)
 
 	if c.ack != nil {
-		select {
-		case c.ack.ch <- c.lastLogID:
-		default:
-		}
+		asyncNotifyUint64(c.ack.ch, c.lastLogID)
+	}
+}
+
+func asyncNotifyUint64(ch chan uint64, v uint64) {
+	select {
+	case ch <- v:
+	default:
 	}
 }
 
