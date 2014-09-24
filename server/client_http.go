@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/siddontang/go/bson"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/ugorji/go/codec"
@@ -151,7 +152,7 @@ func (w *httpWriter) writeBulk(b []byte) {
 	if b == nil {
 		w.genericWrite(nil)
 	} else {
-		w.genericWrite(ledis.String(b))
+		w.genericWrite(hack.String(b))
 	}
 }
 
@@ -165,7 +166,7 @@ func (w *httpWriter) writeSliceArray(lst [][]byte) {
 		if elem == nil {
 			arr[i] = nil
 		} else {
-			arr[i] = ledis.String(elem)
+			arr[i] = hack.String(elem)
 		}
 	}
 	w.genericWrite(arr)
@@ -174,7 +175,7 @@ func (w *httpWriter) writeSliceArray(lst [][]byte) {
 func (w *httpWriter) writeFVPairArray(lst []ledis.FVPair) {
 	m := make(map[string]string)
 	for _, elem := range lst {
-		m[ledis.String(elem.Field)] = ledis.String(elem.Value)
+		m[hack.String(elem.Field)] = hack.String(elem.Value)
 	}
 	w.genericWrite(m)
 }
@@ -184,13 +185,13 @@ func (w *httpWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool)
 	if withScores {
 		arr = make([]string, 2*len(lst))
 		for i, data := range lst {
-			arr[2*i] = ledis.String(data.Member)
+			arr[2*i] = hack.String(data.Member)
 			arr[2*i+1] = strconv.FormatInt(data.Score, 10)
 		}
 	} else {
 		arr = make([]string, len(lst))
 		for i, data := range lst {
-			arr[i] = ledis.String(data.Member)
+			arr[i] = hack.String(data.Member)
 		}
 	}
 	w.genericWrite(arr)

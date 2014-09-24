@@ -3,6 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
 	"sort"
 	"time"
@@ -239,8 +240,8 @@ func (db *DB) bUpdateMeta(t *batch, key []byte, seq uint32, off uint32) (tailSeq
 	} else if tseq < 0 {
 		update = true
 	} else {
-		tailSeq = uint32(MaxInt32(tseq, 0))
-		tailOff = uint32(MaxInt32(toff, 0))
+		tailSeq = uint32(num.MaxInt32(tseq, 0))
+		tailOff = uint32(num.MaxInt32(toff, 0))
 		update = (seq > tailSeq || (seq == tailSeq && off > tailOff))
 	}
 
@@ -461,7 +462,7 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 		}
 
 		s = seq << segByteWidth
-		e = MinUInt32(s+segByteSize, capByteSize)
+		e = num.MinUint32(s+segByteSize, capByteSize)
 		copy(data[s:e], it.RawValue())
 	}
 	it.Close()

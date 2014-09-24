@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
@@ -80,7 +81,7 @@ func (c *respClient) readRequest() ([][]byte, error) {
 	}
 
 	var nparams int
-	if nparams, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
+	if nparams, err = strconv.Atoi(hack.String(l[1:])); err != nil {
 		return nil, err
 	} else if nparams <= 0 {
 		return nil, errReadRequest
@@ -97,7 +98,7 @@ func (c *respClient) readRequest() ([][]byte, error) {
 			return nil, errReadRequest
 		} else if l[0] == '$' {
 			//handle resp string
-			if n, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
+			if n, err = strconv.Atoi(hack.String(l[1:])); err != nil {
 				return nil, err
 			} else if n == -1 {
 				req = append(req, nil)
@@ -130,7 +131,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.cmd = ""
 		c.args = reqData[0:0]
 	} else {
-		c.cmd = strings.ToLower(ledis.String(reqData[0]))
+		c.cmd = strings.ToLower(hack.String(reqData[0]))
 		c.args = reqData[1:]
 	}
 	if c.cmd == "quit" {
@@ -154,17 +155,17 @@ func newWriterRESP(conn net.Conn) *respWriter {
 }
 
 func (w *respWriter) writeError(err error) {
-	w.buff.Write(ledis.Slice("-ERR"))
+	w.buff.Write(hack.Slice("-ERR"))
 	if err != nil {
 		w.buff.WriteByte(' ')
-		w.buff.Write(ledis.Slice(err.Error()))
+		w.buff.Write(hack.Slice(err.Error()))
 	}
 	w.buff.Write(Delims)
 }
 
 func (w *respWriter) writeStatus(status string) {
 	w.buff.WriteByte('+')
-	w.buff.Write(ledis.Slice(status))
+	w.buff.Write(hack.Slice(status))
 	w.buff.Write(Delims)
 }
 
@@ -179,7 +180,7 @@ func (w *respWriter) writeBulk(b []byte) {
 	if b == nil {
 		w.buff.Write(NullBulk)
 	} else {
-		w.buff.Write(ledis.Slice(strconv.Itoa(len(b))))
+		w.buff.Write(hack.Slice(strconv.Itoa(len(b))))
 		w.buff.Write(Delims)
 		w.buff.Write(b)
 	}
@@ -193,7 +194,7 @@ func (w *respWriter) writeArray(lst []interface{}) {
 		w.buff.Write(NullArray)
 		w.buff.Write(Delims)
 	} else {
-		w.buff.Write(ledis.Slice(strconv.Itoa(len(lst))))
+		w.buff.Write(hack.Slice(strconv.Itoa(len(lst))))
 		w.buff.Write(Delims)
 
 		for i := 0; i < len(lst); i++ {
@@ -221,7 +222,7 @@ func (w *respWriter) writeSliceArray(lst [][]byte) {
 		w.buff.Write(NullArray)
 		w.buff.Write(Delims)
 	} else {
-		w.buff.Write(ledis.Slice(strconv.Itoa(len(lst))))
+		w.buff.Write(hack.Slice(strconv.Itoa(len(lst))))
 		w.buff.Write(Delims)
 
 		for i := 0; i < len(lst); i++ {
@@ -236,7 +237,7 @@ func (w *respWriter) writeFVPairArray(lst []ledis.FVPair) {
 		w.buff.Write(NullArray)
 		w.buff.Write(Delims)
 	} else {
-		w.buff.Write(ledis.Slice(strconv.Itoa(len(lst) * 2)))
+		w.buff.Write(hack.Slice(strconv.Itoa(len(lst) * 2)))
 		w.buff.Write(Delims)
 
 		for i := 0; i < len(lst); i++ {
@@ -253,10 +254,10 @@ func (w *respWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool)
 		w.buff.Write(Delims)
 	} else {
 		if withScores {
-			w.buff.Write(ledis.Slice(strconv.Itoa(len(lst) * 2)))
+			w.buff.Write(hack.Slice(strconv.Itoa(len(lst) * 2)))
 			w.buff.Write(Delims)
 		} else {
-			w.buff.Write(ledis.Slice(strconv.Itoa(len(lst))))
+			w.buff.Write(hack.Slice(strconv.Itoa(len(lst))))
 			w.buff.Write(Delims)
 
 		}
@@ -273,7 +274,7 @@ func (w *respWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool)
 
 func (w *respWriter) writeBulkFrom(n int64, rb io.Reader) {
 	w.buff.WriteByte('$')
-	w.buff.Write(ledis.Slice(strconv.FormatInt(n, 10)))
+	w.buff.Write(hack.Slice(strconv.FormatInt(n, 10)))
 	w.buff.Write(Delims)
 
 	io.Copy(w.buff, rb)

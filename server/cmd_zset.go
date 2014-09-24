@@ -2,6 +2,8 @@ package server
 
 import (
 	"errors"
+	"github.com/siddontang/go/hack"
+
 	"github.com/siddontang/ledisdb/ledis"
 	"math"
 	"strconv"
@@ -117,7 +119,7 @@ func zincrbyCommand(c *client) error {
 }
 
 func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err error) {
-	if strings.ToLower(ledis.String(minBuf)) == "-inf" {
+	if strings.ToLower(hack.String(minBuf)) == "-inf" {
 		min = math.MinInt64
 	} else {
 
@@ -148,7 +150,7 @@ func zparseScoreRange(minBuf []byte, maxBuf []byte) (min int64, max int64, err e
 		}
 	}
 
-	if strings.ToLower(ledis.String(maxBuf)) == "+inf" {
+	if strings.ToLower(hack.String(maxBuf)) == "+inf" {
 		max = math.MaxInt64
 	} else {
 		var ropen = false
@@ -289,11 +291,11 @@ func zremrangebyscoreCommand(c *client) error {
 }
 
 func zparseRange(c *client, a1 []byte, a2 []byte) (start int, stop int, err error) {
-	if start, err = strconv.Atoi(ledis.String(a1)); err != nil {
+	if start, err = strconv.Atoi(hack.String(a1)); err != nil {
 		return
 	}
 
-	if stop, err = strconv.Atoi(ledis.String(a2)); err != nil {
+	if stop, err = strconv.Atoi(hack.String(a2)); err != nil {
 		return
 	}
 
@@ -320,7 +322,7 @@ func zrangeGeneric(c *client, reverse bool) error {
 		if len(args) != 1 {
 			return ErrCmdParams
 		}
-		if strings.ToLower(ledis.String(args[0])) == "withscores" {
+		if strings.ToLower(hack.String(args[0])) == "withscores" {
 			withScores = true
 		} else {
 			return ErrSyntax
@@ -370,7 +372,7 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 	var withScores bool = false
 
 	if len(args) > 0 {
-		if strings.ToLower(ledis.String(args[0])) == "withscores" {
+		if strings.ToLower(hack.String(args[0])) == "withscores" {
 			withScores = true
 			args = args[1:]
 		}
@@ -384,15 +386,15 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 			return ErrCmdParams
 		}
 
-		if strings.ToLower(ledis.String(args[0])) != "limit" {
+		if strings.ToLower(hack.String(args[0])) != "limit" {
 			return ErrSyntax
 		}
 
-		if offset, err = strconv.Atoi(ledis.String(args[1])); err != nil {
+		if offset, err = strconv.Atoi(hack.String(args[1])); err != nil {
 			return ErrValue
 		}
 
-		if count, err = strconv.Atoi(ledis.String(args[2])); err != nil {
+		if count, err = strconv.Atoi(hack.String(args[2])); err != nil {
 			return ErrValue
 		}
 	}
@@ -523,7 +525,7 @@ func zpersistCommand(c *client) error {
 
 func zparseZsetoptStore(args [][]byte) (destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte, err error) {
 	destKey = args[0]
-	nKeys, err := strconv.Atoi(ledis.String(args[1]))
+	nKeys, err := strconv.Atoi(hack.String(args[1]))
 	if err != nil {
 		err = ErrValue
 		return
@@ -542,7 +544,7 @@ func zparseZsetoptStore(args [][]byte) (destKey []byte, srcKeys [][]byte, weight
 	var aggregateFlag = false
 
 	for len(args) > 0 {
-		if strings.ToLower(ledis.String(args[0])) == "weights" {
+		if strings.ToLower(hack.String(args[0])) == "weights" {
 			if weightsFlag {
 				err = ErrSyntax
 				return
@@ -565,7 +567,7 @@ func zparseZsetoptStore(args [][]byte) (destKey []byte, srcKeys [][]byte, weight
 
 			weightsFlag = true
 
-		} else if strings.ToLower(ledis.String(args[0])) == "aggregate" {
+		} else if strings.ToLower(hack.String(args[0])) == "aggregate" {
 			if aggregateFlag {
 				err = ErrSyntax
 				return
@@ -575,11 +577,11 @@ func zparseZsetoptStore(args [][]byte) (destKey []byte, srcKeys [][]byte, weight
 				return
 			}
 
-			if strings.ToLower(ledis.String(args[1])) == "sum" {
+			if strings.ToLower(hack.String(args[1])) == "sum" {
 				aggregate = ledis.AggregateSum
-			} else if strings.ToLower(ledis.String(args[1])) == "min" {
+			} else if strings.ToLower(hack.String(args[1])) == "min" {
 				aggregate = ledis.AggregateMin
-			} else if strings.ToLower(ledis.String(args[1])) == "max" {
+			} else if strings.ToLower(hack.String(args[1])) == "max" {
 				aggregate = ledis.AggregateMax
 			} else {
 				err = ErrSyntax

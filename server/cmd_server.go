@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/go/hack"
 	"strconv"
 	"strings"
 )
@@ -25,7 +25,7 @@ func selectCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if index, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
+	if index, err := strconv.Atoi(hack.String(c.args[0])); err != nil {
 		return err
 	} else {
 		if c.db.IsInMulti() {
@@ -53,7 +53,7 @@ func infoCommand(c *client) error {
 	}
 	var section string
 	if len(c.args) == 1 {
-		section = strings.ToLower(ledis.String(c.args[0]))
+		section = strings.ToLower(hack.String(c.args[0]))
 	}
 
 	buf := c.app.info.Dump(section)
@@ -87,7 +87,7 @@ func readonlyCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if flag, err := strconv.Atoi(ledis.String(c.args[0])); err != nil {
+	if flag, err := strconv.Atoi(hack.String(c.args[0])); err != nil {
 		return err
 	} else {
 		c.app.ldb.SetReadOnly(flag != 0)

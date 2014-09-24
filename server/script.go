@@ -5,6 +5,7 @@ package server
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/lua"
 	"io"
@@ -38,7 +39,7 @@ func (w *luaWriter) writeBulk(b []byte) {
 	if b == nil {
 		w.l.PushBoolean(false)
 	} else {
-		w.l.PushString(ledis.String(b))
+		w.l.PushString(hack.String(b))
 	}
 }
 
@@ -81,7 +82,7 @@ func (w *luaWriter) writeSliceArray(lst [][]byte) {
 
 	w.l.CreateTable(len(lst), 0)
 	for i, v := range lst {
-		w.l.PushString(ledis.String(v))
+		w.l.PushString(hack.String(v))
 		w.l.RawSeti(-2, i+1)
 	}
 }
@@ -94,10 +95,10 @@ func (w *luaWriter) writeFVPairArray(lst []ledis.FVPair) {
 
 	w.l.CreateTable(len(lst)*2, 0)
 	for i, v := range lst {
-		w.l.PushString(ledis.String(v.Field))
+		w.l.PushString(hack.String(v.Field))
 		w.l.RawSeti(-2, 2*i+1)
 
-		w.l.PushString(ledis.String(v.Value))
+		w.l.PushString(hack.String(v.Value))
 		w.l.RawSeti(-2, 2*i+2)
 	}
 }
@@ -111,16 +112,16 @@ func (w *luaWriter) writeScorePairArray(lst []ledis.ScorePair, withScores bool) 
 	if withScores {
 		w.l.CreateTable(len(lst)*2, 0)
 		for i, v := range lst {
-			w.l.PushString(ledis.String(v.Member))
+			w.l.PushString(hack.String(v.Member))
 			w.l.RawSeti(-2, 2*i+1)
 
-			w.l.PushString(ledis.String(ledis.StrPutInt64(v.Score)))
+			w.l.PushString(hack.String(ledis.StrPutInt64(v.Score)))
 			w.l.RawSeti(-2, 2*i+2)
 		}
 	} else {
 		w.l.CreateTable(len(lst), 0)
 		for i, v := range lst {
-			w.l.PushString(ledis.String(v.Member))
+			w.l.PushString(hack.String(v.Member))
 			w.l.RawSeti(-2, i+1)
 		}
 	}
@@ -280,7 +281,7 @@ func luaSha1Hex(l *lua.State) int {
 	}
 
 	s := l.ToString(1)
-	s = hex.EncodeToString(ledis.Slice(s))
+	s = hex.EncodeToString(hack.Slice(s))
 
 	l.PushString(s)
 	return 1
@@ -333,7 +334,7 @@ func luaSetGlobalArray(l *lua.State, name string, ay [][]byte) {
 	l.NewTable()
 
 	for i := 0; i < len(ay); i++ {
-		l.PushString(ledis.String(ay[i]))
+		l.PushString(hack.String(ay[i]))
 		l.RawSeti(-2, i+1)
 	}
 
@@ -348,7 +349,7 @@ func luaReplyToLedisReply(l *lua.State) interface{} {
 
 	switch l.Type(-1) {
 	case lua.LUA_TSTRING:
-		return ledis.Slice(l.ToString(-1))
+		return hack.Slice(l.ToString(-1))
 	case lua.LUA_TBOOLEAN:
 		if l.ToBoolean(-1) {
 			return int64(1)

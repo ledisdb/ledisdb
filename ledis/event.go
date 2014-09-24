@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/siddontang/go/hack"
 	"io"
 	"strconv"
 )
@@ -114,27 +115,27 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		if key, err := db.decodeKVKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case HashType:
 		if key, field, err := db.hDecodeHashKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(field))
+			buf = strconv.AppendQuote(buf, hack.String(field))
 		}
 	case HSizeType:
 		if key, err := db.hDecodeSizeKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case ListType:
 		if key, seq, err := db.lDecodeListKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
 			buf = strconv.AppendInt(buf, int64(seq), 10)
 		}
@@ -142,29 +143,29 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		if key, err := db.lDecodeMetaKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case ZSetType:
 		if key, m, err := db.zDecodeSetKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(m))
+			buf = strconv.AppendQuote(buf, hack.String(m))
 		}
 	case ZSizeType:
 		if key, err := db.zDecodeSizeKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case ZScoreType:
 		if key, m, score, err := db.zDecodeScoreKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(m))
+			buf = strconv.AppendQuote(buf, hack.String(m))
 			buf = append(buf, ' ')
 			buf = strconv.AppendInt(buf, score, 10)
 		}
@@ -172,7 +173,7 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		if key, seq, err := db.bDecodeBinKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
 			buf = strconv.AppendUint(buf, uint64(seq), 10)
 		}
@@ -180,21 +181,21 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		if key, err := db.bDecodeMetaKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case SetType:
 		if key, member, err := db.sDecodeSetKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(member))
+			buf = strconv.AppendQuote(buf, hack.String(member))
 		}
 	case SSizeType:
 		if key, err := db.sDecodeSizeKey(k); err != nil {
 			return nil, err
 		} else {
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	case ExpTimeType:
 		if tp, key, t, err := db.expDecodeTimeKey(k); err != nil {
@@ -202,7 +203,7 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		} else {
 			buf = append(buf, TypeName[tp]...)
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 			buf = append(buf, ' ')
 			buf = strconv.AppendInt(buf, t, 10)
 		}
@@ -212,7 +213,7 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 		} else {
 			buf = append(buf, TypeName[tp]...)
 			buf = append(buf, ' ')
-			buf = strconv.AppendQuote(buf, String(key))
+			buf = strconv.AppendQuote(buf, hack.String(key))
 		}
 	default:
 		return nil, errInvalidEvent

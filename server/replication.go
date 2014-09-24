@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
+
 	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
@@ -188,7 +190,7 @@ func (m *master) sync() error {
 
 	logIDStr := strconv.FormatUint(syncID, 10)
 
-	cmd := ledis.Slice(fmt.Sprintf(syncCmdFormat, len(logIDStr),
+	cmd := hack.Slice(fmt.Sprintf(syncCmdFormat, len(logIDStr),
 		logIDStr))
 
 	if _, err := m.conn.Write(cmd); err != nil {

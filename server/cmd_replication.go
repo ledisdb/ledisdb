@@ -2,7 +2,9 @@ package server
 
 import (
 	"fmt"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/snappy"
+
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"os"
@@ -19,11 +21,11 @@ func slaveofCommand(c *client) error {
 
 	masterAddr := ""
 
-	if strings.ToLower(ledis.String(args[0])) == "no" &&
-		strings.ToLower(ledis.String(args[1])) == "one" {
+	if strings.ToLower(hack.String(args[0])) == "no" &&
+		strings.ToLower(hack.String(args[1])) == "one" {
 		//stop replication, use master = ""
 	} else {
-		if _, err := strconv.ParseInt(ledis.String(args[1]), 10, 16); err != nil {
+		if _, err := strconv.ParseInt(hack.String(args[1]), 10, 16); err != nil {
 			return err
 		}
 

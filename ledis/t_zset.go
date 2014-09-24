@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
 	"time"
 )
@@ -833,10 +834,10 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 			return 0, err
 		}
 		for _, pair := range scorePairs {
-			if score, ok := destMap[String(pair.Member)]; !ok {
-				destMap[String(pair.Member)] = pair.Score * weights[i]
+			if score, ok := destMap[hack.String(pair.Member)]; !ok {
+				destMap[hack.String(pair.Member)] = pair.Score * weights[i]
 			} else {
-				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
+				destMap[hack.String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
 			}
 		}
 	}
@@ -893,7 +894,7 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		return 0, err
 	}
 	for _, pair := range scorePairs {
-		destMap[String(pair.Member)] = pair.Score * weights[0]
+		destMap[hack.String(pair.Member)] = pair.Score * weights[0]
 	}
 
 	for i, key := range srcKeys[1:] {
@@ -903,8 +904,8 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 		tmpMap := map[string]int64{}
 		for _, pair := range scorePairs {
-			if score, ok := destMap[String(pair.Member)]; ok {
-				tmpMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
+			if score, ok := destMap[hack.String(pair.Member)]; ok {
+				tmpMap[hack.String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
 			}
 		}
 		destMap = tmpMap
