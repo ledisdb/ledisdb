@@ -50,6 +50,9 @@ func (l *Ledis) handleReplication() {
 }
 
 func (l *Ledis) onReplication() {
+	l.wg.Add(1)
+	defer l.wg.Done()
+
 	AsyncNotify(l.rc)
 
 	for {
@@ -58,6 +61,8 @@ func (l *Ledis) onReplication() {
 			l.handleReplication()
 		case <-time.After(5 * time.Second):
 			l.handleReplication()
+		case <-l.quit:
+			return
 		}
 	}
 }
