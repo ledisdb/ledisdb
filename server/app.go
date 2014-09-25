@@ -88,7 +88,13 @@ func NewApp(cfg *config.Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.Open(cfg); err != nil {
+	flag := ledis.RDWRMode
+	if len(app.cfg.SlaveOf) > 0 {
+		//slave must readonly
+		flag = ledis.ROnlyMode
+	}
+
+	if app.ldb, err = ledis.Open2(cfg, flag); err != nil {
 		return nil, err
 	}
 

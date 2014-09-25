@@ -82,20 +82,6 @@ func flushdbCommand(c *client) error {
 	return nil
 }
 
-func readonlyCommand(c *client) error {
-	if len(c.args) != 1 {
-		return ErrCmdParams
-	}
-
-	if flag, err := strconv.Atoi(hack.String(c.args[0])); err != nil {
-		return err
-	} else {
-		c.app.ldb.SetReadOnly(flag != 0)
-		c.resp.writeStatus(OK)
-	}
-	return nil
-}
-
 func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)

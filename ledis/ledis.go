@@ -33,7 +33,7 @@ type Ledis struct {
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
 
-	// for readonly mode, only replication can write
+	// for readonly mode, only replication and flushall can write
 	readOnly bool
 
 	lock io.Closer

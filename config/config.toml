@@ -13,6 +13,7 @@ data_dir = "/tmp/ledis_server"
 access_log = ""
 
 # Set slaveof to enable replication from master, empty, no replication
+# Any write operations except flushall and replication will be disabled in slave mode.
 slaveof = ""
 
 # Choose which backend storage to use, now support:

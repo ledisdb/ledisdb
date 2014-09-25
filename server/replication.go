@@ -87,8 +87,6 @@ func (m *master) connect() error {
 func (m *master) stopReplication() error {
 	m.Close()
 
-	m.app.ldb.SetReadOnly(false)
-
 	return nil
 }
 
@@ -126,7 +124,7 @@ func (m *master) runReplication() {
 			if err := m.sync(); err != nil {
 				if m.conn != nil {
 					//if conn == nil, other close the replication, not error
-					log.Warn("sync error %s", err.Error())
+					log.Error("sync error %s", err.Error())
 				}
 				return
 			}
@@ -237,7 +235,11 @@ func (app *App) slaveof(masterAddr string) error {
 	}
 
 	if len(masterAddr) == 0 {
-		return app.m.stopReplication()
+		if err := app.m.stopReplication(); err != nil {
+			return err
+		}
+
+		app.ldb.SetReadOnly(false)
 	} else {
 		return app.m.startReplication(masterAddr)
 	}
