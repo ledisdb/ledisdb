@@ -24,6 +24,9 @@ var httpUnsupportedCommands = map[string]struct{}{
 	"fullsync": struct{}{},
 	"sync":     struct{}{},
 	"quit":     struct{}{},
+	"begin":    struct{}{},
+	"commit":   struct{}{},
+	"rollback": struct{}{},
 }
 
 type httpClient struct {

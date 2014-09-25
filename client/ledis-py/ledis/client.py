@@ -9,7 +9,8 @@ from ledis.exceptions import (
     ConnectionError,
     DataError,
     LedisError,
-    ResponseError
+    ResponseError,
+    TxNotBeginError
 )
 
 SYM_EMPTY = b('')
@@ -198,6 +199,11 @@ class Ledis(object):
     def set_response_callback(self, command, callback):
         "Set a custom Response Callback"
         self.response_callbacks[command] = callback
+
+    def tx(self):
+        return Transaction(
+            self.connection_pool,
+            self.response_callbacks)
 
     #### COMMAND EXECUTION AND PROTOCOL PARSING ####
 
@@ -964,3 +970,43 @@ class Ledis(object):
 
     def scriptflush(self):
         return self.execute_command('SCRIPT', 'FLUSH')
+
+
+class Transaction(Ledis):
+    def __init__(self, connection_pool, response_callbacks):
+        self.connection_pool = connection_pool
+        self.response_callbacks = response_callbacks
+        self.connection = None
+
+    def execute_command(self, *args, **options):
+        "Execute a command and return a parsed response"
+        command_name = args[0]
+
+        connection = self.connection
+        if self.connection is None:
+            raise TxNotBeginError
+
+        try:
+            connection.send_command(*args)
+            return self.parse_response(connection, command_name, **options)
+        except ConnectionError:
+            connection.disconnect()
+            connection.send_command(*args)
+            return self.parse_response(connection, command_name, **options)
+
+    def begin(self):
+        self.connection = self.connection_pool.get_connection('begin')
+        return self.execute_command("BEGIN")
+
+    def commit(self):
+        res = self.execute_command("COMMIT")
+        self.connection_pool.release(self.connection)
+        self.connection = None
+        return res
+
+    def rollback(self):
+        res = self.execute_command("ROLLBACK")
+        self.connection_pool.release(self.connection)
+        self.connection = None
+        return res
+

@@ -35,3 +35,5 @@ class DataError(LedisError):
 class ExecAbortError(ResponseError):
     pass
 
+class TxNotBeginError(LedisError):
+    pass

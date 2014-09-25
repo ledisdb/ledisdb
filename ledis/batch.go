@@ -14,6 +14,8 @@ type batch struct {
 
 	sync.Locker
 
+	tx *Tx
+
 	eb *eventBatch
 }
 
@@ -22,31 +24,12 @@ func (b *batch) Commit() error {
 		return ErrWriteInROnly
 	}
 
-	b.l.commitLock.Lock()
-	defer b.l.commitLock.Unlock()
-
-	var err error
-	if b.l.r != nil {
-		var l *rpl.Log
-		if l, err = b.l.r.Log(b.eb.Bytes()); err != nil {
-			log.Fatal("write wal error %s", err.Error())
-			return err
-		}
-
-		b.l.propagate(l)
-
-		if err = b.WriteBatch.Commit(); err != nil {
-			log.Fatal("commit error %s", err.Error())
-			return err
-		}
-
-		if err = b.l.r.UpdateCommitID(l.ID); err != nil {
-			log.Fatal("update commit id error %s", err.Error())
-			return err
-		}
-
-		return nil
+	if b.tx == nil {
+		return b.l.handleCommit(b.eb, b.WriteBatch)
 	} else {
+		if b.l.r != nil {
+			b.tx.eb.Write(b.eb.Bytes())
+		}
 		return b.WriteBatch.Commit()
 	}
 }
@@ -93,20 +76,61 @@ func (l *dbBatchLocker) Unlock() {
 	l.wrLock.RUnlock()
 }
 
+type txBatchLocker struct {
+}
+
+func (l *txBatchLocker) Lock()   {}
+func (l *txBatchLocker) Unlock() {}
+
 type multiBatchLocker struct {
 }
 
 func (l *multiBatchLocker) Lock()   {}
 func (l *multiBatchLocker) Unlock() {}
 
-func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker) *batch {
+func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch {
 	b := new(batch)
 	b.l = l
 	b.WriteBatch = wb
 
 	b.Locker = locker
 
+	b.tx = tx
 	b.eb = new(eventBatch)
 
 	return b
+}
+
+type commiter interface {
+	Commit() error
+}
+
+func (l *Ledis) handleCommit(eb *eventBatch, c commiter) error {
+	l.commitLock.Lock()
+	defer l.commitLock.Unlock()
+
+	var err error
+	if l.r != nil {
+		var rl *rpl.Log
+		if rl, err = l.r.Log(eb.Bytes()); err != nil {
+			log.Fatal("write wal error %s", err.Error())
+			return err
+		}
+
+		l.propagate(rl)
+
+		if err = c.Commit(); err != nil {
+			log.Fatal("commit error %s", err.Error())
+			return err
+		}
+
+		if err = l.r.UpdateCommitID(rl.ID); err != nil {
+			log.Fatal("update commit id error %s", err.Error())
+			return err
+		}
+
+		return nil
+	} else {
+		return c.Commit()
+	}
 }

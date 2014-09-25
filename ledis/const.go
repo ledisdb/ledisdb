@@ -92,6 +92,7 @@ var (
 )
 
 const (
-	DBAutoCommit uint8 = 0x0
-	DBInMulti    uint8 = 0x2
+	DBAutoCommit    uint8 = 0x0
+	DBInTransaction uint8 = 0x1
+	DBInMulti       uint8 = 0x2
 )

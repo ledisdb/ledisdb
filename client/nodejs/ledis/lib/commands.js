@@ -125,6 +125,10 @@ module.exports = [
 	"spersist",
 	"sxscan",
 
+    "begin",
+    "rollback",
+    "commit",
+    
     "eval",
     "evalsha",
     "script",

@@ -512,6 +512,22 @@
         "readonly": false
     },
 
+    "BEGIN": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+    "COMMIT": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+    "ROLLBACK": {
+        "arguments": "-",
+        "group": "Transaction",
+        "readonly": false
+    },
+
     "XSCAN": {
         "arguments": "key [MATCH match] [COUNT count]",
         "group": "KV",

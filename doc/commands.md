@@ -129,6 +129,10 @@ Table of Contents
 	- [FLUSHALL](#flushall)
 	- [FLUSHDB](#flushdb)
 	- [INFO [section]](#info-section)
+- [Transaction](#transaction)
+	- [BEGIN](#begin)
+	- [ROLLBACK](#rollback)
+	- [COMMIT](#commit)
 - [Script](#script)
 	- [EVAL script numkeys key [key ...] arg [arg ...]](#eval-script-numkeys-key-key--arg-arg-)
 	- [EVALSHA sha1 numkeys key [key ...] arg [arg ...]](#evalsha-sha1-numkeys-key-key--arg-arg-)
@@ -2498,6 +2502,69 @@ The optional parameter can be used to select a specific section of information:
 
 When no parameter is provided, all will return.
 
+## Transaction
+
+### BEGIN
+
+Marks the start of a transaction block. Subsequent commands will be in a transaction context util using COMMIT or ROLLBACK.
+
+You must known that `BEGIN` will block any other write operators before you `COMMIT` or `ROLLBACK`. Don't use long-time transaction.
+
+**Return value**
+
+Returns `OK` if the backend store engine in use supports transaction, otherwise, returns `Err`. 
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> COMMIT
+OK
+```
+
+### ROLLBACK
+
+Discards all the changes of previously commands in a transaction and restores the connection state to normal.
+
+**Return value**
+Returns `OK` if in a transaction context, otherwise, `Err`
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> GET HELLO
+"WORLD"
+ledis> ROLLBACK
+OK
+ledis> GET HELLO
+(nil)
+```
+
+### COMMIT
+
+Persists the changes of all the commands in a transaction and restores the connection state to normal.
+
+**Return value**
+Returns `OK` if in a transaction context, otherwise, `Err`
+
+**Examples**
+```
+ledis> BEGIN
+OK
+ledis> SET HELLO WORLD
+OK
+ledis> GET HELLO
+"WORLD"
+ledis> COMMIT
+OK
+ledis> GET HELLO
+"WORLD"
+```
 
 ## Script
 

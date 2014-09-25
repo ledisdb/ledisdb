@@ -51,7 +51,7 @@ func (db *DB) Multi() (*Multi, error) {
 }
 
 func (m *Multi) newBatch() *batch {
-	return m.l.newBatch(m.bucket.NewWriteBatch(), &multiBatchLocker{})
+	return m.l.newBatch(m.bucket.NewWriteBatch(), &multiBatchLocker{}, nil)
 }
 
 func (m *Multi) Close() error {
