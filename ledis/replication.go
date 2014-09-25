@@ -187,23 +187,6 @@ func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (
 	return l.ReadLogsTo(startLogID, w)
 }
 
-func (l *Ledis) NextSyncLogID() (uint64, error) {
-	if !l.ReplicationUsed() {
-		return 0, ErrRplNotSupport
-	}
-
-	s, err := l.r.Stat()
-	if err != nil {
-		return 0, err
-	}
-
-	if s.LastID > s.CommitID {
-		return s.LastID + 1, nil
-	} else {
-		return s.CommitID + 1, nil
-	}
-}
-
 func (l *Ledis) propagate(rl *rpl.Log) {
 	for _, h := range l.rhs {
 		h(rl)

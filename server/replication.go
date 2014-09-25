@@ -176,10 +176,23 @@ func (m *master) fullSync() error {
 	return nil
 }
 
+func (m *master) nextSyncLogID() (uint64, error) {
+	s, err := m.app.ldb.ReplicationStat()
+	if err != nil {
+		return 0, err
+	}
+
+	if s.LastID > s.CommitID {
+		return s.LastID + 1, nil
+	} else {
+		return s.CommitID + 1, nil
+	}
+}
+
 func (m *master) sync() error {
 	var err error
 	var syncID uint64
-	if syncID, err = m.app.ldb.NextSyncLogID(); err != nil {
+	if syncID, err = m.nextSyncLogID(); err != nil {
 		return err
 	}
 
