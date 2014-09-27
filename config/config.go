@@ -34,6 +34,7 @@ type ReplicationConfig struct {
 	ExpiredLogDays int    `toml:"expired_log_days"`
 	Sync           bool   `toml:"sync"`
 	WaitSyncTime   int    `toml:"wait_sync_time"`
+	Compression    bool   `toml:"compression"`
 }
 
 type Config struct {
@@ -98,6 +99,7 @@ func NewConfigDefault() *Config {
 	cfg.LMDB.NoSync = true
 
 	cfg.Replication.WaitSyncTime = 1
+	cfg.Replication.Compression = true
 
 	return cfg
 }

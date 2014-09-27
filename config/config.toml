@@ -54,9 +54,11 @@ path = ""
 expired_log_days = 7
 
 # If sync is true, the new log must be sent to some slaves, and then commit. 
-# It may affect performance. 
+# It will reduce performance but have better high availability. 
 sync = true
 
-# If sync is true, wait at last wait_sync_time seconds to check whether slave sync this log
+# If sync is true, wait at last wait_sync_time seconds for slave syncing this log
 wait_sync_time = 1
 
+# Compress the log or not
+compression = true
