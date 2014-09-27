@@ -74,6 +74,7 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 		l.rc = make(chan struct{}, 8)
 		l.rbatch = l.ldb.NewWriteBatch()
 
+		l.wg.Add(1)
 		go l.onReplication()
 
 		//first we must try wait all replication ok
@@ -87,6 +88,7 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 		l.dbs[i] = l.newDB(i)
 	}
 
+	l.wg.Add(1)
 	go l.onDataExpired()
 
 	return l, nil
@@ -176,7 +178,6 @@ func (l *Ledis) SetReadOnly(b bool) {
 }
 
 func (l *Ledis) onDataExpired() {
-	l.wg.Add(1)
 	defer l.wg.Done()
 
 	var executors []*elimination = make([]*elimination, len(l.dbs))

@@ -22,19 +22,18 @@ func (l *Ledis) ReplicationUsed() bool {
 	return l.r != nil
 }
 
-func (l *Ledis) handleReplication() {
-	l.commitLock.Lock()
-	defer l.commitLock.Unlock()
-
+func (l *Ledis) handleReplication() error {
 	l.rwg.Add(1)
 	rl := &rpl.Log{}
+	var err error
 	for {
-		if err := l.r.NextNeedCommitLog(rl); err != nil {
+		if err = l.r.NextNeedCommitLog(rl); err != nil {
 			if err != rpl.ErrNoBehindLog {
 				log.Error("get next commit log err, %s", err.Error)
+				return err
 			} else {
 				l.rwg.Done()
-				return
+				return nil
 			}
 		} else {
 			l.rbatch.Rollback()
@@ -43,18 +42,22 @@ func (l *Ledis) handleReplication() {
 				//todo optimize
 				if rl.Data, err = snappy.Decode(nil, rl.Data); err != nil {
 					log.Error("decode log error %s", err.Error())
-					return
+					return err
 				}
 			}
 
 			decodeEventBatch(l.rbatch, rl.Data)
 
-			if err := l.rbatch.Commit(); err != nil {
+			l.commitLock.Lock()
+			if err = l.rbatch.Commit(); err != nil {
 				log.Error("commit log error %s", err.Error())
-				return
 			} else if err = l.r.UpdateCommitID(rl.ID); err != nil {
 				log.Error("update commit id error %s", err.Error())
-				return
+			}
+
+			l.commitLock.Unlock()
+			if err != nil {
+				return err
 			}
 		}
 
@@ -62,7 +65,6 @@ func (l *Ledis) handleReplication() {
 }
 
 func (l *Ledis) onReplication() {
-	l.wg.Add(1)
 	defer l.wg.Done()
 
 	AsyncNotify(l.rc)
