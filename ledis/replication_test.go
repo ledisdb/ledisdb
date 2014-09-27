@@ -34,6 +34,7 @@ func TestReplication(t *testing.T) {
 	cfgM.DataDir = "/tmp/test_repl/master"
 
 	cfgM.UseReplication = true
+	cfgM.Replication.Compression = true
 
 	os.RemoveAll(cfgM.DataDir)
 

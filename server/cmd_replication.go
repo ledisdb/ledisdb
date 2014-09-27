@@ -3,8 +3,6 @@ package server
 import (
 	"fmt"
 	"github.com/siddontang/go/hack"
-	"github.com/siddontang/go/snappy"
-
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"os"
@@ -93,14 +91,6 @@ func syncCommand(c *client) error {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()
-
-		if len(c.compressBuf) < snappy.MaxEncodedLen(len(buf)) {
-			c.compressBuf = make([]byte, snappy.MaxEncodedLen(len(buf)))
-		}
-
-		if buf, err = snappy.Encode(c.compressBuf, buf); err != nil {
-			return err
-		}
 
 		c.resp.writeBulk(buf)
 	}

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
-
-	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
 	"net"
@@ -38,8 +36,6 @@ type master struct {
 	wg sync.WaitGroup
 
 	syncBuf bytes.Buffer
-
-	compressBuf []byte
 }
 
 func newMaster(app *App) *master {
@@ -47,8 +43,6 @@ func newMaster(app *App) *master {
 	m.app = app
 
 	m.quit = make(chan struct{}, 1)
-
-	m.compressBuf = make([]byte, 256)
 
 	return m
 }
@@ -219,13 +213,7 @@ func (m *master) sync() error {
 		}
 	}
 
-	var buf []byte
-	buf, err = snappy.Decode(m.compressBuf, m.syncBuf.Bytes())
-	if err != nil {
-		return err
-	} else if len(buf) > len(m.compressBuf) {
-		m.compressBuf = buf
-	}
+	buf := m.syncBuf.Bytes()
 
 	if len(buf) == 0 {
 		return nil

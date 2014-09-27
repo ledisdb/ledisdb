@@ -3,6 +3,7 @@ package rpl
 import (
 	"encoding/binary"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"path"
@@ -86,6 +87,14 @@ func (r *Replication) Close() error {
 }
 
 func (r *Replication) Log(data []byte) (*Log, error) {
+	if r.cfg.Replication.Compression {
+		//todo optimize
+		var err error
+		if data, err = snappy.Encode(nil, data); err != nil {
+			return nil, err
+		}
+	}
+
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -102,6 +111,12 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 	l := new(Log)
 	l.ID = lastID + 1
 	l.CreateTime = uint32(time.Now().Unix())
+
+	if r.cfg.Replication.Compression {
+		l.Compression = 1
+	} else {
+		l.Compression = 0
+	}
 
 	l.Data = data
 

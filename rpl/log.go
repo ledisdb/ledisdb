@@ -4,27 +4,18 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"time"
 )
 
 type Log struct {
-	ID         uint64
-	CreateTime uint32
+	ID          uint64
+	CreateTime  uint32
+	Compression uint8
 
 	Data []byte
 }
 
-func NewLog(id uint64, data []byte) *Log {
-	l := new(Log)
-	l.ID = id
-	l.CreateTime = uint32(time.Now().Unix())
-	l.Data = data
-
-	return l
-}
-
 func (l *Log) HeadSize() int {
-	return 16
+	return 17
 }
 
 func (l *Log) Size() int {
@@ -58,6 +49,9 @@ func (l *Log) Encode(w io.Writer) error {
 	binary.BigEndian.PutUint32(buf[pos:], l.CreateTime)
 	pos += 4
 
+	buf[pos] = l.Compression
+	pos++
+
 	binary.BigEndian.PutUint32(buf[pos:], uint32(len(l.Data)))
 
 	if n, err := w.Write(buf); err != nil {
@@ -87,6 +81,9 @@ func (l *Log) Decode(r io.Reader) error {
 
 	l.CreateTime = binary.BigEndian.Uint32(buf[pos:])
 	pos += 4
+
+	l.Compression = uint8(buf[pos])
+	pos++
 
 	length := binary.BigEndian.Uint32(buf[pos:])
 

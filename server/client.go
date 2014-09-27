@@ -60,8 +60,7 @@ type client struct {
 
 	resp responseWriter
 
-	syncBuf     bytes.Buffer
-	compressBuf []byte
+	syncBuf bytes.Buffer
 
 	lastLogID uint64
 
@@ -83,7 +82,6 @@ func newClient(app *App) *client {
 	c.ldb = app.ldb
 	c.db, _ = app.ldb.Select(0) //use default db
 
-	c.compressBuf = []byte{}
 	c.reqErr = make(chan error)
 
 	return c

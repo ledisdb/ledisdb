@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/rpl"
 	"io"
 	"time"
@@ -37,12 +38,23 @@ func (l *Ledis) handleReplication() {
 			}
 		} else {
 			l.rbatch.Rollback()
+
+			if rl.Compression == 1 {
+				//todo optimize
+				if rl.Data, err = snappy.Decode(nil, rl.Data); err != nil {
+					log.Error("decode log error %s", err.Error())
+					return
+				}
+			}
+
 			decodeEventBatch(l.rbatch, rl.Data)
 
 			if err := l.rbatch.Commit(); err != nil {
 				log.Error("commit log error %s", err.Error())
+				return
 			} else if err = l.r.UpdateCommitID(rl.ID); err != nil {
 				log.Error("update commit id error %s", err.Error())
+				return
 			}
 		}
 
