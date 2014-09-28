@@ -84,7 +84,7 @@ func (m *master) stopReplication() error {
 	return nil
 }
 
-func (m *master) startReplication(masterAddr string) error {
+func (m *master) startReplication(masterAddr string, restart bool) error {
 	//stop last replcation, if avaliable
 	m.Close()
 
@@ -94,11 +94,11 @@ func (m *master) startReplication(masterAddr string) error {
 
 	m.app.ldb.SetReadOnly(true)
 
-	go m.runReplication()
+	go m.runReplication(restart)
 	return nil
 }
 
-func (m *master) runReplication() {
+func (m *master) runReplication(restart bool) {
 	m.wg.Add(1)
 	defer m.wg.Done()
 
@@ -111,6 +111,16 @@ func (m *master) runReplication() {
 				log.Error("connect master %s error %s, try 2s later", m.addr, err.Error())
 				time.Sleep(2 * time.Second)
 				continue
+			}
+		}
+
+		if restart {
+			if err := m.fullSync(); err != nil {
+				if m.conn != nil {
+					//if conn == nil, other close the replication, not error
+					log.Error("restart fullsync error %s", err.Error())
+				}
+				return
 			}
 		}
 
@@ -227,7 +237,7 @@ func (m *master) sync() error {
 
 }
 
-func (app *App) slaveof(masterAddr string) error {
+func (app *App) slaveof(masterAddr string, restart bool) error {
 	app.m.Lock()
 	defer app.m.Unlock()
 
@@ -242,7 +252,7 @@ func (app *App) slaveof(masterAddr string) error {
 
 		app.ldb.SetReadOnly(false)
 	} else {
-		return app.m.startReplication(masterAddr)
+		return app.m.startReplication(masterAddr, restart)
 	}
 
 	return nil
@@ -308,15 +318,19 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	}
 
 	done := make(chan struct{}, 1)
-	go func() {
+	go func(total int) {
+		n := 0
 		for i := 0; i < len(ss); i++ {
 			id := <-ack.ch
 			if id > logId {
-				break
+				n++
+				if n >= total {
+					break
+				}
 			}
 		}
 		done <- struct{}{}
-	}()
+	}((len(ss) + 1) / 2)
 
 	select {
 	case <-done:

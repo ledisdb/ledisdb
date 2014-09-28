@@ -13,24 +13,32 @@ import (
 func slaveofCommand(c *client) error {
 	args := c.args
 
-	if len(args) != 2 {
+	if len(args) != 2 || len(args) != 3 {
 		return ErrCmdParams
 	}
 
 	masterAddr := ""
+	restart := false
 
 	if strings.ToLower(hack.String(args[0])) == "no" &&
 		strings.ToLower(hack.String(args[1])) == "one" {
 		//stop replication, use master = ""
+		if len(args) != 2 {
+			return ErrCmdParams
+		}
 	} else {
 		if _, err := strconv.ParseInt(hack.String(args[1]), 10, 16); err != nil {
 			return err
 		}
 
 		masterAddr = fmt.Sprintf("%s:%s", args[0], args[1])
+
+		if len(args) == 3 && strings.ToLower(hack.String(args[2])) == "restart" {
+			restart = true
+		}
 	}
 
-	if err := c.app.slaveof(masterAddr); err != nil {
+	if err := c.app.slaveof(masterAddr, restart); err != nil {
 		return err
 	}
 

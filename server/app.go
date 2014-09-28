@@ -135,7 +135,7 @@ func (app *App) Close() {
 
 func (app *App) Run() {
 	if len(app.cfg.SlaveOf) > 0 {
-		app.slaveof(app.cfg.SlaveOf)
+		app.slaveof(app.cfg.SlaveOf, false)
 	}
 
 	go app.httpServe()

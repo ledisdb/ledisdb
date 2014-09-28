@@ -96,7 +96,7 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	slave.slaveof("")
+	slave.slaveof("", false)
 
 	db.Set([]byte("a2"), value)
 	db.Set([]byte("b2"), value)
@@ -112,7 +112,7 @@ func TestReplication(t *testing.T) {
 		t.Fatal("must error")
 	}
 
-	slave.slaveof(masterCfg.Addr)
+	slave.slaveof(masterCfg.Addr, false)
 
 	time.Sleep(1 * time.Second)
 

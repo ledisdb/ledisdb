@@ -119,7 +119,7 @@ Table of Contents
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 - [Replication](#replication)
-	- [SLAVEOF host port](#slaveof-host-port)
+	- [SLAVEOF host port [restart]](#slaveof-host-port-restart)
 	- [FULLSYNC](#fullsync)
 	- [SYNC logid](#sync-logid)
 - [Server](#server)
@@ -2396,13 +2396,13 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## Replication
 
-### SLAVEOF host port
+### SLAVEOF host port [restart]
 
 Changes the replication settings of a slave on the fly. If the server is already acting as slave, SLAVEOF NO ONE will turn off the replication.
 
 SLAVEOF host port will make the server a slave of another server listening at the specified host and port.
 
-If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, discarding the old dataset.
+If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, if restart is set, it will discard the old dataset, otherwise it will sync with LastLogID + 1. 
 
 
 ### FULLSYNC
