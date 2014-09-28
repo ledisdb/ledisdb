@@ -55,7 +55,7 @@ func (b *batch) Put(key []byte, value []byte) {
 
 func (b *batch) Delete(key []byte) {
 	if b.l.r != nil {
-		b.Delete(key)
+		b.eb.Delete(key)
 	}
 
 	b.WriteBatch.Delete(key)
@@ -121,11 +121,13 @@ func (l *Ledis) handleCommit(eb *eventBatch, c commiter) error {
 
 		if err = c.Commit(); err != nil {
 			log.Fatal("commit error %s", err.Error())
+			l.noticeReplication()
 			return err
 		}
 
 		if err = l.r.UpdateCommitID(rl.ID); err != nil {
 			log.Fatal("update commit id error %s", err.Error())
+			l.noticeReplication()
 			return err
 		}
 

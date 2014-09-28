@@ -23,6 +23,9 @@ func (l *Ledis) ReplicationUsed() bool {
 }
 
 func (l *Ledis) handleReplication() error {
+	l.wLock.Lock()
+	defer l.wLock.Unlock()
+
 	l.rwg.Add(1)
 	rl := &rpl.Log{}
 	var err error
@@ -73,8 +76,6 @@ func (l *Ledis) onReplication() {
 		select {
 		case <-l.rc:
 			l.handleReplication()
-		case <-time.After(5 * time.Second):
-			l.handleReplication()
 		case <-l.quit:
 			return
 		}
@@ -86,7 +87,8 @@ func (l *Ledis) WaitReplication() error {
 		return ErrRplNotSupport
 
 	}
-	AsyncNotify(l.rc)
+
+	l.noticeReplication()
 
 	l.rwg.Wait()
 
@@ -125,9 +127,13 @@ func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
 
 	}
 
-	AsyncNotify(l.rc)
+	l.noticeReplication()
 
 	return nil
+}
+
+func (l *Ledis) noticeReplication() {
+	AsyncNotify(l.rc)
 }
 
 func (l *Ledis) StoreLogsFromData(data []byte) error {
