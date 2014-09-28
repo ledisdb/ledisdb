@@ -89,18 +89,20 @@ func (l *Ledis) WaitReplication() error {
 	}
 
 	l.noticeReplication()
-
 	l.rwg.Wait()
 
-	b, err := l.r.CommitIDBehind()
-	if err != nil {
-		return err
-	} else if b {
-		AsyncNotify(l.rc)
-		l.rwg.Wait()
+	for i := 0; i < 100; i++ {
+		b, err := l.r.CommitIDBehind()
+		if err != nil {
+			return err
+		} else if b {
+			l.noticeReplication()
+			l.rwg.Wait()
+		} else {
+			return nil
+		}
 	}
-
-	return nil
+	return errors.New("wait replication too many times")
 }
 
 func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
