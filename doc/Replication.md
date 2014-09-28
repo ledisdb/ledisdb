@@ -4,7 +4,7 @@ Let's assume below scenario: A -> B and A -> C, here A is master, B and C are sl
 
 MySQL has the same problem for this, so from MySQL 5.6, it introduces GTID (Global Transaction ID) to solve it. GTID is very powerful but a little complex, I just want to a simple and easy solution.
 
-Before GTID, Google has supplied a solution calling [Global Transaction IDs](https://code.google.com/p/google-mysql-tools/wiki/GlobalTransactionIds) which uses a monotonically increasing group id to represent an unique transaction event in BinLog. Although it has some limitations for MySQL hierarchical replication, I still think using a integer id like group id for log event is simple and suitable for LedisDB.
+Before GTID, Google has supplied a solution called [Global Transaction IDs](https://code.google.com/p/google-mysql-tools/wiki/GlobalTransactionIds) which uses a monotonically increasing group id to represent an unique transaction event in BinLog. Although it has some limitations for MySQL hierarchical replication, I still think using a integer id like group id for log event is simple and suitable for LedisDB.
 
 Another implementation influencing me is [Raft](http://raftconsensus.github.io/), a consensus algorithm based on the replicated log. Leader must ensure that some followers receive the replicated log before executing the commands in log. The log has an unique log id (like group id above), if the leader failed, the candidate which has the up to date log (checked by log id) will be elected a new leader. 
 
@@ -40,7 +40,7 @@ For a slave:
 
 ## Full Sync Flow
 
-If slave sync a log but master has purged it, slave has to start a full sync.
+If slave syncs a log but master has purged it, slave has to start a full sync.
 
 + Master generates a snapshot with current LastLogID and dumps to a file.
 + Slave discards all old data and replicated logs, then loads the dump file and updates CommitID with LastLogID in dump file.
@@ -71,4 +71,5 @@ If a slave first syncs from a master A, then uses slaveof to sync from master B,
 
 + Replication can not store log less than current LastLogID.
 + Cycle replication not support.
++ Master and slave must set `use_replication` to true to support replication.
 
