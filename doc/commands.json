@@ -301,12 +301,12 @@
         "readonly": false
     },
     "SLAVEOF": {
-        "arguments": "host port",
+        "arguments": "host port [restart]",
         "group": "Replication",
         "readonly": false
     },
     "SYNC": {
-        "arguments": "index offset",
+        "arguments": "logid",
         "group": "Replication",
         "readonly": false
     },
