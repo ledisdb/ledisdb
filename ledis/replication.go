@@ -70,7 +70,7 @@ func (l *Ledis) handleReplication() error {
 func (l *Ledis) onReplication() {
 	defer l.wg.Done()
 
-	AsyncNotify(l.rc)
+	l.noticeReplication()
 
 	for {
 		select {
@@ -98,10 +98,12 @@ func (l *Ledis) WaitReplication() error {
 		} else if b {
 			l.noticeReplication()
 			l.rwg.Wait()
+			time.Sleep(100 * time.Millisecond)
 		} else {
 			return nil
 		}
 	}
+
 	return errors.New("wait replication too many times")
 }
 
