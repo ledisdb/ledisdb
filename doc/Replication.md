@@ -10,7 +10,7 @@ Another implementation influencing me is [Raft](http://raftconsensus.github.io/)
 
 Refer above, I supply a simple solution for LedisDB's replication.
 
-## Key word
+## Keyword
 
 + LogID: a monotonically increasing integer for a log
 + FirstLogID: the oldest log id for a server, all the logs before this id have been purged.
@@ -62,14 +62,14 @@ You must notice that this feature has a big influence on the performance. Use yo
 
 Using replication is very simple for LedisDB, only using `slaveof` command.
 
-+ Uses `slaveof host port` to enable replication from master at "host:port".
-+ Uses `slaveof no one` to stop replication and changes to master. 
++ Use `slaveof host port` to enable replication from master at "host:port".
++ Use `slaveof no one` to stop replication and change the slave to master. 
 
-If a slave first syncs from a master A, then uses slaveof to sync from master B, it will sync with the LogID = LastLogID + 1. If you want to start over from B, you must first use `slaveof host port restart`. 
+If a slave first syncs from a master A, then uses `slaveof` to sync from master B, it will sync with the LogID = LastLogID + 1. If you want to start over from B, you must use `slaveof host port restart` which will start a full sync first. 
 
 ## Limitation
 
 + Replication can not store log less than current LastLogID.
-+ Cycle replication not support.
++ Cycle replication is not supported.
 + Master and slave must set `use_replication` to true to support replication.
 
