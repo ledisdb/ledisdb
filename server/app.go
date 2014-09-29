@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 )
 
 type App struct {
@@ -29,6 +30,10 @@ type App struct {
 	info *info
 
 	s *script
+
+	// handle slaves
+	slock  sync.Mutex
+	slaves map[*client]struct{}
 }
 
 func netType(s string) string {
@@ -52,6 +57,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.closed = false
 
 	app.cfg = cfg
+
+	app.slaves = make(map[*client]struct{})
 
 	var err error
 
@@ -81,13 +88,21 @@ func NewApp(cfg *config.Config) (*App, error) {
 		}
 	}
 
-	if app.ldb, err = ledis.Open(cfg); err != nil {
+	flag := ledis.RDWRMode
+	if len(app.cfg.SlaveOf) > 0 {
+		//slave must readonly
+		flag = ledis.ROnlyMode
+	}
+
+	if app.ldb, err = ledis.Open2(cfg, flag); err != nil {
 		return nil, err
 	}
 
 	app.m = newMaster(app)
 
 	app.openScript()
+
+	app.ldb.AddNewLogEventHandler(app.publishNewLog)
 
 	return app, nil
 }
@@ -120,7 +135,7 @@ func (app *App) Close() {
 
 func (app *App) Run() {
 	if len(app.cfg.SlaveOf) > 0 {
-		app.slaveof(app.cfg.SlaveOf)
+		app.slaveof(app.cfg.SlaveOf, false)
 	}
 
 	go app.httpServe()

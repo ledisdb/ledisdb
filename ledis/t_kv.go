@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"errors"
+	"github.com/siddontang/go/num"
 	"time"
 )
 
@@ -75,9 +76,7 @@ func (db *DB) incr(key []byte, delta int64) (int64, error) {
 
 	n += delta
 
-	t.Put(key, StrPutInt64(n))
-
-	//todo binlog
+	t.Put(key, num.FormatInt64ToSlice(n))
 
 	err = t.Commit()
 	return n, err
@@ -185,7 +184,6 @@ func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	}
 
 	t.Put(key, value)
-	//todo, binlog
 
 	err = t.Commit()
 
@@ -244,7 +242,6 @@ func (db *DB) MSet(args ...KVPair) error {
 
 		t.Put(key, value)
 
-		//todo binlog
 	}
 
 	err = t.Commit()
@@ -296,8 +293,6 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 		n = 0
 	} else {
 		t.Put(key, value)
-
-		//todo binlog
 
 		err = t.Commit()
 	}

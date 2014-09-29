@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"fmt"
+	"github.com/siddontang/go/hack"
 	"sync"
 	"testing"
 	"time"
@@ -49,7 +50,7 @@ func listAdaptor(db *DB) *adaptor {
 	adp.set = func(k []byte, v []byte) (int64, error) {
 		eles := make([][]byte, 0)
 		for i := 0; i < 3; i++ {
-			e := []byte(String(v) + fmt.Sprintf("_%d", i))
+			e := []byte(hack.String(v) + fmt.Sprintf("_%d", i))
 			eles = append(eles, e)
 		}
 
@@ -87,8 +88,8 @@ func hashAdaptor(db *DB) *adaptor {
 		for i := 0; i < 3; i++ {
 			suffix := fmt.Sprintf("_%d", i)
 			pair := FVPair{
-				Field: []byte(String(k) + suffix),
-				Value: []byte(String(v) + suffix)}
+				Field: []byte(hack.String(k) + suffix),
+				Value: []byte(hack.String(v) + suffix)}
 
 			datas = append(datas, pair)
 		}
@@ -125,7 +126,7 @@ func zsetAdaptor(db *DB) *adaptor {
 	adp.set = func(k []byte, v []byte) (int64, error) {
 		datas := make([]ScorePair, 0)
 		for i := 0; i < 3; i++ {
-			memb := []byte(String(k) + fmt.Sprintf("_%d", i))
+			memb := []byte(hack.String(k) + fmt.Sprintf("_%d", i))
 			pair := ScorePair{
 				Score:  int64(i),
 				Member: memb}
@@ -165,7 +166,7 @@ func setAdaptor(db *DB) *adaptor {
 	adp.set = func(k []byte, v []byte) (int64, error) {
 		eles := make([][]byte, 0)
 		for i := 0; i < 3; i++ {
-			e := []byte(String(v) + fmt.Sprintf("_%d", i))
+			e := []byte(hack.String(v) + fmt.Sprintf("_%d", i))
 			eles = append(eles, e)
 		}
 

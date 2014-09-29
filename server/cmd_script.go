@@ -6,7 +6,8 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/go/hack"
+
 	"github.com/siddontang/ledisdb/lua"
 	"strconv"
 	"strings"
@@ -20,7 +21,7 @@ func parseEvalArgs(l *lua.State, c *client) error {
 
 	args = args[1:]
 
-	n, err := strconv.Atoi(ledis.String(args[0]))
+	n, err := strconv.Atoi(hack.String(args[0]))
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 		h := sha1.Sum(c.args[0])
 		key = hex.EncodeToString(h[0:20])
 	} else {
-		key = strings.ToLower(ledis.String(c.args[0]))
+		key = strings.ToLower(hack.String(c.args[0]))
 	}
 
 	l.GetGlobal(key)
@@ -84,7 +85,7 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 			return fmt.Errorf("missing %s script", key)
 		}
 
-		if r := l.LoadString(ledis.String(c.args[0])); r != 0 {
+		if r := l.LoadString(hack.String(c.args[0])); r != 0 {
 			err := fmt.Errorf("%s", l.ToString(-1))
 			l.Pop(1)
 			return err
@@ -139,7 +140,7 @@ func scriptCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	switch strings.ToLower(ledis.String(args[0])) {
+	switch strings.ToLower(hack.String(args[0])) {
 	case "load":
 		return scriptLoadCommand(c)
 	case "exists":
@@ -164,7 +165,7 @@ func scriptLoadCommand(c *client) error {
 	h := sha1.Sum(c.args[1])
 	key := hex.EncodeToString(h[0:20])
 
-	if r := l.LoadString(ledis.String(c.args[1])); r != 0 {
+	if r := l.LoadString(hack.String(c.args[1])); r != 0 {
 		err := fmt.Errorf("%s", l.ToString(-1))
 		l.Pop(1)
 		return err
@@ -175,7 +176,7 @@ func scriptLoadCommand(c *client) error {
 		s.chunks[key] = struct{}{}
 	}
 
-	c.resp.writeBulk(ledis.Slice(key))
+	c.resp.writeBulk(hack.Slice(key))
 	return nil
 }
 
@@ -188,7 +189,7 @@ func scriptExistsCommand(c *client) error {
 
 	ay := make([]interface{}, len(c.args[1:]))
 	for i, n := range c.args[1:] {
-		if _, ok := s.chunks[ledis.String(n)]; ok {
+		if _, ok := s.chunks[hack.String(n)]; ok {
 			ay[i] = int64(1)
 		} else {
 			ay[i] = int64(0)

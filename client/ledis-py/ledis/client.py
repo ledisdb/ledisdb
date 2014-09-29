@@ -199,7 +199,7 @@ class Ledis(object):
     def set_response_callback(self, command, callback):
         "Set a custom Response Callback"
         self.response_callbacks[command] = callback
- 
+
     def tx(self):
         return Transaction(
             self.connection_pool,

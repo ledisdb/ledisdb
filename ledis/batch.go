@@ -1,6 +1,8 @@
 package ledis
 
 import (
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
 )
@@ -12,29 +14,24 @@ type batch struct {
 
 	sync.Locker
 
-	logs [][]byte
-
 	tx *Tx
+
+	eb *eventBatch
 }
 
 func (b *batch) Commit() error {
-	b.l.commitLock.Lock()
-	defer b.l.commitLock.Unlock()
-
-	err := b.WriteBatch.Commit()
-
-	if b.l.binlog != nil {
-		if err == nil {
-			if b.tx == nil {
-				b.l.binlog.Log(b.logs...)
-			} else {
-				b.tx.logs = append(b.tx.logs, b.logs...)
-			}
-		}
-		b.logs = [][]byte{}
+	if b.l.IsReadOnly() {
+		return ErrWriteInROnly
 	}
 
-	return err
+	if b.tx == nil {
+		return b.l.handleCommit(b.eb, b.WriteBatch)
+	} else {
+		if b.l.r != nil {
+			b.tx.eb.Write(b.eb.Bytes())
+		}
+		return b.WriteBatch.Commit()
+	}
 }
 
 func (b *batch) Lock() {
@@ -42,26 +39,25 @@ func (b *batch) Lock() {
 }
 
 func (b *batch) Unlock() {
-	if b.l.binlog != nil {
-		b.logs = [][]byte{}
-	}
+	b.eb.Reset()
+
 	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
 func (b *batch) Put(key []byte, value []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogPut(key, value)
-		b.logs = append(b.logs, buf)
+	if b.l.r != nil {
+		b.eb.Put(key, value)
 	}
+
 	b.WriteBatch.Put(key, value)
 }
 
 func (b *batch) Delete(key []byte) {
-	if b.l.binlog != nil {
-		buf := encodeBinLogDelete(key)
-		b.logs = append(b.logs, buf)
+	if b.l.r != nil {
+		b.eb.Delete(key)
 	}
+
 	b.WriteBatch.Delete(key)
 }
 
@@ -97,9 +93,46 @@ func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch
 	b.l = l
 	b.WriteBatch = wb
 
-	b.tx = tx
 	b.Locker = locker
 
-	b.logs = [][]byte{}
+	b.tx = tx
+	b.eb = new(eventBatch)
+
 	return b
+}
+
+type commiter interface {
+	Commit() error
+}
+
+func (l *Ledis) handleCommit(eb *eventBatch, c commiter) error {
+	l.commitLock.Lock()
+	defer l.commitLock.Unlock()
+
+	var err error
+	if l.r != nil {
+		var rl *rpl.Log
+		if rl, err = l.r.Log(eb.Bytes()); err != nil {
+			log.Fatal("write wal error %s", err.Error())
+			return err
+		}
+
+		l.propagate(rl)
+
+		if err = c.Commit(); err != nil {
+			log.Fatal("commit error %s", err.Error())
+			l.noticeReplication()
+			return err
+		}
+
+		if err = l.r.UpdateCommitID(rl.ID); err != nil {
+			log.Fatal("update commit id error %s", err.Error())
+			l.noticeReplication()
+			return err
+		}
+
+		return nil
+	} else {
+		return c.Commit()
+	}
 }

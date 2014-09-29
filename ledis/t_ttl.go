@@ -111,22 +111,6 @@ func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 	}
 }
 
-func (db *DB) expFlush(t *batch, dataType byte) (err error) {
-	minKey := make([]byte, 3)
-	minKey[0] = db.index
-	minKey[1] = ExpTimeType
-	minKey[2] = dataType
-
-	maxKey := make([]byte, 3)
-	maxKey[0] = db.index
-	maxKey[1] = ExpMetaType
-	maxKey[2] = dataType + 1
-
-	_, err = db.flushRegion(t, minKey, maxKey)
-	err = t.Commit()
-	return
-}
-
 //////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////

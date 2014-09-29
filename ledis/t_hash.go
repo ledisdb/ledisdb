@@ -3,6 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
 	"time"
 )
@@ -183,8 +184,6 @@ func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 		return 0, err
 	}
 
-	//todo add binlog
-
 	err = t.Commit()
 	return n, err
 }
@@ -334,7 +333,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 
 	n += delta
 
-	_, err = db.hSetItem(key, field, StrPutInt64(n))
+	_, err = db.hSetItem(key, field, num.FormatInt64ToSlice(n))
 	if err != nil {
 		return 0, err
 	}

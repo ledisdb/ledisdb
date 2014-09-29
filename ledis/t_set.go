@@ -3,6 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
 	"time"
 )
@@ -240,7 +241,7 @@ func (db *DB) sDiffGeneric(keys ...[]byte) ([][]byte, error) {
 	}
 
 	for _, m := range members {
-		destMap[String(m)] = true
+		destMap[hack.String(m)] = true
 	}
 
 	for _, k := range keys[1:] {
@@ -250,10 +251,10 @@ func (db *DB) sDiffGeneric(keys ...[]byte) ([][]byte, error) {
 		}
 
 		for _, m := range members {
-			if _, ok := destMap[String(m)]; !ok {
+			if _, ok := destMap[hack.String(m)]; !ok {
 				continue
 			} else if ok {
-				delete(destMap, String(m))
+				delete(destMap, hack.String(m))
 			}
 		}
 		// O - A = O, O is zero set.
@@ -294,7 +295,7 @@ func (db *DB) sInterGeneric(keys ...[]byte) ([][]byte, error) {
 	}
 
 	for _, m := range members {
-		destMap[String(m)] = true
+		destMap[hack.String(m)] = true
 	}
 
 	for _, key := range keys[1:] {
@@ -314,8 +315,8 @@ func (db *DB) sInterGeneric(keys ...[]byte) ([][]byte, error) {
 			if err := checkKeySize(member); err != nil {
 				return nil, err
 			}
-			if _, ok := destMap[String(member)]; ok {
-				tempMap[String(member)] = true //mark this item as selected
+			if _, ok := destMap[hack.String(member)]; ok {
+				tempMap[hack.String(member)] = true //mark this item as selected
 			}
 		}
 		destMap = tempMap //reduce the size of the result set
@@ -439,7 +440,7 @@ func (db *DB) sUnionGeneric(keys ...[]byte) ([][]byte, error) {
 		}
 
 		for _, member := range members {
-			dstMap[String(member)] = true
+			dstMap[hack.String(member)] = true
 		}
 	}
 
@@ -508,14 +509,14 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 		t.Put(ek, nil)
 	}
 
-	var num = int64(len(v))
+	var n = int64(len(v))
 	sk := db.sEncodeSizeKey(dstKey)
-	t.Put(sk, PutInt64(num))
+	t.Put(sk, PutInt64(n))
 
 	if err = t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) SClear(key []byte) (int64, error) {

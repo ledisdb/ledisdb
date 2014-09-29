@@ -1,9 +1,8 @@
 package server
 
 import (
-	"encoding/binary"
 	"fmt"
-	"github.com/siddontang/go-snappy/snappy"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 	"io/ioutil"
 	"os"
@@ -14,24 +13,32 @@ import (
 func slaveofCommand(c *client) error {
 	args := c.args
 
-	if len(args) != 2 {
+	if len(args) != 2 || len(args) != 3 {
 		return ErrCmdParams
 	}
 
 	masterAddr := ""
+	restart := false
 
-	if strings.ToLower(ledis.String(args[0])) == "no" &&
-		strings.ToLower(ledis.String(args[1])) == "one" {
+	if strings.ToLower(hack.String(args[0])) == "no" &&
+		strings.ToLower(hack.String(args[1])) == "one" {
 		//stop replication, use master = ""
+		if len(args) != 2 {
+			return ErrCmdParams
+		}
 	} else {
-		if _, err := strconv.ParseInt(ledis.String(args[1]), 10, 16); err != nil {
+		if _, err := strconv.ParseInt(hack.String(args[1]), 10, 16); err != nil {
 			return err
 		}
 
 		masterAddr = fmt.Sprintf("%s:%s", args[0], args[1])
+
+		if len(args) == 3 && strings.ToLower(hack.String(args[2])) == "restart" {
+			restart = true
+		}
 	}
 
-	if err := c.app.slaveof(masterAddr); err != nil {
+	if err := c.app.slaveof(masterAddr, restart); err != nil {
 		return err
 	}
 
@@ -66,54 +73,37 @@ func fullsyncCommand(c *client) error {
 	return nil
 }
 
-var reserveInfoSpace = make([]byte, 16)
-
 func syncCommand(c *client) error {
 	args := c.args
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	var logIndex int64
-	var logPos int64
+	var logId uint64
 	var err error
-	logIndex, err = ledis.StrInt64(args[0], nil)
-	if err != nil {
+
+	if logId, err = ledis.StrUint64(args[0], nil); err != nil {
 		return ErrCmdParams
 	}
 
-	logPos, err = ledis.StrInt64(args[1], nil)
-	if err != nil {
-		return ErrCmdParams
+	c.lastLogID = logId - 1
+
+	if c.ack != nil && logId > c.ack.id {
+		asyncNotifyUint64(c.ack.ch, logId)
+		c.ack = nil
 	}
 
 	c.syncBuf.Reset()
 
-	//reserve space to write binlog anchor
-	if _, err := c.syncBuf.Write(reserveInfoSpace); err != nil {
-		return err
-	}
-
-	m := &ledis.BinLogAnchor{logIndex, logPos}
-
-	if _, err := c.app.ldb.ReadEventsToTimeout(m, &c.syncBuf, 5); err != nil {
+	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 30); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()
 
-		binary.BigEndian.PutUint64(buf[0:], uint64(m.LogFileIndex))
-		binary.BigEndian.PutUint64(buf[8:], uint64(m.LogPos))
-
-		if len(c.compressBuf) < snappy.MaxEncodedLen(len(buf)) {
-			c.compressBuf = make([]byte, snappy.MaxEncodedLen(len(buf)))
-		}
-
-		if buf, err = snappy.Encode(c.compressBuf, buf); err != nil {
-			return err
-		}
-
 		c.resp.writeBulk(buf)
 	}
+
+	c.app.addSlave(c)
 
 	return nil
 }

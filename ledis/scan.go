@@ -24,17 +24,17 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 		if err = checkKeySize(key); err != nil {
 			return nil, err
 		}
-		if minKey, err = db.encodeMetaKey(dataType, key); err != nil {
+		if minKey, err = db.encodeScanKey(dataType, key); err != nil {
 			return nil, err
 		}
 
 	} else {
-		if minKey, err = db.encodeMinKey(dataType); err != nil {
+		if minKey, err = db.encodeScanMinKey(dataType); err != nil {
 			return nil, err
 		}
 	}
 
-	if maxKey, err = db.encodeMaxKey(dataType); err != nil {
+	if maxKey, err = db.encodeScanMaxKey(dataType); err != nil {
 		return nil, err
 	}
 
@@ -54,7 +54,7 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 	}
 
 	for i := 0; it.Valid() && i < count && bytes.Compare(it.RawKey(), maxKey) < 0; it.Next() {
-		if k, err := db.decodeMetaKey(dataType, it.Key()); err != nil {
+		if k, err := db.decodeScanKey(dataType, it.Key()); err != nil {
 			continue
 		} else if r != nil && !r.Match(k) {
 			continue
@@ -67,12 +67,12 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 	return v, nil
 }
 
-func (db *DB) encodeMinKey(dataType byte) ([]byte, error) {
-	return db.encodeMetaKey(dataType, nil)
+func (db *DB) encodeScanMinKey(dataType byte) ([]byte, error) {
+	return db.encodeScanKey(dataType, nil)
 }
 
-func (db *DB) encodeMaxKey(dataType byte) ([]byte, error) {
-	k, err := db.encodeMetaKey(dataType, nil)
+func (db *DB) encodeScanMaxKey(dataType byte) ([]byte, error) {
+	k, err := db.encodeScanKey(dataType, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (db *DB) encodeMaxKey(dataType byte) ([]byte, error) {
 	return k, nil
 }
 
-func (db *DB) encodeMetaKey(dataType byte, key []byte) ([]byte, error) {
+func (db *DB) encodeScanKey(dataType byte, key []byte) ([]byte, error) {
 	switch dataType {
 	case KVType:
 		return db.encodeKVKey(key), nil
@@ -98,7 +98,7 @@ func (db *DB) encodeMetaKey(dataType byte, key []byte) ([]byte, error) {
 		return nil, errDataType
 	}
 }
-func (db *DB) decodeMetaKey(dataType byte, ek []byte) ([]byte, error) {
+func (db *DB) decodeScanKey(dataType byte, ek []byte) ([]byte, error) {
 	if len(ek) < 2 || ek[0] != db.index || ek[1] != dataType {
 		return nil, errMetaKey
 	}

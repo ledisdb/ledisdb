@@ -24,7 +24,8 @@
 //  ledis-cli -p 6381
 //  ledis 127.0.0.1:6381 > slaveof 127.0.0.1 6380
 //
-// After you send slaveof command, the slave will start to sync master's binlog and replicate from binlog.
+// After you send slaveof command, the slave will start to sync master's write ahead log and replicate from it.
+// You must notice that use_replication must be set true if you want to use it.
 //
 // HTTP Interface
 //

@@ -109,21 +109,6 @@ func (db *DB) newEliminator() *elimination {
 	return eliminator
 }
 
-func (db *DB) flushRegion(t *batch, minKey []byte, maxKey []byte) (drop int64, err error) {
-	it := db.bucket.RangeIterator(minKey, maxKey, store.RangeROpen)
-	for ; it.Valid(); it.Next() {
-		t.Delete(it.RawKey())
-		drop++
-		if drop&1023 == 0 {
-			if err = t.Commit(); err != nil {
-				return
-			}
-		}
-	}
-	it.Close()
-	return
-}
-
 func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 	var deleteFunc func(t *batch, key []byte) int64
 	var metaDataType byte

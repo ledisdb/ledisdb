@@ -119,9 +119,9 @@ Table of Contents
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 - [Replication](#replication)
-	- [SLAVEOF host port](#slaveof-host-port)
+	- [SLAVEOF host port [restart]](#slaveof-host-port-restart)
 	- [FULLSYNC](#fullsync)
-	- [SYNC index offset](#sync-index-offset)
+	- [SYNC logid](#sync-logid)
 - [Server](#server)
 	- [PING](#ping)
 	- [ECHO message](#echo-message)
@@ -2396,13 +2396,13 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## Replication
 
-### SLAVEOF host port
+### SLAVEOF host port [restart]
 
 Changes the replication settings of a slave on the fly. If the server is already acting as slave, SLAVEOF NO ONE will turn off the replication.
 
 SLAVEOF host port will make the server a slave of another server listening at the specified host and port.
 
-If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, discarding the old dataset.
+If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, if restart is set, it will discard the old dataset, otherwise it will sync with LastLogID + 1. 
 
 
 ### FULLSYNC
@@ -2416,9 +2416,9 @@ FULLSYNC will first try to sync all data from the master, save in local disk, th
 **Examples**
 
 
-### SYNC index offset
+### SYNC logid
 
-Inner command, syncs the new changed from master set by SLAVEOF at offset in binlog.index file.
+Inner command, syncs the new changed from master set by SLAVEOF with logid.
 
 **Return value**
 
@@ -2478,7 +2478,7 @@ ERR invalid db index 16
 
 ### FLUSHALL
 
-Delete all the keys of all the existing databases, not just the currently selected one. This command never fails.
+Delete all the keys of all the existing databases and replication logs, not just the currently selected one. This command never fails.
 
 Very dangerous to use!!!
 
