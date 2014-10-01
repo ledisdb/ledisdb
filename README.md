@@ -35,6 +35,9 @@ Create a workspace and checkout ledisdb source
     make
     make test
 
+## Godep support
+
+LedisDB supports building with [godep](https://github.com/tools/godep) which can manage LedisDB go dependence automatically.
 
 ## LevelDB support
 

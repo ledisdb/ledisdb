@@ -2,6 +2,14 @@
 
 . ./dev.sh
 
+# Test godep install
+godep path > /dev/null 2>&1
+if [ "$?" = 0 ]; then
+    GOPATH=`godep path`
+    godep restore
+    exit 0
+fi
+
 go get github.com/siddontang/goleveldb/leveldb
 
 go get github.com/szferi/gomdb
