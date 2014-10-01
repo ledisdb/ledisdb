@@ -939,3 +939,83 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 func (db *DB) ZScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	return db.scan(ZSizeType, key, count, inclusive, match)
 }
+
+func (db *DB) ZRangeByLex(key []byte, min []byte, max []byte, rangeType uint8, offset int, count int) ([][]byte, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	it := db.bucket.RangeLimitIterator(min, max, rangeType, offset, count)
+	defer it.Close()
+
+	ay := make([][]byte, 0, 16)
+	for ; it.Valid(); it.Next() {
+		if _, m, err := db.zDecodeSetKey(it.Key()); err == nil {
+			ay = append(ay, m)
+		}
+	}
+
+	return ay, nil
+}
+
+func (db *DB) ZRemRangeByLex(key []byte, min []byte, max []byte, rangeType uint8) (int64, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	t := db.zsetBatch
+	t.Lock()
+	defer t.Unlock()
+
+	it := db.bucket.RangeIterator(min, max, rangeType)
+	defer it.Close()
+
+	var n int64 = 0
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.RawKey())
+		n++
+	}
+
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
+	return n, nil
+}
+
+func (db *DB) ZLexCount(key []byte, min []byte, max []byte, rangeType uint8) (int64, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	it := db.bucket.RangeIterator(min, max, rangeType)
+	defer it.Close()
+
+	var n int64 = 0
+	for ; it.Valid(); it.Next() {
+		n++
+	}
+
+	return n, nil
+}

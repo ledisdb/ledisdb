@@ -5,6 +5,7 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/ledisdb/store"
 	"math"
 	"strconv"
 	"strings"
@@ -661,6 +662,128 @@ func zxscanCommand(c *client) error {
 	return nil
 }
 
+func zparseMemberRange(minBuf []byte, maxBuf []byte) (min []byte, max []byte, rangeType uint8, err error) {
+	rangeType = store.RangeClose
+	if strings.ToLower(hack.String(minBuf)) == "-" {
+		min = nil
+	} else {
+		if len(minBuf) == 0 {
+			err = ErrCmdParams
+			return
+		}
+
+		if minBuf[0] == '(' {
+			rangeType |= store.RangeLOpen
+			min = minBuf[1:]
+		} else if minBuf[0] == '[' {
+			min = minBuf[1:]
+		} else {
+			err = ErrCmdParams
+			return
+		}
+	}
+
+	if strings.ToLower(hack.String(maxBuf)) == "+" {
+		max = nil
+	} else {
+		if len(maxBuf) == 0 {
+			err = ErrCmdParams
+			return
+		}
+		if maxBuf[0] == '(' {
+			rangeType |= store.RangeROpen
+			max = maxBuf[1:]
+		} else if maxBuf[0] == '[' {
+			max = maxBuf[1:]
+		} else {
+			err = ErrCmdParams
+			return
+		}
+	}
+
+	return
+}
+
+func zrangebylexCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 && len(args) != 6 {
+		return ErrCmdParams
+	}
+
+	min, max, rangeType, err := zparseMemberRange(args[1], args[2])
+	if err != nil {
+		return err
+	}
+
+	var offset int = 0
+	var count int = -1
+
+	if len(args) == 6 {
+		if strings.ToLower(hack.String(args[3])) != "limit" {
+			return ErrSyntax
+		}
+
+		if offset, err = strconv.Atoi(hack.String(args[4])); err != nil {
+			return ErrValue
+		}
+
+		if count, err = strconv.Atoi(hack.String(args[5])); err != nil {
+			return ErrValue
+		}
+	}
+
+	key := args[0]
+	if ay, err := c.db.ZRangeByLex(key, min, max, rangeType, offset, count); err != nil {
+		return err
+	} else {
+		c.resp.writeSliceArray(ay)
+	}
+
+	return nil
+}
+
+func zremrangebylexCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	min, max, rangeType, err := zparseMemberRange(args[1], args[2])
+	if err != nil {
+		return err
+	}
+
+	key := args[0]
+	if n, err := c.db.ZRemRangeByLex(key, min, max, rangeType); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+
+	return nil
+}
+
+func zlexcountCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	min, max, rangeType, err := zparseMemberRange(args[1], args[2])
+	if err != nil {
+		return err
+	}
+
+	key := args[0]
+	if n, err := c.db.ZLexCount(key, min, max, rangeType); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -679,6 +802,10 @@ func init() {
 
 	register("zunionstore", zunionstoreCommand)
 	register("zinterstore", zinterstoreCommand)
+
+	register("zrangebylex", zrangebylexCommand)
+	register("zremrangebylex", zremrangebylexCommand)
+	register("zlexcount", zlexcountCommand)
 
 	//ledisdb special command
 

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -736,4 +737,52 @@ func TestZInterStore(t *testing.T) {
 			t.Fatal("invalid value ", n)
 		}
 	}
+}
+
+func TestZSetLex(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	key := []byte("myzlexset")
+	if _, err := c.Do("zadd", key,
+		0, "a", 0, "b", 0, "c", 0, "d", 0, "e", 0, "f", 0, "g"); err != nil {
+		t.Fatal(err)
+	}
+
+	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "-", "[c")); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, []string{"a", "b", "c"}) {
+		t.Fatal("must equal")
+	}
+
+	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "-", "(c")); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, []string{"a", "b"}) {
+		t.Fatal("must equal")
+	}
+
+	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "[aaa", "(g")); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, []string{"b", "c", "d", "e", "f"}) {
+		t.Fatal("must equal")
+	}
+
+	if n, err := ledis.Int64(c.Do("zlexcount", key, "-", "(c")); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int64(c.Do("zremrangebylex", key, "[aaa", "(g")); err != nil {
+		t.Fatal(err)
+	} else if n != 5 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int64(c.Do("zlexcount", key, "-", "+")); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
 }
