@@ -95,6 +95,12 @@ local commands = {
     "zrevrank", 
     "zrevrangebyscore", 
     "zscore", 
+    "zunionstore",
+    "zinterstore",
+    "zrangebylex",
+    "zremrangebylex",
+    "zlexcount",
+    
     --[[ledisdb special commands]]
     "zclear", 
     "zmclear",

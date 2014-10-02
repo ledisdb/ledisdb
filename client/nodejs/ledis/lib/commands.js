@@ -93,6 +93,9 @@ module.exports = [
 	"zscore",
     "zunionstore",
     "zinterstore",
+    "zrangebylex",
+    "zremrangebylex",
+    "zlexcount",
 
 
 	"zclear",
