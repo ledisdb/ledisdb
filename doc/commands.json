@@ -512,6 +512,24 @@
         "readonly": false
     },
 
+    "ZRANGEBYLEX":{
+        "arguments": "key min max [LIMIT offset count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "ZREMRANGBYLEX":{
+        "arguments": "key min max",
+        "group": "ZSet",
+        "readonly": false
+    },
+
+    "ZLEXCOUNT":{
+        "arguments": "key min max",
+        "group": "ZSet",
+        "readonly": true
+    },
+
     "BEGIN": {
         "arguments": "-",
         "group": "Transaction",

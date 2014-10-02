@@ -106,6 +106,9 @@ Table of Contents
     - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
 	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
+	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
+	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
+	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
 - [Bitmap](#bitmap)
 	- [BGET key](#bget-key)
 	- [BGETBIT key offset](#bgetbit-key-offset)
@@ -2227,9 +2230,74 @@ Iterate ZSet keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
+### ZRANGEBYLEX key min max [LIMIT offset count]
+
+When all the elements in a sorted set are inserted with the same score, in order to force lexicographical ordering, this command returns all the elements in the sorted set at key with a value between min and max.
+
+If the elements in the sorted set have different scores, the returned elements are unspecified.
+
+Valid start and stop must start with ( or [, in order to specify if the range item is respectively exclusive or inclusive. The special values of + or - for start and stop have the special meaning or positively infinite and negatively infinite strings, so for instance the command ZRANGEBYLEX myzset - + is guaranteed to return all the elements in the sorted set, if all the elements have the same score.
+
+**Return value**
+
+array: list of elements in the specified score range
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZRANGEBYLEX myzset - [c
+1) "a"
+2) "b"
+3) "c"
+ledis> ZRANGEBYLEX myzset - (c
+1) "a"
+2) "b"
+ledis> ZRANGEBYLEX myzset [aaa (g
+1) "b"
+2) "c"
+3) "d"
+4) "e"
+5) "f"
+```
+
+### ZREMRANGEBYLEX key min max
+
+Removes all elements in the sorted set stored at key between the lexicographical range specified by min and max.
+
+**Return value**
+
+int64: he number of elements removed.
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZREMRANGEBYLEX myzset - [c
+(integer) 3
+```
+
+### ZLEXCOUNT key min max
+
+Returns the number of elements in the sorted set at key with a value between min and max.
+
+**Return value**
+
+int64: the number of elements in the specified score range.
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZLEXCOUNT myzset - [c
+(integer) 3
+```
+
 
 ## Bitmap
-
 
 ### BGET key
 
