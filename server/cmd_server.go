@@ -68,6 +68,9 @@ func flushallCommand(c *client) error {
 		return err
 	}
 
+	//we will restart the replication from master if possible
+	c.app.tryReSlaveof()
+
 	c.resp.writeStatus(OK)
 	return nil
 }

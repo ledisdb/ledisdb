@@ -94,12 +94,12 @@ func (m *master) startReplication(masterAddr string, restart bool) error {
 
 	m.app.ldb.SetReadOnly(true)
 
+	m.wg.Add(1)
 	go m.runReplication(restart)
 	return nil
 }
 
 func (m *master) runReplication(restart bool) {
-	m.wg.Add(1)
 	defer m.wg.Done()
 
 	for {
@@ -245,6 +245,8 @@ func (app *App) slaveof(masterAddr string, restart bool) error {
 		return fmt.Errorf("slaveof must enable replication")
 	}
 
+	app.cfg.SlaveOf = masterAddr
+
 	if len(masterAddr) == 0 {
 		if err := app.m.stopReplication(); err != nil {
 			return err
@@ -256,6 +258,21 @@ func (app *App) slaveof(masterAddr string, restart bool) error {
 	}
 
 	return nil
+}
+
+func (app *App) tryReSlaveof() error {
+	app.m.Lock()
+	defer app.m.Unlock()
+
+	if !app.ldb.ReplicationUsed() {
+		return nil
+	}
+
+	if len(app.cfg.SlaveOf) == 0 {
+		return nil
+	} else {
+		return app.m.startReplication(app.cfg.SlaveOf, true)
+	}
 }
 
 func (app *App) addSlave(c *client) {

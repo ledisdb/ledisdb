@@ -120,4 +120,14 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	slave.tryReSlaveof()
+
+	time.Sleep(1 * time.Second)
+
+	slave.ldb.WaitReplication()
+
+	if err = checkDataEqual(master, slave); err != nil {
+		t.Fatal(err)
+	}
+
 }
