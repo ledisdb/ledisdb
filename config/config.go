@@ -30,11 +30,12 @@ type LMDBConfig struct {
 }
 
 type ReplicationConfig struct {
-	Path           string `toml:"path"`
-	ExpiredLogDays int    `toml:"expired_log_days"`
-	Sync           bool   `toml:"sync"`
-	WaitSyncTime   int    `toml:"wait_sync_time"`
-	Compression    bool   `toml:"compression"`
+	Path             string `toml:"path"`
+	ExpiredLogDays   int    `toml:"expired_log_days"`
+	Sync             bool   `toml:"sync"`
+	WaitSyncTime     int    `toml:"wait_sync_time"`
+	WaitMaxSlaveAcks int    `toml:"wait_max_slave_acks"`
+	Compression      bool   `toml:"compression"`
 }
 
 type Config struct {
@@ -100,6 +101,7 @@ func NewConfigDefault() *Config {
 
 	cfg.Replication.WaitSyncTime = 1
 	cfg.Replication.Compression = true
+	cfg.Replication.WaitMaxSlaveAcks = 2
 
 	return cfg
 }

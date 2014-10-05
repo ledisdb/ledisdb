@@ -5,7 +5,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	_, err := NewConfigWithFile("./config.toml")
+	_, err := NewConfigWithFile("./ledis.toml")
 	if err != nil {
 		t.Fatal(err)
 	}

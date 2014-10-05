@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
 	"net"
@@ -334,6 +335,11 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		s.ack = ack
 	}
 
+	total := (len(ss) + 1) / 2
+	if app.cfg.Replication.WaitMaxSlaveAcks > 0 {
+		total = num.MinInt(total, app.cfg.Replication.WaitMaxSlaveAcks)
+	}
+
 	done := make(chan struct{}, 1)
 	go func(total int) {
 		n := 0
@@ -347,10 +353,11 @@ func (app *App) publishNewLog(l *rpl.Log) {
 			}
 		}
 		done <- struct{}{}
-	}((len(ss) + 1) / 2)
+	}(total)
 
 	select {
 	case <-done:
 	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Second):
+		log.Info("replication wait timeout")
 	}
 }
