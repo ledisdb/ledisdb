@@ -63,7 +63,8 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 + Set `ROCKSDB_DIR` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
 + `make clean && make` 
 
-**Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch. **
+
+Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch.
 
 
 ## HyperLevelDB support
@@ -78,7 +79,7 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb, memory. it will choose goleveldb as default to store data if you don't set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb, memory. it will use goleveldb as default to store data if you don't set.
 
 Choosing a store database to use is very simple, you have two ways:
 
