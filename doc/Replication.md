@@ -69,7 +69,8 @@ If a slave first syncs from a master A, then uses `slaveof` to sync from master 
 
 ## Limitation
 
++ Multi-Master is not supported.
 + Replication can not store log less than current LastLogID.
-+ Cycle replication is not supported.
++ Circular replication is not supported.
 + Master and slave must set `use_replication` to true to support replication.
 
