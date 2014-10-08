@@ -2,8 +2,11 @@ package server
 
 import (
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/num"
+
 	"strconv"
 	"strings"
+	"time"
 )
 
 func pingCommand(c *client) error {
@@ -85,6 +88,47 @@ func flushdbCommand(c *client) error {
 	return nil
 }
 
+func timeCommand(c *client) error {
+	if len(c.args) != 0 {
+		return ErrCmdParams
+	}
+
+	t := time.Now()
+
+	//seconds
+	s := t.Unix()
+	n := t.UnixNano()
+
+	//micro seconds
+	m := (n - s*1e9) / 1e3
+
+	ay := []interface{}{
+		num.FormatInt64ToSlice(s),
+		num.FormatInt64ToSlice(m),
+	}
+
+	c.resp.writeArray(ay)
+	return nil
+}
+
+func configCommand(c *client) error {
+	if len(c.args) < 1 {
+		return ErrCmdParams
+	}
+
+	switch strings.ToLower(hack.String(c.args[0])) {
+	case "rewrite":
+		if err := c.app.cfg.Rewrite(); err != nil {
+			return err
+		} else {
+			c.resp.writeStatus(OK)
+			return nil
+		}
+	default:
+		return ErrCmdParams
+	}
+}
+
 func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)
@@ -92,4 +136,6 @@ func init() {
 	register("info", infoCommand)
 	register("flushall", flushallCommand)
 	register("flushdb", flushdbCommand)
+	register("time", timeCommand)
+	register("config", configCommand)
 }

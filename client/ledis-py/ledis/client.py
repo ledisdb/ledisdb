@@ -137,6 +137,7 @@ class Ledis(object):
             'PING': lambda r: nativestr(r) == 'PONG',
             'SET': lambda r: r and nativestr(r) == 'OK',
             'INFO': parse_info,
+            'TIME': lambda x: (int(x[0]), int(x[1])),
         }
 
 
@@ -1034,6 +1035,13 @@ class Ledis(object):
 
     def scriptflush(self):
         return self.execute_command('SCRIPT', 'FLUSH')
+
+    def time(self):
+        """
+        Returns the server time as a 2-item tuple of ints:
+        (seconds since epoch, microseconds into this second).
+        """
+        return self.execute_command('TIME')
 
 
 class Transaction(Ledis):

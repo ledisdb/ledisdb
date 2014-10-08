@@ -17,6 +17,7 @@ var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 var reverse = flag.Bool("rev", false, "enable zset rev benchmark")
 var round = flag.Int("r", 1, "benchmark round number")
+var del = flag.Bool("del", true, "enable del benchmark")
 
 var wg sync.WaitGroup
 
@@ -281,18 +282,27 @@ func main() {
 		benchSet()
 		benchGet()
 		benchRandGet()
-		benchDel()
+
+		if *del == true {
+			benchDel()
+		}
 
 		benchPushList()
 		benchRangeList10()
 		benchRangeList50()
 		benchRangeList100()
-		benchPopList()
+
+		if *del == true {
+			benchPopList()
+		}
 
 		benchHset()
 		benchHGet()
 		benchHRandGet()
-		benchHDel()
+
+		if *del == true {
+			benchHDel()
+		}
 
 		benchZAdd()
 		benchZIncr()
@@ -306,7 +316,9 @@ func main() {
 			benchZRevRangeByScore()
 		}
 
-		benchZDel()
+		if *del == true {
+			benchZDel()
+		}
 
 		println("")
 	}

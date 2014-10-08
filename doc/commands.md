@@ -132,6 +132,8 @@ Table of Contents
 	- [FLUSHALL](#flushall)
 	- [FLUSHDB](#flushdb)
 	- [INFO [section]](#info-section)
+	- [TIME](#time)
+	- [CONFIG REWRITE](#config-rewrite)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -2569,6 +2571,24 @@ The optional parameter can be used to select a specific section of information:
 + persistence: Strorage related information
 
 When no parameter is provided, all will return.
+
+### TIME
+
+The TIME command returns the current server time as a two items lists: a Unix timestamp and the amount of microseconds already elapsed in the current second
+
+**Return value**
+
+array: two elements, one is unix time in seconds, the other is microseconds.
+
+### CONFIG REWRITE
+
+Rewrites the config file the server was started with. 
+
+**Unlike Redis rewrite, it will discard all comments in origin config file.**
+
+**Return value**
+
+String: OK or error msg.
 
 ## Transaction
 

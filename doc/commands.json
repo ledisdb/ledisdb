@@ -628,6 +628,17 @@
         "arguments" : "-",
         "group": "Script",
         "readonly": false
-    }
+    },
 
+    "TIME": {
+        "arguments" : "-",
+        "group": "Server",
+        "readonly": true
+    },
+
+    "CONFIG REWRITE": {
+        "arguments" : "-",
+        "group": "Server",
+        "readonly": false
+    }
 }

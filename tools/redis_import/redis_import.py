@@ -35,7 +35,7 @@ def set_ttl(redis_client, ledis_client, key, k_type):
         "string": ledis_client.expire,
         "list": ledis_client.lexpire,
         "hash": ledis_client.hexpire,
-        "set": ledis_client.zexpire,
+        "set": ledis_client.sexpire,
         "zset": ledis_client.zexpire
     }
     timeout = redis_client.ttl(key)
@@ -46,6 +46,7 @@ def set_ttl(redis_client, ledis_client, key, k_type):
 def copy_key(redis_client, ledis_client, key, convert=False):
     global entries
     k_type = redis_client.type(key)
+
     if k_type == "string":
         value = redis_client.get(key)
         ledis_client.set(key, value)
@@ -66,6 +67,7 @@ def copy_key(redis_client, ledis_client, key, convert=False):
         entries += 1
 
     elif k_type == "zset":
+        # dangerous to do this?
         out = redis_client.zrange(key, 0, -1, withscores=True)
         pieces = od()
         for i in od(out).iteritems():
@@ -73,6 +75,14 @@ def copy_key(redis_client, ledis_client, key, convert=False):
         ledis_client.zadd(key, **pieces)
         set_ttl(redis_client, ledis_client, key, k_type)
         entries += 1
+
+    elif k_type == "set":
+        mbs = list(redis_client.smembers(key))
+
+        if mbs is not None:
+            ledis_client.sadd(key, *mbs)
+            set_ttl(redis_client, ledis_client, key, k_type)
+            entries += 1
 
     else:
         print "KEY %s of TYPE %s is not supported by LedisDB." % (key, k_type)
