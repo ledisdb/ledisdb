@@ -1,6 +1,5 @@
 ## Notice
 
-1. The tool doesn't support `set` data type.
 2. The tool doesn't support `bitmap` data type.
 2. Our `zset` use integer instead of double, so the zset float score in Redis 
    will be **converted to integer**.
