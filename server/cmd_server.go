@@ -111,6 +111,24 @@ func timeCommand(c *client) error {
 	return nil
 }
 
+func configCommand(c *client) error {
+	if len(c.args) < 1 {
+		return ErrCmdParams
+	}
+
+	switch strings.ToLower(hack.String(c.args[0])) {
+	case "rewrite":
+		if err := c.app.cfg.Rewrite(); err != nil {
+			return err
+		} else {
+			c.resp.writeStatus(OK)
+			return nil
+		}
+	default:
+		return ErrCmdParams
+	}
+}
+
 func init() {
 	register("ping", pingCommand)
 	register("echo", echoCommand)
@@ -119,4 +137,5 @@ func init() {
 	register("flushall", flushallCommand)
 	register("flushdb", flushdbCommand)
 	register("time", timeCommand)
+	register("config", configCommand)
 }

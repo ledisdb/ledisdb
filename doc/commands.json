@@ -634,5 +634,11 @@
         "arguments" : "-",
         "group": "Server",
         "readonly": true
+    },
+
+    "CONFIG REWRITE": {
+        "arguments" : "-",
+        "group": "Server",
+        "readonly": false
     }
 }

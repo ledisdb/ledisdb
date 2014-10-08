@@ -9,6 +9,7 @@ module.exports = [
     "flushall",
     "flushdb",
     "time",
+    "config",
 
 	"bget",
 	"bdelete",

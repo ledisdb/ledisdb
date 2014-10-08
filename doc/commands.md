@@ -133,6 +133,7 @@ Table of Contents
 	- [FLUSHDB](#flushdb)
 	- [INFO [section]](#info-section)
 	- [TIME](#time)
+	- [CONFIG REWRITE](#config-rewrite)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -2578,6 +2579,16 @@ The TIME command returns the current server time as a two items lists: a Unix ti
 **Return value**
 
 array: two elements, one is unix time in seconds, the other is microseconds.
+
+### CONFIG REWRITE
+
+Rewrites the config file the server was started with. 
+
+**Unlike Redis rewrite, it will discard all comments in origin config file.**
+
+**Return value**
+
+String: OK or error msg.
 
 ## Transaction
 
