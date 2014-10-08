@@ -43,6 +43,11 @@ type responseWriter interface {
 	flush()
 }
 
+type syncAck struct {
+	id uint64
+	ch chan uint64
+}
+
 type client struct {
 	app *App
 	ldb *ledis.Ledis
@@ -55,14 +60,18 @@ type client struct {
 
 	resp responseWriter
 
-	syncBuf     bytes.Buffer
-	compressBuf []byte
+	syncBuf bytes.Buffer
+
+	lastLogID uint64
+
+	ack *syncAck
 
 	reqErr chan error
 
 	buf bytes.Buffer
 
-	tx     *ledis.Tx
+	tx *ledis.Tx
+
 	script *ledis.Multi
 }
 
@@ -73,7 +82,6 @@ func newClient(app *App) *client {
 	c.ldb = app.ldb
 	c.db, _ = app.ldb.Select(0) //use default db
 
-	c.compressBuf = []byte{}
 	c.reqErr = make(chan error)
 
 	return c

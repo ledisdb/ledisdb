@@ -2,8 +2,13 @@
 
 . ./dev.sh
 
-go get github.com/siddontang/go-log/log
-go get github.com/siddontang/go-snappy/snappy
+# Test godep install
+godep path > /dev/null 2>&1
+if [ "$?" = 0 ]; then
+    GOPATH=`godep path`
+    godep restore
+    exit 0
+fi
 
 go get github.com/siddontang/goleveldb/leveldb
 
@@ -14,4 +19,9 @@ go get github.com/boltdb/bolt
 go get github.com/ugorji/go/codec
 go get github.com/BurntSushi/toml
 
-go get github.com/siddontang/go-bson/bson
+
+go get github.com/siddontang/go/bson
+go get github.com/siddontang/go/log
+go get github.com/siddontang/go/snappy
+go get github.com/siddontang/go/num
+go get github.com/siddontang/go/filelock

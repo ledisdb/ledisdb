@@ -199,7 +199,7 @@ class Ledis(object):
     def set_response_callback(self, command, callback):
         "Set a custom Response Callback"
         self.response_callbacks[command] = callback
- 
+
     def tx(self):
         return Transaction(
             self.connection_pool,
@@ -732,6 +732,70 @@ class Ledis(object):
     def zscore(self, name, value):
         "Return the score of element ``value`` in sorted set ``name``"
         return self.execute_command('ZSCORE', name, value)
+
+    def zinterstore(self, dest, keys, aggregate=None):
+        """
+        Intersect multiple sorted sets specified by ``keys`` into
+        a new sorted set, ``dest``. Scores in the destination will be
+        aggregated based on the ``aggregate``, or SUM if none is provided.
+        """
+        return self._zaggregate('ZINTERSTORE', dest, keys, aggregate)
+
+    def zunionstore(self, dest, keys, aggregate=None):
+        """
+        Union multiple sorted sets specified by ``keys`` into
+        a new sorted set, ``dest``. Scores in the destination will be
+        aggregated based on the ``aggregate``, or SUM if none is provided.
+        """
+        return self._zaggregate('ZUNIONSTORE', dest, keys, aggregate)
+
+    def _zaggregate(self, command, dest, keys, aggregate=None):
+        pieces = [command, dest, len(keys)]
+        if isinstance(keys, dict):
+            keys, weights = iterkeys(keys), itervalues(keys)
+        else:
+            weights = None
+        pieces.extend(keys)
+        if weights:
+            pieces.append(Token('WEIGHTS'))
+            pieces.extend(weights)
+        if aggregate:
+            pieces.append(Token('AGGREGATE'))
+            pieces.append(aggregate)
+        return self.execute_command(*pieces)
+
+    def zrangebylex(self, name, min, max, start=None, num=None):
+        """
+        Return the lexicographical range of values from sorted set ``name``
+        between ``min`` and ``max``.
+
+        If ``start`` and ``num`` are specified, then return a slice of the
+        range.
+        """
+        if (start is not None and num is None) or \
+                (num is not None and start is None):
+            raise RedisError("``start`` and ``num`` must both be specified")
+        pieces = ['ZRANGEBYLEX', name, min, max]
+        if start is not None and num is not None:
+            pieces.extend([Token('LIMIT'), start, num])
+        return self.execute_command(*pieces)
+
+    def zremrangebylex(self, name, min, max):
+        """
+        Remove all elements in the sorted set ``name`` between the
+        lexicographical range specified by ``min`` and ``max``.
+
+        Returns the number of elements removed.
+        """
+        return self.execute_command('ZREMRANGEBYLEX', name, min, max)
+
+    def zlexcount(self, name, min, max):
+        """
+        Return the number of items in the sorted set ``name`` between the
+        lexicographical range ``min`` and ``max``.
+        """
+        return self.execute_command('ZLEXCOUNT', name, min, max)
+
 
     # SPECIAL COMMANDS SUPPORTED BY LEDISDB
     def zclear(self, name):

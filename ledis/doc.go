@@ -2,7 +2,7 @@
 //
 // Ledis supports various data structure like kv, list, hash and zset like redis.
 //
-// Other features include binlog replication, data with a limited time-to-live.
+// Other features include replication, data with a limited time-to-live.
 //
 // Usage
 //
@@ -54,8 +54,5 @@
 //  n, err := db.ZAdd(key, ScorePair{score1, member1}, ScorePair{score2, member2})
 //  ay, err := db.ZRangeByScore(key, minScore, maxScore, 0, -1)
 //
-// Binlog
-//
-// ledis supports binlog, so you can sync binlog to another server for replication. If you want to open binlog support, set UseBinLog to true in config.
 //
 package ledis

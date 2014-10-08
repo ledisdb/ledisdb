@@ -13,6 +13,7 @@ data_dir = "/tmp/ledis_server"
 access_log = ""
 
 # Set slaveof to enable replication from master, empty, no replication
+# Any write operations except flushall and replication will be disabled in slave mode.
 slaveof = ""
 
 # Choose which backend storage to use, now support:
@@ -27,6 +28,12 @@ slaveof = ""
 #   
 db_name = "leveldb"
 
+# If not set, use data_dir/"db_name"_data
+db_path = ""
+
+# enable replication or not
+use_replication = true
+
 [leveldb]
 compression = false
 block_size = 32768
@@ -38,8 +45,25 @@ max_open_files = 1024
 map_size = 524288000
 nosync = true
 
-[binlog]
-max_file_size = 0
-max_file_num = 0
+[replication]
+# Path to store replication information(write ahead log, commit log, etc.)
+# if not set, use data_dir/rpl 
+path = ""
 
+# Expire write ahead logs after the given days
+expired_log_days = 7
 
+# If sync is true, the new log must be sent to some slaves, and then commit. 
+# It will reduce performance but have better high availability. 
+sync = true
+
+# If sync is true, wait at last wait_sync_time seconds for slave syncing this log
+wait_sync_time = 1
+
+# If sync is true, wait at most min(wait_max_slave_acks, (n + 1) / 2) to promise syncing ok.
+# n is slave number
+# If 0, wait (n + 1) / 2 acks.
+wait_max_slave_acks = 2
+
+# Compress the log or not
+compression = true

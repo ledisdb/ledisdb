@@ -106,6 +106,9 @@ Table of Contents
     - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
 	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
+	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
+	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
+	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
 - [Bitmap](#bitmap)
 	- [BGET key](#bget-key)
 	- [BGETBIT key offset](#bgetbit-key-offset)
@@ -119,9 +122,9 @@ Table of Contents
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 - [Replication](#replication)
-	- [SLAVEOF host port](#slaveof-host-port)
+	- [SLAVEOF host port [restart]](#slaveof-host-port-restart)
 	- [FULLSYNC](#fullsync)
-	- [SYNC index offset](#sync-index-offset)
+	- [SYNC logid](#sync-logid)
 - [Server](#server)
 	- [PING](#ping)
 	- [ECHO message](#echo-message)
@@ -2227,9 +2230,74 @@ Iterate ZSet keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
+### ZRANGEBYLEX key min max [LIMIT offset count]
+
+When all the elements in a sorted set are inserted with the same score, in order to force lexicographical ordering, this command returns all the elements in the sorted set at key with a value between min and max.
+
+If the elements in the sorted set have different scores, the returned elements are unspecified.
+
+Valid start and stop must start with ( or [, in order to specify if the range item is respectively exclusive or inclusive. The special values of + or - for start and stop have the special meaning or positively infinite and negatively infinite strings, so for instance the command ZRANGEBYLEX myzset - + is guaranteed to return all the elements in the sorted set, if all the elements have the same score.
+
+**Return value**
+
+array: list of elements in the specified score range
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZRANGEBYLEX myzset - [c
+1) "a"
+2) "b"
+3) "c"
+ledis> ZRANGEBYLEX myzset - (c
+1) "a"
+2) "b"
+ledis> ZRANGEBYLEX myzset [aaa (g
+1) "b"
+2) "c"
+3) "d"
+4) "e"
+5) "f"
+```
+
+### ZREMRANGEBYLEX key min max
+
+Removes all elements in the sorted set stored at key between the lexicographical range specified by min and max.
+
+**Return value**
+
+int64: he number of elements removed.
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZREMRANGEBYLEX myzset - [c
+(integer) 3
+```
+
+### ZLEXCOUNT key min max
+
+Returns the number of elements in the sorted set at key with a value between min and max.
+
+**Return value**
+
+int64: the number of elements in the specified score range.
+
+**Example**
+
+```
+ledis> ZADD myzset 0 a 0 b 0 c 0 d 0 e 0 f 0 g
+(integer) 7
+ledis> ZLEXCOUNT myzset - [c
+(integer) 3
+```
+
 
 ## Bitmap
-
 
 ### BGET key
 
@@ -2396,13 +2464,13 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## Replication
 
-### SLAVEOF host port
+### SLAVEOF host port [restart]
 
 Changes the replication settings of a slave on the fly. If the server is already acting as slave, SLAVEOF NO ONE will turn off the replication.
 
 SLAVEOF host port will make the server a slave of another server listening at the specified host and port.
 
-If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, discarding the old dataset.
+If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, if restart is set, it will discard the old dataset, otherwise it will sync with LastLogID + 1. 
 
 
 ### FULLSYNC
@@ -2416,9 +2484,9 @@ FULLSYNC will first try to sync all data from the master, save in local disk, th
 **Examples**
 
 
-### SYNC index offset
+### SYNC logid
 
-Inner command, syncs the new changed from master set by SLAVEOF at offset in binlog.index file.
+Inner command, syncs the new changed from master set by SLAVEOF with logid.
 
 **Return value**
 
@@ -2478,7 +2546,7 @@ ERR invalid db index 16
 
 ### FLUSHALL
 
-Delete all the keys of all the existing databases, not just the currently selected one. This command never fails.
+Delete all the keys of all the existing databases and replication logs, not just the currently selected one. This command never fails.
 
 Very dangerous to use!!!
 

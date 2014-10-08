@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
 	"strings"
@@ -292,26 +293,26 @@ func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 	}
 
 	if len(args) == 3 {
-		switch strings.ToLower(ledis.String(args[1])) {
+		switch strings.ToLower(hack.String(args[1])) {
 		case "match":
-			match = ledis.String(args[2])
+			match = hack.String(args[2])
 		case "count":
-			count, err = strconv.Atoi(ledis.String(args[2]))
+			count, err = strconv.Atoi(hack.String(args[2]))
 		default:
 			err = ErrCmdParams
 			return
 		}
 	} else if len(args) == 5 {
-		if strings.ToLower(ledis.String(args[1])) != "match" {
+		if strings.ToLower(hack.String(args[1])) != "match" {
 			err = ErrCmdParams
 			return
-		} else if strings.ToLower(ledis.String(args[3])) != "count" {
+		} else if strings.ToLower(hack.String(args[3])) != "count" {
 			err = ErrCmdParams
 			return
 		}
 
-		match = ledis.String(args[2])
-		count, err = strconv.Atoi(ledis.String(args[4]))
+		match = hack.String(args[2])
+		count, err = strconv.Atoi(hack.String(args[4]))
 	}
 
 	if count <= 0 {

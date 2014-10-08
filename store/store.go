@@ -16,7 +16,11 @@ import (
 )
 
 func getStorePath(cfg *config.Config) string {
-	return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
+	if len(cfg.DBPath) > 0 {
+		return cfg.DBPath
+	} else {
+		return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
+	}
 }
 
 func Open(cfg *config.Config) (*DB, error) {

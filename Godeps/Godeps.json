@@ -1,0 +1,54 @@
+{
+	"ImportPath": "github.com/siddontang/ledisdb",
+	"GoVersion": "go1.3.2",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Rev": "2ceedfee35ad3848e49308ab0c9a4f640cfb5fb2"
+		},
+		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "data/v1-228-g8fb50d5",
+			"Rev": "8fb50d5ee57110936b904a7539d4c5f2bf2359db"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/bson",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/filelock",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/hack",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/log",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/num",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/go/snappy",
+			"Rev": "466d5bc779ad45f5923d0f59efbc5d696bf2099c"
+		},
+		{
+			"ImportPath": "github.com/siddontang/goleveldb/leveldb",
+			"Rev": "c1f6d721561c48f467b26a277741e55fd224df1e"
+		},
+		{
+			"ImportPath": "github.com/szferi/gomdb",
+			"Rev": "d8a6d8371e2409b0787a782bf9b0c5daca364a3d"
+		},
+		{
+			"ImportPath": "github.com/ugorji/go/codec",
+			"Rev": "71c2886f5a673a35f909803f38ece5810165097b"
+		}
+	]
+}

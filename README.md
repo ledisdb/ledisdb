@@ -13,7 +13,7 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 + Supports lua scripting.
 + Supports expiration and ttl.
 + Supports using redis-cli directly.
-+ Multiple client API supports, including Go, Python, Lua(Openresty), C/C++, Node.js. 
++ Multiple client API support, including Go, Python, Lua(Openresty), C/C++, Node.js. 
 + Easy to embed in your own Go application. 
 + Restful API support, json/bson/msgpack output.
 + Replication to guarantee data safe.
@@ -35,6 +35,9 @@ Create a workspace and checkout ledisdb source
     make
     make test
 
+## Godep support
+
+LedisDB supports building with [godep](https://github.com/tools/godep) which can manage LedisDB go dependence automatically.
 
 ## LevelDB support
 
@@ -60,7 +63,8 @@ Create a workspace and checkout ledisdb source
 + Set `ROCKSDB_DIR` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
 + `make clean && make` 
 
-**Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch. **
+
+Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch.
 
 
 ## HyperLevelDB support
@@ -75,7 +79,7 @@ Create a workspace and checkout ledisdb source
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb. it will choose goleveldb as default to store data if you not set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb, memory. it will use goleveldb as default to store data if you don't set.
 
 Choosing a store database to use is very simple, you have two ways:
 

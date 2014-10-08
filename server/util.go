@@ -3,7 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/go/hack"
 	"io"
 	"strconv"
 )
@@ -36,7 +36,7 @@ func ReadBulkTo(rb *bufio.Reader, w io.Writer) error {
 	} else if l[0] == '$' {
 		var n int
 		//handle resp string
-		if n, err = strconv.Atoi(ledis.String(l[1:])); err != nil {
+		if n, err = strconv.Atoi(hack.String(l[1:])); err != nil {
 			return err
 		} else if n == -1 {
 			return nil

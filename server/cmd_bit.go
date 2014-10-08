@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/siddontang/go/hack"
+
 	"github.com/siddontang/ledisdb/ledis"
 	"strings"
 )
@@ -173,7 +175,7 @@ func boptCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	opDesc := strings.ToLower(ledis.String(args[0]))
+	opDesc := strings.ToLower(hack.String(args[0]))
 	dstKey := args[1]
 	srcKeys := args[2:]
 

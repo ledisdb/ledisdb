@@ -16,7 +16,7 @@ type Tx struct {
 
 	tx *store.Tx
 
-	logs [][]byte
+	eb *eventBatch
 }
 
 func (db *DB) IsTransaction() bool {
@@ -31,6 +31,8 @@ func (db *DB) Begin() (*Tx, error) {
 	}
 
 	tx := new(Tx)
+
+	tx.eb = new(eventBatch)
 
 	tx.DB = new(DB)
 	tx.DB.l = db.l
@@ -67,15 +69,9 @@ func (tx *Tx) Commit() error {
 		return ErrTxDone
 	}
 
-	tx.l.commitLock.Lock()
-	err := tx.tx.Commit()
+	err := tx.l.handleCommit(tx.eb, tx.tx)
+
 	tx.tx = nil
-
-	if len(tx.logs) > 0 {
-		tx.l.binlog.Log(tx.logs...)
-	}
-
-	tx.l.commitLock.Unlock()
 
 	tx.l.wLock.Unlock()
 
@@ -90,6 +86,7 @@ func (tx *Tx) Rollback() error {
 	}
 
 	err := tx.tx.Rollback()
+	tx.eb.Reset()
 	tx.tx = nil
 
 	tx.l.wLock.Unlock()

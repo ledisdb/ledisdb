@@ -93,6 +93,9 @@ module.exports = [
 	"zscore",
     "zunionstore",
     "zinterstore",
+    "zrangebylex",
+    "zremrangebylex",
+    "zlexcount",
 
 
 	"zclear",
@@ -128,7 +131,7 @@ module.exports = [
     "begin",
     "rollback",
     "commit",
-
+    
     "eval",
     "evalsha",
     "script",

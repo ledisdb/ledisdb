@@ -2,6 +2,8 @@ package ledis
 
 import (
 	"fmt"
+	"github.com/siddontang/ledisdb/store"
+	"reflect"
 	"testing"
 )
 
@@ -406,4 +408,60 @@ func TestZScan(t *testing.T) {
 	} else if len(v) != 0 {
 		t.Fatal("invalid value length ", len(v))
 	}
+}
+
+func TestZLex(t *testing.T) {
+	db := getTestDB()
+	if _, err := db.zFlush(); err != nil {
+		t.Fatal(err)
+	}
+
+	key := []byte("myzset")
+	if _, err := db.ZAdd(key, ScorePair{0, []byte("a")},
+		ScorePair{0, []byte("b")},
+		ScorePair{0, []byte("c")},
+		ScorePair{0, []byte("d")},
+		ScorePair{0, []byte("e")},
+		ScorePair{0, []byte("f")},
+		ScorePair{0, []byte("g")}); err != nil {
+		t.Fatal(err)
+	}
+
+	if ay, err := db.ZRangeByLex(key, nil, []byte("c"), store.RangeClose, 0, -1); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, [][]byte{[]byte("a"), []byte("b"), []byte("c")}) {
+		t.Fatal("must equal a, b, c")
+	}
+
+	if ay, err := db.ZRangeByLex(key, nil, []byte("c"), store.RangeROpen, 0, -1); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, [][]byte{[]byte("a"), []byte("b")}) {
+		t.Fatal("must equal a, b")
+	}
+
+	if ay, err := db.ZRangeByLex(key, []byte("aaa"), []byte("g"), store.RangeROpen, 0, -1); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(ay, [][]byte{[]byte("b"),
+		[]byte("c"), []byte("d"), []byte("e"), []byte("f")}) {
+		t.Fatal("must equal b, c, d, e, f", fmt.Sprintf("%q", ay))
+	}
+
+	if n, err := db.ZLexCount(key, nil, nil, store.RangeClose); err != nil {
+		t.Fatal(err)
+	} else if n != 7 {
+		t.Fatal(n)
+	}
+
+	if n, err := db.ZRemRangeByLex(key, []byte("aaa"), []byte("g"), store.RangeROpen); err != nil {
+		t.Fatal(err)
+	} else if n != 5 {
+		t.Fatal(n)
+	}
+
+	if n, err := db.ZLexCount(key, nil, nil, store.RangeClose); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
 }

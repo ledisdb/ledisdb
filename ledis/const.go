@@ -23,6 +23,8 @@ const (
 
 	ExpTimeType byte = 101
 	ExpMetaType byte = 102
+
+	MetaType byte = 201
 )
 
 var (
@@ -42,6 +44,11 @@ var (
 		ExpTimeType: "exptime",
 		ExpMetaType: "expmeta",
 	}
+)
+
+const (
+	RDWRMode  = 0
+	ROnlyMode = 1
 )
 
 const (
@@ -78,13 +85,10 @@ const (
 )
 
 var (
-	ErrScoreMiss = errors.New("zset score miss")
-)
-
-const (
-	BinLogTypeDeletion uint8 = 0x0
-	BinLogTypePut      uint8 = 0x1
-	BinLogTypeCommand  uint8 = 0x2
+	ErrScoreMiss     = errors.New("zset score miss")
+	ErrWriteInROnly  = errors.New("write not support in readonly mode")
+	ErrRplInRDWR     = errors.New("replication not support in read write mode")
+	ErrRplNotSupport = errors.New("replication not support")
 )
 
 const (

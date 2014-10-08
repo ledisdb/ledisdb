@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
 	"time"
 )
@@ -305,7 +306,6 @@ func (db *DB) ZAdd(key []byte, args ...ScorePair) (int64, error) {
 		return 0, err
 	}
 
-	//todo add binlog
 	err := t.Commit()
 	return num, err
 }
@@ -834,10 +834,10 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 			return 0, err
 		}
 		for _, pair := range scorePairs {
-			if score, ok := destMap[String(pair.Member)]; !ok {
-				destMap[String(pair.Member)] = pair.Score * weights[i]
+			if score, ok := destMap[hack.String(pair.Member)]; !ok {
+				destMap[hack.String(pair.Member)] = pair.Score * weights[i]
 			} else {
-				destMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
+				destMap[hack.String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i])
 			}
 		}
 	}
@@ -858,15 +858,14 @@ func (db *DB) ZUnionStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
-	var num = int64(len(destMap))
+	var n = int64(len(destMap))
 	sk := db.zEncodeSizeKey(destKey)
-	t.Put(sk, PutInt64(num))
+	t.Put(sk, PutInt64(n))
 
-	//todo add binlog
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, aggregate byte) (int64, error) {
@@ -895,7 +894,7 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		return 0, err
 	}
 	for _, pair := range scorePairs {
-		destMap[String(pair.Member)] = pair.Score * weights[0]
+		destMap[hack.String(pair.Member)] = pair.Score * weights[0]
 	}
 
 	for i, key := range srcKeys[1:] {
@@ -905,8 +904,8 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 		tmpMap := map[string]int64{}
 		for _, pair := range scorePairs {
-			if score, ok := destMap[String(pair.Member)]; ok {
-				tmpMap[String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
+			if score, ok := destMap[hack.String(pair.Member)]; ok {
+				tmpMap[hack.String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
 			}
 		}
 		destMap = tmpMap
@@ -927,16 +926,96 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 		}
 	}
 
-	var num int64 = int64(len(destMap))
+	var n int64 = int64(len(destMap))
 	sk := db.zEncodeSizeKey(destKey)
-	t.Put(sk, PutInt64(num))
-	//todo add binlog
+	t.Put(sk, PutInt64(n))
+
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
-	return num, nil
+	return n, nil
 }
 
 func (db *DB) ZScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	return db.scan(ZSizeType, key, count, inclusive, match)
+}
+
+func (db *DB) ZRangeByLex(key []byte, min []byte, max []byte, rangeType uint8, offset int, count int) ([][]byte, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	it := db.bucket.RangeLimitIterator(min, max, rangeType, offset, count)
+	defer it.Close()
+
+	ay := make([][]byte, 0, 16)
+	for ; it.Valid(); it.Next() {
+		if _, m, err := db.zDecodeSetKey(it.Key()); err == nil {
+			ay = append(ay, m)
+		}
+	}
+
+	return ay, nil
+}
+
+func (db *DB) ZRemRangeByLex(key []byte, min []byte, max []byte, rangeType uint8) (int64, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	t := db.zsetBatch
+	t.Lock()
+	defer t.Unlock()
+
+	it := db.bucket.RangeIterator(min, max, rangeType)
+	defer it.Close()
+
+	var n int64 = 0
+	for ; it.Valid(); it.Next() {
+		t.Delete(it.RawKey())
+		n++
+	}
+
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
+	return n, nil
+}
+
+func (db *DB) ZLexCount(key []byte, min []byte, max []byte, rangeType uint8) (int64, error) {
+	if min == nil {
+		min = db.zEncodeStartSetKey(key)
+	} else {
+		min = db.zEncodeSetKey(key, min)
+	}
+	if max == nil {
+		max = db.zEncodeStopSetKey(key)
+	} else {
+		max = db.zEncodeSetKey(key, max)
+	}
+
+	it := db.bucket.RangeIterator(min, max, rangeType)
+	defer it.Close()
+
+	var n int64 = 0
+	for ; it.Valid(); it.Next() {
+		n++
+	}
+
+	return n, nil
 }
