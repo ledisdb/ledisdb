@@ -1,7 +1,10 @@
 package config
 
 import (
+	"bytes"
 	"github.com/BurntSushi/toml"
+	"github.com/siddontang/go/ioutil2"
+	"io"
 	"io/ioutil"
 )
 
@@ -122,4 +125,20 @@ func (cfg *LevelDBConfig) Adjust() {
 	if cfg.MaxOpenFiles < 1024 {
 		cfg.MaxOpenFiles = 1024
 	}
+}
+
+func (cfg *Config) Dump(w io.Writer) error {
+	e := toml.NewEncoder(w)
+	e.Indent = ""
+	return e.Encode(cfg)
+}
+
+func (cfg *Config) DumpFile(fileName string) error {
+	var b bytes.Buffer
+
+	if err := cfg.Dump(&b); err != nil {
+		return err
+	}
+
+	return ioutil2.WriteFileAtomic(fileName, b.Bytes(), 0644)
 }
