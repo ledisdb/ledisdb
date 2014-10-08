@@ -132,6 +132,7 @@ Table of Contents
 	- [FLUSHALL](#flushall)
 	- [FLUSHDB](#flushdb)
 	- [INFO [section]](#info-section)
+	- [TIME](#time)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -2569,6 +2570,14 @@ The optional parameter can be used to select a specific section of information:
 + persistence: Strorage related information
 
 When no parameter is provided, all will return.
+
+### TIME
+
+The TIME command returns the current server time as a two items lists: a Unix timestamp and the amount of microseconds already elapsed in the current second
+
+**Return value**
+
+array: two elements, one is unix time in seconds, the other is microseconds.
 
 ## Transaction
 

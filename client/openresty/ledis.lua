@@ -153,6 +153,7 @@ local commands = {
     "info",
     "flushall",
     "flushdb",
+    "time",
 
     -- [[transaction]]
     "begin",

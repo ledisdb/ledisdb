@@ -628,6 +628,11 @@
         "arguments" : "-",
         "group": "Script",
         "readonly": false
-    }
+    },
 
+    "TIME": {
+        "arguments" : "-",
+        "group": "Server",
+        "readonly": true
+    }
 }
