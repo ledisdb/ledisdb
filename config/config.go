@@ -2,13 +2,16 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"github.com/BurntSushi/toml"
 	"github.com/siddontang/go/ioutil2"
 	"io"
 	"io/ioutil"
 )
 
-type Size int
+var (
+	ErrNoConfigFile = errors.New("Running without a config file")
+)
 
 const (
 	DefaultAddr     string = "127.0.0.1:6380"
@@ -42,6 +45,8 @@ type ReplicationConfig struct {
 }
 
 type Config struct {
+	FileName string `toml:"-"`
+
 	Addr string `toml:"addr"`
 
 	HttpAddr string `toml:"http_addr"`
@@ -70,7 +75,12 @@ func NewConfigWithFile(fileName string) (*Config, error) {
 		return nil, err
 	}
 
-	return NewConfigWithData(data)
+	if cfg, err := NewConfigWithData(data); err != nil {
+		return nil, err
+	} else {
+		cfg.FileName = fileName
+		return cfg, nil
+	}
 }
 
 func NewConfigWithData(data []byte) (*Config, error) {
@@ -141,4 +151,12 @@ func (cfg *Config) DumpFile(fileName string) error {
 	}
 
 	return ioutil2.WriteFileAtomic(fileName, b.Bytes(), 0644)
+}
+
+func (cfg *Config) Rewrite() error {
+	if len(cfg.FileName) == 0 {
+		return ErrNoConfigFile
+	}
+
+	return cfg.DumpFile(cfg.FileName)
 }
