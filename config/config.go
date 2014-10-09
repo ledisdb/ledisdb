@@ -37,10 +37,11 @@ type LMDBConfig struct {
 
 type ReplicationConfig struct {
 	Path             string `toml:"path"`
-	ExpiredLogDays   int    `toml:"expired_log_days"`
 	Sync             bool   `toml:"sync"`
 	WaitSyncTime     int    `toml:"wait_sync_time"`
 	WaitMaxSlaveAcks int    `toml:"wait_max_slave_acks"`
+	ExpiredLogDays   int    `toml:"expired_log_days"`
+	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
 }
 

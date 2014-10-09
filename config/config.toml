@@ -50,9 +50,6 @@ nosync = true
 # if not set, use data_dir/rpl 
 path = ""
 
-# Expire write ahead logs after the given days
-expired_log_days = 7
-
 # If sync is true, the new log must be sent to some slaves, and then commit. 
 # It will reduce performance but have better high availability. 
 sync = true
@@ -64,6 +61,15 @@ wait_sync_time = 1
 # n is slave number
 # If 0, wait (n + 1) / 2 acks.
 wait_max_slave_acks = 2
+
+# Expire write ahead logs after the given days
+expired_log_days = 7
+
+# Sync log to disk if possible
+#  0: no sync 
+#  1: sync every second 
+#  2: sync every commit 
+sync_log = 0
 
 # Compress the log or not
 compression = true
