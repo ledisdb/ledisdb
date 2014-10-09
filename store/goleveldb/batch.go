@@ -21,6 +21,10 @@ func (w *WriteBatch) Commit() error {
 	return w.db.db.Write(w.wbatch, nil)
 }
 
+func (w *WriteBatch) SyncCommit() error {
+	return w.db.db.Write(w.wbatch, w.db.syncOpts)
+}
+
 func (w *WriteBatch) Rollback() error {
 	w.wbatch.Reset()
 	return nil

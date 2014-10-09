@@ -85,6 +85,8 @@ type DB struct {
 	writeOpts    *WriteOptions
 	iteratorOpts *ReadOptions
 
+	syncOpts *WriteOptions
+
 	cache *Cache
 
 	filter *FilterPolicy
@@ -152,6 +154,9 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	db.readOpts = NewReadOptions()
 	db.writeOpts = NewWriteOptions()
 
+	db.syncOpts = NewWriteOptions()
+	db.syncOpts.SetSync(true)
+
 	db.iteratorOpts = NewReadOptions()
 	db.iteratorOpts.SetFillCache(false)
 }
@@ -195,6 +200,14 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 
 func (db *DB) Delete(key []byte) error {
 	return db.delete(db.writeOpts, key)
+}
+
+func (db *DB) SyncPut(key []byte, value []byte) error {
+	return db.put(db.syncOpts, key, value)
+}
+
+func (db *DB) SyncDelete(key []byte) error {
+	return db.delete(db.syncOpts, key)
 }
 
 func (db *DB) NewWriteBatch() driver.IWriteBatch {

@@ -48,6 +48,10 @@ func (t *Tx) BatchPut(writes []driver.Write) error {
 	return nil
 }
 
+func (t *Tx) SyncBatchPut(writes []driver.Write) error {
+	return t.BatchPut(writes)
+}
+
 func (t *Tx) Rollback() error {
 	return t.tx.Rollback()
 }

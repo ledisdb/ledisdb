@@ -16,6 +16,9 @@ type IDB interface {
 	Put(key []byte, value []byte) error
 	Delete(key []byte) error
 
+	SyncPut(key []byte, value []byte) error
+	SyncDelete(key []byte) error
+
 	NewIterator() IIterator
 
 	NewWriteBatch() IWriteBatch
@@ -53,6 +56,7 @@ type IWriteBatch interface {
 	Put(key []byte, value []byte)
 	Delete(key []byte)
 	Commit() error
+	SyncCommit() error
 	Rollback() error
 }
 
