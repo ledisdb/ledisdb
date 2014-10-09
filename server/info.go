@@ -165,6 +165,10 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		p = append(p, infoPair{"last_log_id", s.LastID})
 		p = append(p, infoPair{"first_log_id", s.FirstID})
 		p = append(p, infoPair{"commit_log_id", s.CommitID})
+	} else {
+		p = append(p, infoPair{"last_log_id", 0})
+		p = append(p, infoPair{"first_log_id", 0})
+		p = append(p, infoPair{"commit_log_id", 0})
 	}
 
 	i.dumpPairs(buf, p...)
