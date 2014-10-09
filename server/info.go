@@ -161,10 +161,11 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		p = append(p, infoPair{"slave", strings.Join(slaves, ",")})
 	}
 
-	s, _ := i.app.ldb.ReplicationStat()
-	p = append(p, infoPair{"last_log_id", s.LastID})
-	p = append(p, infoPair{"first_log_id", s.FirstID})
-	p = append(p, infoPair{"commit_log_id", s.CommitID})
+	if s, _ := i.app.ldb.ReplicationStat(); s != nil {
+		p = append(p, infoPair{"last_log_id", s.LastID})
+		p = append(p, infoPair{"first_log_id", s.FirstID})
+		p = append(p, infoPair{"commit_log_id", s.CommitID})
+	}
 
 	i.dumpPairs(buf, p...)
 }

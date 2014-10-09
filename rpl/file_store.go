@@ -2,6 +2,8 @@ package rpl
 
 import (
 	"fmt"
+	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/ioutil2"
 	"github.com/siddontang/go/log"
 	"io/ioutil"
 	"os"
@@ -121,23 +123,8 @@ func (s *FileStore) Close() error {
 func (s *FileStore) flushIndex() error {
 	data := strings.Join(s.logNames, "\n")
 
-	bakName := fmt.Sprintf("%s.bak", s.indexName)
-	f, err := os.OpenFile(bakName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		log.Error("create bak index error %s", err.Error())
-		return err
-	}
-
-	if _, err := f.WriteString(data); err != nil {
-		log.Error("write index error %s", err.Error())
-		f.Close()
-		return err
-	}
-
-	f.Close()
-
-	if err := os.Rename(bakName, s.indexName); err != nil {
-		log.Error("rename bak index error %s", err.Error())
+	if err := ioutil2.WriteFileAtomic(s.indexName, hack.Slice(data), 0644); err != nil {
+		log.Error("flush index error %s", err.Error())
 		return err
 	}
 
