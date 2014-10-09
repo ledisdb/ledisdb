@@ -1,7 +1,5 @@
 INSTALL_PATH ?= $(CURDIR)
 
-$(shell ./bootstrap.sh >> /dev/null 2>&1)
-
 $(shell ./tools/build_config.sh build_config.mk $INSTALL_PATH)
 
 include build_config.mk
