@@ -287,7 +287,10 @@ func (app *App) removeSlave(c *client) {
 	app.slock.Lock()
 	defer app.slock.Unlock()
 
-	delete(app.slaves, c)
+	if _, ok := app.slaves[c]; ok {
+		delete(app.slaves, c)
+		log.Info("remove slave %s", c.remoteAddr)
+	}
 
 	if c.ack != nil {
 		asyncNotifyUint64(c.ack.ch, c.lastLogID)
@@ -313,7 +316,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	logId := l.ID
 	for s, _ := range app.slaves {
 		if s.lastLogID >= logId {
-			//slave has already this log
+			//slave has already owned this log
 			ss = []*client{}
 			break
 		} else {
