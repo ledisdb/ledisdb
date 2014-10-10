@@ -45,6 +45,11 @@ type ReplicationConfig struct {
 	Compression      bool   `toml:"compression"`
 }
 
+type SnapshotConfig struct {
+	Path   string `toml:"path"`
+	MaxNum int    `toml:"max_num"`
+}
+
 type Config struct {
 	FileName string `toml:"-"`
 
@@ -70,6 +75,8 @@ type Config struct {
 
 	UseReplication bool              `toml:"use_replication"`
 	Replication    ReplicationConfig `toml:"replication"`
+
+	Snapshot SnapshotConfig `toml:"snapshot"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
