@@ -37,10 +37,40 @@ func TestSnapshot(t *testing.T) {
 		if b, _ := ioutil.ReadAll(f); string(b) != "hello world" {
 			t.Fatal("invalid read snapshot")
 		}
+
+		if len(s.names) != 1 {
+			t.Fatal("must 1 snapshot")
+		}
 	}
 
-	if len(s.names) != 1 {
-		t.Fatal("mut one snapshot")
+	if f, _, err := s.Create(d); err != nil {
+		t.Fatal(err)
+	} else {
+		defer f.Close()
+		if b, _ := ioutil.ReadAll(f); string(b) != "hello world" {
+			t.Fatal("invalid read snapshot")
+		}
+		if len(s.names) != 2 {
+			t.Fatal("must 2 snapshot")
+		}
+	}
+
+	if f, _, err := s.Create(d); err != nil {
+		t.Fatal(err)
+	} else {
+		defer f.Close()
+		if b, _ := ioutil.ReadAll(f); string(b) != "hello world" {
+			t.Fatal("invalid read snapshot")
+		}
+
+		if len(s.names) != 2 {
+			t.Fatal("must 2 snapshot")
+		}
+	}
+
+	fs, _ := ioutil.ReadDir(cfg.Snapshot.Path)
+	if len(fs) != 2 {
+		t.Fatal("must 2 snapshot")
 	}
 
 	s.Close()

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	snapshotTimeFormat = "2006-01-02T15:04:05"
+	snapshotTimeFormat = "2006-01-02T15:04:05.999999999"
 )
 
 type snapshotStore struct {
@@ -91,28 +91,37 @@ func (s *snapshotStore) run() {
 	for {
 		select {
 		case <-t.C:
-			s.purge()
+			s.Lock()
+			s.purge(false)
+			s.Unlock()
 		case <-s.quit:
 			return
 		}
 	}
 }
 
-func (s *snapshotStore) purge() {
-	s.Lock()
+func (s *snapshotStore) purge(create bool) {
 	var names []string
-	num := s.cfg.Snapshot.MaxNum
-	if len(s.names) > num {
-		names = s.names[0:num]
+	maxNum := s.cfg.Snapshot.MaxNum
+	num := len(s.names) - maxNum
 
-		s.names = s.names[num:]
+	if create {
+		num++
+		if num > len(s.names) {
+			num = len(s.names)
+		}
 	}
 
-	s.Unlock()
+	if num > 0 {
+		names = s.names[0:num]
 
-	for _, n := range names {
-		if err := os.Remove(s.snapshotPath(n)); err != nil {
-			log.Error("purge snapshot %s error %s", n, err.Error())
+		n := copy(s.names, s.names[num:])
+		s.names = s.names[0:n]
+	}
+
+	for _, name := range names {
+		if err := os.Remove(s.snapshotPath(name)); err != nil {
+			log.Error("purge snapshot %s error %s", name, err.Error())
 		}
 	}
 }
@@ -125,9 +134,30 @@ type snapshotDumper interface {
 	Dump(w io.Writer) error
 }
 
-func (s *snapshotStore) Create(d snapshotDumper) (*os.File, time.Time, error) {
+type snapshot struct {
+	io.ReadCloser
+
+	f *os.File
+}
+
+func (st *snapshot) Read(b []byte) (int, error) {
+	return st.f.Read(b)
+}
+
+func (st *snapshot) Close() error {
+	return st.f.Close()
+}
+
+func (st *snapshot) Size() int64 {
+	s, _ := st.f.Stat()
+	return s.Size()
+}
+
+func (s *snapshotStore) Create(d snapshotDumper) (*snapshot, time.Time, error) {
 	s.Lock()
 	defer s.Unlock()
+
+	s.purge(true)
 
 	now := time.Now()
 	name := snapshotName(now)
@@ -147,14 +177,16 @@ func (s *snapshotStore) Create(d snapshotDumper) (*os.File, time.Time, error) {
 		return nil, time.Time{}, err
 	}
 
+	f.Sync()
+
 	s.names = append(s.names, name)
 
 	f.Seek(0, os.SEEK_SET)
 
-	return f, now, nil
+	return &snapshot{f: f}, now, nil
 }
 
-func (s *snapshotStore) OpenLatest() (*os.File, time.Time, error) {
+func (s *snapshotStore) OpenLatest() (*snapshot, time.Time, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -170,5 +202,5 @@ func (s *snapshotStore) OpenLatest() (*os.File, time.Time, error) {
 		return nil, time.Time{}, err
 	}
 
-	return f, t, err
+	return &snapshot{f: f}, t, err
 }
