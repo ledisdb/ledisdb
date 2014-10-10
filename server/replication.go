@@ -93,7 +93,7 @@ func (m *master) startReplication(masterAddr string, restart bool) error {
 
 	m.quit = make(chan struct{}, 1)
 
-	m.app.ldb.SetReadOnly(true)
+	m.app.cfg.Readonly = true
 
 	m.wg.Add(1)
 	go m.runReplication(restart)
@@ -238,9 +238,15 @@ func (m *master) sync() error {
 
 }
 
-func (app *App) slaveof(masterAddr string, restart bool) error {
+func (app *App) slaveof(masterAddr string, restart bool, readonly bool) error {
 	app.m.Lock()
 	defer app.m.Unlock()
+
+	//in master mode and no slaveof, only set readonly
+	if len(app.cfg.SlaveOf) == 0 && len(masterAddr) == 0 {
+		app.cfg.Readonly = readonly
+		return nil
+	}
 
 	if !app.ldb.ReplicationUsed() {
 		return fmt.Errorf("slaveof must enable replication")
@@ -253,7 +259,7 @@ func (app *App) slaveof(masterAddr string, restart bool) error {
 			return err
 		}
 
-		app.ldb.SetReadOnly(false)
+		app.cfg.Readonly = readonly
 	} else {
 		return app.m.startReplication(masterAddr, restart)
 	}

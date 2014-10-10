@@ -110,7 +110,7 @@ func (l *Ledis) WaitReplication() error {
 func (l *Ledis) StoreLogsFromReader(rb io.Reader) error {
 	if !l.ReplicationUsed() {
 		return ErrRplNotSupport
-	} else if !l.readOnly {
+	} else if !l.cfg.Readonly {
 		return ErrRplInRDWR
 	}
 

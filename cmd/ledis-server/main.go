@@ -18,6 +18,8 @@ var configFile = flag.String("config", "", "ledisdb config file")
 var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 var usePprof = flag.Bool("pprof", false, "enable pprof")
 var pprofPort = flag.Int("pprof_port", 6060, "pprof http port")
+var slaveof = flag.String("slaveof", "", "make the server a slave of another instance")
+var readonly = flag.Bool("readonly", false, "set readonly mode, salve server is always readonly")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -41,6 +43,13 @@ func main() {
 
 	if len(*dbName) > 0 {
 		cfg.DBName = *dbName
+	}
+
+	if len(*slaveof) > 0 {
+		cfg.SlaveOf = *slaveof
+		cfg.Readonly = true
+	} else {
+		cfg.Readonly = *readonly
 	}
 
 	var app *server.App

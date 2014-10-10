@@ -33,17 +33,10 @@ type Ledis struct {
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
 
-	// for readonly mode, only replication and flushall can write
-	readOnly bool
-
 	lock io.Closer
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
-	return Open2(cfg, RDWRMode)
-}
-
-func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		cfg.DataDir = config.DefaultDataDir
 	}
@@ -53,12 +46,11 @@ func Open2(cfg *config.Config, flags int) (*Ledis, error) {
 	var err error
 
 	l := new(Ledis)
+	l.cfg = cfg
 
 	if l.lock, err = filelock.Lock(path.Join(cfg.DataDir, "LOCK")); err != nil {
 		return nil, err
 	}
-
-	l.readOnly = (flags&ROnlyMode > 0)
 
 	l.quit = make(chan struct{})
 
@@ -163,7 +155,7 @@ func (l *Ledis) flushAll() error {
 }
 
 func (l *Ledis) IsReadOnly() bool {
-	if l.readOnly {
+	if l.cfg.Readonly {
 		return true
 	} else if l.r != nil {
 		if b, _ := l.r.CommitIDBehind(); b {
@@ -171,10 +163,6 @@ func (l *Ledis) IsReadOnly() bool {
 		}
 	}
 	return false
-}
-
-func (l *Ledis) SetReadOnly(b bool) {
-	l.readOnly = b
 }
 
 func (l *Ledis) onDataExpired() {

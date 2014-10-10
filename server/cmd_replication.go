@@ -13,18 +13,19 @@ import (
 func slaveofCommand(c *client) error {
 	args := c.args
 
-	if len(args) != 2 || len(args) != 3 {
+	if len(args) != 2 && len(args) != 3 {
 		return ErrCmdParams
 	}
 
 	masterAddr := ""
 	restart := false
+	readonly := false
 
 	if strings.ToLower(hack.String(args[0])) == "no" &&
 		strings.ToLower(hack.String(args[1])) == "one" {
 		//stop replication, use master = ""
-		if len(args) != 2 {
-			return ErrCmdParams
+		if len(args) == 3 && strings.ToLower(hack.String(args[2])) == "readonly" {
+			readonly = true
 		}
 	} else {
 		if _, err := strconv.ParseInt(hack.String(args[1]), 10, 16); err != nil {
@@ -38,7 +39,7 @@ func slaveofCommand(c *client) error {
 		}
 	}
 
-	if err := c.app.slaveof(masterAddr, restart); err != nil {
+	if err := c.app.slaveof(masterAddr, restart, readonly); err != nil {
 		return err
 	}
 

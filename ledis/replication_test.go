@@ -46,10 +46,11 @@ func TestReplication(t *testing.T) {
 	cfgS := new(config.Config)
 	cfgS.DataDir = "/tmp/test_repl/slave"
 	cfgS.UseReplication = true
+	cfgS.Readonly = true
 
 	os.RemoveAll(cfgS.DataDir)
 
-	slave, err = Open2(cfgS, ROnlyMode)
+	slave, err = Open(cfgS)
 	if err != nil {
 		t.Fatal(err)
 	}

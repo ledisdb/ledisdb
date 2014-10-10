@@ -115,7 +115,8 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 	i.dumpPairs(buf, infoPair{"os", i.Server.OS},
 		infoPair{"process_id", i.Server.ProceessId},
 		infoPair{"addr", i.app.cfg.Addr},
-		infoPair{"http_addr", i.app.cfg.HttpAddr})
+		infoPair{"http_addr", i.app.cfg.HttpAddr},
+		infoPair{"readonly", i.app.cfg.Readonly})
 }
 
 func (i *info) dumpClients(buf *bytes.Buffer) {
@@ -155,10 +156,10 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		slaves = append(slaves, s.remoteAddr)
 	}
 
-	p = append(p, infoPair{"readonly", i.app.ldb.IsReadOnly()})
+	p = append(p, infoPair{"slaveof", i.app.cfg.SlaveOf})
 
 	if len(slaves) > 0 {
-		p = append(p, infoPair{"slave", strings.Join(slaves, ",")})
+		p = append(p, infoPair{"slaves", strings.Join(slaves, ",")})
 	}
 
 	if s, _ := i.app.ldb.ReplicationStat(); s != nil {

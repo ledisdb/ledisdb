@@ -54,6 +54,8 @@ type Config struct {
 
 	SlaveOf string `toml:"slaveof"`
 
+	Readonly bool `toml:readonly`
+
 	DataDir string `toml:"data_dir"`
 
 	DBName string `toml:"db_name"`
@@ -106,6 +108,7 @@ func NewConfigDefault() *Config {
 	cfg.DBName = DefaultDBName
 
 	cfg.SlaveOf = ""
+	cfg.Readonly = false
 
 	// disable access log
 	cfg.AccessLog = ""

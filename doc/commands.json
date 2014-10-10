@@ -301,7 +301,7 @@
         "readonly": false
     },
     "SLAVEOF": {
-        "arguments": "host port [restart]",
+        "arguments": "host port [RESTART] [READONLY]",
         "group": "Replication",
         "readonly": false
     },
