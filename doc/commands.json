@@ -90,7 +90,7 @@
         "readonly": false
     },
     "FULLSYNC": {
-        "arguments": "-",
+        "arguments": "[NEW]",
         "group": "Replication",
         "readonly": false
 

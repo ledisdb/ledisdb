@@ -28,12 +28,13 @@ type snapshotStore struct {
 }
 
 func snapshotName(t time.Time) string {
-	return fmt.Sprintf("snap-%s.dmp", t.Format(snapshotTimeFormat))
+	return fmt.Sprintf("dmp-%s", t.Format(snapshotTimeFormat))
 }
 
 func parseSnapshotName(name string) (time.Time, error) {
 	var timeString string
-	if _, err := fmt.Sscanf(name, "snap-%s.dmp", &timeString); err != nil {
+	if _, err := fmt.Sscanf(name, "dmp-%s", &timeString); err != nil {
+		println(err.Error())
 		return time.Time{}, err
 	}
 	when, err := time.Parse(snapshotTimeFormat, timeString)
@@ -88,7 +89,7 @@ func (s *snapshotStore) checkSnapshots() error {
 		}
 
 		if _, err := parseSnapshotName(info.Name()); err != nil {
-			log.Error("invalid snapshot file name %s, err: %s, try remove", info.Name(), err.Error())
+			log.Error("invalid snapshot file name %s, err: %s", info.Name(), err.Error())
 			continue
 		}
 
@@ -161,8 +162,6 @@ type snapshot struct {
 	io.ReadCloser
 
 	f *os.File
-
-	temp bool
 }
 
 func (st *snapshot) Read(b []byte) (int, error) {
@@ -170,15 +169,7 @@ func (st *snapshot) Read(b []byte) (int, error) {
 }
 
 func (st *snapshot) Close() error {
-	if st.temp {
-		name := st.f.Name()
-		if err := st.f.Close(); err != nil {
-			return err
-		}
-		return os.Remove(name)
-	} else {
-		return st.f.Close()
-	}
+	return st.f.Close()
 }
 
 func (st *snapshot) Size() int64 {
@@ -186,20 +177,18 @@ func (st *snapshot) Size() int64 {
 	return s.Size()
 }
 
-func (s *snapshotStore) Create(d snapshotDumper, temp bool) (*snapshot, time.Time, error) {
+func (s *snapshotStore) Create(d snapshotDumper) (*snapshot, time.Time, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	if !temp {
-		s.purge(true)
-	}
+	s.purge(true)
 
 	now := time.Now()
 	name := snapshotName(now)
 
 	tmpName := name + ".tmp"
 
-	if len(s.names) > 0 && !temp {
+	if len(s.names) > 0 {
 		lastTime, _ := parseSnapshotName(s.names[len(s.names)-1])
 		if !now.After(lastTime) {
 			return nil, time.Time{}, fmt.Errorf("create snapshot file time %s is behind %s ",
@@ -218,26 +207,17 @@ func (s *snapshotStore) Create(d snapshotDumper, temp bool) (*snapshot, time.Tim
 		return nil, time.Time{}, err
 	}
 
-	if temp {
-		if err := f.Sync(); err != nil {
-			f.Close()
-			return nil, time.Time{}, err
-		}
-
-		f.Seek(0, os.SEEK_SET)
-	} else {
-		f.Close()
-		if err := os.Rename(s.snapshotPath(tmpName), s.snapshotPath(name)); err != nil {
-			return nil, time.Time{}, err
-		}
-
-		if f, err = os.Open(s.snapshotPath(name)); err != nil {
-			return nil, time.Time{}, err
-		}
-		s.names = append(s.names, name)
+	f.Close()
+	if err := os.Rename(s.snapshotPath(tmpName), s.snapshotPath(name)); err != nil {
+		return nil, time.Time{}, err
 	}
 
-	return &snapshot{f: f, temp: temp}, now, nil
+	if f, err = os.Open(s.snapshotPath(name)); err != nil {
+		return nil, time.Time{}, err
+	}
+	s.names = append(s.names, name)
+
+	return &snapshot{f: f}, now, nil
 }
 
 func (s *snapshotStore) OpenLatest() (*snapshot, time.Time, error) {
@@ -256,5 +236,5 @@ func (s *snapshotStore) OpenLatest() (*snapshot, time.Time, error) {
 		return nil, time.Time{}, err
 	}
 
-	return &snapshot{f: f, temp: false}, t, err
+	return &snapshot{f: f}, t, err
 }

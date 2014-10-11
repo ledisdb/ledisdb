@@ -34,6 +34,8 @@ type App struct {
 	// handle slaves
 	slock  sync.Mutex
 	slaves map[*client]struct{}
+
+	snap *snapshotStore
 }
 
 func netType(s string) string {
@@ -88,6 +90,10 @@ func NewApp(cfg *config.Config) (*App, error) {
 		}
 	}
 
+	if app.snap, err = newSnapshotStore(cfg); err != nil {
+		return nil, err
+	}
+
 	if len(app.cfg.SlaveOf) > 0 {
 		//slave must readonly
 		app.cfg.Readonly = true
@@ -124,6 +130,8 @@ func (app *App) Close() {
 	app.closeScript()
 
 	app.m.Close()
+
+	app.snap.Close()
 
 	if app.access != nil {
 		app.access.Close()

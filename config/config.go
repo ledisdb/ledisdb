@@ -129,6 +129,7 @@ func NewConfigDefault() *Config {
 	cfg.Replication.Compression = true
 	cfg.Replication.WaitMaxSlaveAcks = 2
 	cfg.Replication.SyncLog = 0
+	cfg.Snapshot.MaxNum = 1
 
 	cfg.adjust()
 

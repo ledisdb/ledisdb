@@ -81,7 +81,7 @@ compression = true
 [snapshot]
 # Path to store snapshot dump file
 # if not set, use data_dir/snapshot
-# snapshot file name format is snap-2006-01-02T15:04:05.999999999.dmp
+# snapshot file name format is dmp-2006-01-02T15:04:05.999999999
 path = ""
 
 # Reserve newest max_num snapshot dump files

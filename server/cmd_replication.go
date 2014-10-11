@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
-	"io/ioutil"
-	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func slaveofCommand(c *client) error {
@@ -49,27 +48,46 @@ func slaveofCommand(c *client) error {
 }
 
 func fullsyncCommand(c *client) error {
-	//todo, multi fullsync may use same dump file
-	dumpFile, err := ioutil.TempFile(c.app.cfg.DataDir, "dump_")
+	args := c.args
+	needNew := false
+	if len(args) == 1 && strings.ToLower(hack.String(args[0])) == "new" {
+		needNew = true
+	}
+
+	var s *snapshot
+	var err error
+	var t time.Time
+
+	dumper := c.app.ldb
+
+	if needNew {
+		s, t, err = c.app.snap.Create(dumper)
+	} else {
+		if s, t, err = c.app.snap.OpenLatest(); err != nil {
+			return err
+		} else if s == nil {
+			s, t, err = c.app.snap.Create(dumper)
+		} else {
+			gap := time.Duration(c.app.cfg.Replication.ExpiredLogDays*24*3600) * time.Second / 2
+			minT := time.Now().Add(-gap)
+
+			//snapshot is too old
+			if t.Before(minT) {
+				s.Close()
+				s, t, err = c.app.snap.Create(dumper)
+			}
+		}
+	}
+
 	if err != nil {
 		return err
 	}
 
-	if err = c.app.ldb.Dump(dumpFile); err != nil {
-		return err
-	}
+	n := s.Size()
 
-	st, _ := dumpFile.Stat()
-	n := st.Size()
+	c.resp.writeBulkFrom(n, s)
 
-	dumpFile.Seek(0, os.SEEK_SET)
-
-	c.resp.writeBulkFrom(n, dumpFile)
-
-	name := dumpFile.Name()
-	dumpFile.Close()
-
-	os.Remove(name)
+	s.Close()
 
 	return nil
 }

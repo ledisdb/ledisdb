@@ -30,7 +30,7 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if f, _, err := s.Create(d, false); err != nil {
+	if f, _, err := s.Create(d); err != nil {
 		t.Fatal(err)
 	} else {
 		defer f.Close()
@@ -43,7 +43,7 @@ func TestSnapshot(t *testing.T) {
 		}
 	}
 
-	if f, _, err := s.Create(d, false); err != nil {
+	if f, _, err := s.Create(d); err != nil {
 		t.Fatal(err)
 	} else {
 		defer f.Close()
@@ -55,7 +55,7 @@ func TestSnapshot(t *testing.T) {
 		}
 	}
 
-	if f, _, err := s.Create(d, false); err != nil {
+	if f, _, err := s.Create(d); err != nil {
 		t.Fatal(err)
 	} else {
 		defer f.Close()
@@ -69,30 +69,6 @@ func TestSnapshot(t *testing.T) {
 	}
 
 	fs, _ := ioutil.ReadDir(cfg.Snapshot.Path)
-	if len(fs) != 2 {
-		t.Fatal("must 2 snapshot")
-	}
-
-	if f, _, err := s.Create(d, true); err != nil {
-		t.Fatal(err)
-	} else {
-		if b, _ := ioutil.ReadAll(f); string(b) != "hello world" {
-			t.Fatal("invalid read snapshot")
-		}
-
-		if len(s.names) != 2 {
-			t.Fatal("must 2 snapshot")
-		}
-
-		fs, _ = ioutil.ReadDir(cfg.Snapshot.Path)
-		if len(fs) != 3 {
-			t.Fatal("must 3 snapshot")
-		}
-
-		f.Close()
-	}
-
-	fs, _ = ioutil.ReadDir(cfg.Snapshot.Path)
 	if len(fs) != 2 {
 		t.Fatal("must 2 snapshot")
 	}
