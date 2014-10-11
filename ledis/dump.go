@@ -46,20 +46,21 @@ func (l *Ledis) Dump(w io.Writer) error {
 	var commitID uint64
 	var snap *store.Snapshot
 
-	{
-		l.wLock.Lock()
-		defer l.wLock.Unlock()
+	l.wLock.Lock()
 
-		if l.r != nil {
-			if commitID, err = l.r.LastCommitID(); err != nil {
-				return err
-			}
-		}
-
-		if snap, err = l.ldb.NewSnapshot(); err != nil {
+	if l.r != nil {
+		if commitID, err = l.r.LastCommitID(); err != nil {
+			l.wLock.Unlock()
 			return err
 		}
 	}
+
+	if snap, err = l.ldb.NewSnapshot(); err != nil {
+		l.wLock.Unlock()
+		return err
+	}
+
+	l.wLock.Unlock()
 
 	wb := bufio.NewWriterSize(w, 4096)
 
