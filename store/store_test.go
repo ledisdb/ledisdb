@@ -10,7 +10,7 @@ import (
 )
 
 func TestStore(t *testing.T) {
-	cfg := new(config.Config)
+	cfg := config.NewConfigDefault()
 	cfg.DataDir = "/tmp/testdb"
 	cfg.LMDB.MapSize = 10 * 1024 * 1024
 

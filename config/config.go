@@ -14,8 +14,7 @@ var (
 )
 
 const (
-	DefaultAddr     string = "127.0.0.1:6380"
-	DefaultHttpAddr string = "127.0.0.1:11181"
+	DefaultAddr string = "127.0.0.1:6380"
 
 	DefaultDBName string = "goleveldb"
 
@@ -101,6 +100,8 @@ func NewConfigWithData(data []byte) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.adjust()
+
 	return cfg, nil
 }
 
@@ -108,7 +109,7 @@ func NewConfigDefault() *Config {
 	cfg := new(Config)
 
 	cfg.Addr = DefaultAddr
-	cfg.HttpAddr = DefaultHttpAddr
+	cfg.HttpAddr = ""
 
 	cfg.DataDir = DefaultDataDir
 
@@ -123,28 +124,36 @@ func NewConfigDefault() *Config {
 	cfg.LMDB.MapSize = 20 * 1024 * 1024
 	cfg.LMDB.NoSync = true
 
-	cfg.Replication.WaitSyncTime = 1
+	cfg.UseReplication = false
+	cfg.Replication.WaitSyncTime = 500
 	cfg.Replication.Compression = true
 	cfg.Replication.WaitMaxSlaveAcks = 2
+	cfg.Replication.SyncLog = 0
+
+	cfg.adjust()
 
 	return cfg
 }
 
-func (cfg *LevelDBConfig) Adjust() {
-	if cfg.CacheSize <= 0 {
-		cfg.CacheSize = 4 * 1024 * 1024
+func (cfg *Config) adjust() {
+	if cfg.LevelDB.CacheSize <= 0 {
+		cfg.LevelDB.CacheSize = 4 * 1024 * 1024
 	}
 
-	if cfg.BlockSize <= 0 {
-		cfg.BlockSize = 4 * 1024
+	if cfg.LevelDB.BlockSize <= 0 {
+		cfg.LevelDB.BlockSize = 4 * 1024
 	}
 
-	if cfg.WriteBufferSize <= 0 {
-		cfg.WriteBufferSize = 4 * 1024 * 1024
+	if cfg.LevelDB.WriteBufferSize <= 0 {
+		cfg.LevelDB.WriteBufferSize = 4 * 1024 * 1024
 	}
 
-	if cfg.MaxOpenFiles < 1024 {
-		cfg.MaxOpenFiles = 1024
+	if cfg.LevelDB.MaxOpenFiles < 1024 {
+		cfg.LevelDB.MaxOpenFiles = 1024
+	}
+
+	if cfg.Replication.ExpiredLogDays <= 0 {
+		cfg.Replication.ExpiredLogDays = 7
 	}
 }
 

@@ -58,8 +58,8 @@ path = ""
 # It will reduce performance but have better high availability. 
 sync = true
 
-# If sync is true, wait at last wait_sync_time seconds for slave syncing this log
-wait_sync_time = 1
+# If sync is true, wait at last wait_sync_time milliseconds for slave syncing this log
+wait_sync_time = 500
 
 # If sync is true, wait at most min(wait_max_slave_acks, (n + 1) / 2) to promise syncing ok.
 # n is slave number

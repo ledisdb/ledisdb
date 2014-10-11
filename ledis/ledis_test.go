@@ -12,7 +12,7 @@ var testLedisOnce sync.Once
 
 func getTestDB() *DB {
 	f := func() {
-		cfg := new(config.Config)
+		cfg := config.NewConfigDefault()
 		cfg.DataDir = "/tmp/test_ledis"
 
 		os.RemoveAll(cfg.DataDir)

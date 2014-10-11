@@ -37,12 +37,12 @@ func TestReplication(t *testing.T) {
 	data_dir := "/tmp/test_replication"
 	os.RemoveAll(data_dir)
 
-	masterCfg := new(config.Config)
+	masterCfg := config.NewConfigDefault()
 	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
 	masterCfg.Addr = "127.0.0.1:11182"
 	masterCfg.UseReplication = true
 	masterCfg.Replication.Sync = true
-	masterCfg.Replication.WaitSyncTime = 5
+	masterCfg.Replication.WaitSyncTime = 5000
 
 	var master *App
 	var slave *App
@@ -53,7 +53,7 @@ func TestReplication(t *testing.T) {
 	}
 	defer master.Close()
 
-	slaveCfg := new(config.Config)
+	slaveCfg := config.NewConfigDefault()
 	slaveCfg.DataDir = fmt.Sprintf("%s/slave", data_dir)
 	slaveCfg.Addr = "127.0.0.1:11183"
 	slaveCfg.SlaveOf = masterCfg.Addr

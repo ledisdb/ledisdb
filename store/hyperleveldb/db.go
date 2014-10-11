@@ -108,8 +108,6 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 
 	opts.SetCreateIfMissing(true)
 
-	cfg.Adjust()
-
 	db.cache = NewLRUCache(cfg.CacheSize)
 	opts.SetCache(db.cache)
 

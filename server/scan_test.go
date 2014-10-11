@@ -9,7 +9,7 @@ import (
 )
 
 func TestScan(t *testing.T) {
-	cfg := new(config.Config)
+	cfg := config.NewConfigDefault()
 	cfg.DataDir = "/tmp/test_scan"
 	cfg.Addr = "127.0.0.1:11185"
 

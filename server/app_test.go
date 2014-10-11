@@ -29,7 +29,7 @@ func startTestApp() {
 	f := func() {
 		newTestLedisClient()
 
-		cfg := new(config.Config)
+		cfg := config.NewConfigDefault()
 		cfg.DataDir = "/tmp/testdb"
 		os.RemoveAll(cfg.DataDir)
 

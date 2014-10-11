@@ -366,7 +366,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 
 	select {
 	case <-done:
-	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Second):
+	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Millisecond):
 		log.Info("replication wait timeout")
 	}
 }

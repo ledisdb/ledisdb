@@ -190,7 +190,7 @@ func testTxSelect(t *testing.T, db *DB) {
 }
 
 func testTx(t *testing.T, name string) {
-	cfg := new(config.Config)
+	cfg := config.NewConfigDefault()
 	cfg.DataDir = "/tmp/ledis_test_tx"
 
 	cfg.DBName = name

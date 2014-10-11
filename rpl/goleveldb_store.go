@@ -269,12 +269,12 @@ func (s *GoLevelDBStore) open() error {
 }
 
 func NewGoLevelDBStore(base string) (*GoLevelDBStore, error) {
-	cfg := new(config.Config)
+	cfg := config.NewConfigDefault()
 	cfg.DBName = "goleveldb"
 	cfg.DBPath = base
-	cfg.LevelDB.BlockSize = 4 * 1024 * 1024
-	cfg.LevelDB.CacheSize = 16 * 1024 * 1024
-	cfg.LevelDB.WriteBufferSize = 4 * 1024 * 1024
+	cfg.LevelDB.BlockSize = 16 * 1024 * 1024
+	cfg.LevelDB.CacheSize = 64 * 1024 * 1024
+	cfg.LevelDB.WriteBufferSize = 64 * 1024 * 1024
 	cfg.LevelDB.Compression = false
 
 	s := new(GoLevelDBStore)

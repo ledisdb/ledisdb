@@ -113,8 +113,6 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 
 	opts.SetCreateIfMissing(true)
 
-	cfg.Adjust()
-
 	db.env = NewDefaultEnv()
 	db.env.SetBackgroundThreads(runtime.NumCPU() * 2)
 	db.env.SetHighPriorityBackgroundThreads(1)
