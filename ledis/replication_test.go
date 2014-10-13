@@ -30,7 +30,7 @@ func TestReplication(t *testing.T) {
 	var slave *Ledis
 	var err error
 
-	cfgM := new(config.Config)
+	cfgM := config.NewConfigDefault()
 	cfgM.DataDir = "/tmp/test_repl/master"
 
 	cfgM.UseReplication = true
@@ -43,13 +43,14 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfgS := new(config.Config)
+	cfgS := config.NewConfigDefault()
 	cfgS.DataDir = "/tmp/test_repl/slave"
 	cfgS.UseReplication = true
+	cfgS.Readonly = true
 
 	os.RemoveAll(cfgS.DataDir)
 
-	slave, err = Open2(cfgS, ROnlyMode)
+	slave, err = Open(cfgS)
 	if err != nil {
 		t.Fatal(err)
 	}

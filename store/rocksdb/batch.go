@@ -45,6 +45,10 @@ func (w *WriteBatch) Commit() error {
 	return w.commit(w.db.writeOpts)
 }
 
+func (w *WriteBatch) SyncCommit() error {
+	return w.commit(w.db.syncOpts)
+}
+
 func (w *WriteBatch) Rollback() error {
 	C.rocksdb_writebatch_clear(w.wbatch)
 	return nil

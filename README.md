@@ -29,6 +29,9 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
+    #install go dependences
+    ./bootstrap.sh
+
     #set build and run environment 
     source dev.sh
 

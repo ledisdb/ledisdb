@@ -47,11 +47,6 @@ var (
 )
 
 const (
-	RDWRMode  = 0
-	ROnlyMode = 1
-)
-
-const (
 	defaultScanCount int = 10
 )
 

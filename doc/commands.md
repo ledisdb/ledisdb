@@ -122,8 +122,8 @@ Table of Contents
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 - [Replication](#replication)
-	- [SLAVEOF host port [restart]](#slaveof-host-port-restart)
-	- [FULLSYNC](#fullsync)
+	- [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
+	- [FULLSYNC [NEW]](#fullsync-new)
 	- [SYNC logid](#sync-logid)
 - [Server](#server)
 	- [PING](#ping)
@@ -2466,20 +2466,24 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## Replication
 
-### SLAVEOF host port [restart]
+### SLAVEOF host port [RESTART] [READONLY]
 
-Changes the replication settings of a slave on the fly. If the server is already acting as slave, SLAVEOF NO ONE will turn off the replication.
+Changes the replication settings of a slave on the fly. If the server is already acting as slave, `SLAVEOF NO ONE` will turn off the replication and turn the server into master. `SLAVEOF NO ONE READONLY` will turn the server into master with readonly mode. 
 
-SLAVEOF host port will make the server a slave of another server listening at the specified host and port.
+If the server is already master, `SLAVEOF NO ONE READONLY` will force the server to readonly mode, and `SLAVEOF NO ONE` will disable readonly.
 
-If a server is already a slave of a master, SLAVEOF host port will stop the replication against the old and start the synchronization against the new one, if restart is set, it will discard the old dataset, otherwise it will sync with LastLogID + 1. 
+`SLAVEOF host port` will make the server a slave of another server listening at the specified host and port.
+
+If a server is already a slave of a master, `SLAVEOF host port` will stop the replication against the old and start the synchronization against the new one, if RESTART is set, it will discard the old dataset, otherwise it will sync with LastLogID + 1. 
 
 
-### FULLSYNC
+### FULLSYNC [NEW]
 
 Inner command, starts a fullsync from the master set by SLAVEOF.
 
 FULLSYNC will first try to sync all data from the master, save in local disk, then discard old dataset and load new one.
+
+`FULLSYNC NEW` will generate a new snapshot and sync, otherwise it will use the latest existing snapshot if possible.
 
 **Return value**
 

@@ -41,6 +41,8 @@ type DB struct {
 
 	iteratorOpts *opt.ReadOptions
 
+	syncOpts *opt.WriteOptions
+
 	cache cache.Cache
 
 	filter filter.Filter
@@ -102,13 +104,14 @@ func (db *DB) initOpts() {
 
 	db.iteratorOpts = &opt.ReadOptions{}
 	db.iteratorOpts.DontFillCache = true
+
+	db.syncOpts = &opt.WriteOptions{}
+	db.syncOpts.Sync = true
 }
 
 func newOptions(cfg *config.LevelDBConfig) *opt.Options {
 	opts := &opt.Options{}
 	opts.ErrorIfMissing = false
-
-	cfg.Adjust()
 
 	opts.BlockCache = cache.NewLRUCache(cfg.CacheSize)
 
@@ -145,6 +148,14 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 
 func (db *DB) Delete(key []byte) error {
 	return db.db.Delete(key, nil)
+}
+
+func (db *DB) SyncPut(key []byte, value []byte) error {
+	return db.db.Put(key, value, db.syncOpts)
+}
+
+func (db *DB) SyncDelete(key []byte) error {
+	return db.db.Delete(key, db.syncOpts)
 }
 
 func (db *DB) NewWriteBatch() driver.IWriteBatch {

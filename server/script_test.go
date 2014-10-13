@@ -101,7 +101,7 @@ var testScript4 = `
 `
 
 func TestLuaCall(t *testing.T) {
-	cfg := new(config.Config)
+	cfg := config.NewConfigDefault()
 	cfg.Addr = ":11188"
 	cfg.DataDir = "/tmp/testscript"
 	cfg.DBName = "memory"

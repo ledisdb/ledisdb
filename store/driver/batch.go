@@ -2,6 +2,7 @@ package driver
 
 type BatchPuter interface {
 	BatchPut([]Write) error
+	SyncBatchPut([]Write) error
 }
 
 type Write struct {
@@ -27,6 +28,10 @@ func (w *WriteBatch) Delete(key []byte) {
 
 func (w *WriteBatch) Commit() error {
 	return w.batch.BatchPut(w.wb)
+}
+
+func (w *WriteBatch) SyncCommit() error {
+	return w.batch.SyncBatchPut(w.wb)
 }
 
 func (w *WriteBatch) Rollback() error {

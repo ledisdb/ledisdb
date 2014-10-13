@@ -9,7 +9,7 @@ import (
 )
 
 func TestDump(t *testing.T) {
-	cfgM := new(config.Config)
+	cfgM := config.NewConfigDefault()
 	cfgM.DataDir = "/tmp/test_ledis_master"
 
 	os.RemoveAll(cfgM.DataDir)
@@ -19,7 +19,7 @@ func TestDump(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfgS := new(config.Config)
+	cfgS := config.NewConfigDefault()
 	cfgS.DataDir = "/tmp/test_ledis_slave"
 	os.RemoveAll(cfgM.DataDir)
 

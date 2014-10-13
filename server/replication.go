@@ -15,6 +15,7 @@ import (
 	"path"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -93,7 +94,7 @@ func (m *master) startReplication(masterAddr string, restart bool) error {
 
 	m.quit = make(chan struct{}, 1)
 
-	m.app.ldb.SetReadOnly(true)
+	m.app.cfg.Readonly = true
 
 	m.wg.Add(1)
 	go m.runReplication(restart)
@@ -238,9 +239,15 @@ func (m *master) sync() error {
 
 }
 
-func (app *App) slaveof(masterAddr string, restart bool) error {
+func (app *App) slaveof(masterAddr string, restart bool, readonly bool) error {
 	app.m.Lock()
 	defer app.m.Unlock()
+
+	//in master mode and no slaveof, only set readonly
+	if len(app.cfg.SlaveOf) == 0 && len(masterAddr) == 0 {
+		app.cfg.Readonly = readonly
+		return nil
+	}
 
 	if !app.ldb.ReplicationUsed() {
 		return fmt.Errorf("slaveof must enable replication")
@@ -253,7 +260,7 @@ func (app *App) slaveof(masterAddr string, restart bool) error {
 			return err
 		}
 
-		app.ldb.SetReadOnly(false)
+		app.cfg.Readonly = readonly
 	} else {
 		return app.m.startReplication(masterAddr, restart)
 	}
@@ -287,7 +294,10 @@ func (app *App) removeSlave(c *client) {
 	app.slock.Lock()
 	defer app.slock.Unlock()
 
-	delete(app.slaves, c)
+	if _, ok := app.slaves[c]; ok {
+		delete(app.slaves, c)
+		log.Info("remove slave %s", c.remoteAddr)
+	}
 
 	if c.ack != nil {
 		asyncNotifyUint64(c.ack.ch, c.lastLogID)
@@ -313,7 +323,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	logId := l.ID
 	for s, _ := range app.slaves {
 		if s.lastLogID >= logId {
-			//slave has already this log
+			//slave has already owned this log
 			ss = []*client{}
 			break
 		} else {
@@ -326,6 +336,8 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	if len(ss) == 0 {
 		return
 	}
+
+	startTime := time.Now()
 
 	ack := &syncAck{
 		logId, make(chan uint64, len(ss)),
@@ -357,7 +369,11 @@ func (app *App) publishNewLog(l *rpl.Log) {
 
 	select {
 	case <-done:
-	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Second):
+	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Millisecond):
 		log.Info("replication wait timeout")
 	}
+
+	stopTime := time.Now()
+	atomic.AddInt64(&app.info.Replication.PubLogNum, 1)
+	atomic.AddInt64(&app.info.Replication.PubLogTotalTime, stopTime.Sub(startTime).Nanoseconds()/1e6)
 }

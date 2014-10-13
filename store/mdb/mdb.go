@@ -122,6 +122,14 @@ func (db MDB) BatchPut(writes []driver.Write) error {
 	return itr.err
 }
 
+func (db MDB) SyncBatchPut(writes []driver.Write) error {
+	if err := db.BatchPut(writes); err != nil {
+		return err
+	}
+
+	return db.env.Sync(1)
+}
+
 func (db MDB) Get(key []byte) ([]byte, error) {
 	tx, err := db.env.BeginTxn(nil, mdb.RDONLY)
 	if err != nil {
@@ -146,6 +154,22 @@ func (db MDB) Delete(key []byte) error {
 	}
 	itr.setState()
 	return itr.Error()
+}
+
+func (db MDB) SyncPut(key []byte, value []byte) error {
+	if err := db.Put(key, value); err != nil {
+		return err
+	}
+
+	return db.env.Sync(1)
+}
+
+func (db MDB) SyncDelete(key []byte) error {
+	if err := db.Delete(key); err != nil {
+		return err
+	}
+
+	return db.env.Sync(1)
 }
 
 type MDBIterator struct {

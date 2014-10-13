@@ -14,7 +14,7 @@ var port = flag.Int("port", 6380, "ledis server port")
 var sock = flag.String("sock", "", "ledis unix socket domain")
 var dumpFile = flag.String("o", "./ledis.dump", "dump file to save")
 
-var fullSyncCmd = []byte("*1\r\n$8\r\nfullsync\r\n") //fullsync
+var fullSyncCmd = []byte("*2\r\n$8\r\nfullsync\r\n$3\r\nnew\r\n") //fullsync
 
 func main() {
 	flag.Parse()

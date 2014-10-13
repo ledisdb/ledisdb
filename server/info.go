@@ -28,6 +28,11 @@ type info struct {
 	Persistence struct {
 		DBName string
 	}
+
+	Replication struct {
+		PubLogNum       int64
+		PubLogTotalTime int64 //milliseconds
+	}
 }
 
 func newInfo(app *App) (i *info, err error) {
@@ -115,7 +120,8 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 	i.dumpPairs(buf, infoPair{"os", i.Server.OS},
 		infoPair{"process_id", i.Server.ProceessId},
 		infoPair{"addr", i.app.cfg.Addr},
-		infoPair{"http_addr", i.app.cfg.HttpAddr})
+		infoPair{"http_addr", i.app.cfg.HttpAddr},
+		infoPair{"readonly", i.app.cfg.Readonly})
 }
 
 func (i *info) dumpClients(buf *bytes.Buffer) {
@@ -155,16 +161,29 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		slaves = append(slaves, s.remoteAddr)
 	}
 
-	p = append(p, infoPair{"readonly", i.app.ldb.IsReadOnly()})
+	num := i.Replication.PubLogNum
+	p = append(p, infoPair{"pub_log_num", num})
+
+	if num != 0 {
+		p = append(p, infoPair{"pub_log_per_time", i.Replication.PubLogTotalTime / num})
+	} else {
+		p = append(p, infoPair{"pub_log_per_time", 0})
+	}
+
+	p = append(p, infoPair{"slaveof", i.app.cfg.SlaveOf})
 
 	if len(slaves) > 0 {
-		p = append(p, infoPair{"slave", strings.Join(slaves, ",")})
+		p = append(p, infoPair{"slaves", strings.Join(slaves, ",")})
 	}
 
 	if s, _ := i.app.ldb.ReplicationStat(); s != nil {
 		p = append(p, infoPair{"last_log_id", s.LastID})
 		p = append(p, infoPair{"first_log_id", s.FirstID})
 		p = append(p, infoPair{"commit_log_id", s.CommitID})
+	} else {
+		p = append(p, infoPair{"last_log_id", 0})
+		p = append(p, infoPair{"first_log_id", 0})
+		p = append(p, infoPair{"commit_log_id", 0})
 	}
 
 	i.dumpPairs(buf, p...)

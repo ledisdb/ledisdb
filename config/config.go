@@ -14,8 +14,7 @@ var (
 )
 
 const (
-	DefaultAddr     string = "127.0.0.1:6380"
-	DefaultHttpAddr string = "127.0.0.1:11181"
+	DefaultAddr string = "127.0.0.1:6380"
 
 	DefaultDBName string = "goleveldb"
 
@@ -37,11 +36,17 @@ type LMDBConfig struct {
 
 type ReplicationConfig struct {
 	Path             string `toml:"path"`
-	ExpiredLogDays   int    `toml:"expired_log_days"`
 	Sync             bool   `toml:"sync"`
 	WaitSyncTime     int    `toml:"wait_sync_time"`
 	WaitMaxSlaveAcks int    `toml:"wait_max_slave_acks"`
+	ExpiredLogDays   int    `toml:"expired_log_days"`
+	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
+}
+
+type SnapshotConfig struct {
+	Path   string `toml:"path"`
+	MaxNum int    `toml:"max_num"`
 }
 
 type Config struct {
@@ -52,6 +57,8 @@ type Config struct {
 	HttpAddr string `toml:"http_addr"`
 
 	SlaveOf string `toml:"slaveof"`
+
+	Readonly bool `toml:readonly`
 
 	DataDir string `toml:"data_dir"`
 
@@ -67,6 +74,8 @@ type Config struct {
 
 	UseReplication bool              `toml:"use_replication"`
 	Replication    ReplicationConfig `toml:"replication"`
+
+	Snapshot SnapshotConfig `toml:"snapshot"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -91,6 +100,8 @@ func NewConfigWithData(data []byte) (*Config, error) {
 		return nil, err
 	}
 
+	cfg.adjust()
+
 	return cfg, nil
 }
 
@@ -98,13 +109,14 @@ func NewConfigDefault() *Config {
 	cfg := new(Config)
 
 	cfg.Addr = DefaultAddr
-	cfg.HttpAddr = DefaultHttpAddr
+	cfg.HttpAddr = ""
 
 	cfg.DataDir = DefaultDataDir
 
 	cfg.DBName = DefaultDBName
 
 	cfg.SlaveOf = ""
+	cfg.Readonly = false
 
 	// disable access log
 	cfg.AccessLog = ""
@@ -112,28 +124,37 @@ func NewConfigDefault() *Config {
 	cfg.LMDB.MapSize = 20 * 1024 * 1024
 	cfg.LMDB.NoSync = true
 
-	cfg.Replication.WaitSyncTime = 1
+	cfg.UseReplication = false
+	cfg.Replication.WaitSyncTime = 500
 	cfg.Replication.Compression = true
 	cfg.Replication.WaitMaxSlaveAcks = 2
+	cfg.Replication.SyncLog = 0
+	cfg.Snapshot.MaxNum = 1
+
+	cfg.adjust()
 
 	return cfg
 }
 
-func (cfg *LevelDBConfig) Adjust() {
-	if cfg.CacheSize <= 0 {
-		cfg.CacheSize = 4 * 1024 * 1024
+func (cfg *Config) adjust() {
+	if cfg.LevelDB.CacheSize <= 0 {
+		cfg.LevelDB.CacheSize = 4 * 1024 * 1024
 	}
 
-	if cfg.BlockSize <= 0 {
-		cfg.BlockSize = 4 * 1024
+	if cfg.LevelDB.BlockSize <= 0 {
+		cfg.LevelDB.BlockSize = 4 * 1024
 	}
 
-	if cfg.WriteBufferSize <= 0 {
-		cfg.WriteBufferSize = 4 * 1024 * 1024
+	if cfg.LevelDB.WriteBufferSize <= 0 {
+		cfg.LevelDB.WriteBufferSize = 4 * 1024 * 1024
 	}
 
-	if cfg.MaxOpenFiles < 1024 {
-		cfg.MaxOpenFiles = 1024
+	if cfg.LevelDB.MaxOpenFiles < 1024 {
+		cfg.LevelDB.MaxOpenFiles = 1024
+	}
+
+	if cfg.Replication.ExpiredLogDays <= 0 {
+		cfg.Replication.ExpiredLogDays = 7
 	}
 }
 

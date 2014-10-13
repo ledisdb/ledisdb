@@ -34,6 +34,8 @@ type App struct {
 	// handle slaves
 	slock  sync.Mutex
 	slaves map[*client]struct{}
+
+	snap *snapshotStore
 }
 
 func netType(s string) string {
@@ -88,13 +90,16 @@ func NewApp(cfg *config.Config) (*App, error) {
 		}
 	}
 
-	flag := ledis.RDWRMode
-	if len(app.cfg.SlaveOf) > 0 {
-		//slave must readonly
-		flag = ledis.ROnlyMode
+	if app.snap, err = newSnapshotStore(cfg); err != nil {
+		return nil, err
 	}
 
-	if app.ldb, err = ledis.Open2(cfg, flag); err != nil {
+	if len(app.cfg.SlaveOf) > 0 {
+		//slave must readonly
+		app.cfg.Readonly = true
+	}
+
+	if app.ldb, err = ledis.Open(cfg); err != nil {
 		return nil, err
 	}
 
@@ -126,6 +131,8 @@ func (app *App) Close() {
 
 	app.m.Close()
 
+	app.snap.Close()
+
 	if app.access != nil {
 		app.access.Close()
 	}
@@ -135,7 +142,7 @@ func (app *App) Close() {
 
 func (app *App) Run() {
 	if len(app.cfg.SlaveOf) > 0 {
-		app.slaveof(app.cfg.SlaveOf, false)
+		app.slaveof(app.cfg.SlaveOf, false, app.cfg.Readonly)
 	}
 
 	go app.httpServe()

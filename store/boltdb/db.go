@@ -98,7 +98,14 @@ func (db *DB) Delete(key []byte) error {
 		return b.Delete(key)
 	})
 	return err
+}
 
+func (db *DB) SyncPut(key []byte, value []byte) error {
+	return db.Put(key, value)
+}
+
+func (db *DB) SyncDelete(key []byte) error {
+	return db.Delete(key)
 }
 
 func (db *DB) NewIterator() driver.IIterator {
@@ -150,6 +157,10 @@ func (db *DB) BatchPut(writes []driver.Write) error {
 		return nil
 	})
 	return err
+}
+
+func (db *DB) SyncBatchPut(writes []driver.Write) error {
+	return db.BatchPut(writes)
 }
 
 func (db *DB) Compact() error {

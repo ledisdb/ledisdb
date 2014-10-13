@@ -74,7 +74,10 @@ func (t *Tx) BatchPut(writes []driver.Write) error {
 	itr.setState()
 
 	return itr.Close()
+}
 
+func (t *Tx) SyncBatchPut(writes []driver.Write) error {
+	return t.BatchPut(writes)
 }
 
 func (t *Tx) Rollback() error {
