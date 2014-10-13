@@ -28,6 +28,11 @@ type info struct {
 	Persistence struct {
 		DBName string
 	}
+
+	Replication struct {
+		PubLogNum       int64
+		PubLogTotalTime int64 //milliseconds
+	}
 }
 
 func newInfo(app *App) (i *info, err error) {
@@ -154,6 +159,15 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 	slaves := make([]string, 0, len(i.app.slaves))
 	for s, _ := range i.app.slaves {
 		slaves = append(slaves, s.remoteAddr)
+	}
+
+	num := i.Replication.PubLogNum
+	p = append(p, infoPair{"pub_log_num", num})
+
+	if num != 0 {
+		p = append(p, infoPair{"pub_log_per_time", i.Replication.PubLogTotalTime / num})
+	} else {
+		p = append(p, infoPair{"pub_log_per_time", 0})
 	}
 
 	p = append(p, infoPair{"slaveof", i.app.cfg.SlaveOf})

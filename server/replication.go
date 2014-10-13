@@ -15,6 +15,7 @@ import (
 	"path"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -336,6 +337,8 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		return
 	}
 
+	startTime := time.Now()
+
 	ack := &syncAck{
 		logId, make(chan uint64, len(ss)),
 	}
@@ -369,4 +372,8 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	case <-time.After(time.Duration(app.cfg.Replication.WaitSyncTime) * time.Millisecond):
 		log.Info("replication wait timeout")
 	}
+
+	stopTime := time.Now()
+	atomic.AddInt64(&app.info.Replication.PubLogNum, 1)
+	atomic.AddInt64(&app.info.Replication.PubLogTotalTime, stopTime.Sub(startTime).Nanoseconds()/1e6)
 }
