@@ -26,7 +26,7 @@ type Ledis struct {
 	//for replication
 	r      *rpl.Replication
 	rc     chan struct{}
-	rbatch store.WriteBatch
+	rbatch *store.WriteBatch
 	rwg    sync.WaitGroup
 	rhs    []NewLogEventHandler
 

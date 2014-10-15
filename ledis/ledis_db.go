@@ -14,7 +14,7 @@ type ibucket interface {
 
 	NewIterator() *store.Iterator
 
-	NewWriteBatch() store.WriteBatch
+	NewWriteBatch() *store.WriteBatch
 
 	RangeIterator(min []byte, max []byte, rangeType uint8) *store.RangeLimitIterator
 	RevRangeIterator(min []byte, max []byte, rangeType uint8) *store.RangeLimitIterator

@@ -10,7 +10,7 @@ import (
 type batch struct {
 	l *Ledis
 
-	store.WriteBatch
+	*store.WriteBatch
 
 	sync.Locker
 
@@ -88,7 +88,7 @@ type multiBatchLocker struct {
 func (l *multiBatchLocker) Lock()   {}
 func (l *multiBatchLocker) Unlock() {}
 
-func (l *Ledis) newBatch(wb store.WriteBatch, locker sync.Locker, tx *Tx) *batch {
+func (l *Ledis) newBatch(wb *store.WriteBatch, locker sync.Locker, tx *Tx) *batch {
 	b := new(batch)
 	b.l = l
 	b.WriteBatch = wb

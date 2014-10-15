@@ -25,3 +25,4 @@ go get github.com/siddontang/go/log
 go get github.com/siddontang/go/snappy
 go get github.com/siddontang/go/num
 go get github.com/siddontang/go/filelock
+go get github.com/siddontang/go/sync2

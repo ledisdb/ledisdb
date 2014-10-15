@@ -190,7 +190,7 @@ func (s *snapshotStore) Create(d snapshotDumper) (*snapshot, time.Time, error) {
 
 	if len(s.names) > 0 {
 		lastTime, _ := parseSnapshotName(s.names[len(s.names)-1])
-		if !now.After(lastTime) {
+		if now.Nanosecond() <= lastTime.Nanosecond() {
 			return nil, time.Time{}, fmt.Errorf("create snapshot file time %s is behind %s ",
 				now.Format(snapshotTimeFormat), lastTime.Format(snapshotTimeFormat))
 		}
