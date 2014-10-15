@@ -55,6 +55,7 @@ func newInfo(app *App) (i *info, err error) {
 func (i *info) addClients(delta int64) {
 	atomic.AddInt64(&i.Clients.ConnectedClients, delta)
 }
+
 func (i *info) Close() {
 
 }
@@ -82,10 +83,8 @@ func (i *info) Dump(section string) []byte {
 		i.dumpClients(buf)
 	case "mem":
 		i.dumpMem(buf)
-	case "persistence":
-		i.dumpPersistence(buf)
-	case "goroutine":
-		i.dumpGoroutine(buf)
+	case "store":
+		i.dumpStore(buf)
 	case "replication":
 		i.dumpReplication(buf)
 	default:
@@ -103,13 +102,11 @@ type infoPair struct {
 func (i *info) dumpAll(buf *bytes.Buffer) {
 	i.dumpServer(buf)
 	buf.Write(Delims)
-	i.dumpPersistence(buf)
+	i.dumpStore(buf)
 	buf.Write(Delims)
 	i.dumpClients(buf)
 	buf.Write(Delims)
 	i.dumpMem(buf)
-	buf.Write(Delims)
-	i.dumpGoroutine(buf)
 	buf.Write(Delims)
 	i.dumpReplication(buf)
 }
@@ -121,7 +118,9 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 		infoPair{"process_id", i.Server.ProceessId},
 		infoPair{"addr", i.app.cfg.Addr},
 		infoPair{"http_addr", i.app.cfg.HttpAddr},
-		infoPair{"readonly", i.app.cfg.Readonly})
+		infoPair{"readonly", i.app.cfg.Readonly},
+		infoPair{"goroutine_num", runtime.NumGoroutine()},
+	)
 }
 
 func (i *info) dumpClients(buf *bytes.Buffer) {
@@ -140,16 +139,21 @@ func (i *info) dumpMem(buf *bytes.Buffer) {
 		infoPair{"mem_alloc_human", getMemoryHuman(mem.Alloc)})
 }
 
-func (i *info) dumpGoroutine(buf *bytes.Buffer) {
-	buf.WriteString("# Goroutine\r\n")
+func (i *info) dumpStore(buf *bytes.Buffer) {
+	buf.WriteString("# Store\r\n")
 
-	i.dumpPairs(buf, infoPair{"goroutine_num", runtime.NumGoroutine()})
-}
+	s := i.app.ldb.StoreStat()
 
-func (i *info) dumpPersistence(buf *bytes.Buffer) {
-	buf.WriteString("# Persistence\r\n")
-
-	i.dumpPairs(buf, infoPair{"db_name", i.Persistence.DBName})
+	i.dumpPairs(buf, infoPair{"name", i.Persistence.DBName},
+		infoPair{"get", s.GetNum},
+		infoPair{"get_missing", s.GetMissingNum},
+		infoPair{"put", s.PutNum},
+		infoPair{"delete", s.DeleteNum},
+		infoPair{"iter", s.IterNum},
+		infoPair{"iter_seek", s.IterSeekNum},
+		infoPair{"iter_close", s.IterCloseNum},
+		infoPair{"batch_commit", s.BatchCommitNum},
+	)
 }
 
 func (i *info) dumpReplication(buf *bytes.Buffer) {

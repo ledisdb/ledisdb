@@ -198,3 +198,7 @@ func (l *Ledis) onDataExpired() {
 	}
 
 }
+
+func (l *Ledis) StoreStat() *store.Stat {
+	return l.ldb.Stat()
+}
