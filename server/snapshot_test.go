@@ -21,6 +21,7 @@ func TestSnapshot(t *testing.T) {
 	cfg := config.NewConfigDefault()
 	cfg.Snapshot.MaxNum = 2
 	cfg.Snapshot.Path = path.Join(os.TempDir(), "snapshot")
+
 	defer os.RemoveAll(cfg.Snapshot.Path)
 
 	d := new(testSnapshotDumper)

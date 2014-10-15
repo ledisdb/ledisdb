@@ -2566,15 +2566,7 @@ Very dangerous to use!!!
 
 Return information and statistic about the server in a format that is simple to parse by computers and easy to read by humans.
 
-The optional parameter can be used to select a specific section of information:
-
-+ server: General information about the Redis server
-+ client: Client connections section
-+ mem: Memory consumption related information
-+ goroutine: Goroutine num
-+ persistence: Strorage related information
-
-When no parameter is provided, all will return.
+The optional parameter can be used to select a specific section of information. When no parameter is provided, all will return.
 
 ### TIME
 

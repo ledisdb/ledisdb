@@ -26,7 +26,7 @@ type Ledis struct {
 	//for replication
 	r      *rpl.Replication
 	rc     chan struct{}
-	rbatch store.WriteBatch
+	rbatch *store.WriteBatch
 	rwg    sync.WaitGroup
 	rhs    []NewLogEventHandler
 
@@ -197,4 +197,8 @@ func (l *Ledis) onDataExpired() {
 		}
 	}
 
+}
+
+func (l *Ledis) StoreStat() *store.Stat {
+	return l.ldb.Stat()
 }

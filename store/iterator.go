@@ -40,6 +40,7 @@ type Limit struct {
 
 type Iterator struct {
 	it driver.IIterator
+	st *Stat
 }
 
 // Returns a copy of key.
@@ -105,6 +106,7 @@ func (it *Iterator) BufValue(b []byte) []byte {
 
 func (it *Iterator) Close() {
 	if it.it != nil {
+		it.st.IterCloseNum.Add(1)
 		it.it.Close()
 		it.it = nil
 	}
@@ -115,22 +117,27 @@ func (it *Iterator) Valid() bool {
 }
 
 func (it *Iterator) Next() {
+	it.st.IterSeekNum.Add(1)
 	it.it.Next()
 }
 
 func (it *Iterator) Prev() {
+	it.st.IterSeekNum.Add(1)
 	it.it.Prev()
 }
 
 func (it *Iterator) SeekToFirst() {
+	it.st.IterSeekNum.Add(1)
 	it.it.First()
 }
 
 func (it *Iterator) SeekToLast() {
+	it.st.IterSeekNum.Add(1)
 	it.it.Last()
 }
 
 func (it *Iterator) Seek(key []byte) {
+	it.st.IterSeekNum.Add(1)
 	it.it.Seek(key)
 }
 
