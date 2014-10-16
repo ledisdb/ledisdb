@@ -16,7 +16,7 @@ func TestGoLevelDBStore(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	// New level
-	l, err := NewGoLevelDBStore(dir)
+	l, err := NewGoLevelDBStore(dir, 0)
 	if err != nil {
 		t.Fatalf("err: %v ", err)
 	}

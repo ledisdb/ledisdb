@@ -40,7 +40,11 @@ func Open(cfg *config.Config) (*DB, error) {
 		return nil, err
 	}
 
-	db := &DB{idb, s.String(), &Stat{}}
+	db := new(DB)
+	db.db = idb
+	db.name = s.String()
+	db.st = &Stat{}
+	db.cfg = cfg
 
 	return db, nil
 }
