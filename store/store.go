@@ -9,7 +9,6 @@ import (
 
 	_ "github.com/siddontang/ledisdb/store/boltdb"
 	_ "github.com/siddontang/ledisdb/store/goleveldb"
-	_ "github.com/siddontang/ledisdb/store/hyperleveldb"
 	_ "github.com/siddontang/ledisdb/store/leveldb"
 	_ "github.com/siddontang/ledisdb/store/mdb"
 	_ "github.com/siddontang/ledisdb/store/rocksdb"

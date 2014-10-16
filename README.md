@@ -8,14 +8,13 @@ LedisDB now supports multiple databases as backend to store data, you can test a
 
 + Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
 + Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, HyperLevelDB, Memory.
++ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, Memory.
 + Supports transaction using LMDB or BotlDB.
 + Supports lua scripting.
 + Supports expiration and ttl.
 + Supports using redis-cli directly.
-+ Multiple client API support, including Go, Python, Lua(Openresty), C/C++, Node.js. 
 + Easy to embed in your own Go application. 
-+ Restful API support, json/bson/msgpack output.
++ HTTP API support, json/bson/msgpack output.
 + Replication to guarantee data safe.
 + Supplies tools to load, dump, repair database. 
 
@@ -54,6 +53,8 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 
     LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
 
+    You can use other LevelDB (like Hyper LevelDB, Basho LevelDB) instead easily, the only thing you may pay attention to is that the header files must be in `include/leveldb` folder not `include/hyperleveldb` or other. 
+
 + Set `LEVELDB_DIR` and `SNAPPY_DIR` to the actual install path in dev.sh.
 + `make clean && make` 
 
@@ -68,21 +69,11 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 
 
 Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch.
-
-
-## HyperLevelDB support
-
-+ [Install hyperleveldb](https://github.com/rescrv/HyperLevelDB/blob/master/README) and snappy first.
-    
-    LedisDB has not supplied a simple script to install, maybe later.
-
-+ Set `HYPERLEVELDB` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
-+ `make clean && make` 
     
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, hyperleveldb, memory. it will use goleveldb as default to store data if you don't set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, memory. it will use goleveldb as default to store data if you don't set.
 
 Choosing a store database to use is very simple, you have two ways:
 

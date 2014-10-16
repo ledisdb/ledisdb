@@ -7,7 +7,7 @@ import ledis
 global_l = ledis.Ledis()
 
 #db that do not support transaction
-dbs = ["leveldb", "rocksdb", "hyperleveldb", "goleveldb"]
+dbs = ["leveldb", "rocksdb", "goleveldb"]
 check = global_l.info().get("db_name") in dbs
 
 
