@@ -5,13 +5,13 @@ import (
 )
 
 type Tx struct {
-	driver.Tx
+	tx driver.Tx
 	st *Stat
 }
 
 func (tx *Tx) NewIterator() *Iterator {
 	it := new(Iterator)
-	it.it = tx.Tx.NewIterator()
+	it.it = tx.tx.NewIterator()
 	it.st = tx.st
 
 	tx.st.IterNum.Add(1)
@@ -23,7 +23,7 @@ func (tx *Tx) NewWriteBatch() *WriteBatch {
 	tx.st.BatchNum.Add(1)
 
 	wb := new(WriteBatch)
-	wb.IWriteBatch = tx.Tx.NewWriteBatch()
+	wb.wb = tx.tx.NewWriteBatch()
 	wb.st = tx.st
 	return wb
 }
@@ -51,26 +51,26 @@ func (tx *Tx) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, off
 }
 
 func (tx *Tx) Get(key []byte) ([]byte, error) {
-	v, err := tx.Tx.Get(key)
+	v, err := tx.tx.Get(key)
 	tx.st.statGet(v, err)
 	return v, err
 }
 
 func (tx *Tx) Put(key []byte, value []byte) error {
 	tx.st.PutNum.Add(1)
-	return tx.Tx.Put(key, value)
+	return tx.tx.Put(key, value)
 }
 
 func (tx *Tx) Delete(key []byte) error {
 	tx.st.DeleteNum.Add(1)
-	return tx.Tx.Delete(key)
+	return tx.tx.Delete(key)
 }
 
 func (tx *Tx) Commit() error {
 	tx.st.TxCommitNum.Add(1)
-	return tx.Tx.Commit()
+	return tx.tx.Commit()
 }
 
 func (tx *Tx) Rollback() error {
-	return tx.Tx.Rollback()
+	return tx.tx.Rollback()
 }

@@ -27,13 +27,18 @@ readonly = false
 #   goleveldb
 #   lmdb
 #   boltdb
-#   hyperleveldb
 #   memory
 #   
 db_name = "leveldb"
 
 # If not set, use data_dir/"db_name"_data
 db_path = ""
+
+# Sync commit to disk if possible
+#  0: no sync 
+#  1: sync every second 
+#  2: sync every commit 
+db_sync_commit = 0
 
 # enable replication or not
 use_replication = true

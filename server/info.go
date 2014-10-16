@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"runtime"
 	"strings"
@@ -25,10 +24,6 @@ type info struct {
 		ConnectedClients int64
 	}
 
-	Persistence struct {
-		DBName string
-	}
-
 	Replication struct {
 		PubLogNum       int64
 		PubLogTotalTime int64 //milliseconds
@@ -42,12 +37,6 @@ func newInfo(app *App) (i *info, err error) {
 
 	i.Server.OS = runtime.GOOS
 	i.Server.ProceessId = os.Getpid()
-
-	if app.cfg.DBName != "" {
-		i.Persistence.DBName = app.cfg.DBName
-	} else {
-		i.Persistence.DBName = config.DefaultDBName
-	}
 
 	return i, nil
 }
@@ -144,7 +133,7 @@ func (i *info) dumpStore(buf *bytes.Buffer) {
 
 	s := i.app.ldb.StoreStat()
 
-	i.dumpPairs(buf, infoPair{"name", i.Persistence.DBName},
+	i.dumpPairs(buf, infoPair{"name", i.app.cfg.DBName},
 		infoPair{"get", s.GetNum},
 		infoPair{"get_missing", s.GetMissingNum},
 		infoPair{"put", s.PutNum},

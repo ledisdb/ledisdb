@@ -10,7 +10,7 @@ from ledis._compat import b
 from ledis import ResponseError
 
 l = ledis.Ledis(port=6380)
-dbs = ["leveldb", "rocksdb", "goleveldb", "hyperleveldb", "lmdb", "boltdb"]
+dbs = ["leveldb", "rocksdb", "goleveldb", "lmdb", "boltdb"]
 
 class TestOtherCommands(unittest.TestCase):
     def setUp(self):

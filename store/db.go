@@ -1,15 +1,27 @@
 package store
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
+	"sync"
 	"time"
 )
 
 type DB struct {
-	driver.IDB
+	db   driver.IDB
 	name string
 
 	st *Stat
+
+	cfg *config.Config
+
+	lastCommit time.Time
+
+	m sync.Mutex
+}
+
+func (db *DB) Close() error {
+	return db.db.Close()
 }
 
 func (db *DB) String() string {
@@ -20,43 +32,46 @@ func (db *DB) NewIterator() *Iterator {
 	db.st.IterNum.Add(1)
 
 	it := new(Iterator)
-	it.it = db.IDB.NewIterator()
+	it.it = db.db.NewIterator()
 	it.st = db.st
 
 	return it
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
-	v, err := db.IDB.Get(key)
+	v, err := db.db.Get(key)
 	db.st.statGet(v, err)
 	return v, err
 }
 
 func (db *DB) Put(key []byte, value []byte) error {
 	db.st.PutNum.Add(1)
-	return db.IDB.Put(key, value)
+
+	if db.needSyncCommit() {
+		return db.db.SyncPut(key, value)
+
+	} else {
+		return db.db.Put(key, value)
+
+	}
 }
 
 func (db *DB) Delete(key []byte) error {
 	db.st.DeleteNum.Add(1)
-	return db.IDB.Delete(key)
-}
 
-func (db *DB) SyncPut(key []byte, value []byte) error {
-	db.st.SyncPutNum.Add(1)
-	return db.IDB.SyncPut(key, value)
-}
-
-func (db *DB) SyncDelete(key []byte) error {
-	db.st.SyncDeleteNum.Add(1)
-	return db.IDB.SyncDelete(key)
+	if db.needSyncCommit() {
+		return db.db.SyncDelete(key)
+	} else {
+		return db.db.Delete(key)
+	}
 }
 
 func (db *DB) NewWriteBatch() *WriteBatch {
 	db.st.BatchNum.Add(1)
 	wb := new(WriteBatch)
-	wb.IWriteBatch = db.IDB.NewWriteBatch()
+	wb.wb = db.db.NewWriteBatch()
 	wb.st = db.st
+	wb.db = db
 	return wb
 }
 
@@ -65,7 +80,7 @@ func (db *DB) NewSnapshot() (*Snapshot, error) {
 
 	var err error
 	s := &Snapshot{}
-	if s.ISnapshot, err = db.IDB.NewSnapshot(); err != nil {
+	if s.ISnapshot, err = db.db.NewSnapshot(); err != nil {
 		return nil, err
 	}
 	s.st = db.st
@@ -77,7 +92,7 @@ func (db *DB) Compact() error {
 	db.st.CompactNum.Add(1)
 
 	t := time.Now()
-	err := db.IDB.Compact()
+	err := db.db.Compact()
 
 	db.st.CompactTotalTime.Add(time.Now().Sub(t))
 
@@ -107,7 +122,7 @@ func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, off
 }
 
 func (db *DB) Begin() (*Tx, error) {
-	tx, err := db.IDB.Begin()
+	tx, err := db.db.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -119,4 +134,25 @@ func (db *DB) Begin() (*Tx, error) {
 
 func (db *DB) Stat() *Stat {
 	return db.st
+}
+
+func (db *DB) needSyncCommit() bool {
+	if db.cfg.DBSyncCommit == 0 {
+		return false
+	} else if db.cfg.DBSyncCommit == 2 {
+		return true
+	} else {
+		n := time.Now()
+		need := false
+		db.m.Lock()
+
+		if n.Sub(db.lastCommit) > time.Second {
+			need = true
+		}
+		db.lastCommit = n
+
+		db.m.Unlock()
+		return need
+	}
+
 }

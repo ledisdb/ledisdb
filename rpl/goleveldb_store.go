@@ -21,8 +21,6 @@ type GoLevelDBStore struct {
 
 	first uint64
 	last  uint64
-
-	lastCommit time.Time
 }
 
 func (s *GoLevelDBStore) FirstID() (uint64, error) {
@@ -134,17 +132,7 @@ func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 		w.Put(key, buf.Bytes())
 	}
 
-	n := time.Now()
-	if s.cfg.Replication.SyncLog == 2 ||
-		(s.cfg.Replication.SyncLog == 1 && n.Sub(s.lastCommit) > time.Second) {
-		err = w.SyncCommit()
-	} else {
-		err = w.Commit()
-	}
-
-	s.lastCommit = n
-
-	if err != nil {
+	if err = w.Commit(); err != nil {
 		return err
 	}
 
@@ -268,7 +256,7 @@ func (s *GoLevelDBStore) open() error {
 	return err
 }
 
-func NewGoLevelDBStore(base string) (*GoLevelDBStore, error) {
+func NewGoLevelDBStore(base string, syncLog int) (*GoLevelDBStore, error) {
 	cfg := config.NewConfigDefault()
 	cfg.DBName = "goleveldb"
 	cfg.DBPath = base
@@ -276,6 +264,7 @@ func NewGoLevelDBStore(base string) (*GoLevelDBStore, error) {
 	cfg.LevelDB.CacheSize = 64 * 1024 * 1024
 	cfg.LevelDB.WriteBufferSize = 64 * 1024 * 1024
 	cfg.LevelDB.Compression = false
+	cfg.DBSyncCommit = syncLog
 
 	s := new(GoLevelDBStore)
 	s.cfg = cfg

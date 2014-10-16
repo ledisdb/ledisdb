@@ -9,7 +9,6 @@ import (
 
 	_ "github.com/siddontang/ledisdb/store/boltdb"
 	_ "github.com/siddontang/ledisdb/store/goleveldb"
-	_ "github.com/siddontang/ledisdb/store/hyperleveldb"
 	_ "github.com/siddontang/ledisdb/store/leveldb"
 	_ "github.com/siddontang/ledisdb/store/mdb"
 	_ "github.com/siddontang/ledisdb/store/rocksdb"
@@ -40,7 +39,11 @@ func Open(cfg *config.Config) (*DB, error) {
 		return nil, err
 	}
 
-	db := &DB{idb, s.String(), &Stat{}}
+	db := new(DB)
+	db.db = idb
+	db.name = s.String()
+	db.st = &Stat{}
+	db.cfg = cfg
 
 	return db, nil
 }

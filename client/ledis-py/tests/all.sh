@@ -1,4 +1,4 @@
-dbs=(leveldb rocksdb hyperleveldb goleveldb boltdb lmdb)
+dbs=(leveldb rocksdb goleveldb boltdb lmdb)
 for db in "${dbs[@]}"
 do 
     killall ledis-server

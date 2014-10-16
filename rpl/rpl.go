@@ -49,7 +49,7 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 	r.cfg = cfg
 
 	var err error
-	if r.s, err = NewGoLevelDBStore(path.Join(base, "wal")); err != nil {
+	if r.s, err = NewGoLevelDBStore(path.Join(base, "wal"), cfg.Replication.SyncLog); err != nil {
 		return nil, err
 	}
 
