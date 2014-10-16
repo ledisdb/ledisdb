@@ -3,7 +3,9 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
+	"sync"
 	"time"
 )
 
@@ -484,4 +486,184 @@ func (db *DB) lEncodeMaxKey() []byte {
 	ek := db.lEncodeMetaKey(nil)
 	ek[len(ek)-1] = LMetaType + 1
 	return ek
+}
+
+func (db *DB) BLPop(keys [][]byte, timeout int) ([]interface{}, error) {
+	return db.lblockPop(keys, listHeadSeq, timeout)
+}
+
+func (db *DB) BRPop(keys [][]byte, timeout int) ([]interface{}, error) {
+	return db.lblockPop(keys, listTailSeq, timeout)
+}
+
+func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout int) ([]interface{}, error) {
+	ch := make(chan []byte)
+
+	bkeys := [][]byte{}
+	for _, key := range keys {
+		v, err := db.lpop(key, whereSeq)
+		if err != nil {
+			return nil, err
+		} else if v != nil {
+			return []interface{}{key, v}, nil
+		} else {
+			if db.IsAutoCommit() {
+				//block wait can not be supported in transaction and multi
+				db.lbkeys.wait(key, ch)
+				bkeys = append(bkeys, key)
+			}
+		}
+	}
+	if len(bkeys) == 0 {
+		return nil, nil
+	}
+
+	defer func() {
+		for _, key := range bkeys {
+			db.lbkeys.unwait(key, ch)
+		}
+	}()
+
+	deadT := time.Now().Add(time.Duration(timeout) * time.Second)
+
+	for {
+		if timeout == 0 {
+			key := <-ch
+			if v, err := db.lpop(key, whereSeq); err != nil {
+				return nil, err
+			} else if v == nil {
+				continue
+			} else {
+				return []interface{}{key, v}, nil
+			}
+		} else {
+			d := deadT.Sub(time.Now())
+			if d < 0 {
+				return nil, nil
+			}
+
+			select {
+			case key := <-ch:
+				if v, err := db.lpop(key, whereSeq); err != nil {
+					return nil, err
+				} else if v == nil {
+					continue
+				} else {
+					return []interface{}{key, v}, nil
+				}
+			case <-time.After(d):
+				return nil, nil
+			}
+		}
+
+	}
+}
+
+func (db *DB) lSignalAsReady(key []byte) {
+	if db.status == DBInTransaction {
+		//for transaction, only data can be pushed after tx commit and it is hard to signal
+		//so we don't handle it now
+		return
+	}
+
+	db.lbkeys.signal(key)
+}
+
+type lbKeyCh chan<- []byte
+
+type lBlockKeys struct {
+	sync.Mutex
+
+	keys map[string][]lbKeyCh
+}
+
+func newLBlockKeys() *lBlockKeys {
+	l := new(lBlockKeys)
+
+	l.keys = make(map[string][]lbKeyCh)
+	return l
+}
+
+func (l *lBlockKeys) signal(key []byte) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		return
+	}
+
+LOOP:
+	for i, ch := range chs {
+		if ch == nil {
+			continue
+		}
+
+		select {
+		case ch <- key:
+			break LOOP
+		default:
+			//waiter unwait
+			chs[i] = nil
+		}
+	}
+
+	chs = l.deleteCh(chs, nil)
+	if len(chs) == 0 {
+		delete(l.keys, s)
+	}
+}
+
+func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		chs = []lbKeyCh{ch}
+		l.keys[s] = chs
+	} else {
+		exists := false
+		for _, c := range chs {
+			if c == ch {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			chs = append(chs, ch)
+		}
+	}
+}
+
+func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		return
+	} else {
+		chs = l.deleteCh(chs, ch)
+		if len(chs) == 0 {
+			delete(l.keys, s)
+		}
+	}
+}
+
+func (l *lBlockKeys) deleteCh(chs []lbKeyCh, ch lbKeyCh) []lbKeyCh {
+	i := 0
+LOOP:
+	for _, c := range chs {
+		if c == ch {
+			continue LOOP
+		}
+		chs[i] = c
+		i++
+	}
+
+	return chs[:i]
 }
