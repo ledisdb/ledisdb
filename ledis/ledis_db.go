@@ -39,6 +39,8 @@ type DB struct {
 	setBatch  *batch
 
 	status uint8
+
+	lbkeys *lBlockKeys
 }
 
 func (l *Ledis) newDB(index uint8) *DB {
@@ -59,6 +61,8 @@ func (l *Ledis) newDB(index uint8) *DB {
 	d.zsetBatch = d.newBatch()
 	d.binBatch = d.newBatch()
 	d.setBatch = d.newBatch()
+
+	d.lbkeys = newLBlockKeys()
 
 	return d
 }

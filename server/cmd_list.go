@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
+	"strconv"
 )
 
 func lpushCommand(c *client) error {
@@ -249,7 +251,53 @@ func lxscanCommand(c *client) error {
 	return nil
 }
 
+func blpopCommand(c *client) error {
+	keys, timeout, err := lParseBPopArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.BLPop(keys, timeout); err != nil {
+		return err
+	} else {
+		c.resp.writeArray(ay)
+	}
+	return nil
+}
+
+func brpopCommand(c *client) error {
+	keys, timeout, err := lParseBPopArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.BRPop(keys, timeout); err != nil {
+		return err
+	} else {
+		c.resp.writeArray(ay)
+	}
+	return nil
+
+}
+
+func lParseBPopArgs(c *client) (keys [][]byte, timeout int, err error) {
+	args := c.args
+	if len(args) < 2 {
+		err = ErrCmdParams
+		return
+	}
+
+	if timeout, err = strconv.Atoi(hack.String(args[len(args)-1])); err != nil {
+		return
+	}
+
+	keys = args[0 : len(args)-1]
+	return
+}
+
 func init() {
+	register("blpop", blpopCommand)
+	register("brpop", brpopCommand)
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
 	register("lpop", lpopCommand)
