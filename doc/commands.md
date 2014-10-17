@@ -894,6 +894,8 @@ The timeout argument is interpreted as an double value specifying the maximum nu
 
 A timeout of zero can be used to block indefinitely.
 
+BLPOP and BRPOP can not work correctly in transaction now!
+
 **Return value**
 
 array: 
