@@ -2,7 +2,9 @@ package ledis
 
 import (
 	"fmt"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestListCodec(t *testing.T) {
@@ -100,6 +102,36 @@ func TestListPersist(t *testing.T) {
 	} else if n != 1 {
 		t.Fatal(n)
 	}
+}
+
+func TestLBlock(t *testing.T) {
+	db := getTestDB()
+
+	key1 := []byte("test_lblock_key1")
+	key2 := []byte("test_lblock_key2")
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	f := func(i int) {
+		defer wg.Done()
+
+		ay, err := db.BLPop([][]byte{key1, key2}, 0)
+		if err != nil {
+			t.Fatal(err)
+		} else if len(ay) != 2 {
+			t.Fatal(len(ay))
+		}
+	}
+
+	go f(1)
+	go f(2)
+
+	time.Sleep(100 * time.Millisecond)
+
+	db.LPush(key1, []byte("value"))
+	db.LPush(key2, []byte("value"))
+	wg.Wait()
 }
 
 func TestLFlush(t *testing.T) {

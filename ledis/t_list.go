@@ -1,6 +1,7 @@
 package ledis
 
 import (
+	"container/list"
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/go/hack"
@@ -133,6 +134,11 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	db.lSetMeta(metaKey, headSeq, tailSeq)
 
 	err = t.Commit()
+
+	if err == nil {
+		db.lSignalAsReady(key, pushCnt)
+	}
+
 	return int64(size) + int64(pushCnt), err
 }
 
@@ -547,6 +553,7 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout int) ([]interface
 				if v, err := db.lpop(key, whereSeq); err != nil {
 					return nil, err
 				} else if v == nil {
+					db.lbkeys.wait(key, ch)
 					continue
 				} else {
 					return []interface{}{key, v}, nil
@@ -559,14 +566,14 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout int) ([]interface
 	}
 }
 
-func (db *DB) lSignalAsReady(key []byte) {
+func (db *DB) lSignalAsReady(key []byte, num int) {
 	if db.status == DBInTransaction {
 		//for transaction, only data can be pushed after tx commit and it is hard to signal
 		//so we don't handle it now
 		return
 	}
 
-	db.lbkeys.signal(key)
+	db.lbkeys.signal(key, num)
 }
 
 type lbKeyCh chan<- []byte
@@ -574,17 +581,17 @@ type lbKeyCh chan<- []byte
 type lBlockKeys struct {
 	sync.Mutex
 
-	keys map[string][]lbKeyCh
+	keys map[string]*list.List
 }
 
 func newLBlockKeys() *lBlockKeys {
 	l := new(lBlockKeys)
 
-	l.keys = make(map[string][]lbKeyCh)
+	l.keys = make(map[string]*list.List)
 	return l
 }
 
-func (l *lBlockKeys) signal(key []byte) {
+func (l *lBlockKeys) signal(key []byte, num int) {
 	l.Lock()
 	defer l.Unlock()
 
@@ -594,23 +601,23 @@ func (l *lBlockKeys) signal(key []byte) {
 		return
 	}
 
-LOOP:
-	for i, ch := range chs {
-		if ch == nil {
-			continue
-		}
+	var n *list.Element
 
+	i := 0
+	for e := chs.Front(); e != nil && i < num; e = n {
+		ch := e.Value.(lbKeyCh)
+		n = e.Next()
 		select {
 		case ch <- key:
-			break LOOP
+			chs.Remove(e)
+			i++
 		default:
 			//waiter unwait
-			chs[i] = nil
+			chs.Remove(e)
 		}
 	}
 
-	chs = l.deleteCh(chs, nil)
-	if len(chs) == 0 {
+	if chs.Len() == 0 {
 		delete(l.keys, s)
 	}
 }
@@ -622,20 +629,11 @@ func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
 	s := hack.String(key)
 	chs, ok := l.keys[s]
 	if !ok {
-		chs = []lbKeyCh{ch}
+		chs = list.New()
 		l.keys[s] = chs
-	} else {
-		exists := false
-		for _, c := range chs {
-			if c == ch {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			chs = append(chs, ch)
-		}
 	}
+
+	chs.PushBack(ch)
 }
 
 func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
@@ -647,23 +645,17 @@ func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
 	if !ok {
 		return
 	} else {
-		chs = l.deleteCh(chs, ch)
-		if len(chs) == 0 {
+		var n *list.Element
+		for e := chs.Front(); e != nil; e = n {
+			c := e.Value.(lbKeyCh)
+			n = e.Next()
+			if c == ch {
+				chs.Remove(e)
+			}
+		}
+
+		if chs.Len() == 0 {
 			delete(l.keys, s)
 		}
 	}
-}
-
-func (l *lBlockKeys) deleteCh(chs []lbKeyCh, ch lbKeyCh) []lbKeyCh {
-	i := 0
-LOOP:
-	for _, c := range chs {
-		if c == ch {
-			continue LOOP
-		}
-		chs[i] = c
-		i++
-	}
-
-	return chs[:i]
 }
