@@ -255,6 +255,16 @@
         "group": "List",
         "readonly": true
     },
+    "BLPOP": {
+        "arguments": "key [key ...] timeout",
+        "group": "List",
+        "readonly": false
+    },
+    "BRPOP": {
+        "arguments": "key [key ...] timeout",
+        "group": "List",
+        "readonly": false
+    },
     "MGET": {
         "arguments": "key [key ...]",
         "group": "KV",

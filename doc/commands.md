@@ -40,13 +40,15 @@ Table of Contents
 	- [HSET key field value](#hset-key-field-value)
 	- [HVALS key](#hvals-key)
 	- [HCLEAR key](#hclear-key)
-	- [HMCLEAR key [key...]](#hmclear-key-key)
+	- [HMCLEAR key [key ...]](#hmclear-key-key)
 	- [HEXPIRE key seconds](#hexpire-key-seconds)
 	- [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
 	- [HTTL key](#httl-key)
 	- [HPERSIST key](#hpersist-key)
 	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
 - [List](#list)
+	- [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
+	- [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
 	- [LINDEX key index](#lindex-key-index)
 	- [LLEN key](#llen-key)
 	- [LPOP key](#lpop-key)
@@ -882,6 +884,35 @@ Iterate Hash keys incrementally.
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
 ## List
+
+### BLPOP key [key ...] timeout
+
+BLPOP is a blocking list pop primitive. It is the blocking version of LPOP because it blocks the connection when there are no elements to pop from any of the given lists. An element is popped from the head of the first list that is non-empty, with the given keys being checked in the order that they are given.
+
+When BLPOP causes a client to block and a non-zero timeout is specified, the client will unblock returning a nil multi-bulk value when the specified timeout has expired.
+The timeout argument is interpreted as an double value specifying the maximum number of seconds to block. You can use 0.005 format to support milliseconds timeout.
+
+A timeout of zero can be used to block indefinitely.
+
+**Return value**
+
+array: 
+
++ A nil multi-bulk when no element could be popped and the timeout expired.
++ A two-element multi-bulk with the first element being the name of the key where an element was popped and the second element being the value of the popped element.
+
+**Examples**
+```
+ledis> RPUSH list1 a b c
+(integer) 3
+ledis> BLPOP list1 list2 0
+1) "list1"
+2) "a"
+```
+
+### BRPOP key [key ...] timeout
+
+See [BLPOP key [key ...] timeout](#blpop-key-key--timeout) for more information.
 
 ### LINDEX key index
 Returns the element at index index in the list stored at key. The index is zero-based, so 0 means the first element, 1 the second element and so on. Negative indices can be used to designate elements starting at the tail of the list. Here, `-1` means the last element, `-2` means the penultimate and so forth.
