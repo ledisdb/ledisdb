@@ -4,6 +4,7 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
+	"time"
 )
 
 func lpushCommand(c *client) error {
@@ -280,16 +281,19 @@ func brpopCommand(c *client) error {
 
 }
 
-func lParseBPopArgs(c *client) (keys [][]byte, timeout int, err error) {
+func lParseBPopArgs(c *client) (keys [][]byte, timeout time.Duration, err error) {
 	args := c.args
 	if len(args) < 2 {
 		err = ErrCmdParams
 		return
 	}
 
-	if timeout, err = strconv.Atoi(hack.String(args[len(args)-1])); err != nil {
+	var t float64
+	if t, err = strconv.ParseFloat(hack.String(args[len(args)-1]), 64); err != nil {
 		return
 	}
+
+	timeout = time.Duration(t * float64(time.Second))
 
 	keys = args[0 : len(args)-1]
 	return

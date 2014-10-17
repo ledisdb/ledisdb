@@ -494,15 +494,15 @@ func (db *DB) lEncodeMaxKey() []byte {
 	return ek
 }
 
-func (db *DB) BLPop(keys [][]byte, timeout int) ([]interface{}, error) {
+func (db *DB) BLPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
 	return db.lblockPop(keys, listHeadSeq, timeout)
 }
 
-func (db *DB) BRPop(keys [][]byte, timeout int) ([]interface{}, error) {
+func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
 	return db.lblockPop(keys, listTailSeq, timeout)
 }
 
-func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout int) ([]interface{}, error) {
+func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
 	ch := make(chan []byte)
 
 	bkeys := [][]byte{}
@@ -530,7 +530,7 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout int) ([]interface
 		}
 	}()
 
-	deadT := time.Now().Add(time.Duration(timeout) * time.Second)
+	deadT := time.Now().Add(timeout)
 
 	for {
 		if timeout == 0 {
