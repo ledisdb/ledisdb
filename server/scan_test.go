@@ -77,6 +77,29 @@ func checkScan(t *testing.T, c *ledis.Client, cmd string) {
 
 }
 
+func checkRevScan(t *testing.T, c *ledis.Client, cmd string) {
+	if ay, err := ledis.Values(c.Do(cmd, "", "count", 5)); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 2 {
+		t.Fatal(len(ay))
+	} else if n := ay[0].([]byte); string(n) != "5" {
+		t.Fatal(string(n))
+	} else {
+		checkScanValues(t, ay[1], 9, 8, 7, 6, 5)
+	}
+
+	if ay, err := ledis.Values(c.Do(cmd, "5", "count", 6)); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 2 {
+		t.Fatal(len(ay))
+	} else if n := ay[0].([]byte); string(n) != "" {
+		t.Fatal(string(n))
+	} else {
+		checkScanValues(t, ay[1], 4, 3, 2, 1, 0)
+	}
+
+}
+
 func testKVScan(t *testing.T, c *ledis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("set", fmt.Sprintf("%d", i), []byte("value")); err != nil {
@@ -85,6 +108,7 @@ func testKVScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "xscan")
+	checkRevScan(t, c, "xrevscan")
 }
 
 func testHashScan(t *testing.T, c *ledis.Client) {
@@ -95,6 +119,7 @@ func testHashScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "hxscan")
+	checkRevScan(t, c, "hxrevscan")
 }
 
 func testListScan(t *testing.T, c *ledis.Client) {
@@ -105,6 +130,7 @@ func testListScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "lxscan")
+	checkRevScan(t, c, "lxrevscan")
 }
 
 func testZSetScan(t *testing.T, c *ledis.Client) {
@@ -115,6 +141,7 @@ func testZSetScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "zxscan")
+	checkRevScan(t, c, "zxrevscan")
 }
 
 func testSetScan(t *testing.T, c *ledis.Client) {
@@ -125,6 +152,7 @@ func testSetScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "sxscan")
+	checkRevScan(t, c, "sxrevscan")
 }
 
 func testBitScan(t *testing.T, c *ledis.Client) {
@@ -135,4 +163,5 @@ func testBitScan(t *testing.T, c *ledis.Client) {
 	}
 
 	checkScan(t, c, "bxscan")
+	checkRevScan(t, c, "bxrevscan")
 }

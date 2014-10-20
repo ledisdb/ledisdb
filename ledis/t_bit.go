@@ -913,6 +913,10 @@ func (db *DB) BScan(key []byte, count int, inclusive bool, match string) ([][]by
 	return db.scan(BitMetaType, key, count, inclusive, match)
 }
 
+func (db *DB) BRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.revscan(BitMetaType, key, count, inclusive, match)
+}
+
 func (db *DB) bFlush() (drop int64, err error) {
 	t := db.binBatch
 	t.Lock()

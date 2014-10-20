@@ -27,6 +27,7 @@ Table of Contents
 	- [TTL key](#ttl-key)
 	- [PERSIST key](#persist-key)
 	- [XSCAN key [MATCH match] [COUNT count]](#xscan-key-match-match-count-count)
+	- [XREVSCAN key [MATCH match] [COUNT count]](#xrevscan-key-match-match-count-count)
 - [Hash](#hash)
 	- [HDEL key field [field ...]](#hdel-key-field-field-)
 	- [HEXISTS key field](#hexists-key-field)
@@ -46,6 +47,7 @@ Table of Contents
 	- [HTTL key](#httl-key)
 	- [HPERSIST key](#hpersist-key)
 	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
+	- [HXREVSCAN key [MATCH match] [COUNT count]](#hxrevscan-key-match-match-count-count)
 - [List](#list)
 	- [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
 	- [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
@@ -63,6 +65,7 @@ Table of Contents
 	- [LTTL key](#lttl-key)
 	- [LPERSIST key](#lpersist-key)
 	- [LXSCAN key [MATCH match] [COUNT count]](#lxscan-key-match-match-count-count)
+	- [LXREVSCAN key [MATCH match] [COUNT count]](#lxrevscan-key-match-match-count-count)
 - [Set](#set)
 	- [SADD key member [member ...]](#sadd-key-member-member-)
 	- [SCARD key](#scard-key)
@@ -82,6 +85,7 @@ Table of Contents
 	- [STTL key](#sttl-key)
 	- [SPERSIST key](#spersist-key)
 	- [SXSCAN key [MATCH match] [COUNT count]](#sxscan-key-match-match-count-count)
+	- [SXREVSCAN key [MATCH match] [COUNT count]](#sxrevscan-key-match-match-count-count)
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
 	- [ZCARD key](#zcard-key)
@@ -108,6 +112,7 @@ Table of Contents
     - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
 	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
+	- [ZXREVSCAN key [MATCH match] [COUNT count]](#zxrevscan-key-match-match-count-count)
 	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
 	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
 	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
@@ -123,6 +128,7 @@ Table of Contents
 	- [BTTL key](#bttl-key)
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
+	- [BXREVSCAN key [MATCH match] [COUNT count]](#bxrevscan-key-match-match-count-count)
 - [Replication](#replication)
 	- [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
 	- [FULLSYNC [NEW]](#fullsync-new)
@@ -514,6 +520,45 @@ ledis>xscan "c" count 1
 2) []
 ```
 
+### XREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate KV keys incrementally.
+
+Key is the start for the current iteration.
+Match is the regexp for checking matched key.
+Count is the maximum retrieved elememts number, default is 10.
+
+**Return value**
+
+an array of two values, first value is the key for next iteration, second value is an array of elements.
+
+**Examples**
+
+```
+ledis>set a 1
+OK
+ledis>set b 2
+OK
+ledis>set c 3
+OK
+127.0.0.1:6380>xrevscan "" 
+1) ""
+2) ["c" "b" "a"]
+ledis>xrevscan "" count 1
+1) "c"
+2) ["c"]
+ledis>xrevscan "c" count 1
+1) "b"
+2) ["b"]
+ledis>xrevscan "b" count 1
+1) "a"
+2) ["a"]
+ledis>xrevscan "a" count 1
+1) ""
+2) []
+```
+
+
 ## Hash
 
 ### HDEL key field [field ...]
@@ -883,6 +928,12 @@ Iterate Hash keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
+### HXREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Hash keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 ## List
 
 ### BLPOP key [key ...] timeout
@@ -1210,6 +1261,12 @@ ledis> LPERSIST b
 Iterate list keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### LXREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate list keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
 
 ## Set
@@ -1639,6 +1696,12 @@ Iterate Set keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
+
+### SXREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Set keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
 ## ZSet
 
@@ -2265,6 +2328,12 @@ Iterate ZSet keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
 
+### ZXREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate ZSet keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 ### ZRANGEBYLEX key min max [LIMIT offset count]
 
 When all the elements in a sorted set are inserted with the same score, in order to force lexicographical ordering, this command returns all the elements in the sorted set at key with a value between min and max.
@@ -2495,6 +2564,12 @@ ledis> BCOUNT flag 5 6
 Iterate Bitmap keys incrementally.
 
 See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### BXREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Bitmap keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
 
 ## Replication

@@ -642,24 +642,11 @@ func zinterstoreCommand(c *client) error {
 }
 
 func zxscanCommand(c *client) error {
-	key, match, count, err := parseScanArgs(c)
-	if err != nil {
-		return err
-	}
+	return xscanGeneric(c, c.db.ZScan)
+}
 
-	if ay, err := c.db.ZScan(key, count, false, match); err != nil {
-		return err
-	} else {
-		data := make([]interface{}, 2)
-		if len(ay) < count {
-			data[0] = []byte("")
-		} else {
-			data[0] = ay[len(ay)-1]
-		}
-		data[1] = ay
-		c.resp.writeArray(data)
-	}
-	return nil
+func zxrevscanCommand(c *client) error {
+	return xscanGeneric(c, c.db.ZRevScan)
 }
 
 func zparseMemberRange(minBuf []byte, maxBuf []byte) (min []byte, max []byte, rangeType uint8, err error) {
@@ -816,4 +803,5 @@ func init() {
 	register("zttl", zttlCommand)
 	register("zpersist", zpersistCommand)
 	register("zxscan", zxscanCommand)
+	register("zxrevscan", zxrevscanCommand)
 }

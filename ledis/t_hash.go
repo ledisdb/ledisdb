@@ -464,6 +464,10 @@ func (db *DB) HScan(key []byte, count int, inclusive bool, match string) ([][]by
 	return db.scan(HSizeType, key, count, inclusive, match)
 }
 
+func (db *DB) HRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.revscan(HSizeType, key, count, inclusive, match)
+}
+
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue

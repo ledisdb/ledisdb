@@ -47,14 +47,14 @@ Transaction API:
 
 ## Scan
 
-LedisDB supplies `xscan`, etc, to fetch data iteratively.
+LedisDB supplies `xscan`, `xrevscan`, etc, to fetch data iteratively and reverse iteratively.
 
-+ KV:     `xscan`
-+ Hash:   `hxscan`
-+ List:   `lxscan`
-+ Set:    `sxscan` 
-+ Zset:   `zxscan`
-+ Bitmap: `bxscan`
++ KV:     `xscan`, `xrevscan`
++ Hash:   `hxscan`, `hxrevscan`
++ List:   `lxscan`, `lxrevscan`
++ Set:    `sxscan` , `sxrevscan`
++ Zset:   `zxscan`, `zxrevscan`
++ Bitmap: `bxscan`, `bxrevscan`
 
 
 Of course, LedisDB has not implemented all APIs in Redis, you can see full commands in commands.json, commands.doc or [wiki](https://github.com/siddontang/ledisdb/wiki/Commands).

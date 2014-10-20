@@ -4,6 +4,18 @@ import (
 	"testing"
 )
 
+func checkTestScan(t *testing.T, v [][]byte, args ...string) {
+	if len(v) != len(args) {
+		t.Fatal(len(v), len(args))
+	}
+
+	for i := range v {
+		if string(v[i]) != args[i] {
+			t.Fatalf("%q %q", v, args)
+		}
+	}
+}
+
 func TestDBScan(t *testing.T) {
 	db := getTestDB()
 
@@ -15,44 +27,86 @@ func TestDBScan(t *testing.T) {
 		t.Fatal(len(v))
 	}
 
+	if v, err := db.RevScan(nil, 10, true, ""); err != nil {
+		t.Fatal(err)
+	} else if len(v) != 0 {
+		t.Fatal(len(v))
+	}
+
 	db.Set([]byte("a"), []byte{})
 	db.Set([]byte("b"), []byte{})
 	db.Set([]byte("c"), []byte{})
 
 	if v, err := db.Scan(nil, 1, true, ""); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 1 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "a")
 	}
 
 	if v, err := db.Scan([]byte("a"), 2, false, ""); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 2 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "b", "c")
 	}
 
 	if v, err := db.Scan(nil, 3, true, ""); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 3 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "a", "b", "c")
 	}
 
 	if v, err := db.Scan(nil, 3, true, "b"); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 1 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "b")
 	}
 
 	if v, err := db.Scan(nil, 3, true, "."); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 3 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "a", "b", "c")
 	}
 
 	if v, err := db.Scan(nil, 3, true, "a+"); err != nil {
 		t.Fatal(err)
-	} else if len(v) != 1 {
-		t.Fatal(len(v))
+	} else {
+		checkTestScan(t, v, "a")
+	}
+
+	if v, err := db.RevScan(nil, 1, true, ""); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "c")
+	}
+
+	if v, err := db.RevScan([]byte("c"), 2, false, ""); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "b", "a")
+	}
+
+	if v, err := db.RevScan(nil, 3, true, ""); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "c", "b", "a")
+	}
+
+	if v, err := db.RevScan(nil, 3, true, "b"); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "b")
+	}
+
+	if v, err := db.RevScan(nil, 3, true, "."); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "c", "b", "a")
+	}
+
+	if v, err := db.RevScan(nil, 3, true, "c+"); err != nil {
+		t.Fatal(err)
+	} else {
+		checkTestScan(t, v, "c")
 	}
 
 }

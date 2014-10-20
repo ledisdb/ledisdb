@@ -484,6 +484,10 @@ func (db *DB) LScan(key []byte, count int, inclusive bool, match string) ([][]by
 	return db.scan(LMetaType, key, count, inclusive, match)
 }
 
+func (db *DB) LRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.revscan(LMetaType, key, count, inclusive, match)
+}
+
 func (db *DB) lEncodeMinKey() []byte {
 	return db.lEncodeMetaKey(nil)
 }

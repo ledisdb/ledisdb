@@ -591,6 +591,42 @@
         "group": "Bitmap",
         "readonly": true
     },
+    
+    "XREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "KV",
+        "readonly": true
+    },
+
+    "HXREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Hash",
+        "readonly": true
+    },
+
+    "LXREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "List",
+        "readonly": true
+    },
+
+    "SXREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Set",
+        "readonly": true
+    },
+
+    "ZXREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "BXREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Bitmap",
+        "readonly": true
+    },
 
     "FLUSHALL": {
         "arguments": "-",
