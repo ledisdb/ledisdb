@@ -275,24 +275,11 @@ func bpersistCommand(c *client) error {
 }
 
 func bxscanCommand(c *client) error {
-	key, match, count, err := parseScanArgs(c)
-	if err != nil {
-		return err
-	}
+	return xscanGeneric(c, c.db.BScan)
+}
 
-	if ay, err := c.db.BScan(key, count, false, match); err != nil {
-		return err
-	} else {
-		data := make([]interface{}, 2)
-		if len(ay) < count {
-			data[0] = []byte("")
-		} else {
-			data[0] = ay[len(ay)-1]
-		}
-		data[1] = ay
-		c.resp.writeArray(data)
-	}
-	return nil
+func bxrevscanCommand(c *client) error {
+	return xscanGeneric(c, c.db.BRevScan)
 }
 
 func init() {
@@ -308,4 +295,5 @@ func init() {
 	register("bttl", bttlCommand)
 	register("bpersist", bpersistCommand)
 	register("bxscan", bxscanCommand)
+	register("bxrevscan", bxrevscanCommand)
 }

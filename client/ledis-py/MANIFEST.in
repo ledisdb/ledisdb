@@ -1,5 +1,0 @@
-include README.md
-include redis-py_license
-exclude tests/__pycache__
-recursive-include tests *
-recursive-exclude tests *.pyc

@@ -312,6 +312,11 @@ func (db *DB) Scan(key []byte, count int, inclusive bool, match string) ([][]byt
 	return db.scan(KVType, key, count, inclusive, match)
 }
 
+//if inclusive is true, revscan range (-inf, key] else (inf, key)
+func (db *DB) RevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.revscan(KVType, key, count, inclusive, match)
+}
+
 func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue

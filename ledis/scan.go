@@ -1,8 +1,8 @@
 package ledis
 
 import (
-	"bytes"
 	"errors"
+	"github.com/siddontang/ledisdb/store"
 	"regexp"
 )
 
@@ -10,6 +10,15 @@ var errDataType = errors.New("error data type")
 var errMetaKey = errors.New("error meta key")
 
 func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scanGeneric(dataType, key, count, inclusive, match, false)
+}
+
+func (db *DB) revscan(dataType byte, key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.scanGeneric(dataType, key, count, inclusive, match, true)
+}
+
+func (db *DB) scanGeneric(dataType byte, key []byte, count int,
+	inclusive bool, match string, reverse bool) ([][]byte, error) {
 	var minKey, maxKey []byte
 	var err error
 	var r *regexp.Regexp
@@ -20,40 +29,46 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 		}
 	}
 
-	if len(key) > 0 {
-		if err = checkKeySize(key); err != nil {
+	tp := store.RangeOpen
+
+	if !reverse {
+		if minKey, err = db.encodeScanMinKey(dataType, key); err != nil {
 			return nil, err
 		}
-		if minKey, err = db.encodeScanKey(dataType, key); err != nil {
+		if maxKey, err = db.encodeScanMaxKey(dataType, nil); err != nil {
 			return nil, err
 		}
 
+		if inclusive {
+			tp = store.RangeROpen
+		}
 	} else {
-		if minKey, err = db.encodeScanMinKey(dataType); err != nil {
+		if minKey, err = db.encodeScanMinKey(dataType, nil); err != nil {
 			return nil, err
 		}
-	}
+		if maxKey, err = db.encodeScanMaxKey(dataType, key); err != nil {
+			return nil, err
+		}
 
-	if maxKey, err = db.encodeScanMaxKey(dataType); err != nil {
-		return nil, err
+		if inclusive {
+			tp = store.RangeLOpen
+		}
 	}
 
 	if count <= 0 {
 		count = defaultScanCount
 	}
 
-	v := make([][]byte, 0, count)
-
-	it := db.bucket.NewIterator()
-	it.Seek(minKey)
-
-	if !inclusive {
-		if it.Valid() && bytes.Equal(it.RawKey(), minKey) {
-			it.Next()
-		}
+	var it *store.RangeLimitIterator
+	if !reverse {
+		it = db.bucket.RangeIterator(minKey, maxKey, tp)
+	} else {
+		it = db.bucket.RevRangeIterator(minKey, maxKey, tp)
 	}
 
-	for i := 0; it.Valid() && i < count && bytes.Compare(it.RawKey(), maxKey) < 0; it.Next() {
+	v := make([][]byte, 0, count)
+
+	for i := 0; it.Valid() && i < count; it.Next() {
 		if k, err := db.decodeScanKey(dataType, it.Key()); err != nil {
 			continue
 		} else if r != nil && !r.Match(k) {
@@ -67,11 +82,26 @@ func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match s
 	return v, nil
 }
 
-func (db *DB) encodeScanMinKey(dataType byte) ([]byte, error) {
-	return db.encodeScanKey(dataType, nil)
+func (db *DB) encodeScanMinKey(dataType byte, key []byte) ([]byte, error) {
+	if len(key) == 0 {
+		return db.encodeScanKey(dataType, nil)
+	} else {
+		if err := checkKeySize(key); err != nil {
+			return nil, err
+		}
+		return db.encodeScanKey(dataType, key)
+	}
 }
 
-func (db *DB) encodeScanMaxKey(dataType byte) ([]byte, error) {
+func (db *DB) encodeScanMaxKey(dataType byte, key []byte) ([]byte, error) {
+	if len(key) > 0 {
+		if err := checkKeySize(key); err != nil {
+			return nil, err
+		}
+
+		return db.encodeScanKey(dataType, key)
+	}
+
 	k, err := db.encodeScanKey(dataType, nil)
 	if err != nil {
 		return nil, err

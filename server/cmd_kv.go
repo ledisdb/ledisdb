@@ -322,13 +322,14 @@ func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
 	return
 }
 
-func xscanCommand(c *client) error {
+func xscanGeneric(c *client,
+	f func(key []byte, count int, inclusive bool, match string) ([][]byte, error)) error {
 	key, match, count, err := parseScanArgs(c)
 	if err != nil {
 		return err
 	}
 
-	if ay, err := c.db.Scan(key, count, false, match); err != nil {
+	if ay, err := f(key, count, false, match); err != nil {
 		return err
 	} else {
 		data := make([]interface{}, 2)
@@ -341,6 +342,14 @@ func xscanCommand(c *client) error {
 		c.resp.writeArray(data)
 	}
 	return nil
+}
+
+func xscanCommand(c *client) error {
+	return xscanGeneric(c, c.db.Scan)
+}
+
+func xrevscanCommand(c *client) error {
+	return xscanGeneric(c, c.db.RevScan)
 }
 
 func init() {
@@ -361,4 +370,5 @@ func init() {
 	register("ttl", ttlCommand)
 	register("persist", persistCommand)
 	register("xscan", xscanCommand)
+	register("xrevscan", xrevscanCommand)
 }

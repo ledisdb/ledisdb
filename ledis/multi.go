@@ -47,6 +47,8 @@ func (db *DB) Multi() (*Multi, error) {
 	m.DB.binBatch = m.newBatch()
 	m.DB.setBatch = m.newBatch()
 
+	m.DB.lbkeys = db.lbkeys
+
 	return m, nil
 }
 

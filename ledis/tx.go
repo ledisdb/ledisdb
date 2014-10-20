@@ -61,6 +61,8 @@ func (db *DB) Begin() (*Tx, error) {
 	tx.DB.binBatch = tx.newBatch()
 	tx.DB.setBatch = tx.newBatch()
 
+	tx.DB.lbkeys = db.lbkeys
+
 	return tx, nil
 }
 

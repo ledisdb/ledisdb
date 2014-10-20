@@ -1,7 +1,10 @@
 package server
 
 import (
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
+	"strconv"
+	"time"
 )
 
 func lpushCommand(c *client) error {
@@ -229,27 +232,63 @@ func lpersistCommand(c *client) error {
 }
 
 func lxscanCommand(c *client) error {
-	key, match, count, err := parseScanArgs(c)
+	return xscanGeneric(c, c.db.LScan)
+}
+
+func lxrevscanCommand(c *client) error {
+	return xscanGeneric(c, c.db.LRevScan)
+}
+
+func blpopCommand(c *client) error {
+	keys, timeout, err := lParseBPopArgs(c)
 	if err != nil {
 		return err
 	}
 
-	if ay, err := c.db.LScan(key, count, false, match); err != nil {
+	if ay, err := c.db.BLPop(keys, timeout); err != nil {
 		return err
 	} else {
-		data := make([]interface{}, 2)
-		if len(ay) < count {
-			data[0] = []byte("")
-		} else {
-			data[0] = ay[len(ay)-1]
-		}
-		data[1] = ay
-		c.resp.writeArray(data)
+		c.resp.writeArray(ay)
 	}
 	return nil
 }
 
+func brpopCommand(c *client) error {
+	keys, timeout, err := lParseBPopArgs(c)
+	if err != nil {
+		return err
+	}
+
+	if ay, err := c.db.BRPop(keys, timeout); err != nil {
+		return err
+	} else {
+		c.resp.writeArray(ay)
+	}
+	return nil
+
+}
+
+func lParseBPopArgs(c *client) (keys [][]byte, timeout time.Duration, err error) {
+	args := c.args
+	if len(args) < 2 {
+		err = ErrCmdParams
+		return
+	}
+
+	var t float64
+	if t, err = strconv.ParseFloat(hack.String(args[len(args)-1]), 64); err != nil {
+		return
+	}
+
+	timeout = time.Duration(t * float64(time.Second))
+
+	keys = args[0 : len(args)-1]
+	return
+}
+
 func init() {
+	register("blpop", blpopCommand)
+	register("brpop", brpopCommand)
 	register("lindex", lindexCommand)
 	register("llen", llenCommand)
 	register("lpop", lpopCommand)
@@ -267,4 +306,5 @@ func init() {
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
 	register("lxscan", lxscanCommand)
+	register("lxrevscan", lxrevscanCommand)
 }

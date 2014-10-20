@@ -1,9 +1,12 @@
 package ledis
 
 import (
+	"container/list"
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
+	"sync"
 	"time"
 )
 
@@ -131,6 +134,11 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	db.lSetMeta(metaKey, headSeq, tailSeq)
 
 	err = t.Commit()
+
+	if err == nil {
+		db.lSignalAsReady(key, pushCnt)
+	}
+
 	return int64(size) + int64(pushCnt), err
 }
 
@@ -476,6 +484,10 @@ func (db *DB) LScan(key []byte, count int, inclusive bool, match string) ([][]by
 	return db.scan(LMetaType, key, count, inclusive, match)
 }
 
+func (db *DB) LRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.revscan(LMetaType, key, count, inclusive, match)
+}
+
 func (db *DB) lEncodeMinKey() []byte {
 	return db.lEncodeMetaKey(nil)
 }
@@ -484,4 +496,170 @@ func (db *DB) lEncodeMaxKey() []byte {
 	ek := db.lEncodeMetaKey(nil)
 	ek[len(ek)-1] = LMetaType + 1
 	return ek
+}
+
+func (db *DB) BLPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
+	return db.lblockPop(keys, listHeadSeq, timeout)
+}
+
+func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
+	return db.lblockPop(keys, listTailSeq, timeout)
+}
+
+func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
+	ch := make(chan []byte)
+
+	bkeys := [][]byte{}
+	for _, key := range keys {
+		v, err := db.lpop(key, whereSeq)
+		if err != nil {
+			return nil, err
+		} else if v != nil {
+			return []interface{}{key, v}, nil
+		} else {
+			if db.IsAutoCommit() {
+				//block wait can not be supported in transaction and multi
+				db.lbkeys.wait(key, ch)
+				bkeys = append(bkeys, key)
+			}
+		}
+	}
+	if len(bkeys) == 0 {
+		return nil, nil
+	}
+
+	defer func() {
+		for _, key := range bkeys {
+			db.lbkeys.unwait(key, ch)
+		}
+	}()
+
+	deadT := time.Now().Add(timeout)
+
+	for {
+		if timeout == 0 {
+			key := <-ch
+			if v, err := db.lpop(key, whereSeq); err != nil {
+				return nil, err
+			} else if v == nil {
+				continue
+			} else {
+				return []interface{}{key, v}, nil
+			}
+		} else {
+			d := deadT.Sub(time.Now())
+			if d < 0 {
+				return nil, nil
+			}
+
+			select {
+			case key := <-ch:
+				if v, err := db.lpop(key, whereSeq); err != nil {
+					return nil, err
+				} else if v == nil {
+					db.lbkeys.wait(key, ch)
+					continue
+				} else {
+					return []interface{}{key, v}, nil
+				}
+			case <-time.After(d):
+				return nil, nil
+			}
+		}
+
+	}
+}
+
+func (db *DB) lSignalAsReady(key []byte, num int) {
+	if db.status == DBInTransaction {
+		//for transaction, only data can be pushed after tx commit and it is hard to signal
+		//so we don't handle it now
+		return
+	}
+
+	db.lbkeys.signal(key, num)
+}
+
+type lbKeyCh chan<- []byte
+
+type lBlockKeys struct {
+	sync.Mutex
+
+	keys map[string]*list.List
+}
+
+func newLBlockKeys() *lBlockKeys {
+	l := new(lBlockKeys)
+
+	l.keys = make(map[string]*list.List)
+	return l
+}
+
+func (l *lBlockKeys) signal(key []byte, num int) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		return
+	}
+
+	var n *list.Element
+
+	i := 0
+	for e := chs.Front(); e != nil && i < num; e = n {
+		ch := e.Value.(lbKeyCh)
+		n = e.Next()
+		select {
+		case ch <- key:
+			chs.Remove(e)
+			i++
+		default:
+			//waiter unwait
+			chs.Remove(e)
+		}
+	}
+
+	if chs.Len() == 0 {
+		delete(l.keys, s)
+	}
+}
+
+func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		chs = list.New()
+		l.keys[s] = chs
+	}
+
+	chs.PushBack(ch)
+}
+
+func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
+	l.Lock()
+	defer l.Unlock()
+
+	s := hack.String(key)
+	chs, ok := l.keys[s]
+	if !ok {
+		return
+	} else {
+		var n *list.Element
+		for e := chs.Front(); e != nil; e = n {
+			c := e.Value.(lbKeyCh)
+			n = e.Next()
+			if c == ch {
+				chs.Remove(e)
+			}
+		}
+
+		if chs.Len() == 0 {
+			delete(l.keys, s)
+		}
+	}
 }
