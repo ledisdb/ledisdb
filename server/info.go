@@ -149,10 +149,12 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 	buf.WriteString("# Replication\r\n")
 
 	p := []infoPair{}
+	i.app.slock.Lock()
 	slaves := make([]string, 0, len(i.app.slaves))
-	for s, _ := range i.app.slaves {
-		slaves = append(slaves, s.remoteAddr)
+	for _, s := range i.app.slaves {
+		slaves = append(slaves, s.slaveListeningAddr)
 	}
+	i.app.slock.Unlock()
 
 	num := i.Replication.PubLogNum
 	p = append(p, infoPair{"pub_log_num", num})

@@ -3,7 +3,9 @@ package server
 import (
 	"fmt"
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -107,10 +109,7 @@ func syncCommand(c *client) error {
 
 	c.lastLogID = logId - 1
 
-	if c.ack != nil && logId > c.ack.id {
-		asyncNotifyUint64(c.ack.ch, logId)
-		c.ack = nil
-	}
+	c.app.slaveAck(c)
 
 	c.syncBuf.Reset()
 
@@ -122,8 +121,39 @@ func syncCommand(c *client) error {
 		c.resp.writeBulk(buf)
 	}
 
-	c.app.addSlave(c)
+	return nil
+}
 
+//inner command, only for replication
+//REPLCONF <option> <value> <option> <value> ...
+func replconfCommand(c *client) error {
+	args := c.args
+	if len(args)%2 != 0 {
+		return ErrCmdParams
+	}
+
+	//now only support "listening-port"
+	for i := 0; i < len(args); i += 2 {
+		switch strings.ToLower(hack.String(args[i])) {
+		case "listening-port":
+			var host string
+			var err error
+			if _, err = num.ParseUint16(hack.String(args[i+1])); err != nil {
+				return err
+			}
+			if host, _, err = net.SplitHostPort(c.remoteAddr); err != nil {
+				return err
+			} else {
+				c.slaveListeningAddr = net.JoinHostPort(host, hack.String(args[i+1]))
+			}
+
+			c.app.addSlave(c)
+		default:
+			return ErrSyntax
+		}
+	}
+
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -131,4 +161,5 @@ func init() {
 	register("slaveof", slaveofCommand)
 	register("fullsync", fullsyncCommand)
 	register("sync", syncCommand)
+	register("replconf", replconfCommand)
 }
