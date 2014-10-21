@@ -51,7 +51,10 @@ func (c *respClient) run() {
 			log.Fatal("client run panic %s:%v", buf, e)
 		}
 
+		handleQuit := true
 		if c.conn != nil {
+			//if handle quit command before, conn is nil
+			handleQuit = false
 			c.conn.Close()
 		}
 
@@ -60,7 +63,7 @@ func (c *respClient) run() {
 			c.tx = nil
 		}
 
-		c.app.removeSlave(c.client)
+		c.app.removeSlave(c.client, handleQuit)
 	}()
 
 	for {
@@ -144,6 +147,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.resp.writeStatus(OK)
 		c.resp.flush()
 		c.conn.Close()
+		c.conn = nil
 		return
 	}
 

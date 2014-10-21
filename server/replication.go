@@ -50,10 +50,17 @@ func newMaster(app *App) *master {
 	return m
 }
 
+var (
+	quitCmd = []byte("*1\r\n$4\r\nquit\r\n")
+)
+
 func (m *master) Close() {
 	ledis.AsyncNotify(m.quit)
 
 	if m.conn != nil {
+		//for replication, we send quit command to close gracefully
+		m.conn.Write(quitCmd)
+
 		m.conn.Close()
 		m.conn = nil
 	}
@@ -321,7 +328,7 @@ func (app *App) addSlave(c *client) {
 	app.slaves[addr] = c
 }
 
-func (app *App) removeSlave(c *client) {
+func (app *App) removeSlave(c *client, activeQuit bool) {
 	addr := c.slaveListeningAddr
 
 	app.slock.Lock()
@@ -330,6 +337,9 @@ func (app *App) removeSlave(c *client) {
 	if _, ok := app.slaves[addr]; ok {
 		delete(app.slaves, addr)
 		log.Info("remove slave %s", addr)
+		if activeQuit {
+			asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
+		}
 	}
 }
 
@@ -344,7 +354,6 @@ func (app *App) slaveAck(c *client) {
 		return
 	}
 
-	println("ack", c.lastLogID)
 	asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
 }
 
@@ -371,9 +380,11 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	n := 0
 	logId := l.ID
 	for _, s := range app.slaves {
-		if s.lastLogID >= logId {
+		if s.lastLogID == logId {
 			//slave has already owned this log
 			n++
+		} else if s.lastLogID > logId {
+			log.Error("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, s.lastLogID, logId)
 		}
 	}
 
@@ -387,14 +398,10 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	startTime := time.Now()
 	done := make(chan struct{}, 1)
 	go func(total int) {
-		n := 0
-		for {
+		for i := 0; i < total; i++ {
 			id := <-app.slaveSyncAck
-			if id >= logId {
-				n++
-				if n >= total {
-					break
-				}
+			if id < logId {
+				log.Info("some slave may close with last logid %d < %d", id, logId)
 			}
 		}
 		done <- struct{}{}

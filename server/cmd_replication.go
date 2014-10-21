@@ -109,7 +109,16 @@ func syncCommand(c *client) error {
 
 	c.lastLogID = logId - 1
 
-	c.app.slaveAck(c)
+	stat, err := c.app.ldb.ReplicationStat()
+	if err != nil {
+		return err
+	}
+
+	if c.lastLogID > stat.LastID {
+		return fmt.Errorf("invalid sync logid %d > %d + 1", logId, stat.LastID)
+	} else if c.lastLogID == stat.LastID {
+		c.app.slaveAck(c)
+	}
 
 	c.syncBuf.Reset()
 
