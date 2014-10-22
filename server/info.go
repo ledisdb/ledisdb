@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"github.com/siddontang/go/sync2"
 	"os"
 	"runtime"
 	"strings"
@@ -25,8 +26,11 @@ type info struct {
 	}
 
 	Replication struct {
-		PubLogNum       int64
-		PubLogTotalTime int64 //milliseconds
+		PubLogNum          sync2.AtomicInt64
+		PubLogAckNum       sync2.AtomicInt64
+		PubLogTotalAckTime sync2.AtomicDuration
+
+		MasterLastLogID sync2.AtomicUint64
 	}
 }
 
@@ -156,13 +160,15 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 	}
 	i.app.slock.Unlock()
 
-	num := i.Replication.PubLogNum
+	num := i.Replication.PubLogNum.Get()
 	p = append(p, infoPair{"pub_log_num", num})
 
-	if num != 0 {
-		p = append(p, infoPair{"pub_log_per_time", i.Replication.PubLogTotalTime / num})
+	ackNum := i.Replication.PubLogAckNum.Get()
+	totalTime := i.Replication.PubLogTotalAckTime.Get().Nanoseconds() / 1e6
+	if ackNum != 0 {
+		p = append(p, infoPair{"pub_log_ack_per_time", totalTime / ackNum})
 	} else {
-		p = append(p, infoPair{"pub_log_per_time", 0})
+		p = append(p, infoPair{"pub_log_ack_per_time", 0})
 	}
 
 	p = append(p, infoPair{"slaveof", i.app.cfg.SlaveOf})
@@ -180,6 +186,8 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		p = append(p, infoPair{"first_log_id", 0})
 		p = append(p, infoPair{"commit_log_id", 0})
 	}
+
+	p = append(p, infoPair{"master_last_log_id", i.Replication.MasterLastLogID.Get()})
 
 	i.dumpPairs(buf, p...)
 }

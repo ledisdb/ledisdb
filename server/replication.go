@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -263,6 +262,17 @@ func (m *master) sync() error {
 
 	buf := m.syncBuf.Bytes()
 
+	if len(buf) < 8 {
+		return fmt.Errorf("inavlid sync size %d", len(buf))
+	}
+
+	m.app.info.Replication.MasterLastLogID.Set(num.BytesToUint64(buf))
+
+	var t bytes.Buffer
+	m.app.info.dumpReplication(&t)
+
+	buf = buf[8:]
+
 	if len(buf) == 0 {
 		return nil
 	}
@@ -370,6 +380,8 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		return
 	}
 
+	app.info.Replication.PubLogNum.Add(1)
+
 	app.slock.Lock()
 
 	total := (len(app.slaves) + 1) / 2
@@ -414,6 +426,6 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	}
 
 	stopTime := time.Now()
-	atomic.AddInt64(&app.info.Replication.PubLogNum, 1)
-	atomic.AddInt64(&app.info.Replication.PubLogTotalTime, stopTime.Sub(startTime).Nanoseconds()/1e6)
+	app.info.Replication.PubLogAckNum.Add(1)
+	app.info.Replication.PubLogTotalAckTime.Add(stopTime.Sub(startTime))
 }

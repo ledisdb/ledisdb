@@ -15,12 +15,15 @@ import (
 )
 
 var configFile = flag.String("config", "", "ledisdb config file")
+var addr = flag.String("addr", "", "ledisdb listen address")
+var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
 var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 var usePprof = flag.Bool("pprof", false, "enable pprof")
 var pprofPort = flag.Int("pprof_port", 6060, "pprof http port")
 var slaveof = flag.String("slaveof", "", "make the server a slave of another instance")
 var readonly = flag.Bool("readonly", false, "set readonly mode, salve server is always readonly")
 var rpl = flag.Bool("rpl", false, "enable replication or not, slave server is always enabled")
+var rplSync = flag.Bool("rpl_sync", false, "enable sync replication or not")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -42,6 +45,14 @@ func main() {
 		return
 	}
 
+	if len(*addr) > 0 {
+		cfg.Addr = *addr
+	}
+
+	if len(*dataDir) > 0 {
+		cfg.DataDir = *dataDir
+	}
+
 	if len(*dbName) > 0 {
 		cfg.DBName = *dbName
 	}
@@ -53,6 +64,7 @@ func main() {
 	} else {
 		cfg.Readonly = *readonly
 		cfg.UseReplication = *rpl
+		cfg.Replication.Sync = *rplSync
 	}
 
 	var app *server.App

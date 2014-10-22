@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
@@ -94,6 +95,8 @@ func fullsyncCommand(c *client) error {
 	return nil
 }
 
+var dummyBuf = make([]byte, 8)
+
 func syncCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -122,10 +125,19 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Reset()
 
+	c.syncBuf.Write(dummyBuf)
+
 	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 30); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()
+
+		stat, err = c.app.ldb.ReplicationStat()
+		if err != nil {
+			return err
+		}
+
+		binary.BigEndian.PutUint64(buf, stat.LastID)
 
 		c.resp.writeBulk(buf)
 	}
