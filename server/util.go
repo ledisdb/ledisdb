@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	errArrayFormat = errors.New("bad array format")
-	errBulkFormat  = errors.New("bad bulk string format")
-	errLineFormat  = errors.New("bad response line format")
+	errArrayFormat  = errors.New("bad array format")
+	errBulkFormat   = errors.New("bad bulk string format")
+	errLineFormat   = errors.New("bad response line format")
+	errStatusFormat = errors.New("bad status format")
 )
 
 func ReadLine(rb *bufio.Reader) ([]byte, error) {
@@ -54,9 +55,26 @@ func ReadBulkTo(rb *bufio.Reader, w io.Writer) error {
 				return errBulkFormat
 			}
 		}
+	} else if l[0] == '-' {
+		return errors.New(string(l[1:]))
 	} else {
 		return errBulkFormat
 	}
 
 	return nil
+}
+
+func ReadStatus(rb *bufio.Reader) (string, error) {
+	l, err := ReadLine(rb)
+	if err != nil {
+		return "", err
+	} else if len(l) == 0 {
+		return "", errStatusFormat
+	} else if l[0] == '+' {
+		return string(l[1:]), nil
+	} else if l[0] == '-' {
+		return "", errors.New(string(l[1:]))
+	} else {
+		return "", errStatusFormat
+	}
 }

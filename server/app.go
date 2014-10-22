@@ -32,8 +32,9 @@ type App struct {
 	s *script
 
 	// handle slaves
-	slock  sync.Mutex
-	slaves map[*client]struct{}
+	slock        sync.Mutex
+	slaves       map[string]*client
+	slaveSyncAck chan uint64
 
 	snap *snapshotStore
 }
@@ -60,7 +61,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	app.cfg = cfg
 
-	app.slaves = make(map[*client]struct{})
+	app.slaves = make(map[string]*client)
+	app.slaveSyncAck = make(chan uint64)
 
 	var err error
 

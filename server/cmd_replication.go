@@ -1,9 +1,12 @@
 package server
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -92,6 +95,8 @@ func fullsyncCommand(c *client) error {
 	return nil
 }
 
+var dummyBuf = make([]byte, 8)
+
 func syncCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -107,23 +112,69 @@ func syncCommand(c *client) error {
 
 	c.lastLogID = logId - 1
 
-	if c.ack != nil && logId > c.ack.id {
-		asyncNotifyUint64(c.ack.ch, logId)
-		c.ack = nil
+	stat, err := c.app.ldb.ReplicationStat()
+	if err != nil {
+		return err
+	}
+
+	if c.lastLogID > stat.LastID {
+		return fmt.Errorf("invalid sync logid %d > %d + 1", logId, stat.LastID)
+	} else if c.lastLogID == stat.LastID {
+		c.app.slaveAck(c)
 	}
 
 	c.syncBuf.Reset()
+
+	c.syncBuf.Write(dummyBuf)
 
 	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 30); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()
 
+		stat, err = c.app.ldb.ReplicationStat()
+		if err != nil {
+			return err
+		}
+
+		binary.BigEndian.PutUint64(buf, stat.LastID)
+
 		c.resp.writeBulk(buf)
 	}
 
-	c.app.addSlave(c)
+	return nil
+}
 
+//inner command, only for replication
+//REPLCONF <option> <value> <option> <value> ...
+func replconfCommand(c *client) error {
+	args := c.args
+	if len(args)%2 != 0 {
+		return ErrCmdParams
+	}
+
+	//now only support "listening-port"
+	for i := 0; i < len(args); i += 2 {
+		switch strings.ToLower(hack.String(args[i])) {
+		case "listening-port":
+			var host string
+			var err error
+			if _, err = num.ParseUint16(hack.String(args[i+1])); err != nil {
+				return err
+			}
+			if host, _, err = net.SplitHostPort(c.remoteAddr); err != nil {
+				return err
+			} else {
+				c.slaveListeningAddr = net.JoinHostPort(host, hack.String(args[i+1]))
+			}
+
+			c.app.addSlave(c)
+		default:
+			return ErrSyntax
+		}
+	}
+
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -131,4 +182,5 @@ func init() {
 	register("slaveof", slaveofCommand)
 	register("fullsync", fullsyncCommand)
 	register("sync", syncCommand)
+	register("replconf", replconfCommand)
 }

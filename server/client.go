@@ -64,8 +64,6 @@ type client struct {
 
 	lastLogID uint64
 
-	ack *syncAck
-
 	reqErr chan error
 
 	buf bytes.Buffer
@@ -73,6 +71,8 @@ type client struct {
 	tx *ledis.Tx
 
 	script *ledis.Multi
+
+	slaveListeningAddr string
 }
 
 func newClient(app *App) *client {
