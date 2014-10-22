@@ -16,35 +16,35 @@
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/bson",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/filelock",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/hack",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/ioutil2",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/log",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/num",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/snappy",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/sync2",
-			"Rev": "ada3cebe1055442f2af2840ed42cd50f64bbc6f7"
+			"Rev": "c7a17e4e4a1b72e4bc38b8b52cac8558aff4a4b1"
 		},
 		{
 			"ImportPath": "github.com/siddontang/goleveldb/leveldb",
