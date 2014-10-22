@@ -14,8 +14,8 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -49,10 +49,17 @@ func newMaster(app *App) *master {
 	return m
 }
 
+var (
+	quitCmd = []byte("*1\r\n$4\r\nquit\r\n")
+)
+
 func (m *master) Close() {
 	ledis.AsyncNotify(m.quit)
 
 	if m.conn != nil {
+		//for replication, we send quit command to close gracefully
+		m.conn.Write(quitCmd)
+
 		m.conn.Close()
 		m.conn = nil
 	}
@@ -77,6 +84,7 @@ func (m *master) connect() error {
 
 		m.rb = bufio.NewReaderSize(m.conn, 4096)
 	}
+
 	return nil
 }
 
@@ -116,6 +124,11 @@ func (m *master) runReplication(restart bool) {
 			}
 		}
 
+		if err := m.replConf(); err != nil {
+			log.Error("replconf error %s", err.Error())
+			return
+		}
+
 		if restart {
 			if err := m.fullSync(); err != nil {
 				if m.conn != nil {
@@ -148,9 +161,31 @@ func (m *master) runReplication(restart bool) {
 }
 
 var (
-	fullSyncCmd   = []byte("*1\r\n$8\r\nfullsync\r\n")  //fullsync
-	syncCmdFormat = "*2\r\n$4\r\nsync\r\n$%d\r\n%s\r\n" //sync logid
+	fullSyncCmd       = []byte("*1\r\n$8\r\nfullsync\r\n")                               //fullsync
+	syncCmdFormat     = "*2\r\n$4\r\nsync\r\n$%d\r\n%s\r\n"                              //sync logid
+	replconfCmdFormat = "*3\r\n$8\r\nreplconf\r\n$14\r\nlistening-port\r\n$%d\r\n%s\r\n" //replconf listening-port port
 )
+
+func (m *master) replConf() error {
+	_, port, err := net.SplitHostPort(m.app.cfg.Addr)
+	if err != nil {
+		return err
+	}
+
+	cmd := hack.Slice(fmt.Sprintf(replconfCmdFormat, len(port), port))
+
+	if _, err := m.conn.Write(cmd); err != nil {
+		return err
+	}
+
+	if s, err := ReadStatus(m.rb); err != nil {
+		return err
+	} else if strings.ToLower(s) != "ok" {
+		return fmt.Errorf("not ok but %s", s)
+	}
+
+	return nil
+}
 
 func (m *master) fullSync() error {
 	log.Info("begin full sync")
@@ -227,6 +262,17 @@ func (m *master) sync() error {
 
 	buf := m.syncBuf.Bytes()
 
+	if len(buf) < 8 {
+		return fmt.Errorf("inavlid sync size %d", len(buf))
+	}
+
+	m.app.info.Replication.MasterLastLogID.Set(num.BytesToUint64(buf))
+
+	var t bytes.Buffer
+	m.app.info.dumpReplication(&t)
+
+	buf = buf[8:]
+
 	if len(buf) == 0 {
 		return nil
 	}
@@ -284,24 +330,41 @@ func (app *App) tryReSlaveof() error {
 }
 
 func (app *App) addSlave(c *client) {
+	addr := c.slaveListeningAddr
+
 	app.slock.Lock()
 	defer app.slock.Unlock()
 
-	app.slaves[c] = struct{}{}
+	app.slaves[addr] = c
 }
 
-func (app *App) removeSlave(c *client) {
+func (app *App) removeSlave(c *client, activeQuit bool) {
+	addr := c.slaveListeningAddr
+
 	app.slock.Lock()
 	defer app.slock.Unlock()
 
-	if _, ok := app.slaves[c]; ok {
-		delete(app.slaves, c)
-		log.Info("remove slave %s", c.remoteAddr)
+	if _, ok := app.slaves[addr]; ok {
+		delete(app.slaves, addr)
+		log.Info("remove slave %s", addr)
+		if activeQuit {
+			asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
+		}
+	}
+}
+
+func (app *App) slaveAck(c *client) {
+	addr := c.slaveListeningAddr
+
+	app.slock.Lock()
+	defer app.slock.Unlock()
+
+	if _, ok := app.slaves[addr]; !ok {
+		//slave not add
+		return
 	}
 
-	if c.ack != nil {
-		asyncNotifyUint64(c.ack.ch, c.lastLogID)
-	}
+	asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
 }
 
 func asyncNotifyUint64(ch chan uint64, v uint64) {
@@ -317,51 +380,40 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		return
 	}
 
-	ss := make([]*client, 0, 4)
+	app.info.Replication.PubLogNum.Add(1)
+
 	app.slock.Lock()
 
+	total := (len(app.slaves) + 1) / 2
+	if app.cfg.Replication.WaitMaxSlaveAcks > 0 {
+		total = num.MinInt(total, app.cfg.Replication.WaitMaxSlaveAcks)
+	}
+
+	n := 0
 	logId := l.ID
-	for s, _ := range app.slaves {
-		if s.lastLogID >= logId {
+	for _, s := range app.slaves {
+		if s.lastLogID == logId {
 			//slave has already owned this log
-			ss = []*client{}
-			break
-		} else {
-			ss = append(ss, s)
+			n++
+		} else if s.lastLogID > logId {
+			log.Error("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, s.lastLogID, logId)
 		}
 	}
 
 	app.slock.Unlock()
 
-	if len(ss) == 0 {
+	if n >= total {
+		//at least total slaves have owned this log
 		return
 	}
 
 	startTime := time.Now()
-
-	ack := &syncAck{
-		logId, make(chan uint64, len(ss)),
-	}
-
-	for _, s := range ss {
-		s.ack = ack
-	}
-
-	total := (len(ss) + 1) / 2
-	if app.cfg.Replication.WaitMaxSlaveAcks > 0 {
-		total = num.MinInt(total, app.cfg.Replication.WaitMaxSlaveAcks)
-	}
-
 	done := make(chan struct{}, 1)
 	go func(total int) {
-		n := 0
-		for i := 0; i < len(ss); i++ {
-			id := <-ack.ch
-			if id > logId {
-				n++
-				if n >= total {
-					break
-				}
+		for i := 0; i < total; i++ {
+			id := <-app.slaveSyncAck
+			if id < logId {
+				log.Info("some slave may close with last logid %d < %d", id, logId)
 			}
 		}
 		done <- struct{}{}
@@ -374,6 +426,6 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	}
 
 	stopTime := time.Now()
-	atomic.AddInt64(&app.info.Replication.PubLogNum, 1)
-	atomic.AddInt64(&app.info.Replication.PubLogTotalTime, stopTime.Sub(startTime).Nanoseconds()/1e6)
+	app.info.Replication.PubLogAckNum.Add(1)
+	app.info.Replication.PubLogTotalAckTime.Add(stopTime.Sub(startTime))
 }
