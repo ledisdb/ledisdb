@@ -384,7 +384,9 @@ func (app *App) publishNewLog(l *rpl.Log) {
 
 	app.slock.Lock()
 
-	total := (len(app.slaves) + 1) / 2
+	slaveNum := len(app.slaves)
+
+	total := (slaveNum + 1) / 2
 	if app.cfg.Replication.WaitMaxSlaveAcks > 0 {
 		total = num.MinInt(total, app.cfg.Replication.WaitMaxSlaveAcks)
 	}
@@ -409,15 +411,21 @@ func (app *App) publishNewLog(l *rpl.Log) {
 
 	startTime := time.Now()
 	done := make(chan struct{}, 1)
-	go func(total int) {
-		for i := 0; i < total; i++ {
+	go func() {
+		n := 0
+		for i := 0; i < slaveNum; i++ {
 			id := <-app.slaveSyncAck
 			if id < logId {
 				log.Info("some slave may close with last logid %d < %d", id, logId)
+			} else {
+				n++
+				if n >= total {
+					break
+				}
 			}
 		}
 		done <- struct{}{}
-	}(total)
+	}()
 
 	select {
 	case <-done:
