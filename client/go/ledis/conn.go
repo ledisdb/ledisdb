@@ -25,6 +25,9 @@ type Conn struct {
 	br *bufio.Reader
 	bw *bufio.Writer
 
+	rSize int
+	wSize int
+
 	lastActive time.Time
 
 	// Scratch space for formatting argument length.
@@ -39,6 +42,16 @@ func NewConn(addr string) *Conn {
 	co := new(Conn)
 	co.addr = addr
 
+	co.rSize = 4096
+	co.wSize = 4096
+
+	return co
+}
+
+func NewConnSize(addr string, readSize int, writeSize int) *Conn {
+	co := NewConn(addr)
+	co.rSize = readSize
+	co.wSize = writeSize
 	return co
 }
 
@@ -119,13 +132,13 @@ func (c *Conn) connect() error {
 	if c.br != nil {
 		c.br.Reset(c.c)
 	} else {
-		c.br = bufio.NewReader(c.c)
+		c.br = bufio.NewReaderSize(c.c, c.rSize)
 	}
 
 	if c.bw != nil {
 		c.bw.Reset(c.c)
 	} else {
-		c.bw = bufio.NewWriter(c.c)
+		c.bw = bufio.NewWriterSize(c.c, c.wSize)
 	}
 
 	return nil
@@ -371,9 +384,8 @@ func (c *Conn) readReply() (interface{}, error) {
 }
 
 func (c *Client) newConn(addr string) *Conn {
-	co := new(Conn)
+	co := NewConn(addr)
 	co.client = c
-	co.addr = addr
 
 	return co
 }
