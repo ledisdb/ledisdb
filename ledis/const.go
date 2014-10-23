@@ -76,7 +76,7 @@ const (
 	MaxSetMemberSize int = 1024
 
 	//max value size
-	MaxValueSize int = 10 * 1024 * 1024
+	MaxValueSize int = 1024 * 1024 * 1024
 )
 
 var (
