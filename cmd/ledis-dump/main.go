@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/server"
-	"net"
+	"github.com/siddontang/ledisdb/client/go/ledis"
 	"os"
 )
 
@@ -14,12 +12,9 @@ var port = flag.Int("port", 6380, "ledis server port")
 var sock = flag.String("sock", "", "ledis unix socket domain")
 var dumpFile = flag.String("o", "./ledis.dump", "dump file to save")
 
-var fullSyncCmd = []byte("*2\r\n$8\r\nfullsync\r\n$3\r\nnew\r\n") //fullsync
-
 func main() {
 	flag.Parse()
 
-	var c net.Conn
 	var err error
 	var f *os.File
 
@@ -30,30 +25,25 @@ func main() {
 
 	defer f.Close()
 
+	var addr string
 	if len(*sock) != 0 {
-		c, err = net.Dial("unix", *sock)
+		addr = *sock
 	} else {
-		addr := fmt.Sprintf("%s:%d", *host, *port)
-		c, err = net.Dial("tcp", addr)
+		addr = fmt.Sprintf("%s:%d", *host, *port)
 	}
 
-	if err != nil {
-		println(err.Error())
-		return
-	}
+	c := ledis.NewConnSize(addr, 16*1024, 4096)
 
 	defer c.Close()
 
 	println("dump begin")
 
-	if _, err = c.Write(fullSyncCmd); err != nil {
+	if err = c.Send("fullsync"); err != nil {
 		println(err.Error())
 		return
 	}
 
-	rb := bufio.NewReaderSize(c, 16*1024)
-
-	if err = server.ReadBulkTo(rb, f); err != nil {
+	if err = c.ReceiveBulkTo(f); err != nil {
 		println(err.Error())
 		return
 	}

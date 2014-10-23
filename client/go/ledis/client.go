@@ -19,22 +19,23 @@ type Config struct {
 type Client struct {
 	sync.Mutex
 
-	cfg   *Config
-	proto string
+	cfg *Config
 
 	conns *list.List
+}
+
+func getProto(addr string) string {
+	if strings.Contains(addr, "/") {
+		return "unix"
+	} else {
+		return "tcp"
+	}
 }
 
 func NewClient(cfg *Config) *Client {
 	c := new(Client)
 
 	c.cfg = cfg
-
-	if strings.Contains(cfg.Addr, "/") {
-		c.proto = "unix"
-	} else {
-		c.proto = "tcp"
-	}
 
 	c.conns = list.New()
 
@@ -71,7 +72,7 @@ func (c *Client) get() *Conn {
 	if c.conns.Len() == 0 {
 		c.Unlock()
 
-		return c.newConn()
+		return c.newConn(c.cfg.Addr)
 	} else {
 		e := c.conns.Front()
 		co := e.Value.(*Conn)

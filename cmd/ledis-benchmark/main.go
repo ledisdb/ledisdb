@@ -18,7 +18,7 @@ var clients = flag.Int("c", 50, "number of clients")
 var reverse = flag.Bool("rev", false, "enable zset rev benchmark")
 var round = flag.Int("r", 1, "benchmark round number")
 var del = flag.Bool("del", true, "enable del benchmark")
-
+var valueSize = flag.Int("vsize", 100, "kv value size")
 var wg sync.WaitGroup
 
 var client *ledis.Client
@@ -65,7 +65,7 @@ var kvDelBase int64 = 0
 
 func benchSet() {
 	f := func() {
-		value := make([]byte, 100)
+		value := make([]byte, *valueSize)
 		crand.Read(value)
 		n := atomic.AddInt64(&kvSetBase, 1)
 		waitBench("set", n, value)
@@ -103,7 +103,7 @@ func benchDel() {
 
 func benchPushList() {
 	f := func() {
-		value := make([]byte, 10)
+		value := make([]byte, 100)
 		crand.Read(value)
 		waitBench("rpush", "mytestlist", value)
 	}

@@ -19,9 +19,14 @@ func (err Error) Error() string { return string(err) }
 type Conn struct {
 	client *Client
 
+	addr string
+
 	c  net.Conn
 	br *bufio.Reader
 	bw *bufio.Writer
+
+	rSize int
+	wSize int
 
 	lastActive time.Time
 
@@ -33,25 +38,57 @@ type Conn struct {
 	numScratch [40]byte
 }
 
+func NewConn(addr string) *Conn {
+	co := new(Conn)
+	co.addr = addr
+
+	co.rSize = 4096
+	co.wSize = 4096
+
+	return co
+}
+
+func NewConnSize(addr string, readSize int, writeSize int) *Conn {
+	co := NewConn(addr)
+	co.rSize = readSize
+	co.wSize = writeSize
+	return co
+}
+
 func (c *Conn) Close() {
-	c.client.put(c)
+	if c.client != nil {
+		c.client.put(c)
+	} else {
+		c.finalize()
+	}
 }
 
 func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
-	if err := c.connect(); err != nil {
+	if err := c.Send(cmd, args...); err != nil {
 		return nil, err
+	}
+
+	return c.Receive()
+}
+
+func (c *Conn) Send(cmd string, args ...interface{}) error {
+	if err := c.connect(); err != nil {
+		return err
 	}
 
 	if err := c.writeCommand(cmd, args); err != nil {
 		c.finalize()
-		return nil, err
+		return err
 	}
 
 	if err := c.bw.Flush(); err != nil {
 		c.finalize()
-		return nil, err
+		return err
 	}
+	return nil
+}
 
+func (c *Conn) Receive() (interface{}, error) {
 	if reply, err := c.readReply(); err != nil {
 		c.finalize()
 		return nil, err
@@ -62,6 +99,16 @@ func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 			return reply, nil
 		}
 	}
+}
+
+func (c *Conn) ReceiveBulkTo(w io.Writer) error {
+	err := c.readBulkReplyTo(w)
+	if err != nil {
+		if _, ok := err.(Error); !ok {
+			c.finalize()
+		}
+	}
+	return err
 }
 
 func (c *Conn) finalize() {
@@ -77,7 +124,7 @@ func (c *Conn) connect() error {
 	}
 
 	var err error
-	c.c, err = net.Dial(c.client.proto, c.client.cfg.Addr)
+	c.c, err = net.Dial(getProto(c.addr), c.addr)
 	if err != nil {
 		return err
 	}
@@ -85,13 +132,13 @@ func (c *Conn) connect() error {
 	if c.br != nil {
 		c.br.Reset(c.c)
 	} else {
-		c.br = bufio.NewReader(c.c)
+		c.br = bufio.NewReaderSize(c.c, c.rSize)
 	}
 
 	if c.bw != nil {
 		c.bw.Reset(c.c)
 	} else {
-		c.bw = bufio.NewWriter(c.c)
+		c.bw = bufio.NewWriterSize(c.c, c.wSize)
 	}
 
 	return nil
@@ -244,6 +291,41 @@ var (
 	pongReply interface{} = "PONG"
 )
 
+func (c *Conn) readBulkReplyTo(w io.Writer) error {
+	line, err := c.readLine()
+	if err != nil {
+		return err
+	}
+	if len(line) == 0 {
+		return errors.New("ledis: short response line")
+	}
+	switch line[0] {
+	case '-':
+		return Error(string(line[1:]))
+	case '$':
+		n, err := parseLen(line[1:])
+		if n < 0 || err != nil {
+			return err
+		}
+
+		var nn int64
+		if nn, err = io.CopyN(w, c.br, int64(n)); err != nil {
+			return err
+		} else if nn != int64(n) {
+			return io.ErrShortWrite
+		}
+
+		if line, err := c.readLine(); err != nil {
+			return err
+		} else if len(line) != 0 {
+			return errors.New("ledis: bad bulk string format")
+		}
+		return nil
+	default:
+		return fmt.Errorf("ledis: not invalid bulk string type, but %c", line[0])
+	}
+}
+
 func (c *Conn) readReply() (interface{}, error) {
 	line, err := c.readLine()
 	if err != nil {
@@ -301,8 +383,8 @@ func (c *Conn) readReply() (interface{}, error) {
 	return nil, errors.New("ledis: unexpected response line")
 }
 
-func (c *Client) newConn() *Conn {
-	co := new(Conn)
+func (c *Client) newConn(addr string) *Conn {
+	co := NewConn(addr)
 	co.client = c
 
 	return co

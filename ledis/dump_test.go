@@ -21,7 +21,7 @@ func TestDump(t *testing.T) {
 
 	cfgS := config.NewConfigDefault()
 	cfgS.DataDir = "/tmp/test_ledis_slave"
-	os.RemoveAll(cfgM.DataDir)
+	os.RemoveAll(cfgS.DataDir)
 
 	var slave *Ledis
 	if slave, err = Open(cfgS); err != nil {
