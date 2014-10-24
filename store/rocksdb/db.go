@@ -15,7 +15,6 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
-	"runtime"
 	"unsafe"
 )
 
@@ -35,7 +34,7 @@ func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
 
 	db := new(DB)
 	db.path = path
-	db.cfg = &cfg.LevelDB
+	db.cfg = &cfg.RocksDB
 
 	if err := db.open(); err != nil {
 		return nil, err
@@ -47,7 +46,7 @@ func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
 func (s Store) Repair(path string, cfg *config.Config) error {
 	db := new(DB)
 	db.path = path
-	db.cfg = &cfg.LevelDB
+	db.cfg = &cfg.RocksDB
 
 	err := db.open()
 	defer db.Close()
@@ -71,7 +70,7 @@ func (s Store) Repair(path string, cfg *config.Config) error {
 type DB struct {
 	path string
 
-	cfg *config.LevelDBConfig
+	cfg *config.RocksDBConfig
 
 	db *C.rocksdb_t
 
@@ -107,15 +106,15 @@ func (db *DB) open() error {
 	return nil
 }
 
-func (db *DB) initOptions(cfg *config.LevelDBConfig) {
+func (db *DB) initOptions(cfg *config.RocksDBConfig) {
 	opts := NewOptions()
 	blockOpts := NewBlockBasedTableOptions()
 
 	opts.SetCreateIfMissing(true)
 
 	db.env = NewDefaultEnv()
-	db.env.SetBackgroundThreads(runtime.NumCPU() * 2)
-	db.env.SetHighPriorityBackgroundThreads(1)
+	db.env.SetBackgroundThreads(cfg.BackgroundThreads)
+	db.env.SetHighPriorityBackgroundThreads(cfg.HighPriorityBackgroundThreads)
 	opts.SetEnv(db.env)
 
 	db.cache = NewLRUCache(cfg.CacheSize)
@@ -124,27 +123,27 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 	//we must use bloomfilter
 	db.filter = NewBloomFilter(defaultFilterBits)
 	blockOpts.SetFilterPolicy(db.filter)
-
-	if !cfg.Compression {
-		opts.SetCompression(NoCompression)
-	} else {
-		opts.SetCompression(SnappyCompression)
-	}
-
 	blockOpts.SetBlockSize(cfg.BlockSize)
-
-	opts.SetWriteBufferSize(cfg.WriteBufferSize)
-
-	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
-
-	opts.SetMaxBackgroundCompactions(runtime.NumCPU()*2 - 1)
-	opts.SetMaxBackgroundFlushes(1)
-
-	opts.SetLevel0SlowdownWritesTrigger(16)
-	opts.SetLevel0StopWritesTrigger(64)
-	opts.SetTargetFileSizeBase(32 * 1024 * 1024)
-
 	opts.SetBlockBasedTableFactory(blockOpts)
+
+	opts.SetCompression(CompressionOpt(cfg.Compression))
+	opts.SetWriteBufferSize(cfg.WriteBufferSize)
+	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
+	opts.SetMaxBackgroundCompactions(cfg.MaxBackgroundCompactions)
+	opts.SetMaxBackgroundFlushes(cfg.MaxBackgroundFlushes)
+	opts.SetLevel0SlowdownWritesTrigger(cfg.Level0SlowdownWritesTrigger)
+	opts.SetLevel0StopWritesTrigger(cfg.Level0StopWritesTrigger)
+	opts.SetTargetFileSizeBase(cfg.TargetFileSizeBase)
+	opts.SetTargetFileSizeMultiplier(cfg.TargetFileSizeMultiplier)
+	opts.SetMaxBytesForLevelBase(cfg.MaxBytesForLevelBase)
+	opts.SetMaxBytesForLevelMultiplier(cfg.MaxBytesForLevelMultiplier)
+	opts.DisableDataSync(cfg.DisableDataSync)
+	opts.SetMinWriteBufferNumberToMerge(cfg.MinWriteBufferNumberToMerge)
+	opts.DisableAutoCompactions(cfg.DisableAutoCompactions)
+	opts.EnableStatistics(cfg.EnableStatistics)
+	opts.UseFsync(cfg.UseFsync)
+	opts.AllowOsBuffer(cfg.AllowOsBuffer)
+	opts.SetStatsDumpPeriodSec(cfg.StatsDumpPeriodSec)
 
 	db.opts = opts
 	db.blockOpts = blockOpts
@@ -213,10 +212,6 @@ func (db *DB) NewWriteBatch() driver.IWriteBatch {
 		db:     db,
 		wbatch: C.rocksdb_writebatch_create(),
 	}
-
-	runtime.SetFinalizer(wb, func(w *WriteBatch) {
-		w.Close()
-	})
 
 	return wb
 }

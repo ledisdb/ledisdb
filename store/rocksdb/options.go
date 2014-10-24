@@ -11,6 +11,10 @@ type CompressionOpt int
 const (
 	NoCompression     = CompressionOpt(0)
 	SnappyCompression = CompressionOpt(1)
+	ZlibCompression   = CompressionOpt(2)
+	Bz2Compression    = CompressionOpt(3)
+	Lz4Compression    = CompressionOpt(4)
+	Lz4hcCompression  = CompressionOpt(5)
 )
 
 type Options struct {
@@ -134,6 +138,36 @@ func (o *Options) SetBlockBasedTableFactory(opt *BlockBasedTableOptions) {
 	C.rocksdb_options_set_block_based_table_factory(o.Opt, opt.Opt)
 }
 
+func (o *Options) SetMinWriteBufferNumberToMerge(n int) {
+	C.rocksdb_options_set_min_write_buffer_number_to_merge(o.Opt, C.int(n))
+}
+
+func (o *Options) DisableDataSync(b bool) {
+	C.rocksdb_options_set_disable_data_sync(o.Opt, boolToInt(b))
+}
+
+func (o *Options) DisableAutoCompactions(b bool) {
+	C.rocksdb_options_set_disable_auto_compactions(o.Opt, boolToInt(b))
+}
+
+func (o *Options) UseFsync(b bool) {
+	C.rocksdb_options_set_use_fsync(o.Opt, boolToInt(b))
+}
+
+func (o *Options) AllowOsBuffer(b bool) {
+	C.rocksdb_options_set_allow_os_buffer(o.Opt, boolToUchar(b))
+}
+
+func (o *Options) EnableStatistics(b bool) {
+	if b {
+		C.rocksdb_options_enable_statistics(o.Opt)
+	}
+}
+
+func (o *Options) SetStatsDumpPeriodSec(n int) {
+	C.rocksdb_options_set_stats_dump_period_sec(o.Opt, C.uint(n))
+}
+
 func (o *BlockBasedTableOptions) Close() {
 	C.rocksdb_block_based_options_destroy(o.Opt)
 }
@@ -184,4 +218,8 @@ func (wo *WriteOptions) Close() {
 
 func (wo *WriteOptions) SetSync(b bool) {
 	C.rocksdb_writeoptions_set_sync(wo.Opt, boolToUchar(b))
+}
+
+func (wo *WriteOptions) DisableWAL(b bool) {
+	C.rocksdb_writeoptions_disable_WAL(wo.Opt, boolToInt(b))
 }

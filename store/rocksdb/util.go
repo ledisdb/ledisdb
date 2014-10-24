@@ -27,6 +27,14 @@ func ucharToBool(uc C.uchar) bool {
 	return true
 }
 
+func boolToInt(b bool) C.int {
+	uc := C.int(0)
+	if b {
+		uc = C.int(1)
+	}
+	return uc
+}
+
 func saveError(errStr *C.char) error {
 	if errStr != nil {
 		gs := C.GoString(errStr)
