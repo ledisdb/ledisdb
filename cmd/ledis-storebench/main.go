@@ -1,7 +1,6 @@
 package main
 
 import (
-	crand "crypto/rand"
 	"flag"
 	"fmt"
 	"github.com/siddontang/go/num"
@@ -35,7 +34,7 @@ func bench(cmd string, f func()) {
 	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
-			for i := 0; i < loop; i++ {
+			for j := 0; j < loop; j++ {
 				f()
 			}
 			wg.Done()
@@ -46,8 +45,9 @@ func bench(cmd string, f func()) {
 
 	t2 := time.Now()
 
-	fmt.Printf("%s: %0.2f op/s, %0.2fmb/s\n", cmd, (float64(*number) / t2.Sub(t1).Seconds()),
-		float64(*valueSize*(*number))/(1024.0*1024.0*(t2.Sub(t1).Seconds())))
+	d := t2.Sub(t1)
+	fmt.Printf("%s: %0.3f micros/op, %0.2fmb/s\n", cmd, float64(d.Nanoseconds()/1e3)/float64(*number),
+		float64((*valueSize+16)*(*number))/(1024.0*1024.0*(d.Seconds())))
 }
 
 var kvSetBase int64 = 0
@@ -56,7 +56,6 @@ var kvGetBase int64 = 0
 func benchSet() {
 	f := func() {
 		value := make([]byte, *valueSize)
-		crand.Read(value)
 		n := atomic.AddInt64(&kvSetBase, 1)
 
 		db.Put(num.Int64ToBytes(n), value)

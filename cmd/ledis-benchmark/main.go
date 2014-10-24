@@ -1,7 +1,6 @@
 package main
 
 import (
-	crand "crypto/rand"
 	"flag"
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
@@ -42,7 +41,7 @@ func bench(cmd string, f func()) {
 	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
-			for i := 0; i < loop; i++ {
+			for j := 0; j < loop; j++ {
 				f()
 			}
 			wg.Done()
@@ -64,7 +63,6 @@ var kvDelBase int64 = 0
 func benchSet() {
 	f := func() {
 		value := make([]byte, *valueSize)
-		crand.Read(value)
 		n := atomic.AddInt64(&kvSetBase, 1)
 		waitBench("set", n, value)
 	}
@@ -102,7 +100,6 @@ func benchDel() {
 func benchPushList() {
 	f := func() {
 		value := make([]byte, 100)
-		crand.Read(value)
 		waitBench("rpush", "mytestlist", value)
 	}
 
@@ -149,7 +146,6 @@ var hashDelBase int64 = 0
 func benchHset() {
 	f := func() {
 		value := make([]byte, 100)
-		crand.Read(value)
 
 		n := atomic.AddInt64(&hashSetBase, 1)
 		waitBench("hset", "myhashkey", n, value)
@@ -192,7 +188,6 @@ var zsetIncrBase int64 = 0
 func benchZAdd() {
 	f := func() {
 		member := make([]byte, 16)
-		crand.Read(member)
 		n := atomic.AddInt64(&zsetAddBase, 1)
 		waitBench("zadd", "myzsetkey", n, member)
 	}
