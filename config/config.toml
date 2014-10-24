@@ -82,7 +82,10 @@ max_background_flushes = 1
 allow_os_buffer = true
 enable_statistics = false
 stats_dump_period_sec = 3600
-
+# dangerous to set true, write may got lost after a crash
+# you can set true if replication opened, we may recover from replication log,
+# but it is still not a easy work.
+disable_wal = false
 
 [lmdb]
 map_size = 524288000

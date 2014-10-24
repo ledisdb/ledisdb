@@ -150,9 +150,11 @@ func (db *DB) initOptions(cfg *config.RocksDBConfig) {
 
 	db.readOpts = NewReadOptions()
 	db.writeOpts = NewWriteOptions()
+	db.writeOpts.DisableWAL(cfg.DisableWAL)
 
 	db.syncOpts = NewWriteOptions()
 	db.syncOpts.SetSync(true)
+	db.syncOpts.DisableWAL(cfg.DisableWAL)
 
 	db.iteratorOpts = NewReadOptions()
 	db.iteratorOpts.SetFillCache(false)

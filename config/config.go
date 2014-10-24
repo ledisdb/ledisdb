@@ -59,6 +59,7 @@ type RocksDBConfig struct {
 	StatsDumpPeriodSec             int  `toml:"stats_dump_period_sec"`
 	BackgroundThreads              int  `toml:"background_theads"`
 	HighPriorityBackgroundThreads  int  `toml:"high_priority_background_threads"`
+	DisableWAL                     bool `toml:"disable_wal"`
 }
 
 type LMDBConfig struct {
@@ -169,6 +170,7 @@ func NewConfigDefault() *Config {
 	cfg.RocksDB.UseFsync = false
 	cfg.RocksDB.DisableAutoCompactions = false
 	cfg.RocksDB.AllowOsBuffer = true
+	cfg.RocksDB.DisableWAL = false
 
 	cfg.adjust()
 
