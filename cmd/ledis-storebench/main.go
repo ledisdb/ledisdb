@@ -92,6 +92,8 @@ func setRocksDB(cfg *config.RocksDBConfig) {
 	cfg.CacheSize = 512 * MB
 	cfg.EnableStatistics = true
 	cfg.StatsDumpPeriodSec = 5
+	cfg.Level0FileNumCompactionTrigger = 8
+	cfg.MaxBytesForLevelMultiplier = 8
 }
 
 func main() {
