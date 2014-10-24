@@ -14,8 +14,12 @@ import (
 	"time"
 )
 
+var KB = config.KB
+var MB = config.MB
+var GB = config.GB
+
 var name = flag.String("db_name", "goleveldb", "db name")
-var number = flag.Int("n", 1000, "request number")
+var number = flag.Int("n", 10000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
@@ -28,7 +32,7 @@ var loop int = 0
 func bench(cmd string, f func()) {
 	wg.Add(*clients)
 
-	t1 := time.Now().UnixNano()
+	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
 			for i := 0; i < loop; i++ {
@@ -40,11 +44,10 @@ func bench(cmd string, f func()) {
 
 	wg.Wait()
 
-	t2 := time.Now().UnixNano()
+	t2 := time.Now()
 
-	delta := float64(t2-t1) / float64(time.Second)
-
-	fmt.Printf("%s: %0.2f requests per second\n", cmd, (float64(*number) / delta))
+	fmt.Printf("%s: %0.2f op/s, %0.2fmb/s\n", cmd, (float64(*number) / t2.Sub(t1).Seconds()),
+		float64(*valueSize*(*number))/(1024.0*1024.0*(t2.Sub(t1).Seconds())))
 }
 
 var kvSetBase int64 = 0
@@ -76,18 +79,36 @@ func benchGet() {
 	bench("get", f)
 }
 
+func setRocksDB(cfg *config.RocksDBConfig) {
+	cfg.BlockSize = 64 * KB
+	cfg.WriteBufferSize = 64 * MB
+	cfg.MaxWriteBufferNum = 2
+	cfg.MaxBytesForLevelBase = 512 * MB
+	cfg.TargetFileSizeBase = 64 * MB
+	cfg.BackgroundThreads = 4
+	cfg.HighPriorityBackgroundThreads = 1
+	cfg.MaxBackgroundCompactions = 3
+	cfg.MaxBackgroundFlushes = 1
+	cfg.CacheSize = 512 * MB
+	cfg.EnableStatistics = true
+	cfg.StatsDumpPeriodSec = 5
+}
+
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 
 	cfg := config.NewConfigDefault()
-	cfg.DBPath = "./store_test"
+	cfg.DBPath = "./var/store_test"
+	cfg.DBName = *name
 	os.RemoveAll(cfg.DBPath)
-	defer os.RemoveAll(cfg.DBPath)
 
-	cfg.LevelDB.BlockSize = 32 * 1024
-	cfg.LevelDB.CacheSize = 512 * 1024 * 1024
-	cfg.LevelDB.WriteBufferSize = 64 * 1024 * 1024
+	cfg.LevelDB.BlockSize = 32 * KB
+	cfg.LevelDB.CacheSize = 512 * MB
+	cfg.LevelDB.WriteBufferSize = 64 * MB
+	cfg.LevelDB.MaxOpenFiles = 1000
+
+	setRocksDB(&cfg.RocksDB)
 
 	var err error
 	db, err = store.Open(cfg)

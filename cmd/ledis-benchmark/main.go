@@ -39,7 +39,7 @@ func waitBench(cmd string, args ...interface{}) {
 func bench(cmd string, f func()) {
 	wg.Add(*clients)
 
-	t1 := time.Now().UnixNano()
+	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
 			for i := 0; i < loop; i++ {
@@ -51,11 +51,9 @@ func bench(cmd string, f func()) {
 
 	wg.Wait()
 
-	t2 := time.Now().UnixNano()
+	t2 := time.Now()
 
-	delta := float64(t2-t1) / float64(time.Second)
-
-	fmt.Printf("%s: %0.2f requests per second\n", cmd, (float64(*number) / delta))
+	fmt.Printf("%s: %0.2f op/s\n", cmd, (float64(*number) / t2.Sub(t1).Seconds()))
 }
 
 var kvSetBase int64 = 0
