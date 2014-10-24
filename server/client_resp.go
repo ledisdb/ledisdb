@@ -33,7 +33,7 @@ func newClientRESP(conn net.Conn, app *App) {
 	c.client = newClient(app)
 	c.conn = conn
 
-	c.rb = bufio.NewReaderSize(conn, 256)
+	c.rb = bufio.NewReaderSize(conn, 4096)
 
 	c.resp = newWriterRESP(conn)
 	c.remoteAddr = conn.RemoteAddr().String()

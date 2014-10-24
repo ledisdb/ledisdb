@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/siddontang/ledisdb/client/go/ledis"
 	"math/rand"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -246,6 +247,8 @@ func benchZRevRangeByRank() {
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	flag.Parse()
 
 	if *number <= 0 {
