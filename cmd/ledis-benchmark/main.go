@@ -268,6 +268,8 @@ func main() {
 	cfg := new(ledis.Config)
 	cfg.Addr = addr
 	cfg.MaxIdleConns = *clients
+	cfg.ReadBufferSize = 10240
+	cfg.WriteBufferSize = 10240
 	client = ledis.NewClient(cfg)
 
 	if *round <= 0 {
