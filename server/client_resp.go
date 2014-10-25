@@ -33,9 +33,13 @@ func newClientRESP(conn net.Conn, app *App) {
 	c.client = newClient(app)
 	c.conn = conn
 
-	c.rb = bufio.NewReaderSize(conn, 4096)
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetReadBuffer(app.cfg.ConnReadBufferSize)
+		tcpConn.SetWriteBuffer(app.cfg.ConnWriteBufferSize)
+	}
+	c.rb = bufio.NewReaderSize(conn, app.cfg.ConnReadBufferSize)
 
-	c.resp = newWriterRESP(conn)
+	c.resp = newWriterRESP(conn, app.cfg.ConnWriteBufferSize)
 	c.remoteAddr = conn.RemoteAddr().String()
 
 	go c.run()
@@ -158,9 +162,9 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 
 //	response writer
 
-func newWriterRESP(conn net.Conn) *respWriter {
+func newWriterRESP(conn net.Conn, size int) *respWriter {
 	w := new(respWriter)
-	w.buff = bufio.NewWriterSize(conn, 256)
+	w.buff = bufio.NewWriterSize(conn, size)
 	return w
 }
 
