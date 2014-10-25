@@ -384,7 +384,7 @@ func (c *Conn) readReply() (interface{}, error) {
 }
 
 func (c *Client) newConn(addr string) *Conn {
-	co := NewConn(addr)
+	co := NewConnSize(addr, c.cfg.ReadBufferSize, c.cfg.WriteBufferSize)
 	co.client = c
 
 	return co

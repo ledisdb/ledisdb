@@ -43,6 +43,10 @@ db_sync_commit = 0
 # enable replication or not
 use_replication = true
 
+# set connection buffer, you can increase them appropriately
+conn_read_buffer_size = 10240
+conn_write_buffer_size = 10240
+
 [leveldb]
 # for leveldb and goleveldb
 compression = false
@@ -82,7 +86,10 @@ max_background_flushes = 1
 allow_os_buffer = true
 enable_statistics = false
 stats_dump_period_sec = 3600
-
+# dangerous to set true, write may got lost after a crash
+# you can set true if replication opened, we may recover from replication log,
+# but it is still not a easy work.
+disable_wal = false
 
 [lmdb]
 map_size = 524288000

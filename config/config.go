@@ -59,6 +59,7 @@ type RocksDBConfig struct {
 	StatsDumpPeriodSec             int  `toml:"stats_dump_period_sec"`
 	BackgroundThreads              int  `toml:"background_theads"`
 	HighPriorityBackgroundThreads  int  `toml:"high_priority_background_threads"`
+	DisableWAL                     bool `toml:"disable_wal"`
 }
 
 type LMDBConfig struct {
@@ -109,6 +110,9 @@ type Config struct {
 	Replication    ReplicationConfig `toml:"replication"`
 
 	Snapshot SnapshotConfig `toml:"snapshot"`
+
+	ConnReadBufferSize  int `toml:"conn_read_buffer_size"`
+	ConnWriteBufferSize int `toml:"conn_write_buffer_size"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -169,6 +173,7 @@ func NewConfigDefault() *Config {
 	cfg.RocksDB.UseFsync = false
 	cfg.RocksDB.DisableAutoCompactions = false
 	cfg.RocksDB.AllowOsBuffer = true
+	cfg.RocksDB.DisableWAL = false
 
 	cfg.adjust()
 
@@ -189,6 +194,8 @@ func (cfg *Config) adjust() {
 	cfg.RocksDB.adjust()
 
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
+	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
+	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 }
 
 func (cfg *LevelDBConfig) adjust() {

@@ -12,8 +12,10 @@ const (
 )
 
 type Config struct {
-	Addr         string
-	MaxIdleConns int
+	Addr            string
+	MaxIdleConns    int
+	ReadBufferSize  int
+	WriteBufferSize int
 }
 
 type Client struct {
@@ -36,6 +38,12 @@ func NewClient(cfg *Config) *Client {
 	c := new(Client)
 
 	c.cfg = cfg
+	if c.cfg.ReadBufferSize == 0 {
+		c.cfg.ReadBufferSize = 4096
+	}
+	if c.cfg.WriteBufferSize == 0 {
+		c.cfg.WriteBufferSize = 4096
+	}
 
 	c.conns = list.New()
 
