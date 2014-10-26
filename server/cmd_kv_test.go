@@ -27,6 +27,12 @@ func TestKV(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if ok, err := ledis.String(c.Do("setex", "xx", 10, "hello world")); err != nil {
+		t.Fatal(err)
+	} else if ok != OK {
+		t.Fatal(ok)
+	}
+
 	if v, err := ledis.String(c.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if v != "1234" {
@@ -212,6 +218,10 @@ func TestKVErrorParams(t *testing.T) {
 
 	if _, err := c.Do("persist"); err == nil {
 		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("setex", "a", "blah", "hello world"); err == nil {
+		t.Fatalf("invalid err %v", err)
 	}
 
 }
