@@ -116,3 +116,32 @@ func TestKVFlush(t *testing.T) {
 		}
 	}
 }
+
+func TestKVSetEX(t *testing.T) {
+	db := getTestDB()
+	db.FlushAll()
+
+	key := []byte("testdb_kv_c")
+
+	if err := db.SetEX(key, 10, []byte("hello world")); err != nil {
+		t.Fatal(err)
+	}
+
+	v, err := db.Get(key)
+	if err != nil {
+		t.Fatal(err)
+	} else if string(v) == "" {
+		t.Fatal("v is nil")
+	}
+
+	if n, err := db.TTL(key); err != nil {
+		t.Fatal(err)
+	} else if n != 10 {
+		t.Fatal(n)
+	}
+
+	if v, _ := db.Get(key); string(v) != "hello world" {
+		t.Fatal(string(v))
+	}
+
+}

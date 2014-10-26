@@ -66,6 +66,26 @@ func setnxCommand(c *client) error {
 	return nil
 }
 
+func setexCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	sec, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return ErrValue
+	}
+
+	if err := c.db.SetEX(args[0], sec, args[2]); err != nil {
+		return err
+	} else {
+		c.resp.writeStatus(OK)
+	}
+
+	return nil
+}
+
 func existsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -365,6 +385,7 @@ func init() {
 	register("mset", msetCommand)
 	register("set", setCommand)
 	register("setnx", setnxCommand)
+	register("setex", setexCommand)
 	register("expire", expireCommand)
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)

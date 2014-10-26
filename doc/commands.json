@@ -310,6 +310,11 @@
         "group": "KV",
         "readonly": false
     },
+    "SETEX": {
+        "arguments": "key seconds value",
+        "group": "KV",
+        "readonly": false
+    },
     "SLAVEOF": {
         "arguments": "host port [RESTART] [READONLY]",
         "group": "Replication",
