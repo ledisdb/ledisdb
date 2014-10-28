@@ -29,9 +29,9 @@ func waitBench(cmd string, args ...interface{}) {
 	c := client.Get()
 	defer c.Close()
 
-	_, err := c.Do(cmd, args...)
+	_, err := c.Do(strings.ToUpper(cmd), args...)
 	if err != nil {
-		fmt.Printf("do %s error %s", cmd, err.Error())
+		fmt.Printf("do %s error %s\n", cmd, err.Error())
 		return
 	}
 }
@@ -88,7 +88,7 @@ func benchGet() {
 
 func benchRandGet() {
 	f := func() {
-		n := rand.Int()
+		n := rand.Int() % *number
 		waitBench("get", n)
 	}
 
@@ -172,7 +172,7 @@ func benchHGet() {
 
 func benchHRandGet() {
 	f := func() {
-		n := rand.Int()
+		n := rand.Int() % *number
 		waitBench("hget", "myhashkey", n)
 	}
 
@@ -287,8 +287,6 @@ func main() {
 	if len(ts) > 0 && len(ts[0]) != 0 {
 		runAll = false
 	}
-
-	println(*tests, len(ts))
 
 	needTest := make(map[string]struct{})
 	for _, s := range ts {
