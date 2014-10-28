@@ -196,6 +196,14 @@ func (db *DB) Compact() error {
 	return db.db.CompactRange(util.Range{nil, nil})
 }
 
+func (db *DB) GetSlice(key []byte) (driver.ISlice, error) {
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	} else {
+		return driver.GoSlice(v), nil
+	}
+}
 func init() {
 	driver.Register(Store{})
 	driver.Register(MemStore{})

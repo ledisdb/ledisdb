@@ -12,6 +12,7 @@ type IDB interface {
 	Close() error
 
 	Get(key []byte) ([]byte, error)
+	GetSlice(key []byte) (ISlice, error)
 
 	Put(key []byte, value []byte) error
 	Delete(key []byte) error

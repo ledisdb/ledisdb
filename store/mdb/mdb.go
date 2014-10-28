@@ -311,6 +311,15 @@ func (db MDB) Compact() error {
 	return nil
 }
 
+func (db MDB) GetSlice(key []byte) (driver.ISlice, error) {
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	} else {
+		return driver.GoSlice(v), nil
+	}
+}
+
 func init() {
 	driver.Register(Store{})
 }
