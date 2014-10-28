@@ -46,8 +46,12 @@ func bench(cmd string, f func()) {
 	t2 := time.Now()
 
 	d := t2.Sub(t1)
-	fmt.Printf("%s: %0.3f micros/op, %0.2fmb/s %0.2fop/s\n", cmd, float64(d.Nanoseconds()/1e3)/float64(*number),
-		float64((*valueSize+16)*(*number))/(1024.0*1024.0*(d.Seconds())), float64(*number)/d.Seconds())
+	fmt.Printf("%s %s: %0.3f micros/op, %0.2fmb/s %0.2fop/s\n",
+		cmd,
+		d.String(),
+		float64(d.Nanoseconds()/1e3)/float64(*number),
+		float64((*valueSize+16)*(*number))/(1024.0*1024.0*(d.Seconds())),
+		float64(*number)/d.Seconds())
 }
 
 var kvSetBase int64 = 0

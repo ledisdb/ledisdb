@@ -6,6 +6,7 @@ import (
 	"github.com/siddontang/ledisdb/client/go/ledis"
 	"math/rand"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,10 +16,9 @@ var ip = flag.String("ip", "127.0.0.1", "redis/ledis/ssdb server ip")
 var port = flag.Int("port", 6380, "redis/ledis/ssdb server port")
 var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
-var reverse = flag.Bool("rev", false, "enable zset rev benchmark")
 var round = flag.Int("r", 1, "benchmark round number")
-var del = flag.Bool("del", true, "enable del benchmark")
 var valueSize = flag.Int("vsize", 100, "kv value size")
+var tests = flag.String("t", "", "only run the comma separated list of tests, set,get,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel")
 var wg sync.WaitGroup
 
 var client *ledis.Client
@@ -53,7 +53,13 @@ func bench(cmd string, f func()) {
 
 	t2 := time.Now()
 
-	fmt.Printf("%s: %0.2f op/s\n", cmd, (float64(*number) / t2.Sub(t1).Seconds()))
+	d := t2.Sub(t1)
+
+	fmt.Printf("%s: %s %0.3f micros/op, %0.2fop/s\n",
+		cmd,
+		d.String(),
+		float64(d.Nanoseconds()/1e3)/float64(*number),
+		float64(*number)/d.Seconds())
 }
 
 var kvSetBase int64 = 0
@@ -276,45 +282,90 @@ func main() {
 		*round = 1
 	}
 
-	for i := 0; i < *round; i++ {
-		benchSet()
-		benchGet()
-		benchRandGet()
+	runAll := true
+	ts := strings.Split(*tests, ",")
+	if len(ts) > 0 && len(ts[0]) != 0 {
+		runAll = false
+	}
 
-		if *del == true {
+	println(*tests, len(ts))
+
+	needTest := make(map[string]struct{})
+	for _, s := range ts {
+		needTest[strings.ToLower(s)] = struct{}{}
+	}
+
+	checkTest := func(cmd string) bool {
+		if runAll {
+			return true
+		} else if _, ok := needTest[cmd]; ok {
+			return ok
+		}
+		return false
+	}
+
+	for i := 0; i < *round; i++ {
+		if checkTest("set") {
+			benchSet()
+		}
+
+		if checkTest("get") {
+			benchGet()
+			benchRandGet()
+		}
+
+		if checkTest("del") {
 			benchDel()
 		}
 
-		benchPushList()
-		benchRangeList10()
-		benchRangeList50()
-		benchRangeList100()
+		if checkTest("lpush") {
+			benchPushList()
+		}
 
-		if *del == true {
+		if checkTest("lrange") {
+			benchRangeList10()
+			benchRangeList50()
+			benchRangeList100()
+		}
+
+		if checkTest("lpop") {
 			benchPopList()
 		}
 
-		benchHset()
-		benchHGet()
-		benchHRandGet()
+		if checkTest("hset") {
+			benchHset()
+		}
 
-		if *del == true {
+		if checkTest("hget") {
+			benchHGet()
+			benchHRandGet()
+		}
+
+		if checkTest("hdel") {
 			benchHDel()
 		}
 
-		benchZAdd()
-		benchZIncr()
-		benchZRangeByRank()
-		benchZRangeByScore()
+		if checkTest("zadd") {
+			benchZAdd()
+		}
 
-		//rev is too slow in leveldb, rocksdb or other
-		//maybe disable for huge data benchmark
-		if *reverse == true {
+		if checkTest("zincr") {
+			benchZIncr()
+		}
+
+		if checkTest("zrange") {
+			benchZRangeByRank()
+			benchZRangeByScore()
+		}
+
+		if checkTest("zrevrange") {
+			//rev is too slow in leveldb, rocksdb or other
+			//maybe disable for huge data benchmark
 			benchZRevRangeByRank()
 			benchZRevRangeByScore()
 		}
 
-		if *del == true {
+		if checkTest("zdel") {
 			benchZDel()
 		}
 
