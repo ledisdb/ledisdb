@@ -12,7 +12,6 @@ type IDB interface {
 	Close() error
 
 	Get(key []byte) ([]byte, error)
-	GetSlice(key []byte) (ISlice, error)
 
 	Put(key []byte, value []byte) error
 	Delete(key []byte) error
@@ -71,4 +70,8 @@ type Tx interface {
 
 	Commit() error
 	Rollback() error
+}
+
+type ISliceGeter interface {
+	GetSlice(key []byte) (ISlice, error)
 }

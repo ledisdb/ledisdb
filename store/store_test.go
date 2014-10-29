@@ -61,10 +61,26 @@ func testSimple(db *DB, t *testing.T) {
 		t.Fatal("not equal")
 	}
 
+	if v, err := db.GetSlice(key); err != nil {
+		t.Fatal(err)
+	} else if v == nil {
+		t.Fatal("must not nil")
+	} else if !bytes.Equal(v.Data(), value) {
+		t.Fatal("not equal")
+	} else {
+		v.Free()
+	}
+
 	if err := db.Delete(key); err != nil {
 		t.Fatal(err)
 	}
 	if v, err := db.Get(key); err != nil {
+		t.Fatal(err)
+	} else if v != nil {
+		t.Fatal("must nil")
+	}
+
+	if v, err := db.GetSlice(key); err != nil {
 		t.Fatal(err)
 	} else if v != nil {
 		t.Fatal("must nil")

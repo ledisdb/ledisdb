@@ -276,7 +276,7 @@ func (db *DB) getSlice(ro *ReadOptions, key []byte) (driver.ISlice, error) {
 		return nil, nil
 	}
 
-	return driver.NewCSlice(unsafe.Pointer(value), int(vallen)), nil
+	return NewCSlice(unsafe.Pointer(value), int(vallen)), nil
 }
 
 func (db *DB) delete(wo *WriteOptions, key []byte) error {

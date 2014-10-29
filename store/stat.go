@@ -23,7 +23,7 @@ type Stat struct {
 	CompactTotalTime sync2.AtomicDuration
 }
 
-func (st *Stat) statGet(v []byte, err error) {
+func (st *Stat) statGet(v interface{}, err error) {
 	st.GetNum.Add(1)
 	if v == nil && err == nil {
 		st.GetMissingNum.Add(1)

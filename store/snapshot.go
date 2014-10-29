@@ -25,6 +25,23 @@ func (s *Snapshot) Get(key []byte) ([]byte, error) {
 	return v, err
 }
 
+func (s *Snapshot) GetSlice(key []byte) (Slice, error) {
+	if d, ok := s.ISnapshot.(driver.ISliceGeter); ok {
+		v, err := d.GetSlice(key)
+		s.st.statGet(v, err)
+		return v, err
+	} else {
+		v, err := s.Get(key)
+		if err != nil {
+			return nil, err
+		} else if v == nil {
+			return nil, nil
+		} else {
+			return driver.GoSlice(v), nil
+		}
+	}
+}
+
 func (s *Snapshot) Close() {
 	s.st.SnapshotCloseNum.Add(1)
 	s.ISnapshot.Close()

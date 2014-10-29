@@ -1,5 +1,9 @@
-package driver
+//+build rocksdb
 
+package rocksdb
+
+// #cgo LDFLAGS: -lrocksdb
+// #include <rocksdb/c.h>
 // #include <stdlib.h>
 import "C"
 
@@ -7,12 +11,6 @@ import (
 	"reflect"
 	"unsafe"
 )
-
-type ISlice interface {
-	Data() []byte
-	Size() int
-	Free()
-}
 
 type CSlice struct {
 	data unsafe.Pointer
@@ -43,18 +41,4 @@ func (s *CSlice) Free() {
 		C.free(s.data)
 		s.data = nil
 	}
-}
-
-type GoSlice []byte
-
-func (s GoSlice) Data() []byte {
-	return []byte(s)
-}
-
-func (s GoSlice) Size() int {
-	return len(s)
-}
-
-func (s GoSlice) Free() {
-
 }

@@ -156,3 +156,20 @@ func (db *DB) needSyncCommit() bool {
 	}
 
 }
+
+func (db *DB) GetSlice(key []byte) (Slice, error) {
+	if d, ok := db.db.(driver.ISliceGeter); ok {
+		v, err := d.GetSlice(key)
+		db.st.statGet(v, err)
+		return v, err
+	} else {
+		v, err := db.Get(key)
+		if err != nil {
+			return nil, err
+		} else if v == nil {
+			return nil, nil
+		} else {
+			return driver.GoSlice(v), nil
+		}
+	}
+}
