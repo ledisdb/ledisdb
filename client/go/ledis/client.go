@@ -4,11 +4,6 @@ import (
 	"container/list"
 	"strings"
 	"sync"
-	"time"
-)
-
-const (
-	pingPeriod time.Duration = 3 * time.Second
 )
 
 type Config struct {
@@ -98,7 +93,6 @@ func (c *Client) put(conn *Conn) {
 		c.Unlock()
 		conn.finalize()
 	} else {
-		conn.lastActive = time.Now()
 		c.conns.PushFront(conn)
 		c.Unlock()
 	}

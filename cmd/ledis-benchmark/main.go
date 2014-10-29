@@ -22,29 +22,27 @@ var tests = flag.String("t", "", "only run the comma separated list of tests, se
 var wg sync.WaitGroup
 
 var client *ledis.Client
-
 var loop int = 0
 
-func waitBench(cmd string, args ...interface{}) {
-	c := client.Get()
-	defer c.Close()
-
+func waitBench(c *ledis.Conn, cmd string, args ...interface{}) {
 	_, err := c.Do(strings.ToUpper(cmd), args...)
 	if err != nil {
 		fmt.Printf("do %s error %s\n", cmd, err.Error())
-		return
 	}
+
 }
 
-func bench(cmd string, f func()) {
+func bench(cmd string, f func(c *ledis.Conn)) {
 	wg.Add(*clients)
 
 	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
+			c := client.Get()
 			for j := 0; j < loop; j++ {
-				f()
+				f(c)
 			}
+			c.Close()
 			wg.Done()
 		}()
 	}
@@ -68,78 +66,78 @@ var kvIncrBase int64 = 0
 var kvDelBase int64 = 0
 
 func benchSet() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		value := make([]byte, *valueSize)
 		n := atomic.AddInt64(&kvSetBase, 1)
-		waitBench("set", n, value)
+		waitBench(c, "SET", n, value)
 	}
 
 	bench("set", f)
 }
 
 func benchGet() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&kvGetBase, 1)
-		waitBench("get", n)
+		waitBench(c, "GET", n)
 	}
 
 	bench("get", f)
 }
 
 func benchRandGet() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := rand.Int() % *number
-		waitBench("get", n)
+		waitBench(c, "GET", n)
 	}
 
 	bench("randget", f)
 }
 
 func benchDel() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&kvDelBase, 1)
-		waitBench("del", n)
+		waitBench(c, "DEL", n)
 	}
 
 	bench("del", f)
 }
 
 func benchPushList() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		value := make([]byte, 100)
-		waitBench("rpush", "mytestlist", value)
+		waitBench(c, "RPUSH", "mytestlist", value)
 	}
 
 	bench("rpush", f)
 }
 
 func benchRangeList10() {
-	f := func() {
-		waitBench("lrange", "mytestlist", 0, 10)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "LRANGE", "mytestlist", 0, 10)
 	}
 
 	bench("lrange10", f)
 }
 
 func benchRangeList50() {
-	f := func() {
-		waitBench("lrange", "mytestlist", 0, 50)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "LRANGE", "mytestlist", 0, 50)
 	}
 
 	bench("lrange50", f)
 }
 
 func benchRangeList100() {
-	f := func() {
-		waitBench("lrange", "mytestlist", 0, 100)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "LRANGE", "mytestlist", 0, 100)
 	}
 
 	bench("lrange100", f)
 }
 
 func benchPopList() {
-	f := func() {
-		waitBench("lpop", "mytestlist")
+	f := func(c *ledis.Conn) {
+		waitBench(c, "LPOP", "mytestlist")
 	}
 
 	bench("lpop", f)
@@ -151,38 +149,38 @@ var hashGetBase int64 = 0
 var hashDelBase int64 = 0
 
 func benchHset() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		value := make([]byte, 100)
 
 		n := atomic.AddInt64(&hashSetBase, 1)
-		waitBench("hset", "myhashkey", n, value)
+		waitBench(c, "HSET", "myhashkey", n, value)
 	}
 
 	bench("hset", f)
 }
 
 func benchHGet() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&hashGetBase, 1)
-		waitBench("hget", "myhashkey", n)
+		waitBench(c, "HGET", "myhashkey", n)
 	}
 
 	bench("hget", f)
 }
 
 func benchHRandGet() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := rand.Int() % *number
-		waitBench("hget", "myhashkey", n)
+		waitBench(c, "HGET", "myhashkey", n)
 	}
 
 	bench("hrandget", f)
 }
 
 func benchHDel() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&hashDelBase, 1)
-		waitBench("hdel", "myhashkey", n)
+		waitBench(c, "HDEL", "myhashkey", n)
 	}
 
 	bench("hdel", f)
@@ -193,60 +191,60 @@ var zsetDelBase int64 = 0
 var zsetIncrBase int64 = 0
 
 func benchZAdd() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		member := make([]byte, 16)
 		n := atomic.AddInt64(&zsetAddBase, 1)
-		waitBench("zadd", "myzsetkey", n, member)
+		waitBench(c, "ZADD", "myzsetkey", n, member)
 	}
 
 	bench("zadd", f)
 }
 
 func benchZDel() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&zsetDelBase, 1)
-		waitBench("zrem", "myzsetkey", n)
+		waitBench(c, "ZREM", "myzsetkey", n)
 	}
 
 	bench("zrem", f)
 }
 
 func benchZIncr() {
-	f := func() {
+	f := func(c *ledis.Conn) {
 		n := atomic.AddInt64(&zsetIncrBase, 1)
-		waitBench("zincrby", "myzsetkey", 1, n)
+		waitBench(c, "ZINCRBY", "myzsetkey", 1, n)
 	}
 
 	bench("zincrby", f)
 }
 
 func benchZRangeByScore() {
-	f := func() {
-		waitBench("zrangebyscore", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "ZRANGEBYSCORE", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
 	bench("zrangebyscore", f)
 }
 
 func benchZRangeByRank() {
-	f := func() {
-		waitBench("zrange", "myzsetkey", 0, rand.Int()%100)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "ZRANGE", "myzsetkey", 0, rand.Int()%100)
 	}
 
 	bench("zrange", f)
 }
 
 func benchZRevRangeByScore() {
-	f := func() {
-		waitBench("zrevrangebyscore", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "ZREVRANGEBYSCORE", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
 	bench("zrevrangebyscore", f)
 }
 
 func benchZRevRangeByRank() {
-	f := func() {
-		waitBench("zrevrange", "myzsetkey", 0, rand.Int()%100)
+	f := func(c *ledis.Conn) {
+		waitBench(c, "ZREVRANGE", "myzsetkey", 0, rand.Int()%100)
 	}
 
 	bench("zrevrange", f)
@@ -277,6 +275,11 @@ func main() {
 	cfg.ReadBufferSize = 10240
 	cfg.WriteBufferSize = 10240
 	client = ledis.NewClient(cfg)
+
+	for i := 0; i < *clients; i++ {
+		c := client.Get()
+		c.Close()
+	}
 
 	if *round <= 0 {
 		*round = 1

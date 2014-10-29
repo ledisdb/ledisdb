@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"time"
 )
 
 // Error represents an error returned in a command reply.
@@ -27,8 +26,6 @@ type Conn struct {
 
 	rSize int
 	wSize int
-
-	lastActive time.Time
 
 	// Scratch space for formatting argument length.
 	// '*' or '$', length, "\r\n"
