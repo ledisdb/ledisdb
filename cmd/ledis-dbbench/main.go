@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
+	"github.com/siddontang/ledisdb/ledis"
 	"os"
 	"runtime"
 	"sync"
@@ -24,7 +24,8 @@ var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
 var wg sync.WaitGroup
 
-var db *store.DB
+var ldb *ledis.Ledis
+var db *ledis.DB
 
 var loop int = 0
 
@@ -62,7 +63,7 @@ func benchSet() {
 		value := make([]byte, *valueSize)
 		n := atomic.AddInt64(&kvSetBase, 1)
 
-		db.Put(num.Int64ToBytes(n), value)
+		db.Set(num.Int64ToBytes(n), value)
 	}
 
 	bench("set", f)
@@ -104,7 +105,7 @@ func main() {
 	flag.Parse()
 
 	cfg := config.NewConfigDefault()
-	cfg.DBPath = "./var/store_test"
+	cfg.DBPath = "./var/db_test"
 	cfg.DBName = *name
 	os.RemoveAll(cfg.DBPath)
 
@@ -116,11 +117,13 @@ func main() {
 	setRocksDB(&cfg.RocksDB)
 
 	var err error
-	db, err = store.Open(cfg)
+	ldb, err = ledis.Open(cfg)
 	if err != nil {
 		panic(err)
 		return
 	}
+
+	db, _ = ldb.Select(0)
 
 	if *number <= 0 {
 		panic("invalid number")
