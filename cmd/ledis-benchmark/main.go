@@ -18,7 +18,7 @@ var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
-var tests = flag.String("t", "", "only run the comma separated list of tests, set,get,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel")
+var tests = flag.String("t", "", "only run the comma separated list of tests, set,get,randget,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel")
 var wg sync.WaitGroup
 
 var client *ledis.Client
@@ -312,6 +312,9 @@ func main() {
 
 		if checkTest("get") {
 			benchGet()
+		}
+
+		if checkTest("rangeget") {
 			benchRandGet()
 		}
 
