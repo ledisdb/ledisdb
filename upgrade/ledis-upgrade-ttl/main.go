@@ -10,6 +10,8 @@ import (
 )
 
 var configPath = flag.String("config", "", "ledisdb config file")
+var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
+var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 
 func main() {
 	flag.Parse()
@@ -23,6 +25,14 @@ func main() {
 	if err != nil {
 		println(err.Error())
 		return
+	}
+
+	if len(*dataDir) > 0 {
+		cfg.DataDir = *dataDir
+	}
+
+	if len(*dbName) > 0 {
+		cfg.DBName = *dbName
 	}
 
 	db, err := store.Open(cfg)
