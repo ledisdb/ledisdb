@@ -108,17 +108,18 @@ func (c *client) perform() {
 		}
 
 		if err == nil {
-			go func() {
-				c.reqErr <- exeCmd(c)
-			}()
+			// go func() {
+			// 	c.reqErr <- exeCmd(c)
+			// }()
 
-			err = <-c.reqErr
+			// err = <-c.reqErr
+			err = exeCmd(c)
 		}
 	}
 
-	duration := time.Since(start)
-
 	if c.app.access != nil {
+		duration := time.Since(start)
+
 		fullCmd := c.catGenericCommand()
 		cost := duration.Nanoseconds() / 1000000
 

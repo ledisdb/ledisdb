@@ -5,10 +5,10 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"github.com/siddontang/go/arena"
 	"github.com/siddontang/ledisdb/server"
 	"net"
 	"runtime"
-	"sync"
 	"time"
 )
 
@@ -37,12 +37,12 @@ func main() {
 	}
 }
 
-var m = map[string][]byte{}
-var mu sync.Mutex
-
 func run(c net.Conn) {
 	//buf := make([]byte, 10240)
 	ok := []byte("+OK\r\n")
+	data := []byte("$4096\r\n")
+	data = append(data, make([]byte, 4096)...)
+	data = append(data, "\r\n"...)
 
 	var rt time.Duration
 	var wt time.Duration
@@ -50,10 +50,14 @@ func run(c net.Conn) {
 	rb := bufio.NewReaderSize(c, 10240)
 	wb := bufio.NewWriterSize(c, 10240)
 
+	a := arena.NewArena(10240)
+
 	for {
 		t1 := time.Now()
 
-		req, err := server.ReadRequest(rb)
+		a.Reset()
+
+		req, err := server.ReadRequest(rb, a)
 
 		if err != nil {
 			break
@@ -65,21 +69,9 @@ func run(c net.Conn) {
 		cmd := string(bytes.ToUpper(req[0]))
 		switch cmd {
 		case "SET":
-			mu.Lock()
-			m[string(req[1])] = req[2]
-			mu.Unlock()
 			wb.Write(ok)
 		case "GET":
-			mu.Lock()
-			v := m[string(req[1])]
-			mu.Unlock()
-			if v == nil {
-				wb.WriteString("$-1\r\n")
-			} else {
-				wb.WriteString(fmt.Sprintf("$%d\r\n", len(v)))
-				wb.Write(v)
-				wb.WriteString("\r\n")
-			}
+			wb.Write(data)
 		default:
 			wb.WriteString(fmt.Sprintf("-Err %s Not Supported Now", req[0]))
 		}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/siddontang/go/arena"
 	"io"
 )
 
@@ -25,7 +26,7 @@ func ReadLine(rb *bufio.Reader) ([]byte, error) {
 	return p[:i], nil
 }
 
-func readBytes(br *bufio.Reader) (bytes []byte, err error) {
+func readBytes(br *bufio.Reader, a *arena.Arena) (bytes []byte, err error) {
 	size, err := readLong(br)
 	if err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func readBytes(br *bufio.Reader) (bytes []byte, err error) {
 		return nil, errors.New("Invalid size: " + fmt.Sprint("%d", size))
 	}
 
-	buf := make([]byte, size+2)
+	buf := a.Make(int(size) + 2)
 	if _, err = io.ReadFull(br, buf); err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func readLong(in *bufio.Reader) (result int64, err error) {
 	return -1, err
 }
 
-func ReadRequest(in *bufio.Reader) ([][]byte, error) {
+func ReadRequest(in *bufio.Reader, a *arena.Arena) ([][]byte, error) {
 	code, err := in.ReadByte()
 	if err != nil {
 		return nil, err
@@ -115,7 +116,7 @@ func ReadRequest(in *bufio.Reader) ([][]byte, error) {
 			return nil, errReadRequest
 		}
 
-		if req[i], err = readBytes(in); err != nil {
+		if req[i], err = readBytes(in, a); err != nil {
 			return nil, err
 		}
 	}

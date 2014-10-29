@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"github.com/siddontang/go/arena"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
@@ -21,6 +22,8 @@ type respClient struct {
 
 	conn net.Conn
 	rb   *bufio.Reader
+
+	ar *arena.Arena
 }
 
 type respWriter struct {
@@ -42,6 +45,9 @@ func newClientRESP(conn net.Conn, app *App) {
 
 	c.resp = newWriterRESP(conn, app.cfg.ConnWriteBufferSize)
 	c.remoteAddr = conn.RemoteAddr().String()
+
+	//maybe another config?
+	c.ar = arena.NewArena(app.cfg.ConnReadBufferSize)
 
 	go c.run()
 }
@@ -71,18 +77,31 @@ func (c *respClient) run() {
 		c.app.removeSlave(c.client, handleQuit)
 	}()
 
+	// done := make(chan error)
 	for {
+		// go func() {
 		reqData, err := c.readRequest()
 		if err != nil {
+			// done <- err
 			return
 		}
 
 		c.handleRequest(reqData)
+		// done <- nil
+		// }()
+
+		// err := <-done
+		// if err != nil {
+		// 	return
+		// }
+		// if c.conn == nil {
+		// 	return
+		// }
 	}
 }
 
 func (c *respClient) readRequest() ([][]byte, error) {
-	return ReadRequest(c.rb)
+	return ReadRequest(c.rb, c.ar)
 }
 
 func (c *respClient) handleRequest(reqData [][]byte) {
@@ -102,6 +121,11 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 	}
 
 	c.perform()
+
+	c.cmd = ""
+	c.args = nil
+
+	c.ar.Reset()
 
 	return
 }
