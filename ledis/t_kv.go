@@ -3,6 +3,7 @@ package ledis
 import (
 	"errors"
 	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -162,6 +163,16 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	key = db.encodeKVKey(key)
 
 	return db.bucket.Get(key)
+}
+
+func (db *DB) GetSlice(key []byte) (store.Slice, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
+	key = db.encodeKVKey(key)
+
+	return db.bucket.GetSlice(key)
 }
 
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {

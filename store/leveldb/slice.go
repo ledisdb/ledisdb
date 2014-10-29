@@ -36,8 +36,5 @@ func (s *CSlice) Size() int {
 }
 
 func (s *CSlice) Free() {
-	if s.data != nil {
-		C.leveldb_free(s.data)
-		s.data = nil
-	}
+	C.leveldb_free(s.data)
 }

@@ -7,16 +7,35 @@ import (
 	"strings"
 )
 
+// func getCommand(c *client) error {
+// 	args := c.args
+// 	if len(args) != 1 {
+// 		return ErrCmdParams
+// 	}
+
+// 	if v, err := c.db.Get(args[0]); err != nil {
+// 		return err
+// 	} else {
+// 		c.resp.writeBulk(v)
+// 	}
+// 	return nil
+// }
+
 func getCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.Get(args[0]); err != nil {
+	if v, err := c.db.GetSlice(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeBulk(v)
+		if v == nil {
+			c.resp.writeBulk(nil)
+		} else {
+			c.resp.writeBulk(v.Data())
+			v.Free()
+		}
 	}
 	return nil
 }

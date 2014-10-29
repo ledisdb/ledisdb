@@ -8,6 +8,7 @@ import (
 
 type ibucket interface {
 	Get(key []byte) ([]byte, error)
+	GetSlice(key []byte) (store.Slice, error)
 
 	Put(key []byte, value []byte) error
 	Delete(key []byte) error

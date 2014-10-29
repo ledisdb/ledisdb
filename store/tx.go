@@ -56,6 +56,16 @@ func (tx *Tx) Get(key []byte) ([]byte, error) {
 	return v, err
 }
 
+func (tx *Tx) GetSlice(key []byte) (Slice, error) {
+	if v, err := tx.Get(key); err != nil {
+		return nil, err
+	} else if v == nil {
+		return nil, nil
+	} else {
+		return driver.GoSlice(v), nil
+	}
+}
+
 func (tx *Tx) Put(key []byte, value []byte) error {
 	tx.st.PutNum.Add(1)
 	return tx.tx.Put(key, value)
