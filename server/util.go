@@ -89,3 +89,36 @@ func readLong(in *bufio.Reader) (result int64, err error) {
 	}
 	return -1, err
 }
+
+func ReadRequest(in *bufio.Reader) ([][]byte, error) {
+	code, err := in.ReadByte()
+	if err != nil {
+		return nil, err
+	}
+
+	if code != '*' {
+		return nil, errReadRequest
+	}
+
+	var nparams int64
+	if nparams, err = readLong(in); err != nil {
+		return nil, err
+	} else if nparams <= 0 {
+		return nil, errReadRequest
+	}
+
+	req := make([][]byte, nparams)
+	for i := range req {
+		if code, err = in.ReadByte(); err != nil {
+			return nil, err
+		} else if code != '$' {
+			return nil, errReadRequest
+		}
+
+		if req[i], err = readBytes(in); err != nil {
+			return nil, err
+		}
+	}
+
+	return req, nil
+}
