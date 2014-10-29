@@ -21,8 +21,13 @@ const (
 
 	maxDataType byte = 100
 
-	ExpTimeType byte = 101
-	ExpMetaType byte = 102
+	/*
+		I make a big mistake about TTL time key format and have to use a new one (change 101 to 103).
+		You must run the ledis-upgrade-ttl to upgrade db.
+	*/
+	ObsoleteExpTimeType byte = 101
+	ExpMetaType         byte = 102
+	ExpTimeType         byte = 103
 
 	MetaType byte = 201
 )

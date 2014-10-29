@@ -113,6 +113,8 @@ type Config struct {
 
 	ConnReadBufferSize  int `toml:"conn_read_buffer_size"`
 	ConnWriteBufferSize int `toml:"conn_write_buffer_size"`
+
+	TTLCheckInterval int `toml:"ttl_check_interval"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -196,6 +198,7 @@ func (cfg *Config) adjust() {
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
+	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
 }
 
 func (cfg *LevelDBConfig) adjust() {

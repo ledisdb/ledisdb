@@ -47,6 +47,10 @@ use_replication = false
 conn_read_buffer_size = 10240
 conn_write_buffer_size = 10240
 
+# checking TTL (time to live) data every n seconds
+# if you set big, the expired data may not be deleted immediately
+ttl_check_interval = 1
+
 [leveldb]
 # for leveldb and goleveldb
 compression = false

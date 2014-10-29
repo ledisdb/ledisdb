@@ -34,6 +34,8 @@ type Ledis struct {
 	commitLock sync.Mutex   //allow one write commit at same time
 
 	lock io.Closer
+
+	tcs [MaxDBNumber]*ttlChecker
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
@@ -81,7 +83,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 	}
 
 	l.wg.Add(1)
-	go l.onDataExpired()
+	go l.checkTTL()
 
 	return l, nil
 }
@@ -165,18 +167,28 @@ func (l *Ledis) IsReadOnly() bool {
 	return false
 }
 
-func (l *Ledis) onDataExpired() {
+func (l *Ledis) checkTTL() {
 	defer l.wg.Done()
 
-	var executors []*elimination = make([]*elimination, len(l.dbs))
 	for i, db := range l.dbs {
-		executors[i] = db.newEliminator()
+		c := newTTLChecker(db)
+
+		c.register(KVType, db.kvBatch, db.delete)
+		c.register(ListType, db.listBatch, db.lDelete)
+		c.register(HashType, db.hashBatch, db.hDelete)
+		c.register(ZSetType, db.zsetBatch, db.zDelete)
+		c.register(BitType, db.binBatch, db.bDelete)
+		c.register(SetType, db.setBatch, db.sDelete)
+
+		l.tcs[i] = c
 	}
 
-	tick := time.NewTicker(1 * time.Second)
-	defer tick.Stop()
+	if l.cfg.TTLCheckInterval == 0 {
+		l.cfg.TTLCheckInterval = 1
+	}
 
-	done := make(chan struct{})
+	tick := time.NewTicker(time.Duration(l.cfg.TTLCheckInterval) * time.Second)
+	defer tick.Stop()
 
 	for {
 		select {
@@ -185,13 +197,9 @@ func (l *Ledis) onDataExpired() {
 				break
 			}
 
-			go func() {
-				for _, eli := range executors {
-					eli.active()
-				}
-				done <- struct{}{}
-			}()
-			<-done
+			for _, c := range l.tcs {
+				c.check()
+			}
 		case <-l.quit:
 			return
 		}
