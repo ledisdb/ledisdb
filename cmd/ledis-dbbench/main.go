@@ -105,9 +105,12 @@ func main() {
 	flag.Parse()
 
 	cfg := config.NewConfigDefault()
-	cfg.DBPath = "./var/db_test"
+	cfg.DataDir = "./var/ledis_dbbench"
 	cfg.DBName = *name
 	os.RemoveAll(cfg.DBPath)
+	defer os.RemoveAll(cfg.DBPath)
+
+	os.MkdirAll(cfg.DBPath, 0755)
 
 	cfg.LevelDB.BlockSize = 32 * KB
 	cfg.LevelDB.CacheSize = 512 * MB
@@ -119,7 +122,7 @@ func main() {
 	var err error
 	ldb, err = ledis.Open(cfg)
 	if err != nil {
-		panic(err)
+		println(err.Error())
 		return
 	}
 
