@@ -146,6 +146,8 @@ const (
 )
 
 func (i *info) dumpGC(buf *bytes.Buffer) {
+	buf.WriteString("# GC\r\n")
+
 	count := 5
 
 	var st debug.GCStats
