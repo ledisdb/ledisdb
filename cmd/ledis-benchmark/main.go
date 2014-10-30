@@ -314,7 +314,7 @@ func main() {
 			benchGet()
 		}
 
-		if checkTest("rangeget") {
+		if checkTest("randget") {
 			benchRandGet()
 		}
 
