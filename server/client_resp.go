@@ -77,26 +77,31 @@ func (c *respClient) run() {
 		c.app.removeSlave(c.client, handleQuit)
 	}()
 
-	// done := make(chan error)
+	done := make(chan error)
 	for {
-		// go func() {
-		reqData, err := c.readRequest()
+		// I still don't know why use goroutine can improve performance
+		// if someone knows and benchamrks with another different result without goroutine, please tell me
+		go func() {
+			reqData, err := c.readRequest()
+			if err == nil {
+				c.handleRequest(reqData)
+			}
+
+			done <- nil
+		}()
+
+		// reqData, err := c.readRequest()
+		// if err == nil {
+		// 	c.handleRequest(reqData)
+		// }
+
+		err := <-done
 		if err != nil {
-			// done <- err
 			return
 		}
-
-		c.handleRequest(reqData)
-		// done <- nil
-		// }()
-
-		// err := <-done
-		// if err != nil {
-		// 	return
-		// }
-		// if c.conn == nil {
-		// 	return
-		// }
+		if c.conn == nil {
+			return
+		}
 	}
 }
 

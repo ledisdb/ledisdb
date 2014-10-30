@@ -64,7 +64,7 @@ type client struct {
 
 	lastLogID uint64
 
-	reqErr chan error
+	// reqErr chan error
 
 	buf bytes.Buffer
 
@@ -82,7 +82,7 @@ func newClient(app *App) *client {
 	c.ldb = app.ldb
 	c.db, _ = app.ldb.Select(0) //use default db
 
-	c.reqErr = make(chan error)
+	// c.reqErr = make(chan error)
 
 	return c
 }
