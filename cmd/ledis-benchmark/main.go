@@ -18,7 +18,7 @@ var number = flag.Int("n", 1000, "request number")
 var clients = flag.Int("c", 50, "number of clients")
 var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
-var tests = flag.String("t", "", "only run the comma separated list of tests, set,get,randget,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel")
+var tests = flag.String("t", "set,get,randget,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel", "only run the comma separated list of tests")
 var wg sync.WaitGroup
 
 var client *ledis.Client
@@ -285,92 +285,49 @@ func main() {
 		*round = 1
 	}
 
-	runAll := true
 	ts := strings.Split(*tests, ",")
-	if len(ts) > 0 && len(ts[0]) != 0 {
-		runAll = false
-	}
-
-	needTest := make(map[string]struct{})
-	for _, s := range ts {
-		needTest[strings.ToLower(s)] = struct{}{}
-	}
-
-	checkTest := func(cmd string) bool {
-		if runAll {
-			return true
-		} else if _, ok := needTest[cmd]; ok {
-			return ok
-		}
-		return false
-	}
 
 	for i := 0; i < *round; i++ {
-		if checkTest("set") {
-			benchSet()
-		}
-
-		if checkTest("get") {
-			benchGet()
-		}
-
-		if checkTest("randget") {
-			benchRandGet()
-		}
-
-		if checkTest("del") {
-			benchDel()
-		}
-
-		if checkTest("lpush") {
-			benchPushList()
-		}
-
-		if checkTest("lrange") {
-			benchRangeList10()
-			benchRangeList50()
-			benchRangeList100()
-		}
-
-		if checkTest("lpop") {
-			benchPopList()
-		}
-
-		if checkTest("hset") {
-			benchHset()
-		}
-
-		if checkTest("hget") {
-			benchHGet()
-			benchHRandGet()
-		}
-
-		if checkTest("hdel") {
-			benchHDel()
-		}
-
-		if checkTest("zadd") {
-			benchZAdd()
-		}
-
-		if checkTest("zincr") {
-			benchZIncr()
-		}
-
-		if checkTest("zrange") {
-			benchZRangeByRank()
-			benchZRangeByScore()
-		}
-
-		if checkTest("zrevrange") {
-			//rev is too slow in leveldb, rocksdb or other
-			//maybe disable for huge data benchmark
-			benchZRevRangeByRank()
-			benchZRevRangeByScore()
-		}
-
-		if checkTest("zdel") {
-			benchZDel()
+		for _, s := range ts {
+			switch strings.ToLower(s) {
+			case "set":
+				benchSet()
+			case "get":
+				benchGet()
+			case "randget":
+				benchRandGet()
+			case "del":
+				benchDel()
+			case "lpush":
+				benchPushList()
+			case "lrange":
+				benchRangeList10()
+				benchRangeList50()
+				benchRangeList100()
+			case "lpop":
+				benchPopList()
+			case "hset":
+				benchHset()
+			case "hget":
+				benchHGet()
+				benchHRandGet()
+			case "hdel":
+				benchHDel()
+			case "zadd":
+				benchZAdd()
+			case "zincr":
+				benchZIncr()
+			case "zrange":
+				benchZRangeByRank()
+				benchZRangeByScore()
+			case "zrevrange":
+				//rev is too slow in leveldb, rocksdb or other
+				//maybe disable for huge data benchmark
+				benchZRevRangeByRank()
+				benchZRevRangeByScore()
+			case "zdel":
+				benchZDel()
+			}
 		}
 
 		println("")
