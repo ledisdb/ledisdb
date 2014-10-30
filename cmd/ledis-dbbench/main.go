@@ -70,6 +70,7 @@ func benchSet() {
 }
 
 func benchGet() {
+	kvGetBase = 0
 	f := func() {
 		n := atomic.AddInt64(&kvGetBase, 1)
 		v, err := db.Get(num.Int64ToBytes(n))
@@ -81,6 +82,23 @@ func benchGet() {
 	}
 
 	bench("get", f)
+}
+
+var kvGetSliceBase int64 = 0
+
+func benchGetSlice() {
+	kvGetSliceBase = 0
+	f := func() {
+		n := atomic.AddInt64(&kvGetSliceBase, 1)
+		v, err := db.GetSlice(num.Int64ToBytes(n))
+		if err != nil {
+			println(err.Error())
+		} else if v != nil {
+			v.Free()
+		}
+	}
+
+	bench("getslice", f)
 }
 
 func setRocksDB(cfg *config.RocksDBConfig) {
@@ -147,6 +165,9 @@ func main() {
 	for i := 0; i < *round; i++ {
 		benchSet()
 		benchGet()
+		benchGetSlice()
+		benchGet()
+		benchGetSlice()
 
 		println("")
 	}
