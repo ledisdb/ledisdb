@@ -53,7 +53,11 @@ func newClientRESP(conn net.Conn, app *App) {
 }
 
 func (c *respClient) run() {
+	c.app.info.addClients(1)
+
 	defer func() {
+		c.app.info.addClients(-1)
+
 		if e := recover(); e != nil {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)

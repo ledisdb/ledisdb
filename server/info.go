@@ -6,9 +6,11 @@ import (
 	"github.com/siddontang/go/sync2"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type info struct {
@@ -55,11 +57,11 @@ func (i *info) Close() {
 
 func getMemoryHuman(m uint64) string {
 	if m > GB {
-		return fmt.Sprintf("%dG", m/GB)
+		return fmt.Sprintf("%0.3fG", float64(m)/float64(GB))
 	} else if m > MB {
-		return fmt.Sprintf("%dM", m/MB)
+		return fmt.Sprintf("%0.3fM", float64(m)/float64(MB))
 	} else if m > KB {
-		return fmt.Sprintf("%dK", m/KB)
+		return fmt.Sprintf("%0.3fK", float64(m)/float64(KB))
 	} else {
 		return fmt.Sprintf("%d", m)
 	}
@@ -72,10 +74,10 @@ func (i *info) Dump(section string) []byte {
 		i.dumpAll(buf)
 	case "server":
 		i.dumpServer(buf)
-	case "client":
-		i.dumpClients(buf)
 	case "mem":
 		i.dumpMem(buf)
+	case "gc":
+		i.dumpGC(buf)
 	case "store":
 		i.dumpStore(buf)
 	case "replication":
@@ -97,9 +99,9 @@ func (i *info) dumpAll(buf *bytes.Buffer) {
 	buf.Write(Delims)
 	i.dumpStore(buf)
 	buf.Write(Delims)
-	i.dumpClients(buf)
-	buf.Write(Delims)
 	i.dumpMem(buf)
+	buf.Write(Delims)
+	i.dumpGC(buf)
 	buf.Write(Delims)
 	i.dumpReplication(buf)
 }
@@ -113,13 +115,9 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 		infoPair{"http_addr", i.app.cfg.HttpAddr},
 		infoPair{"readonly", i.app.cfg.Readonly},
 		infoPair{"goroutine_num", runtime.NumGoroutine()},
+		infoPair{"cgo_call_num", runtime.NumCgoCall()},
+		infoPair{"client_num", i.Clients.ConnectedClients},
 	)
-}
-
-func (i *info) dumpClients(buf *bytes.Buffer) {
-	buf.WriteString("# Client\r\n")
-
-	i.dumpPairs(buf, infoPair{"client_num", i.Clients.ConnectedClients})
 }
 
 func (i *info) dumpMem(buf *bytes.Buffer) {
@@ -128,8 +126,44 @@ func (i *info) dumpMem(buf *bytes.Buffer) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	i.dumpPairs(buf, infoPair{"mem_alloc", mem.Alloc},
-		infoPair{"mem_alloc_human", getMemoryHuman(mem.Alloc)})
+	i.dumpPairs(buf, infoPair{"mem_alloc", getMemoryHuman(mem.Alloc)},
+		infoPair{"mem_sys", getMemoryHuman(mem.Sys)},
+		infoPair{"mem_looksups", getMemoryHuman(mem.Lookups)},
+		infoPair{"mem_mallocs", getMemoryHuman(mem.Mallocs)},
+		infoPair{"mem_frees", getMemoryHuman(mem.Frees)},
+		infoPair{"mem_total", getMemoryHuman(mem.TotalAlloc)},
+		infoPair{"mem_heap_alloc", getMemoryHuman(mem.HeapAlloc)},
+		infoPair{"mem_heap_sys", getMemoryHuman(mem.HeapSys)},
+		infoPair{"mem_head_idle", getMemoryHuman(mem.HeapIdle)},
+		infoPair{"mem_head_inuse", getMemoryHuman(mem.HeapInuse)},
+		infoPair{"mem_head_released", getMemoryHuman(mem.HeapReleased)},
+		infoPair{"mem_head_objects", mem.HeapObjects},
+	)
+}
+
+const (
+	gcTimeFormat = "2006/01/02 15:04:05.000"
+)
+
+func (i *info) dumpGC(buf *bytes.Buffer) {
+	count := 5
+
+	var st debug.GCStats
+	st.Pause = make([]time.Duration, count)
+	// st.PauseQuantiles = make([]time.Duration, count)
+	debug.ReadGCStats(&st)
+
+	h := make([]string, 0, count)
+
+	for i := 0; i < count && i < len(st.Pause); i++ {
+		h = append(h, st.Pause[i].String())
+	}
+
+	i.dumpPairs(buf, infoPair{"gc_last_time", st.LastGC.Format(gcTimeFormat)},
+		infoPair{"gc_num", st.NumGC},
+		infoPair{"gc_pause_total", st.PauseTotal.String()},
+		infoPair{"gc_pause_history", strings.Join(h, ",")},
+	)
 }
 
 func (i *info) dumpStore(buf *bytes.Buffer) {
