@@ -111,8 +111,9 @@ type Config struct {
 
 	Snapshot SnapshotConfig `toml:"snapshot"`
 
-	ConnReadBufferSize  int `toml:"conn_read_buffer_size"`
-	ConnWriteBufferSize int `toml:"conn_write_buffer_size"`
+	ConnReadBufferSize    int `toml:"conn_read_buffer_size"`
+	ConnWriteBufferSize   int `toml:"conn_write_buffer_size"`
+	ConnKeepaliveInterval int `toml:"conn_keepavlie_interval"`
 
 	TTLCheckInterval int `toml:"ttl_check_interval"`
 }

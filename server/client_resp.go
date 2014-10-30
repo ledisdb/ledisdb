@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var errReadRequest = errors.New("invalid request protocol")
@@ -81,8 +82,13 @@ func (c *respClient) run() {
 		c.app.removeSlave(c.client, handleQuit)
 	}()
 
+	kc := time.Duration(c.app.cfg.ConnKeepaliveInterval) * time.Second
 	done := make(chan error)
 	for {
+		if kc > 0 {
+			c.conn.SetReadDeadline(time.Now().Add(kc))
+		}
+
 		// I still don't know why use goroutine can improve performance
 		// if someone knows and benchamrks with another different result without goroutine, please tell me
 		go func() {
@@ -91,7 +97,7 @@ func (c *respClient) run() {
 				c.handleRequest(reqData)
 			}
 
-			done <- nil
+			done <- err
 		}()
 
 		// reqData, err := c.readRequest()
