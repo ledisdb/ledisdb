@@ -123,3 +123,14 @@ func ReadRequest(in *bufio.Reader, a *arena.Arena) ([][]byte, error) {
 
 	return req, nil
 }
+
+func lowerSlice(buf []byte) []byte {
+	for i, r := range buf {
+		if 'A' <= r && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+
+		buf[i] = r
+	}
+	return buf
+}

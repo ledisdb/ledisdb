@@ -12,7 +12,6 @@ import (
 	"net"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -124,7 +123,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.cmd = ""
 		c.args = reqData[0:0]
 	} else {
-		c.cmd = strings.ToLower(hack.String(reqData[0]))
+		c.cmd = hack.String(lowerSlice(reqData[0]))
 		c.args = reqData[1:]
 	}
 	if c.cmd == "quit" {
