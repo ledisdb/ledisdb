@@ -2,38 +2,37 @@ package store
 
 import (
 	"github.com/siddontang/ledisdb/store/driver"
+	"time"
 )
 
 type WriteBatch struct {
-	wb        driver.IWriteBatch
-	st        *Stat
-	putNum    int64
-	deleteNum int64
+	wb driver.IWriteBatch
+	st *Stat
 
 	db *DB
 }
 
 func (wb *WriteBatch) Put(key []byte, value []byte) {
-	wb.putNum++
 	wb.wb.Put(key, value)
 }
 
 func (wb *WriteBatch) Delete(key []byte) {
-	wb.deleteNum++
 	wb.wb.Delete(key)
 }
 
 func (wb *WriteBatch) Commit() error {
 	wb.st.BatchCommitNum.Add(1)
-	wb.st.PutNum.Add(wb.putNum)
-	wb.st.DeleteNum.Add(wb.deleteNum)
-	wb.putNum = 0
-	wb.deleteNum = 0
+	var err error
+	t := time.Now()
 	if wb.db == nil || !wb.db.needSyncCommit() {
-		return wb.wb.Commit()
+		err = wb.wb.Commit()
 	} else {
-		return wb.wb.SyncCommit()
+		err = wb.wb.SyncCommit()
 	}
+
+	wb.st.BatchCommitTotalTime.Add(time.Now().Sub(t))
+
+	return err
 }
 
 func (wb *WriteBatch) Rollback() error {

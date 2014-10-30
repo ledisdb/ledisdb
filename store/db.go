@@ -39,8 +39,10 @@ func (db *DB) NewIterator() *Iterator {
 }
 
 func (db *DB) Get(key []byte) ([]byte, error) {
+	t := time.Now()
 	v, err := db.db.Get(key)
 	db.st.statGet(v, err)
+	db.st.GetTotalTime.Add(time.Now().Sub(t))
 	return v, err
 }
 
@@ -159,8 +161,10 @@ func (db *DB) needSyncCommit() bool {
 
 func (db *DB) GetSlice(key []byte) (Slice, error) {
 	if d, ok := db.db.(driver.ISliceGeter); ok {
+		t := time.Now()
 		v, err := d.GetSlice(key)
 		db.st.statGet(v, err)
+		db.st.GetTotalTime.Add(time.Now().Sub(t))
 		return v, err
 	} else {
 		v, err := db.Get(key)
