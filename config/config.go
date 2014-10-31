@@ -113,7 +113,7 @@ type Config struct {
 
 	ConnReadBufferSize    int `toml:"conn_read_buffer_size"`
 	ConnWriteBufferSize   int `toml:"conn_write_buffer_size"`
-	ConnKeepaliveInterval int `toml:"conn_keepavlie_interval"`
+	ConnKeepaliveInterval int `toml:"conn_keepalive_interval"`
 
 	TTLCheckInterval int `toml:"ttl_check_interval"`
 }
