@@ -58,9 +58,10 @@ func bench(cmd string, f func()) {
 var kvSetBase int64 = 0
 var kvGetBase int64 = 0
 
+var value []byte
+
 func benchSet() {
 	f := func() {
-		value := make([]byte, *valueSize)
 		n := atomic.AddInt64(&kvSetBase, 1)
 
 		db.Set(num.Int64ToBytes(n), value)
@@ -121,6 +122,8 @@ func setRocksDB(cfg *config.RocksDBConfig) {
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
+
+	value = make([]byte, *valueSize)
 
 	cfg := config.NewConfigDefault()
 	cfg.DataDir = "./var/ledis_dbbench"
