@@ -99,6 +99,8 @@ func run(c net.Conn) {
 
 	var rt time.Duration
 	var wt time.Duration
+	var st time.Duration
+	var gt time.Duration
 
 	rb := bufio.NewReaderSize(c, 10240)
 	wb := bufio.NewWriterSize(c, 10240)
@@ -124,11 +126,13 @@ func run(c net.Conn) {
 		case "SET":
 			if db != nil {
 				db.Set(req[1], req[2])
+				st += time.Now().Sub(t2)
 			}
 			wb.Write(ok)
 		case "GET":
 			if db != nil {
 				d, _ := db.GetSlice(req[1])
+				gt += time.Now().Sub(t2)
 				if d == nil {
 					wb.Write(data)
 				} else {
@@ -150,5 +154,5 @@ func run(c net.Conn) {
 		wt += t3.Sub(t2)
 	}
 
-	fmt.Printf("rt:%s wt:%s\n", rt.String(), wt.String())
+	fmt.Printf("rt:%s wt %s, gt:%s, st:%s\n", rt.String(), wt.String(), gt.String(), st.String())
 }
