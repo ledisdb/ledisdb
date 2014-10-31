@@ -173,31 +173,33 @@ func (i *info) dumpStore(buf *bytes.Buffer) {
 
 	s := i.app.ldb.StoreStat()
 
-	getNum := s.GetNum.Get()
-	getTotalTime := s.GetTotalTime.Get()
+	// getNum := s.GetNum.Get()
+	// getTotalTime := s.GetTotalTime.Get()
 
-	gt := int64(0)
-	if getNum > 0 {
-		gt = getTotalTime.Nanoseconds() / (getNum * 1e3)
-	}
+	// gt := int64(0)
+	// if getNum > 0 {
+	// 	gt = getTotalTime.Nanoseconds() / (getNum * 1e3)
+	// }
 
-	commitNum := s.BatchCommitNum.Get()
-	commitTotalTime := s.BatchCommitTotalTime.Get()
+	// commitNum := s.BatchCommitNum.Get()
+	// commitTotalTime := s.BatchCommitTotalTime.Get()
 
-	ct := int64(0)
-	if commitNum > 0 {
-		ct = commitTotalTime.Nanoseconds() / (commitNum * 1e3)
-	}
+	// ct := int64(0)
+	// if commitNum > 0 {
+	// 	ct = commitTotalTime.Nanoseconds() / (commitNum * 1e3)
+	// }
 
 	i.dumpPairs(buf, infoPair{"name", i.app.cfg.DBName},
 		infoPair{"get", s.GetNum},
 		infoPair{"get_missing", s.GetMissingNum},
-		infoPair{"get_per_time", fmt.Sprintf("%0.002fms", float64(gt)/1000.0)},
+		infoPair{"put", s.PutNum},
+		infoPair{"delete", s.DeleteNum},
+		infoPair{"get_total_time", s.GetTotalTime.Get().String()},
 		infoPair{"iter", s.IterNum},
 		infoPair{"iter_seek", s.IterSeekNum},
 		infoPair{"iter_close", s.IterCloseNum},
 		infoPair{"batch_commit", s.BatchCommitNum},
-		infoPair{"batch_commit_per_time", fmt.Sprintf("%0.002fms", float64(ct)/1000.0)},
+		infoPair{"batch_commit_total_time", s.BatchCommitTotalTime.Get().String()},
 	)
 }
 
