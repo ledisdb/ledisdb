@@ -135,14 +135,10 @@ func (r *Replication) WaitLog() <-chan struct{} {
 }
 
 func (r *Replication) StoreLog(log *Log) error {
-	return r.StoreLogs([]*Log{log})
-}
-
-func (r *Replication) StoreLogs(logs []*Log) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	return r.s.StoreLogs(logs)
+	return r.s.StoreLog(log)
 }
 
 func (r *Replication) FirstLogID() (uint64, error) {

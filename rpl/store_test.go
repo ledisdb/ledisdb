@@ -63,16 +63,15 @@ func testLogs(t *testing.T, l LogStore) {
 	}
 
 	// Attempt to write multiple logs
-	var logs []*Log
 	for i := 11; i <= 20; i++ {
 		nl := &Log{
 			ID:   uint64(i),
 			Data: []byte("first"),
 		}
-		logs = append(logs, nl)
-	}
-	if err := l.StoreLogs(logs); err != nil {
-		t.Fatalf("err: %v", err)
+
+		if err := l.StoreLog(nl); err != nil {
+			t.Fatalf("err: %v", err)
+		}
 	}
 
 	// Try to fetch
@@ -157,7 +156,7 @@ func testLogs(t *testing.T, l LogStore) {
 	}
 
 	now := uint32(time.Now().Unix())
-	logs = []*Log{}
+	logs := []*Log{}
 	for i := 1; i <= 20; i++ {
 		nl := &Log{
 			ID:         uint64(i),

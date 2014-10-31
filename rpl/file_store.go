@@ -14,14 +14,23 @@ import (
 )
 
 const (
-	defaultMaxLogFileSize = 1024 * 1024 * 1024
+	defaultMaxLogFileSize = uint32(1024 * 1024 * 1024)
+
+	//why 4G, we can use uint32 as offset, reduce memory useage
+	maxLogFileSize = uint32(4*1024*1024*1024 - 1)
 )
 
 /*
-index file format:
-ledis-bin.00001
-ledis-bin.00002
-ledis-bin.00003
+	File Store:
+	0000001.data
+	0000001.meta
+	0000002.data
+	0000002.meta
+
+	data: log1 data | log2 data | magic data
+	meta: log1 pos in data | log2 pos in data
+
+	we use table to mangage data + meta pair
 */
 
 type FileStore struct {
@@ -29,7 +38,7 @@ type FileStore struct {
 
 	m sync.Mutex
 
-	maxFileSize int
+	maxFileSize uint32
 
 	first uint64
 	last  uint64
@@ -66,16 +75,11 @@ func NewFileStore(path string) (*FileStore, error) {
 	return s, nil
 }
 
-func (s *FileStore) SetMaxFileSize(size int) {
+func (s *FileStore) SetMaxFileSize(size uint32) {
 	s.maxFileSize = size
 }
 
 func (s *FileStore) GetLog(id uint64, log *Log) error {
-	panic("not implementation")
-	return nil
-}
-
-func (s *FileStore) SeekLog(id uint64, log *Log) error {
 	panic("not implementation")
 	return nil
 }
@@ -91,11 +95,6 @@ func (s *FileStore) LastID() (uint64, error) {
 }
 
 func (s *FileStore) StoreLog(log *Log) error {
-	panic("not implementation")
-	return nil
-}
-
-func (s *FileStore) StoreLogs(logs []*Log) error {
 	panic("not implementation")
 	return nil
 }

@@ -21,6 +21,8 @@ type GoLevelDBStore struct {
 
 	first uint64
 	last  uint64
+
+	buf bytes.Buffer
 }
 
 func (s *GoLevelDBStore) FirstID() (uint64, error) {
@@ -84,29 +86,9 @@ func (s *GoLevelDBStore) GetLog(id uint64, log *Log) error {
 	}
 }
 
-func (s *GoLevelDBStore) SeekLog(id uint64, log *Log) error {
-	it := s.db.NewIterator()
-	defer it.Close()
-
-	it.Seek(num.Uint64ToBytes(id))
-
-	if !it.Valid() {
-		return ErrLogNotFound
-	} else {
-		return log.Decode(bytes.NewBuffer(it.RawValue()))
-	}
-}
-
 func (s *GoLevelDBStore) StoreLog(log *Log) error {
-	return s.StoreLogs([]*Log{log})
-}
-
-func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 	s.m.Lock()
 	defer s.m.Unlock()
-
-	w := s.db.NewWriteBatch()
-	defer w.Rollback()
 
 	last, err := s.lastID()
 	if err != nil {
@@ -115,24 +97,20 @@ func (s *GoLevelDBStore) StoreLogs(logs []*Log) error {
 
 	s.last = InvalidLogID
 
-	var buf bytes.Buffer
-	for _, log := range logs {
-		buf.Reset()
+	s.buf.Reset()
 
-		if log.ID <= last {
-			return ErrLessLogID
-		}
-
-		last = log.ID
-		key := num.Uint64ToBytes(log.ID)
-
-		if err := log.Encode(&buf); err != nil {
-			return err
-		}
-		w.Put(key, buf.Bytes())
+	if log.ID != last+1 {
+		return ErrStoreLogID
 	}
 
-	if err = w.Commit(); err != nil {
+	last = log.ID
+	key := num.Uint64ToBytes(log.ID)
+
+	if err := log.Encode(&s.buf); err != nil {
+		return err
+	}
+
+	if err = s.db.Put(key, s.buf.Bytes()); err != nil {
 		return err
 	}
 
