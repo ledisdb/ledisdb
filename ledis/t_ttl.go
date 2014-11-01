@@ -85,7 +85,8 @@ func (db *DB) expireAt(t *batch, dataType byte, key []byte, when int64) {
 	t.Put(tk, mk)
 	t.Put(mk, PutInt64(when))
 
-	db.l.tcs[db.index].setNextCheckTime(when, false)
+	tc := db.l.tcs[db.index]
+	tc.setNextCheckTime(when, false)
 }
 
 func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {

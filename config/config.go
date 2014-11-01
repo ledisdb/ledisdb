@@ -7,6 +7,7 @@ import (
 	"github.com/siddontang/go/ioutil2"
 	"io"
 	"io/ioutil"
+	"sync"
 )
 
 var (
@@ -83,6 +84,8 @@ type SnapshotConfig struct {
 }
 
 type Config struct {
+	m sync.RWMutex `toml:"-"`
+
 	FileName string `toml:"-"`
 
 	Addr string `toml:"addr"`
@@ -253,4 +256,17 @@ func (cfg *Config) Rewrite() error {
 	}
 
 	return cfg.DumpFile(cfg.FileName)
+}
+
+func (cfg *Config) GetReadonly() bool {
+	cfg.m.RLock()
+	b := cfg.Readonly
+	cfg.m.RUnlock()
+	return b
+}
+
+func (cfg *Config) SetReadonly(b bool) {
+	cfg.m.Lock()
+	cfg.Readonly = b
+	cfg.m.Unlock()
 }

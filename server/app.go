@@ -149,13 +149,18 @@ func (app *App) Run() {
 
 	go app.httpServe()
 
-	for !app.closed {
-		conn, err := app.listener.Accept()
-		if err != nil {
-			continue
-		}
+	for {
+		select {
+		case <-app.quit:
+			return
+		default:
+			conn, err := app.listener.Accept()
+			if err != nil {
+				continue
+			}
 
-		newClientRESP(conn, app)
+			newClientRESP(conn, app)
+		}
 	}
 }
 

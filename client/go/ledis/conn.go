@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync"
 )
 
 // Error represents an error returned in a command reply.
@@ -16,6 +17,12 @@ type Error string
 func (err Error) Error() string { return string(err) }
 
 type Conn struct {
+	cm sync.Mutex
+	wm sync.Mutex
+	rm sync.Mutex
+
+	closed bool
+
 	client *Client
 
 	addr string
@@ -41,6 +48,8 @@ func NewConn(addr string) *Conn {
 
 	co.rSize = 4096
 	co.wSize = 4096
+
+	co.closed = false
 
 	return co
 }
@@ -73,6 +82,9 @@ func (c *Conn) Send(cmd string, args ...interface{}) error {
 		return err
 	}
 
+	c.wm.Lock()
+	defer c.wm.Unlock()
+
 	if err := c.writeCommand(cmd, args); err != nil {
 		c.finalize()
 		return err
@@ -86,6 +98,9 @@ func (c *Conn) Send(cmd string, args ...interface{}) error {
 }
 
 func (c *Conn) Receive() (interface{}, error) {
+	c.rm.Lock()
+	defer c.rm.Unlock()
+
 	if reply, err := c.readReply(); err != nil {
 		c.finalize()
 		return nil, err
@@ -99,6 +114,9 @@ func (c *Conn) Receive() (interface{}, error) {
 }
 
 func (c *Conn) ReceiveBulkTo(w io.Writer) error {
+	c.rm.Lock()
+	defer c.rm.Unlock()
+
 	err := c.readBulkReplyTo(w)
 	if err != nil {
 		if _, ok := err.(Error); !ok {
@@ -109,20 +127,26 @@ func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 }
 
 func (c *Conn) finalize() {
-	if c.c != nil {
+	c.cm.Lock()
+	if !c.closed {
 		c.c.Close()
-		c.c = nil
+		c.closed = true
 	}
+	c.cm.Unlock()
 }
 
 func (c *Conn) connect() error {
-	if c.c != nil {
+	c.cm.Lock()
+	defer c.cm.Unlock()
+
+	if !c.closed && c.c != nil {
 		return nil
 	}
 
 	var err error
 	c.c, err = net.Dial(getProto(c.addr), c.addr)
 	if err != nil {
+		c.c = nil
 		return err
 	}
 
