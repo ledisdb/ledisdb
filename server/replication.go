@@ -19,6 +19,7 @@ import (
 
 var (
 	errConnectMaster = errors.New("connect master error")
+	errReplClosed    = errors.New("replication is closed")
 )
 
 type master struct {
@@ -47,17 +48,16 @@ func newMaster(app *App) *master {
 }
 
 func (m *master) Close() {
-	ledis.AsyncNotify(m.quit)
+	m.quit <- struct{}{}
 
-	if m.conn != nil {
-		//for replication, we send quit command to close gracefully
-		m.conn.Send("quit")
-
-		m.conn.Close()
-		m.conn = nil
-	}
+	m.closeConn()
 
 	m.wg.Wait()
+
+	select {
+	case <-m.quit:
+	default:
+	}
 }
 
 func (m *master) resetConn() error {
@@ -67,12 +67,20 @@ func (m *master) resetConn() error {
 
 	if m.conn != nil {
 		m.conn.Close()
-		m.conn = nil
 	}
 
 	m.conn = goledis.NewConn(m.addr)
 
 	return nil
+}
+
+func (m *master) closeConn() {
+	if m.conn != nil {
+		//for replication, we send quit command to close gracefully
+		m.conn.Send("quit")
+
+		m.conn.Close()
+	}
 }
 
 func (m *master) stopReplication() error {
@@ -87,9 +95,7 @@ func (m *master) startReplication(masterAddr string, restart bool) error {
 
 	m.addr = masterAddr
 
-	m.quit = make(chan struct{}, 1)
-
-	m.app.cfg.Readonly = true
+	m.app.cfg.SetReadonly(true)
 
 	m.wg.Add(1)
 	go m.runReplication(restart)
@@ -123,28 +129,20 @@ func (m *master) runReplication(restart bool) {
 
 		if restart {
 			if err := m.fullSync(); err != nil {
-				if m.conn != nil {
-					//if conn == nil, other close the replication, not error
-					log.Error("restart fullsync error %s", err.Error())
-				}
+				log.Error("restart fullsync error %s", err.Error())
 				return
 			}
 		}
 
 		for {
-			if err := m.sync(); err != nil {
-				if m.conn != nil {
-					//if conn == nil, other close the replication, not error
-					log.Error("sync error %s", err.Error())
-				}
-				return
-			}
-
 			select {
 			case <-m.quit:
 				return
 			default:
-				break
+				if err := m.sync(); err != nil {
+					log.Error("sync error %s", err.Error())
+					return
+				}
 			}
 		}
 	}
@@ -266,7 +264,7 @@ func (app *App) slaveof(masterAddr string, restart bool, readonly bool) error {
 
 	//in master mode and no slaveof, only set readonly
 	if len(app.cfg.SlaveOf) == 0 && len(masterAddr) == 0 {
-		app.cfg.Readonly = readonly
+		app.cfg.SetReadonly(readonly)
 		return nil
 	}
 
@@ -281,7 +279,7 @@ func (app *App) slaveof(masterAddr string, restart bool, readonly bool) error {
 			return err
 		}
 
-		app.cfg.Readonly = readonly
+		app.cfg.SetReadonly(readonly)
 	} else {
 		return app.m.startReplication(masterAddr, restart)
 	}
@@ -323,7 +321,7 @@ func (app *App) removeSlave(c *client, activeQuit bool) {
 		delete(app.slaves, addr)
 		log.Info("remove slave %s", addr)
 		if activeQuit {
-			asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
+			asyncNotifyUint64(app.slaveSyncAck, c.lastLogID.Get())
 		}
 	}
 }
@@ -339,7 +337,7 @@ func (app *App) slaveAck(c *client) {
 		return
 	}
 
-	asyncNotifyUint64(app.slaveSyncAck, c.lastLogID)
+	asyncNotifyUint64(app.slaveSyncAck, c.lastLogID.Get())
 }
 
 func asyncNotifyUint64(ch chan uint64, v uint64) {
@@ -369,11 +367,12 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	n := 0
 	logId := l.ID
 	for _, s := range app.slaves {
-		if s.lastLogID == logId {
+		lastLogID := s.lastLogID.Get()
+		if lastLogID == logId {
 			//slave has already owned this log
 			n++
-		} else if s.lastLogID > logId {
-			log.Error("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, s.lastLogID, logId)
+		} else if lastLogID > logId {
+			log.Error("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, lastLogID, logId)
 		}
 	}
 

@@ -82,8 +82,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 		l.dbs[i] = l.newDB(i)
 	}
 
-	l.wg.Add(1)
-	go l.checkTTL()
+	l.checkTTL()
 
 	return l, nil
 }
@@ -96,12 +95,12 @@ func (l *Ledis) Close() {
 
 	if l.r != nil {
 		l.r.Close()
-		l.r = nil
+		//l.r = nil
 	}
 
 	if l.lock != nil {
 		l.lock.Close()
-		l.lock = nil
+		//l.lock = nil
 	}
 }
 
@@ -157,7 +156,7 @@ func (l *Ledis) flushAll() error {
 }
 
 func (l *Ledis) IsReadOnly() bool {
-	if l.cfg.Readonly {
+	if l.cfg.GetReadonly() {
 		return true
 	} else if l.r != nil {
 		if b, _ := l.r.CommitIDBehind(); b {
@@ -168,8 +167,6 @@ func (l *Ledis) IsReadOnly() bool {
 }
 
 func (l *Ledis) checkTTL() {
-	defer l.wg.Done()
-
 	for i, db := range l.dbs {
 		c := newTTLChecker(db)
 
@@ -187,23 +184,29 @@ func (l *Ledis) checkTTL() {
 		l.cfg.TTLCheckInterval = 1
 	}
 
-	tick := time.NewTicker(time.Duration(l.cfg.TTLCheckInterval) * time.Second)
-	defer tick.Stop()
+	l.wg.Add(1)
+	go func() {
+		defer l.wg.Done()
 
-	for {
-		select {
-		case <-tick.C:
-			if l.IsReadOnly() {
-				break
-			}
+		tick := time.NewTicker(time.Duration(l.cfg.TTLCheckInterval) * time.Second)
+		defer tick.Stop()
 
-			for _, c := range l.tcs {
-				c.check()
+		for {
+			select {
+			case <-tick.C:
+				if l.IsReadOnly() {
+					break
+				}
+
+				for _, c := range l.tcs {
+					c.check()
+				}
+			case <-l.quit:
+				return
 			}
-		case <-l.quit:
-			return
 		}
-	}
+
+	}()
 
 }
 

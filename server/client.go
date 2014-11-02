@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"fmt"
+	"github.com/siddontang/go/sync2"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"time"
@@ -62,7 +63,7 @@ type client struct {
 
 	syncBuf bytes.Buffer
 
-	lastLogID uint64
+	lastLogID sync2.AtomicUint64
 
 	// reqErr chan error
 

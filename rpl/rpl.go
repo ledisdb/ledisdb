@@ -32,6 +32,8 @@ type Replication struct {
 	wg sync.WaitGroup
 
 	nc chan struct{}
+
+	ncm sync.Mutex
 }
 
 func NewReplication(cfg *config.Config) (*Replication, error) {
@@ -63,6 +65,7 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 		return nil, err
 	}
 
+	r.wg.Add(1)
 	go r.onPurgeExpired()
 
 	return r, nil
@@ -72,6 +75,9 @@ func (r *Replication) Close() error {
 	close(r.quit)
 
 	r.wg.Wait()
+
+	r.m.Lock()
+	defer r.m.Unlock()
 
 	if r.s != nil {
 		r.s.Close()
@@ -124,14 +130,19 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 		return nil, err
 	}
 
+	r.ncm.Lock()
 	close(r.nc)
 	r.nc = make(chan struct{})
+	r.ncm.Unlock()
 
 	return l, nil
 }
 
 func (r *Replication) WaitLog() <-chan struct{} {
-	return r.nc
+	r.ncm.Lock()
+	ch := r.nc
+	r.ncm.Unlock()
+	return ch
 }
 
 func (r *Replication) StoreLog(log *Log) error {
@@ -251,7 +262,6 @@ func (r *Replication) ClearWithCommitID(id uint64) error {
 }
 
 func (r *Replication) onPurgeExpired() {
-	r.wg.Add(1)
 	defer r.wg.Done()
 
 	for {
