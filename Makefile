@@ -24,6 +24,3 @@ test:
 
 test_race:
 	$(GO) test -race -tags '$(GO_BUILD_TAGS)' ./...
-
-pytest:
-	sh client/ledis-py/tests/all.sh
