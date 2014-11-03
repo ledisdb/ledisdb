@@ -22,20 +22,18 @@ const (
 
 /*
 	File Store:
-	0000001.data
-	0000001.meta
-	0000002.data
-	0000002.meta
+	00000001.log
+	00000002.log
 
-	data: log1 data | log2 data | magic data
-	meta: log1 pos in data | log2 pos in data
+	log: log1 data | log2 data | split data | log1 offset | log 2 offset | offset start pos | offset length | magic data
 
-	log id can not be 0, we use here for magic log
+	log id can not be 0, we use here for split data
 	if data has no magic data, it means that we don't close replication gracefully.
 	so we must repair the log data
-	magic data = log0 data
-
-	we use table to mangage data + meta pair
+	split data = log0 data
+	log0: id 0, create time 0, compression 0, data ""
+	//sha1 of github.com/siddontang/ledisdb 20 bytes
+	magic data = "\x1c\x1d\xb8\x88\xff\x9e\x45\x55\x40\xf0\x4c\xda\xe0\xce\x47\xde\x65\x48\x71\x17"
 
 	we must guarantee that the log id is monotonic increment strictly.
 	if log1's id is 1, log2 must be 2
