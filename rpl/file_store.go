@@ -30,7 +30,15 @@ const (
 	data: log1 data | log2 data | magic data
 	meta: log1 pos in data | log2 pos in data
 
+	log id can not be 0, we use here for magic log
+	if data has no magic data, it means that we don't close replication gracefully.
+	so we must repair the log data
+	magic data = log0 data
+
 	we use table to mangage data + meta pair
+
+	we must guarantee that the log id is monotonic increment strictly.
+	if log1's id is 1, log2 must be 2
 */
 
 type FileStore struct {
