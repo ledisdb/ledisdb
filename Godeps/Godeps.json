@@ -15,6 +15,10 @@
 			"Rev": "8fb50d5ee57110936b904a7539d4c5f2bf2359db"
 		},
 		{
+			"ImportPath": "github.com/edsrzf/mmap-go",
+			"Rev": "6c75090c55983bef2e129e173681b20d24871ef8"
+		},
+		{
 			"ImportPath": "github.com/siddontang/go/arena",
 			"Rev": "ecf49fc0738105e87d20e29aa82c403b666ff0b4"
 		},
