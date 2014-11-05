@@ -18,20 +18,29 @@ const (
 
 	//why 4G, we can use uint32 as offset, reduce memory useage
 	maxLogFileSize = uint32(4*1024*1024*1024 - 1)
+
+	maxLogNumInFile = uint64(10000000)
 )
 
 /*
 	File Store:
-	00000001.log
-	00000002.log
+	00000001.ldb
+	00000002.ldb
 
 	log: log1 data | log2 data | split data | log1 offset | log 2 offset | offset start pos | offset length | magic data
 
 	log id can not be 0, we use here for split data
 	if data has no magic data, it means that we don't close replication gracefully.
 	so we must repair the log data
+	log data: id (bigendian uint64), create time (bigendian uint32), compression (byte), data len(bigendian uint32), data
 	split data = log0 data
-	log0: id 0, create time 0, compression 0, data ""
+	log0: id 0, create time 0, compression 0, data len 0, data ""
+
+	log offset: bigendian uint32 | bigendian uint32
+
+	offset start pos: bigendian uint64
+	offset length: bigendian uint32
+
 	//sha1 of github.com/siddontang/ledisdb 20 bytes
 	magic data = "\x1c\x1d\xb8\x88\xff\x9e\x45\x55\x40\xf0\x4c\xda\xe0\xce\x47\xde\x65\x48\x71\x17"
 
