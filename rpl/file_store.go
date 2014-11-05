@@ -5,6 +5,8 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/ioutil2"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
+
 	"io/ioutil"
 	"os"
 	"path"
@@ -14,10 +16,10 @@ import (
 )
 
 const (
-	defaultMaxLogFileSize = uint32(1024 * 1024 * 1024)
+	defaultMaxLogFileSize = int64(1024 * 1024 * 1024)
 
 	//why 4G, we can use uint32 as offset, reduce memory useage
-	maxLogFileSize = uint32(4*1024*1024*1024 - 1)
+	maxLogFileSize = int64(uint32(4*1024*1024*1024 - 1))
 
 	maxLogNumInFile = uint64(10000000)
 )
@@ -53,7 +55,7 @@ type FileStore struct {
 
 	m sync.Mutex
 
-	maxFileSize uint32
+	maxFileSize int64
 
 	first uint64
 	last  uint64
@@ -90,8 +92,8 @@ func NewFileStore(path string) (*FileStore, error) {
 	return s, nil
 }
 
-func (s *FileStore) SetMaxFileSize(size uint32) {
-	s.maxFileSize = size
+func (s *FileStore) SetMaxFileSize(size int64) {
+	s.maxFileSize = num.MinInt64(maxLogFileSize, size)
 }
 
 func (s *FileStore) GetLog(id uint64, log *Log) error {

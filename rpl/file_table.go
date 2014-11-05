@@ -177,8 +177,57 @@ func (t *tableReader) check() error {
 func (t *tableReader) repair() error {
 	t.close()
 
-	//todo later
-	return fmt.Errorf("repair not supported now")
+	var err error
+	if t.f, err = os.Open(t.name); err != nil {
+		return err
+	}
+
+	defer t.close()
+
+	tw := newTableWriter(path.Base(t.name), t.index, maxLogFileSize)
+	tw.name = tw.name + ".tmp"
+	os.Remove(tw.name)
+
+	defer func() {
+		tw.Close()
+		os.Remove(tw.name)
+	}()
+
+	var l Log
+
+	for {
+		if err := l.Decode(t.f); err != nil {
+			return err
+		}
+
+		if l.ID == 0 {
+			break
+		}
+
+		if err := tw.StoreLog(&l); err != nil {
+			return err
+		}
+	}
+
+	t.close()
+
+	var tr *tableReader
+	if tr, err = tw.Flush(); err != nil {
+		return err
+	}
+
+	t.first = tr.first
+	t.last = tr.last
+	t.offsetStartPos = tr.offsetStartPos
+	t.offsetLen = tr.offsetLen
+
+	os.Remove(t.name)
+
+	if err := os.Rename(tw.name, t.name); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (t *tableReader) decodeLogHead(l *Log, pos int64) (int64, error) {
@@ -264,7 +313,7 @@ type tableWriter struct {
 	maxLogSize int64
 }
 
-func newTableWriter(base string, index int64, maxLogSize int64) (*tableWriter, error) {
+func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
 	t := new(tableWriter)
 
 	t.base = base
@@ -273,7 +322,7 @@ func newTableWriter(base string, index int64, maxLogSize int64) (*tableWriter, e
 
 	t.maxLogSize = maxLogSize
 
-	return t, nil
+	return t
 }
 
 func (t *tableWriter) close() {
@@ -370,6 +419,10 @@ func (t *tableWriter) StoreLog(l *Log) error {
 	t.Lock()
 	defer t.Unlock()
 
+	if t.frozen {
+		return errTableFrozen
+	}
+
 	if t.last > 0 && l.ID != t.last+1 {
 		return ErrStoreLogID
 	}
@@ -415,6 +468,10 @@ func (t *tableWriter) StoreLog(l *Log) error {
 func (t *tableWriter) GetLog(id uint64, l *Log) error {
 	t.RLock()
 	defer t.RUnlock()
+
+	if t.frozen {
+		return errTableFrozen
+	}
 
 	if id < t.first && id > t.last {
 		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)
