@@ -131,6 +131,7 @@ func (db *DB) initOptions(cfg *config.RocksDBConfig) {
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 	opts.SetMaxBackgroundCompactions(cfg.MaxBackgroundCompactions)
 	opts.SetMaxBackgroundFlushes(cfg.MaxBackgroundFlushes)
+	opts.SetLevel0FileNumCompactionTrigger(cfg.Level0FileNumCompactionTrigger)
 	opts.SetLevel0SlowdownWritesTrigger(cfg.Level0SlowdownWritesTrigger)
 	opts.SetLevel0StopWritesTrigger(cfg.Level0StopWritesTrigger)
 	opts.SetTargetFileSizeBase(cfg.TargetFileSizeBase)
