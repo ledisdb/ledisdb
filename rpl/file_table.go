@@ -136,7 +136,7 @@ func (t *tableReader) check() error {
 		return fmt.Errorf("invalid magic data %q", b)
 	}
 
-	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
+	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.COPY, 0, t.offsetStartPos); err != nil {
 		return err
 	}
 
@@ -268,11 +268,11 @@ func (t *tableReader) GetLog(id uint64, l *Log) error {
 	pos := binary.BigEndian.Uint32(t.m[(id-t.first)*4:])
 
 	if _, err := t.f.Seek(int64(pos), os.SEEK_SET); err != nil {
-		return fmt.Errorf("seek error %s", err.Error())
+		return err
 	}
 
 	if err := l.Decode(t.f); err != nil {
-		return fmt.Errorf("decode log err :%s", err.Error())
+		return err
 	} else if l.ID != id {
 		return fmt.Errorf("invalid log id %d != %d", l.ID, id)
 	}
@@ -289,14 +289,8 @@ func (t *tableReader) openTable() error {
 	}
 
 	if t.m == nil {
-		if t.f == nil {
-			return fmt.Errorf("invalid fd")
-		}
-
-		t.f.Seek(0, os.SEEK_SET)
-
-		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
-			return fmt.Errorf("mmap %s error %s, %d, %d", t.name, err.Error(), t.offsetLen, t.offsetStartPos)
+		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.COPY, 0, t.offsetStartPos); err != nil {
+			return fmt.Errorf("mmap %s error %s", t.name, err.Error())
 		}
 	}
 
