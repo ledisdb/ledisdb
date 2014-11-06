@@ -18,7 +18,7 @@ import (
 
 var (
 	magic             = []byte("\x1c\x1d\xb8\x88\xff\x9e\x45\x55\x40\xf0\x4c\xda\xe0\xce\x47\xde\x65\x48\x71\x17")
-	log0Data          = []byte("00000000000000000")
+	log0Data          = make([]byte, 17)
 	errTableNeedFlush = errors.New("write table need flush")
 	errTableFrozen    = errors.New("write table is frozen")
 )
@@ -26,7 +26,7 @@ var (
 const tableReaderKeepaliveInterval int64 = 30
 
 func fmtTableName(index int64) string {
-	return fmt.Sprintf("%08d", index)
+	return fmt.Sprintf("%08d.ldb", index)
 }
 
 type tableReader struct {
@@ -184,13 +184,15 @@ func (t *tableReader) repair() error {
 
 	defer t.close()
 
-	tw := newTableWriter(path.Base(t.name), t.index, maxLogFileSize)
-	tw.name = tw.name + ".tmp"
-	os.Remove(tw.name)
+	tw := newTableWriter(path.Dir(t.name), t.index, maxLogFileSize)
+
+	tmpName := tw.name + ".tmp"
+	tw.name = tmpName
+	os.Remove(tmpName)
 
 	defer func() {
 		tw.Close()
-		os.Remove(tw.name)
+		os.Remove(tmpName)
 	}()
 
 	var l Log
@@ -221,9 +223,11 @@ func (t *tableReader) repair() error {
 	t.offsetStartPos = tr.offsetStartPos
 	t.offsetLen = tr.offsetLen
 
+	defer tr.Close()
+
 	os.Remove(t.name)
 
-	if err := os.Rename(tw.name, t.name); err != nil {
+	if err := os.Rename(tmpName, t.name); err != nil {
 		return err
 	}
 
@@ -244,7 +248,7 @@ func (t *tableReader) decodeLogHead(l *Log, pos int64) (int64, error) {
 	return pos + int64(l.HeadSize()) + int64(dataLen), nil
 }
 
-func (t *tableReader) ReadLog(id uint64, l *Log) error {
+func (t *tableReader) GetLog(id uint64, l *Log) error {
 	if id < t.first || id > t.last {
 		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)
 	}
@@ -373,7 +377,7 @@ func (t *tableWriter) Flush() (*tableReader, error) {
 	st, _ := t.wf.Stat()
 
 	tr.offsetStartPos = st.Size() + int64(len(log0Data))
-	tr.offsetLen = uint32(len(t.offsetBuf) / 4)
+	tr.offsetLen = uint32(len(t.offsetBuf))
 
 	tr.first = t.first
 	tr.last = t.last
@@ -416,12 +420,12 @@ func (t *tableWriter) Flush() (*tableReader, error) {
 }
 
 func (t *tableWriter) StoreLog(l *Log) error {
+	if l.ID == 0 {
+		return ErrStoreLogID
+	}
+
 	t.Lock()
 	defer t.Unlock()
-
-	if t.frozen {
-		return errTableFrozen
-	}
 
 	if t.last > 0 && l.ID != t.last+1 {
 		return ErrStoreLogID
@@ -433,7 +437,7 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	var err error
 	if t.wf == nil {
-		if t.wf, err = os.OpenFile(t.name, os.O_CREATE|os.O_APPEND, 0644); err != nil {
+		if t.wf, err = os.OpenFile(t.name, os.O_CREATE|os.O_WRONLY, 0644); err != nil {
 			return err
 		}
 	}
@@ -473,7 +477,7 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 		return errTableFrozen
 	}
 
-	if id < t.first && id > t.last {
+	if id < t.first || id > t.last {
 		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)
 	}
 
