@@ -268,11 +268,11 @@ func (t *tableReader) GetLog(id uint64, l *Log) error {
 	pos := binary.BigEndian.Uint32(t.m[(id-t.first)*4:])
 
 	if _, err := t.f.Seek(int64(pos), os.SEEK_SET); err != nil {
-		return err
+		return fmt.Errorf("seek error %s", err.Error())
 	}
 
 	if err := l.Decode(t.f); err != nil {
-		return err
+		return fmt.Errorf("decode log err :%s", err.Error())
 	} else if l.ID != id {
 		return fmt.Errorf("invalid log id %d != %d", l.ID, id)
 	}
@@ -284,13 +284,13 @@ func (t *tableReader) openTable() error {
 	var err error
 	if t.f == nil {
 		if t.f, err = os.Open(t.name); err != nil {
-			return err
+			return fmt.Errorf("open %s error %s", t.name, err.Error())
 		}
 	}
 
 	if t.m == nil {
 		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
-			return err
+			return fmt.Errorf("mmap %s error %s", t.name, err.Error())
 		}
 	}
 
