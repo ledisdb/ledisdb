@@ -41,27 +41,26 @@ type tableReader struct {
 	first uint64
 	last  uint64
 
+	lastTime uint32
+
 	offsetStartPos int64
 	offsetLen      uint32
 
 	lastReadTime sync2.AtomicInt64
 }
 
-func newTableReader(name string) (*tableReader, error) {
+func newTableReader(base string, index int64) (*tableReader, error) {
 	t := new(tableReader)
-	t.name = name
+	t.name = path.Join(base, fmtTableName(index))
+	t.index = index
 
 	var err error
 
-	if _, err = fmt.Sscanf(path.Base(name), "%d.ldb", &t.index); err != nil {
-		return nil, err
-	}
-
 	if err = t.check(); err != nil {
-		log.Error("check %s error: %s, try to repair", name, err.Error())
+		log.Error("check %s error: %s, try to repair", t.name, err.Error())
 
 		if err = t.repair(); err != nil {
-			log.Error("repair %s error: %s", name, err.Error())
+			log.Error("repair %s error: %s", t.name, err.Error())
 			return nil, err
 		}
 	}
@@ -164,6 +163,7 @@ func (t *tableReader) check() error {
 	}
 
 	t.last = l.ID
+	t.lastTime = l.CreateTime
 
 	if t.first > t.last {
 		return fmt.Errorf("invalid log table first %d > last %d", t.first, t.last)
@@ -205,6 +205,8 @@ func (t *tableReader) repair() error {
 		if l.ID == 0 {
 			break
 		}
+
+		t.lastTime = l.CreateTime
 
 		if err := tw.StoreLog(&l); err != nil {
 			return err

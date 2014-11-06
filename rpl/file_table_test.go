@@ -4,6 +4,7 @@ import (
 	"github.com/siddontang/go/log"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 )
@@ -80,6 +81,7 @@ func TestFileTable(t *testing.T) {
 	}
 
 	var r *tableReader
+
 	name := w.name
 
 	if r, err = w.Flush(); err != nil {
@@ -111,7 +113,7 @@ func TestFileTable(t *testing.T) {
 
 	r.Close()
 
-	if r, err = newTableReader(name); err != nil {
+	if r, err = newTableReader(base, 1); err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
@@ -135,20 +137,18 @@ func TestFileTable(t *testing.T) {
 
 	r.Close()
 
-	testRepair(t, name, s, 11)
-	testRepair(t, name, s, 32)
-	testRepair(t, name, s, 42)
-	testRepair(t, name, s, 72)
+	testRepair(t, name, 1, s, 11)
+	testRepair(t, name, 1, s, 32)
+	testRepair(t, name, 1, s, 42)
+	testRepair(t, name, 1, s, 72)
 
 	if err := os.Truncate(name, s-73); err != nil {
 		t.Fatal(err)
 	}
 
-	if r, err = newTableReader(name); err == nil {
+	if r, err = newTableReader(base, 1); err == nil {
 		t.Fatal("can not repair")
 	}
-
-	name = w.name
 
 	if r, err := w.Flush(); err != nil {
 		t.Fatal(err)
@@ -156,13 +156,13 @@ func TestFileTable(t *testing.T) {
 		r.Close()
 	}
 
-	if r, err = newTableReader(name); err != nil {
+	if r, err = newTableReader(base, 2); err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
 }
 
-func testRepair(t *testing.T, name string, s int64, cutSize int64) {
+func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) {
 	var r *tableReader
 	var err error
 
@@ -170,7 +170,7 @@ func testRepair(t *testing.T, name string, s int64, cutSize int64) {
 		t.Fatal(err)
 	}
 
-	if r, err = newTableReader(name); err != nil {
+	if r, err = newTableReader(path.Dir(name), index); err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
