@@ -10,8 +10,6 @@ import (
 )
 
 func TestFileTable(t *testing.T) {
-	log.SetLevel(log.LevelFatal)
-
 	base, err := ioutil.TempDir("", "test_table")
 	if err != nil {
 		t.Fatal(err)
@@ -136,6 +134,8 @@ func TestFileTable(t *testing.T) {
 	s := st.Size()
 
 	r.Close()
+
+	log.SetLevel(log.LevelFatal)
 
 	testRepair(t, name, 1, s, 11)
 	testRepair(t, name, 1, s, 32)

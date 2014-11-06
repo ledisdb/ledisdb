@@ -136,7 +136,7 @@ func (t *tableReader) check() error {
 		return fmt.Errorf("invalid magic data %q", b)
 	}
 
-	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.COPY, 0, t.offsetStartPos); err != nil {
+	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
 		return err
 	}
 
@@ -289,7 +289,7 @@ func (t *tableReader) openTable() error {
 	}
 
 	if t.m == nil {
-		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.COPY, 0, t.offsetStartPos); err != nil {
+		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
 			return fmt.Errorf("mmap %s error %s", t.name, err.Error())
 		}
 	}
