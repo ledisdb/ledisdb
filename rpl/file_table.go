@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/edsrzf/mmap-go"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/go/sync2"
@@ -13,6 +12,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -36,7 +36,7 @@ type tableReader struct {
 	index int64
 
 	f *os.File
-	m mmap.MMap
+	m []byte
 
 	first uint64
 	last  uint64
@@ -79,7 +79,7 @@ func (t *tableReader) Close() {
 
 func (t *tableReader) close() {
 	if t.m != nil {
-		t.m.Unmap()
+		syscall.Munmap(t.m)
 		t.m = nil
 	}
 
@@ -136,7 +136,7 @@ func (t *tableReader) check() error {
 		return fmt.Errorf("invalid magic data %q", b)
 	}
 
-	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
+	if t.m, err = syscall.Mmap(int(t.f.Fd()), t.offsetStartPos, int(t.offsetLen), syscall.PROT_READ, syscall.MAP_PRIVATE); err != nil {
 		return err
 	}
 
@@ -289,8 +289,8 @@ func (t *tableReader) openTable() error {
 	}
 
 	if t.m == nil {
-		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
-			return fmt.Errorf("mmap %s error %s", t.name, err.Error())
+		if t.m, err = syscall.Mmap(int(t.f.Fd()), t.offsetStartPos, int(t.offsetLen), syscall.PROT_READ, syscall.MAP_PRIVATE); err != nil {
+			return err
 		}
 	}
 
