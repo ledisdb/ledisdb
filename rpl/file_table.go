@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/edsrzf/mmap-go"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/go/sync2"
@@ -42,7 +43,9 @@ type tableReader struct {
 	name  string
 	index int64
 
-	f  *os.File
+	f *os.File
+	m mmap.MMap
+
 	pf *os.File
 
 	first uint64
@@ -85,9 +88,9 @@ func (t *tableReader) Close() {
 }
 
 func (t *tableReader) close() {
-	if t.pf != nil {
-		t.pf.Close()
-		t.pf = nil
+	if t.m != nil {
+		t.m.Unmap()
+		t.m = nil
 	}
 
 	if t.f != nil {
@@ -106,15 +109,17 @@ func (t *tableReader) Keepalived() bool {
 }
 
 func (t *tableReader) getLogPos(index int) (uint32, error) {
-	if _, err := t.pf.Seek(t.offsetStartPos+int64(index*4), os.SEEK_SET); err != nil {
-		return 0, err
-	}
+	// if _, err := t.pf.Seek(t.offsetStartPos+int64(index*4), os.SEEK_SET); err != nil {
+	// 	return 0, err
+	// }
 
-	var pos uint32
-	if err := binary.Read(t.pf, binary.BigEndian, &pos); err != nil {
-		return 0, err
-	}
-	return pos, nil
+	// var pos uint32
+	// if err := binary.Read(t.pf, binary.BigEndian, &pos); err != nil {
+	// 	return 0, err
+	// }
+	// return pos, nil
+
+	return binary.BigEndian.Uint32(t.m[index*4:]), nil
 }
 
 func (t *tableReader) check() error {
@@ -162,7 +167,7 @@ func (t *tableReader) check() error {
 		return fmt.Errorf("invalid magic data %q", b)
 	}
 
-	if t.pf, err = os.Open(t.name); err != nil {
+	if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
 		return err
 	}
 
@@ -325,8 +330,8 @@ func (t *tableReader) openTable() error {
 		}
 	}
 
-	if t.pf == nil {
-		if t.pf, err = os.Open(t.name); err != nil {
+	if t.m == nil {
+		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
 			return err
 		}
 	}
