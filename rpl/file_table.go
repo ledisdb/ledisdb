@@ -22,7 +22,6 @@ var (
 	log0              = Log{0, 1, 1, []byte("ledisdb")}
 	log0Data          = []byte{}
 	errTableNeedFlush = errors.New("write table need flush")
-	errTableFrozen    = errors.New("write table is frozen")
 	pageSize          = int64(4096)
 )
 
@@ -60,6 +59,9 @@ type tableReader struct {
 }
 
 func newTableReader(base string, index int64) (*tableReader, error) {
+	if index <= 0 {
+		return nil, fmt.Errorf("invalid index %d", index)
+	}
 	t := new(tableReader)
 	t.name = path.Join(base, fmtTableName(index))
 	t.index = index
@@ -356,12 +358,14 @@ type tableWriter struct {
 
 	offsetBuf []byte
 
-	frozen bool
-
 	maxLogSize int64
 }
 
 func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
+	if index <= 0 {
+		panic(fmt.Errorf("invalid index %d", index))
+	}
+
 	t := new(tableWriter)
 
 	t.base = base
@@ -392,6 +396,20 @@ func (t *tableWriter) Close() {
 	t.close()
 }
 
+func (t *tableWriter) First() uint64 {
+	t.Lock()
+	id := t.first
+	t.Unlock()
+	return id
+}
+
+func (t *tableWriter) Last() uint64 {
+	t.Lock()
+	id := t.last
+	t.Unlock()
+	return id
+}
+
 func (t *tableWriter) reset() {
 	t.close()
 
@@ -405,8 +423,6 @@ func (t *tableWriter) reset() {
 func (t *tableWriter) Flush() (*tableReader, error) {
 	t.Lock()
 	defer t.Unlock()
-
-	t.frozen = true
 
 	if t.wf == nil {
 		return nil, fmt.Errorf("nil write handler")
@@ -531,10 +547,6 @@ func (t *tableWriter) StoreLog(l *Log) error {
 func (t *tableWriter) GetLog(id uint64, l *Log) error {
 	t.RLock()
 	defer t.RUnlock()
-
-	if t.frozen {
-		return errTableFrozen
-	}
 
 	if id < t.first || id > t.last {
 		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)

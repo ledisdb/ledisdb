@@ -23,9 +23,6 @@ type LogStore interface {
 	// if log id is less than current last id, return error
 	StoreLog(log *Log) error
 
-	// Delete first n logs
-	Purge(n uint64) error
-
 	// Delete logs before n seconds
 	PurgeExpired(n int64) error
 

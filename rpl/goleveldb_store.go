@@ -118,42 +118,6 @@ func (s *GoLevelDBStore) StoreLog(log *Log) error {
 	return nil
 }
 
-func (s *GoLevelDBStore) Purge(n uint64) error {
-	s.m.Lock()
-	defer s.m.Unlock()
-
-	var first, last uint64
-	var err error
-
-	first, err = s.firstID()
-	if err != nil {
-		return err
-	}
-
-	last, err = s.lastID()
-	if err != nil {
-		return err
-	}
-
-	start := first
-	stop := num.MinUint64(last, first+n)
-
-	w := s.db.NewWriteBatch()
-	defer w.Rollback()
-
-	s.reset()
-
-	for i := start; i < stop; i++ {
-		w.Delete(num.Uint64ToBytes(i))
-	}
-
-	if err = w.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *GoLevelDBStore) PurgeExpired(n int64) error {
 	if n <= 0 {
 		return fmt.Errorf("invalid expired time %d", n)
@@ -192,6 +156,11 @@ func (s *GoLevelDBStore) PurgeExpired(n int64) error {
 	return nil
 }
 
+func (s *GoLevelDBStore) reset() {
+	s.first = InvalidLogID
+	s.last = InvalidLogID
+}
+
 func (s *GoLevelDBStore) Clear() error {
 	s.m.Lock()
 	defer s.m.Unlock()
@@ -204,11 +173,6 @@ func (s *GoLevelDBStore) Clear() error {
 	os.RemoveAll(s.cfg.DBPath)
 
 	return s.open()
-}
-
-func (s *GoLevelDBStore) reset() {
-	s.first = InvalidLogID
-	s.last = InvalidLogID
 }
 
 func (s *GoLevelDBStore) Close() error {
