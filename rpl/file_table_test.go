@@ -142,7 +142,7 @@ func TestFileTable(t *testing.T) {
 	testRepair(t, name, 1, s, 42)
 	testRepair(t, name, 1, s, 72)
 
-	if err := os.Truncate(name, s-73); err != nil {
+	if err := os.Truncate(name, s-(73+4096)); err != nil {
 		t.Fatal(err)
 	}
 

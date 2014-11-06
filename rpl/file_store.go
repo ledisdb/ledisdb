@@ -35,8 +35,8 @@ const (
 	if data has no magic data, it means that we don't close replication gracefully.
 	so we must repair the log data
 	log data: id (bigendian uint64), create time (bigendian uint32), compression (byte), data len(bigendian uint32), data
-	split data = log0 data
-	log0: id 0, create time 0, compression 0, data len 0, data ""
+	split data = log0 data + [padding 0] -> file % pagesize() == 0
+	log0: id 0, create time 0, compression 0, data len 7, data "ledisdb"
 
 	log offset: bigendian uint32 | bigendian uint32
 
