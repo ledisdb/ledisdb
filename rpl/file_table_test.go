@@ -70,16 +70,6 @@ func TestFileTable(t *testing.T) {
 		t.Fatal("must nil")
 	}
 
-	for i := 0; i < 10; i++ {
-		if err := w.GetLog(uint64(i+1), &ll); err != nil {
-			t.Fatal(err)
-		} else if len(ll.Data) != 4096 {
-			t.Fatal(len(ll.Data))
-		} else if ll.Data[0] != byte(i+1) {
-			t.Fatal(ll.Data[0])
-		}
-	}
-
 	var r *tableReader
 
 	name := w.name
@@ -106,6 +96,16 @@ func TestFileTable(t *testing.T) {
 	}
 
 	defer r.Close()
+
+	for i := 0; i < 10; i++ {
+		if err := r.GetLog(uint64(i+1), &ll); err != nil {
+			t.Fatal(err)
+		} else if len(ll.Data) != 4096 {
+			t.Fatal(len(ll.Data))
+		} else if ll.Data[0] != byte(i+1) {
+			t.Fatal(ll.Data[0])
+		}
+	}
 
 	if err := r.GetLog(12, &ll); err == nil {
 		t.Fatal("must nil")

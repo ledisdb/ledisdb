@@ -289,8 +289,14 @@ func (t *tableReader) openTable() error {
 	}
 
 	if t.m == nil {
+		if t.f == nil {
+			return fmt.Errorf("invalid fd")
+		}
+
+		t.f.Seek(0, os.SEEK_SET)
+
 		if t.m, err = mmap.MapRegion(t.f, int(t.offsetLen), mmap.RDONLY, 0, t.offsetStartPos); err != nil {
-			return fmt.Errorf("mmap %s error %s", t.name, err.Error())
+			return fmt.Errorf("mmap %s error %s, %d, %d", t.name, err.Error(), t.offsetLen, t.offsetStartPos)
 		}
 	}
 
