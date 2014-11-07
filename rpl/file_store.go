@@ -60,7 +60,7 @@ type FileStore struct {
 	w  *tableWriter
 }
 
-func NewFileStore(base string, maxSize int64) (*FileStore, error) {
+func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) {
 	s := new(FileStore)
 
 	var err error
@@ -72,6 +72,9 @@ func NewFileStore(base string, maxSize int64) (*FileStore, error) {
 	s.base = base
 
 	s.maxFileSize = num.MinInt64(maxLogFileSize, maxSize)
+	if s.maxFileSize == 0 {
+		s.maxFileSize = defaultMaxLogFileSize
+	}
 
 	if err = s.load(); err != nil {
 		return nil, err
@@ -83,29 +86,74 @@ func NewFileStore(base string, maxSize int64) (*FileStore, error) {
 	}
 
 	s.w = newTableWriter(s.base, index, s.maxFileSize)
+	s.w.SetSyncType(syncType)
+
 	return s, nil
 }
 
-func (s *FileStore) GetLog(id uint64, log *Log) error {
-	panic("not implementation")
-	return nil
+func (s *FileStore) GetLog(id uint64, l *Log) error {
+	//first search in table writer
+	if err := s.w.GetLog(id, l); err == nil {
+		return nil
+	} else if err != ErrLogNotFound {
+		return err
+	}
+
+	s.rm.RLock()
+	t := s.rs.Search(id)
+
+	if t == nil {
+		s.rm.RUnlock()
+
+		return ErrLogNotFound
+	}
+
+	err := t.GetLog(id, l)
+	s.rm.RUnlock()
+
+	return err
 }
 
 func (s *FileStore) FirstID() (uint64, error) {
-	return 0, nil
+	id := uint64(0)
+
+	s.rm.RLock()
+	if len(s.rs) > 0 {
+		id = s.rs[0].first
+	} else {
+		id = 0
+	}
+	s.rm.RUnlock()
+
+	if id > 0 {
+		return id, nil
+	}
+
+	//if id = 0,
+
+	return s.w.First(), nil
 }
 
 func (s *FileStore) LastID() (uint64, error) {
-	return 0, nil
+	id := s.w.Last()
+	if id > 0 {
+		return id, nil
+	}
+
+	//if table writer has no last id, we may find in the last table reader
+
+	s.rm.RLock()
+	if len(s.rs) > 0 {
+		id = s.rs[len(s.rs)-1].last
+	}
+	s.rm.RUnlock()
+
+	return id, nil
 }
 
 func (s *FileStore) StoreLog(l *Log) error {
 	s.wm.Lock()
 	defer s.wm.Unlock()
-
-	if s.w == nil {
-		return fmt.Errorf("nil table writer, cannot store")
-	}
 
 	err := s.w.StoreLog(l)
 	if err == nil {
@@ -114,39 +162,39 @@ func (s *FileStore) StoreLog(l *Log) error {
 		return err
 	}
 
+	s.rm.Lock()
+
 	var r *tableReader
 	if r, err = s.w.Flush(); err != nil {
 		log.Error("write table flush error %s, can not store now", err.Error())
 
 		s.w.Close()
-		s.w = nil
+
+		s.rm.Unlock()
+
 		return err
 	}
 
-	s.rm.Lock()
 	s.rs = append(s.rs, r)
 	s.rm.Unlock()
 
-	return nil
+	return s.w.StoreLog(l)
 }
 
 func (s *FileStore) PuregeExpired(n int64) error {
 	s.rm.Lock()
 
 	purges := []*tableReader{}
-	lefts := []*tableReader{}
 
 	t := uint32(time.Now().Unix() - int64(n))
 
-	for _, r := range s.rs {
-		if r.lastTime < t {
-			purges = append(purges, r)
-		} else {
-			lefts = append(lefts, r)
+	for i, r := range s.rs {
+		if r.lastTime > t {
+			purges = s.rs[0:i]
+			s.rs = s.rs[i:]
+			break
 		}
 	}
-
-	s.rs = lefts
 
 	s.rm.Unlock()
 
@@ -162,31 +210,53 @@ func (s *FileStore) PuregeExpired(n int64) error {
 }
 
 func (s *FileStore) Clear() error {
+	s.wm.Lock()
+	s.rm.Lock()
+
+	defer func() {
+		s.rm.Unlock()
+		s.wm.Unlock()
+	}()
+
+	s.w.Close()
+
+	for i := range s.rs {
+		s.rs[i].Close()
+	}
+
+	s.rs = tableReaders{}
+
+	if err := os.RemoveAll(s.base); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(s.base, 0755); err != nil {
+		return err
+	}
+
+	s.w = newTableWriter(s.base, 1, s.maxFileSize)
+
 	return nil
 }
 
 func (s *FileStore) Close() error {
 	s.wm.Lock()
-	if s.w != nil {
-		if r, err := s.w.Flush(); err != nil {
-			log.Error("close err: %s", err.Error())
-		} else {
-			r.Close()
-			s.w.Close()
-			s.w = nil
-		}
-	}
-
-	s.wm.Unlock()
-
 	s.rm.Lock()
+
+	if r, err := s.w.Flush(); err != nil {
+		log.Error("close err: %s", err.Error())
+	} else {
+		r.Close()
+		s.w.Close()
+	}
 
 	for i := range s.rs {
 		s.rs[i].Close()
 	}
-	s.rs = nil
+	s.rs = tableReaders{}
 
 	s.rm.Unlock()
+	s.wm.Unlock()
 
 	return nil
 }
@@ -227,19 +297,25 @@ func (ts tableReaders) Swap(i, j int) {
 }
 
 func (ts tableReaders) Less(i, j int) bool {
-	return ts[i].index < ts[j].index
+	return ts[i].first < ts[j].first
 }
 
 func (ts tableReaders) Search(id uint64) *tableReader {
-	n := sort.Search(len(ts), func(i int) bool {
-		return id >= ts[i].first && id <= ts[i].last
-	})
+	i, j := 0, len(ts)-1
 
-	if n < len(ts) {
-		return ts[n]
-	} else {
-		return nil
+	for i <= j {
+		h := i + (j-i)/2
+
+		if ts[h].first <= id && id <= ts[h].last {
+			return ts[h]
+		} else if ts[h].last < id {
+			i = h + 1
+		} else {
+			j = h - 1
+		}
 	}
+
+	return nil
 }
 
 func (ts tableReaders) check() error {
@@ -262,7 +338,7 @@ func (ts tableReaders) check() error {
 			return fmt.Errorf("invalid first log id %d in table %s", ts[i].first, ts[i].name)
 		}
 
-		if ts[i].index == index {
+		if ts[i].index <= index {
 			return fmt.Errorf("invalid index %d in table %s", ts[i].index, ts[i].name)
 		}
 

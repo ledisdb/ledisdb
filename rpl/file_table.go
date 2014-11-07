@@ -293,7 +293,7 @@ func (t *tableReader) decodeLogHead(l *Log, pos int64) (int64, error) {
 
 func (t *tableReader) GetLog(id uint64, l *Log) error {
 	if id < t.first || id > t.last {
-		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)
+		return ErrLogNotFound
 	}
 
 	t.lastReadTime.Set(time.Now().Unix())
@@ -359,6 +359,11 @@ type tableWriter struct {
 	offsetBuf []byte
 
 	maxLogSize int64
+
+	closed bool
+
+	syncType int
+	lastTime uint32
 }
 
 func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
@@ -374,7 +379,17 @@ func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
 
 	t.maxLogSize = maxLogSize
 
+	t.closed = false
+
 	return t
+}
+
+func (t *tableWriter) SetMaxLogSize(s int64) {
+	t.maxLogSize = s
+}
+
+func (t *tableWriter) SetSyncType(tp int) {
+	t.syncType = tp
 }
 
 func (t *tableWriter) close() {
@@ -392,6 +407,8 @@ func (t *tableWriter) close() {
 func (t *tableWriter) Close() {
 	t.Lock()
 	defer t.Unlock()
+
+	t.closed = true
 
 	t.close()
 }
@@ -502,6 +519,10 @@ func (t *tableWriter) StoreLog(l *Log) error {
 	t.Lock()
 	defer t.Unlock()
 
+	if t.closed {
+		return fmt.Errorf("table writer is closed")
+	}
+
 	if t.last > 0 && l.ID != t.last+1 {
 		return ErrStoreLogID
 	}
@@ -539,7 +560,15 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	t.last = l.ID
 
+	t.lastTime = l.CreateTime
+
 	//todo add LRU cache
+
+	if t.syncType == 2 || (t.syncType == 1 && time.Now().Unix()-int64(t.lastTime) > 1) {
+		if err := t.wf.Sync(); err != nil {
+			log.Error("sync table error %s", err.Error())
+		}
+	}
 
 	return nil
 }
@@ -549,7 +578,7 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 	defer t.RUnlock()
 
 	if id < t.first || id > t.last {
-		return fmt.Errorf("log %d not in [%d=%d]", id, t.first, t.last)
+		return ErrLogNotFound
 	}
 
 	//todo memory cache

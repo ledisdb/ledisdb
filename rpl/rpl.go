@@ -51,8 +51,16 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 	r.cfg = cfg
 
 	var err error
-	if r.s, err = NewGoLevelDBStore(path.Join(base, "wal"), cfg.Replication.SyncLog); err != nil {
-		return nil, err
+
+	switch cfg.Replication.StoreName {
+	case "goleveldb":
+		if r.s, err = NewGoLevelDBStore(path.Join(base, "wal"), cfg.Replication.SyncLog); err != nil {
+			return nil, err
+		}
+	default:
+		if r.s, err = NewFileStore(path.Join(base, "ldb"), cfg.Replication.MaxLogFileSize, cfg.Replication.SyncLog); err != nil {
+			return nil, err
+		}
 	}
 
 	if r.commitLog, err = os.OpenFile(path.Join(base, "commit.log"), os.O_RDWR|os.O_CREATE, 0644); err != nil {

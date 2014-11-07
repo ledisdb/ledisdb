@@ -74,6 +74,8 @@ type ReplicationConfig struct {
 	WaitSyncTime     int    `toml:"wait_sync_time"`
 	WaitMaxSlaveAcks int    `toml:"wait_max_slave_acks"`
 	ExpiredLogDays   int    `toml:"expired_log_days"`
+	StoreName        string `toml:"store_name"`
+	MaxLogFileSize   int64  `toml:"max_log_file_size"`
 	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
 }
