@@ -29,3 +29,7 @@ func (w *WriteBatch) Rollback() error {
 	w.wbatch.Reset()
 	return nil
 }
+
+func (w *WriteBatch) Data() []byte {
+	return w.wbatch.Dump()
+}

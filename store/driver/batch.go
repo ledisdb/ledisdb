@@ -1,5 +1,9 @@
 package driver
 
+import (
+	"github.com/siddontang/goleveldb/leveldb"
+)
+
 type BatchPuter interface {
 	BatchPut([]Write) error
 	SyncBatchPut([]Write) error
@@ -11,34 +15,48 @@ type Write struct {
 }
 
 type WriteBatch struct {
-	batch BatchPuter
-	wb    []Write
+	d *leveldb.Batch
+
+	wb []Write
+	w  BatchPuter
 }
 
-func (w *WriteBatch) Put(key, value []byte) {
-	if value == nil {
-		value = []byte{}
-	}
-	w.wb = append(w.wb, Write{key, value})
+func (wb *WriteBatch) Put(key, value []byte) {
+	wb.wb = append(wb.wb, Write{key, value})
 }
 
-func (w *WriteBatch) Delete(key []byte) {
-	w.wb = append(w.wb, Write{key, nil})
+func (wb *WriteBatch) Delete(key []byte) {
+	wb.wb = append(wb.wb, Write{key, nil})
 }
 
-func (w *WriteBatch) Commit() error {
-	return w.batch.BatchPut(w.wb)
+func (wb *WriteBatch) Commit() error {
+	return wb.w.BatchPut(wb.wb)
 }
 
-func (w *WriteBatch) SyncCommit() error {
-	return w.batch.SyncBatchPut(w.wb)
+func (wb *WriteBatch) SyncCommit() error {
+	return wb.w.SyncBatchPut(wb.wb)
 }
 
-func (w *WriteBatch) Rollback() error {
-	w.wb = w.wb[0:0]
+func (wb *WriteBatch) Rollback() error {
+	wb.wb = wb.wb[0:0]
 	return nil
 }
 
-func NewWriteBatch(puter BatchPuter) IWriteBatch {
-	return &WriteBatch{puter, []Write{}}
+func (wb *WriteBatch) Data() []byte {
+	wb.d.Reset()
+	for _, w := range wb.wb {
+		if w.Value == nil {
+			wb.Delete(w.Key)
+		} else {
+			wb.Put(w.Key, w.Value)
+		}
+	}
+	return wb.d.Dump()
+}
+
+func NewWriteBatch(puter BatchPuter) *WriteBatch {
+	return &WriteBatch{
+		&leveldb.Batch{},
+		[]Write{},
+		puter}
 }

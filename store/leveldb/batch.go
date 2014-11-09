@@ -63,3 +63,8 @@ func (w *WriteBatch) commit(wb *WriteOptions) error {
 	}
 	return nil
 }
+
+func (w *WriteBatch) Data() []byte {
+	//todo later
+	return nil
+}

@@ -56,7 +56,7 @@
 		},
 		{
 			"ImportPath": "github.com/siddontang/goleveldb/leveldb",
-			"Rev": "448b15792e63fe835c48d294f9b7859a86f4b76e"
+			"Rev": "41805642b981fb3d9462f6641bcb94b8609ca791"
 		},
 		{
 			"ImportPath": "github.com/szferi/gomdb",
