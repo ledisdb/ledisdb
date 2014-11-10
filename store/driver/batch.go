@@ -22,6 +22,9 @@ type WriteBatch struct {
 }
 
 func (wb *WriteBatch) Put(key, value []byte) {
+	if value == nil {
+		value = []byte{}
+	}
 	wb.wb = append(wb.wb, Write{key, value})
 }
 
@@ -46,9 +49,9 @@ func (wb *WriteBatch) Data() []byte {
 	wb.d.Reset()
 	for _, w := range wb.wb {
 		if w.Value == nil {
-			wb.Delete(w.Key)
+			wb.d.Delete(w.Key)
 		} else {
-			wb.Put(w.Key, w.Value)
+			wb.d.Put(w.Key, w.Value)
 		}
 	}
 	return wb.d.Dump()
