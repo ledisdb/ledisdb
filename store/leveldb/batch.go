@@ -4,19 +4,13 @@ package leveldb
 
 // #cgo LDFLAGS: -lleveldb
 // #include "leveldb/c.h"
+// #include "leveldb_ext.h"
 import "C"
 
 import (
 	"github.com/siddontang/goleveldb/leveldb"
 	"unsafe"
 )
-
-/*
-	It's not easy to let leveldb support Data() function like rocksdb,
-	so here, we will use goleveldb batch instead
-
-	later optimize
-*/
 
 type WriteBatch struct {
 	db     *DB
@@ -44,8 +38,6 @@ func (w *WriteBatch) Close() {
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
-	w.gbatch.Put(key, value)
-
 	var k, v *C.char
 	if len(key) != 0 {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
@@ -61,28 +53,20 @@ func (w *WriteBatch) Put(key, value []byte) {
 }
 
 func (w *WriteBatch) Delete(key []byte) {
-	w.gbatch.Delete(key)
-
 	C.leveldb_writebatch_delete(w.wbatch,
 		(*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
 
 func (w *WriteBatch) Commit() error {
-	w.gbatch.Reset()
-
 	return w.commit(w.db.writeOpts)
 }
 
 func (w *WriteBatch) SyncCommit() error {
-	w.gbatch.Reset()
-
 	return w.commit(w.db.syncOpts)
 }
 
 func (w *WriteBatch) Rollback() error {
 	C.leveldb_writebatch_clear(w.wbatch)
-
-	w.gbatch.Reset()
 
 	return nil
 }
@@ -96,6 +80,25 @@ func (w *WriteBatch) commit(wb *WriteOptions) error {
 	return nil
 }
 
+//export leveldb_writebatch_iterate_put
+func leveldb_writebatch_iterate_put(p unsafe.Pointer, k *C.char, klen C.size_t, v *C.char, vlen C.size_t) {
+	b := (*leveldb.Batch)(p)
+	key := slice(unsafe.Pointer(k), int(klen))
+	value := slice(unsafe.Pointer(v), int(vlen))
+	b.Put(key, value)
+}
+
+//export leveldb_writebatch_iterate_delete
+func leveldb_writebatch_iterate_delete(p unsafe.Pointer, k *C.char, klen C.size_t) {
+	b := (*leveldb.Batch)(p)
+	key := slice(unsafe.Pointer(k), int(klen))
+	b.Delete(key)
+}
+
 func (w *WriteBatch) Data() []byte {
-	return w.gbatch.Dump()
+	w.gbatch.Reset()
+	C.leveldb_writebatch_iterate_ext(w.wbatch,
+		unsafe.Pointer(w.gbatch))
+	b := w.gbatch.Dump()
+	return b
 }
