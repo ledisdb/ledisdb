@@ -352,10 +352,7 @@ func testBatchData(db *DB, t *testing.T) {
 	w.Put([]byte("b"), nil)
 	w.Delete([]byte("c"))
 
-	d, err := w.Data()
-	if err != nil {
-		t.Fatal(err)
-	}
+	d := w.BatchData()
 
 	if kvs, err := d.Items(); err != nil {
 		t.Fatal(err)

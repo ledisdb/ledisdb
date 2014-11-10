@@ -16,7 +16,7 @@ type Tx struct {
 
 	tx *store.Tx
 
-	eb *eventBatch
+	data *store.BatchData
 }
 
 func (db *DB) IsTransaction() bool {
@@ -32,7 +32,7 @@ func (db *DB) Begin() (*Tx, error) {
 
 	tx := new(Tx)
 
-	tx.eb = new(eventBatch)
+	tx.data = &store.BatchData{}
 
 	tx.DB = new(DB)
 	tx.DB.l = db.l
@@ -71,7 +71,8 @@ func (tx *Tx) Commit() error {
 		return ErrTxDone
 	}
 
-	err := tx.l.handleCommit(tx.eb, tx.tx)
+	err := tx.l.handleCommit(tx.data, tx.tx)
+	tx.data.Reset()
 
 	tx.tx = nil
 
@@ -88,7 +89,7 @@ func (tx *Tx) Rollback() error {
 	}
 
 	err := tx.tx.Rollback()
-	tx.eb.Reset()
+	tx.data.Reset()
 	tx.tx = nil
 
 	tx.l.wLock.Unlock()

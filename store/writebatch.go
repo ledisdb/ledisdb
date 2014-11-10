@@ -53,9 +53,21 @@ func (wb *WriteBatch) Rollback() error {
 	return wb.wb.Rollback()
 }
 
-func (wb *WriteBatch) Data() (*BatchData, error) {
+// the data will be undefined after commit or rollback
+func (wb *WriteBatch) BatchData() *BatchData {
 	data := wb.wb.Data()
-	return NewBatchData(data)
+	d, err := NewBatchData(data)
+	if err != nil {
+		//can not enter this
+		panic(err)
+	}
+
+	return d
+}
+
+func (wb *WriteBatch) Data() []byte {
+	b := wb.BatchData()
+	return b.Data()
 }
 
 const BatchDataHeadLen = 12
@@ -84,14 +96,18 @@ func (d *BatchData) Append(do *BatchData) error {
 
 	n := d.Len() + do.Len()
 
-	binary.LittleEndian.PutUint32(d1[8:], uint32(n))
 	d1 = append(d1, d2[BatchDataHeadLen:]...)
+	binary.LittleEndian.PutUint32(d1[8:], uint32(n))
 
 	return d.Load(d1)
 }
 
 func (d *BatchData) Data() []byte {
 	return d.Dump()
+}
+
+func (d *BatchData) Reset() {
+	d.Batch.Reset()
 }
 
 type BatchDataReplay interface {
