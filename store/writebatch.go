@@ -16,6 +16,10 @@ type WriteBatch struct {
 	db        *DB
 }
 
+func (wb *WriteBatch) Close() {
+	wb.wb.Close()
+}
+
 func (wb *WriteBatch) Put(key []byte, value []byte) {
 	wb.putNum++
 	wb.wb.Put(key, value)

@@ -14,6 +14,7 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
+	"runtime"
 	"unsafe"
 )
 
@@ -182,7 +183,13 @@ func (db *DB) SyncDelete(key []byte) error {
 }
 
 func (db *DB) NewWriteBatch() driver.IWriteBatch {
-	return newWriteBatch(db)
+	wb := newWriteBatch(db)
+
+	runtime.SetFinalizer(wb, func(w *WriteBatch) {
+		w.Close()
+	})
+
+	return wb
 }
 
 func (db *DB) NewIterator() driver.IIterator {

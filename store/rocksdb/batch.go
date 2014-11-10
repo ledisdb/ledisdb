@@ -17,10 +17,11 @@ type WriteBatch struct {
 	commitOk bool
 }
 
-func (w *WriteBatch) Close() error {
-	C.rocksdb_writebatch_destroy(w.wbatch)
-	w.wbatch = nil
-	return nil
+func (w *WriteBatch) Close() {
+	if w.wbatch != nil {
+		C.rocksdb_writebatch_destroy(w.wbatch)
+		w.wbatch = nil
+	}
 }
 
 func (w *WriteBatch) Put(key, value []byte) {

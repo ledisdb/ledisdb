@@ -21,6 +21,11 @@ type WriteBatch struct {
 	w  BatchPuter
 }
 
+func (wb *WriteBatch) Close() {
+	wb.d.Reset()
+	wb.wb = wb.wb[0:0]
+}
+
 func (wb *WriteBatch) Put(key, value []byte) {
 	if value == nil {
 		value = []byte{}

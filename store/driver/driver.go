@@ -59,6 +59,7 @@ type IWriteBatch interface {
 	SyncCommit() error
 	Rollback() error
 	Data() []byte
+	Close()
 }
 
 type Tx interface {
