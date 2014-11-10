@@ -57,6 +57,14 @@ func (o *Options) Close() {
 	C.rocksdb_options_destroy(o.Opt)
 }
 
+func (o *Options) IncreaseParallelism(n int) {
+	C.rocksdb_options_increase_parallelism(o.Opt, C.int(n))
+}
+
+func (o *Options) OptimizeLevelStyleCompaction(n int) {
+	C.rocksdb_options_optimize_level_style_compaction(o.Opt, C.uint64_t(n))
+}
+
 func (o *Options) SetComparator(cmp *C.rocksdb_comparator_t) {
 	C.rocksdb_options_set_comparator(o.Opt, cmp)
 }
