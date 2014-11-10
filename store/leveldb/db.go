@@ -182,12 +182,7 @@ func (db *DB) SyncDelete(key []byte) error {
 }
 
 func (db *DB) NewWriteBatch() driver.IWriteBatch {
-	wb := &WriteBatch{
-		db:     db,
-		wbatch: C.leveldb_writebatch_create(),
-	}
-
-	return wb
+	return newWriteBatch(db)
 }
 
 func (db *DB) NewIterator() driver.IIterator {
