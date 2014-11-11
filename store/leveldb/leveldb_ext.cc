@@ -84,5 +84,12 @@ unsigned char leveldb_iter_prev_ext(leveldb_iterator_t* iter) {
     return leveldb_iter_valid(iter);
 }
 
+extern void leveldb_writebatch_iterate_put(void*, const char* k, size_t klen, const char* v, size_t vlen);
+extern void leveldb_writebatch_iterate_delete(void*, const char* k, size_t klen);
+
+void leveldb_writebatch_iterate_ext(leveldb_writebatch_t* w, void *p) {
+    leveldb_writebatch_iterate(w, p, 
+        leveldb_writebatch_iterate_put, leveldb_writebatch_iterate_delete);
+}
 
 }

@@ -155,6 +155,11 @@ func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 
 	var key, value []byte
 
+	wb := l.ldb.NewWriteBatch()
+	defer wb.Close()
+
+	n := 0
+
 	for {
 		if err = binary.Read(rb, binary.BigEndian, &keyLen); err != nil && err != io.EOF {
 			return nil, err
@@ -182,12 +187,24 @@ func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 			return nil, err
 		}
 
-		if err = l.ldb.Put(key, value); err != nil {
-			return nil, err
+		wb.Put(key, value)
+		n++
+		if n%1024 == 0 {
+			if err = wb.Commit(); err != nil {
+				return nil, err
+			}
 		}
+
+		// if err = l.ldb.Put(key, value); err != nil {
+		// 	return nil, err
+		// }
 
 		keyBuf.Reset()
 		valueBuf.Reset()
+	}
+
+	if err = wb.Commit(); err != nil {
+		return nil, err
 	}
 
 	deKeyBuf = nil

@@ -15,6 +15,7 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
+	"runtime"
 	"unsafe"
 )
 
@@ -215,6 +216,10 @@ func (db *DB) NewWriteBatch() driver.IWriteBatch {
 		db:     db,
 		wbatch: C.rocksdb_writebatch_create(),
 	}
+
+	runtime.SetFinalizer(wb, func(w *WriteBatch) {
+		w.Close()
+	})
 
 	return wb
 }

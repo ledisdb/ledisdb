@@ -56,6 +56,8 @@ func (c *respClient) run() {
 	c.app.info.addClients(1)
 
 	defer func() {
+		c.client.close()
+
 		c.app.info.addClients(-1)
 
 		if e := recover(); e != nil {
@@ -82,32 +84,20 @@ func (c *respClient) run() {
 	}()
 
 	kc := time.Duration(c.app.cfg.ConnKeepaliveInterval) * time.Second
-	done := make(chan error)
 	for {
 		if kc > 0 {
 			c.conn.SetReadDeadline(time.Now().Add(kc))
 		}
 
-		// I still don't know why use goroutine can improve performance
-		// if someone knows and benchamrks with another different result without goroutine, please tell me
-		go func() {
-			reqData, err := c.readRequest()
-			if err == nil {
-				c.handleRequest(reqData)
-			}
+		reqData, err := c.readRequest()
+		if err == nil {
+			c.handleRequest(reqData)
+		}
 
-			done <- err
-		}()
-
-		// reqData, err := c.readRequest()
-		// if err == nil {
-		// 	c.handleRequest(reqData)
-		// }
-
-		err := <-done
 		if err != nil {
 			return
 		}
+
 		if c.conn == nil {
 			return
 		}

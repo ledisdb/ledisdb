@@ -24,8 +24,9 @@ type Replication struct {
 
 	s LogStore
 
-	commitID  uint64
-	commitLog *os.File
+	commitID       uint64
+	commitLog      *os.File
+	commitLastTime time.Time
 
 	quit chan struct{}
 
@@ -51,8 +52,16 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 	r.cfg = cfg
 
 	var err error
-	if r.s, err = NewGoLevelDBStore(path.Join(base, "wal"), cfg.Replication.SyncLog); err != nil {
-		return nil, err
+
+	switch cfg.Replication.StoreName {
+	case "goleveldb":
+		if r.s, err = NewGoLevelDBStore(path.Join(base, "wal"), cfg.Replication.SyncLog); err != nil {
+			return nil, err
+		}
+	default:
+		if r.s, err = NewFileStore(path.Join(base, "ldb"), cfg.Replication.MaxLogFileSize, cfg.Replication.SyncLog); err != nil {
+			return nil, err
+		}
 	}
 
 	if r.commitLog, err = os.OpenFile(path.Join(base, "commit.log"), os.O_RDWR|os.O_CREATE, 0644); err != nil {
@@ -82,6 +91,10 @@ func (r *Replication) Close() error {
 	if r.s != nil {
 		r.s.Close()
 		r.s = nil
+	}
+
+	if err := r.updateCommitID(r.commitID, true); err != nil {
+		log.Error("update commit id err %s", err.Error())
 	}
 
 	if r.commitLog != nil {
@@ -146,14 +159,10 @@ func (r *Replication) WaitLog() <-chan struct{} {
 }
 
 func (r *Replication) StoreLog(log *Log) error {
-	return r.StoreLogs([]*Log{log})
-}
-
-func (r *Replication) StoreLogs(logs []*Log) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	return r.s.StoreLogs(logs)
+	return r.s.StoreLog(log)
 }
 
 func (r *Replication) FirstLogID() (uint64, error) {
@@ -181,7 +190,7 @@ func (r *Replication) UpdateCommitID(id uint64) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	return r.updateCommitID(id)
+	return r.updateCommitID(id, r.cfg.Replication.SyncLog == 2)
 }
 
 func (r *Replication) Stat() (*Stat, error) {
@@ -203,16 +212,22 @@ func (r *Replication) Stat() (*Stat, error) {
 	return s, nil
 }
 
-func (r *Replication) updateCommitID(id uint64) error {
-	if _, err := r.commitLog.Seek(0, os.SEEK_SET); err != nil {
-		return err
-	}
+func (r *Replication) updateCommitID(id uint64, force bool) error {
+	n := time.Now()
 
-	if err := binary.Write(r.commitLog, binary.BigEndian, id); err != nil {
-		return err
+	if force || n.Sub(r.commitLastTime) > time.Second {
+		if _, err := r.commitLog.Seek(0, os.SEEK_SET); err != nil {
+			return err
+		}
+
+		if err := binary.Write(r.commitLog, binary.BigEndian, id); err != nil {
+			return err
+		}
 	}
 
 	r.commitID = id
+
+	r.commitLastTime = n
 
 	return nil
 }
@@ -262,7 +277,7 @@ func (r *Replication) ClearWithCommitID(id uint64) error {
 		return err
 	}
 
-	return r.updateCommitID(id)
+	return r.updateCommitID(id, true)
 }
 
 func (r *Replication) onPurgeExpired() {

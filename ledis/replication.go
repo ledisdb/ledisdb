@@ -6,6 +6,7 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/rpl"
+	"github.com/siddontang/ledisdb/store"
 	"io"
 	"time"
 )
@@ -49,7 +50,12 @@ func (l *Ledis) handleReplication() error {
 				}
 			}
 
-			decodeEventBatch(l.rbatch, rl.Data)
+			if bd, err := store.NewBatchData(rl.Data); err != nil {
+				log.Error("decode batch log error %s", err.Error())
+				return err
+			} else if err = bd.Replay(l.rbatch); err != nil {
+				log.Error("replay batch log error %s", err.Error())
+			}
 
 			l.commitLock.Lock()
 			if err = l.rbatch.Commit(); err != nil {

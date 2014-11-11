@@ -29,3 +29,11 @@ func (w *WriteBatch) Rollback() error {
 	w.wbatch.Reset()
 	return nil
 }
+
+func (w *WriteBatch) Close() {
+	w.wbatch.Reset()
+}
+
+func (w *WriteBatch) Data() []byte {
+	return w.wbatch.Dump()
+}

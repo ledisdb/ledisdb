@@ -50,6 +50,7 @@ func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.perform()
+	c.client.close()
 }
 
 func (c *httpClient) addr(r *http.Request) string {

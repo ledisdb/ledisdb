@@ -15,8 +15,6 @@ type batch struct {
 	sync.Locker
 
 	tx *Tx
-
-	eb *eventBatch
 }
 
 func (b *batch) Commit() error {
@@ -25,10 +23,12 @@ func (b *batch) Commit() error {
 	}
 
 	if b.tx == nil {
-		return b.l.handleCommit(b.eb, b.WriteBatch)
+		return b.l.handleCommit(b.WriteBatch, b.WriteBatch)
 	} else {
 		if b.l.r != nil {
-			b.tx.eb.Write(b.eb.Bytes())
+			if err := b.tx.data.Append(b.WriteBatch.BatchData()); err != nil {
+				return err
+			}
 		}
 		return b.WriteBatch.Commit()
 	}
@@ -39,25 +39,15 @@ func (b *batch) Lock() {
 }
 
 func (b *batch) Unlock() {
-	b.eb.Reset()
-
 	b.WriteBatch.Rollback()
 	b.Locker.Unlock()
 }
 
 func (b *batch) Put(key []byte, value []byte) {
-	if b.l.r != nil {
-		b.eb.Put(key, value)
-	}
-
 	b.WriteBatch.Put(key, value)
 }
 
 func (b *batch) Delete(key []byte) {
-	if b.l.r != nil {
-		b.eb.Delete(key)
-	}
-
 	b.WriteBatch.Delete(key)
 }
 
@@ -96,7 +86,6 @@ func (l *Ledis) newBatch(wb *store.WriteBatch, locker sync.Locker, tx *Tx) *batc
 	b.Locker = locker
 
 	b.tx = tx
-	b.eb = new(eventBatch)
 
 	return b
 }
@@ -105,14 +94,18 @@ type commiter interface {
 	Commit() error
 }
 
-func (l *Ledis) handleCommit(eb *eventBatch, c commiter) error {
+type commitDataGetter interface {
+	Data() []byte
+}
+
+func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 	l.commitLock.Lock()
 	defer l.commitLock.Unlock()
 
 	var err error
 	if l.r != nil {
 		var rl *rpl.Log
-		if rl, err = l.r.Log(eb.Bytes()); err != nil {
+		if rl, err = l.r.Log(g.Data()); err != nil {
 			log.Fatal("write wal error %s", err.Error())
 			return err
 		}

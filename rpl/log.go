@@ -69,10 +69,30 @@ func (l *Log) Encode(w io.Writer) error {
 }
 
 func (l *Log) Decode(r io.Reader) error {
+	length, err := l.DecodeHead(r)
+	if err != nil {
+		return err
+	}
+
+	l.Data = l.Data[0:0]
+
+	if cap(l.Data) >= int(length) {
+		l.Data = l.Data[0:length]
+	} else {
+		l.Data = make([]byte, length)
+	}
+	if _, err := io.ReadFull(r, l.Data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *Log) DecodeHead(r io.Reader) (uint32, error) {
 	buf := make([]byte, l.HeadSize())
 
 	if _, err := io.ReadFull(r, buf); err != nil {
-		return err
+		return 0, err
 	}
 
 	pos := 0
@@ -87,16 +107,5 @@ func (l *Log) Decode(r io.Reader) error {
 
 	length := binary.BigEndian.Uint32(buf[pos:])
 
-	l.Data = l.Data[0:0]
-
-	if cap(l.Data) >= int(length) {
-		l.Data = l.Data[0:length]
-	} else {
-		l.Data = make([]byte, length)
-	}
-	if _, err := io.ReadFull(r, l.Data); err != nil {
-		return err
-	}
-
-	return nil
+	return length, nil
 }
