@@ -16,6 +16,7 @@ import (
 )
 
 var errReadRequest = errors.New("invalid request protocol")
+var errClientQuit = errors.New("remote client quit")
 
 type respClient struct {
 	*client
@@ -24,10 +25,41 @@ type respClient struct {
 	rb   *bufio.Reader
 
 	ar *arena.Arena
+
+	activeQuit bool
 }
 
 type respWriter struct {
 	buff *bufio.Writer
+}
+
+func (app *App) addRespClient(c *respClient) {
+	app.rcm.Lock()
+	app.rcs[c] = struct{}{}
+	app.rcm.Unlock()
+}
+
+func (app *App) delRespClient(c *respClient) {
+	app.rcm.Lock()
+	delete(app.rcs, c)
+	app.rcm.Unlock()
+}
+
+func (app *App) closeAllRespClients() {
+	app.rcm.Lock()
+
+	for c := range app.rcs {
+		c.conn.Close()
+	}
+
+	app.rcm.Unlock()
+}
+
+func (app *App) respClientNum() int {
+	app.rcm.Lock()
+	n := len(app.rcs)
+	app.rcm.Unlock()
+	return n
 }
 
 func newClientRESP(conn net.Conn, app *App) {
@@ -35,6 +67,8 @@ func newClientRESP(conn net.Conn, app *App) {
 
 	c.client = newClient(app)
 	c.conn = conn
+
+	c.activeQuit = false
 
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		tcpConn.SetReadBuffer(app.cfg.ConnReadBufferSize)
@@ -49,17 +83,15 @@ func newClientRESP(conn net.Conn, app *App) {
 	//maybe another config?
 	c.ar = arena.NewArena(app.cfg.ConnReadBufferSize)
 
+	app.connWait.Add(1)
+
+	app.addRespClient(c)
+
 	go c.run()
 }
 
 func (c *respClient) run() {
-	c.app.info.addClients(1)
-
 	defer func() {
-		c.client.close()
-
-		c.app.info.addClients(-1)
-
 		if e := recover(); e != nil {
 			buf := make([]byte, 4096)
 			n := runtime.Stack(buf, false)
@@ -68,20 +100,29 @@ func (c *respClient) run() {
 			log.Fatal("client run panic %s:%v", buf, e)
 		}
 
-		handleQuit := true
-		if c.conn != nil {
-			//if handle quit command before, conn is nil
-			handleQuit = false
-			c.conn.Close()
-		}
+		c.client.close()
+
+		c.conn.Close()
 
 		if c.tx != nil {
 			c.tx.Rollback()
 			c.tx = nil
 		}
 
-		c.app.removeSlave(c.client, handleQuit)
+		c.app.removeSlave(c.client, c.activeQuit)
+
+		c.app.delRespClient(c)
+
+		c.app.connWait.Done()
 	}()
+
+	select {
+	case <-c.app.quit:
+		//check app closed
+		return
+	default:
+		break
+	}
 
 	kc := time.Duration(c.app.cfg.ConnKeepaliveInterval) * time.Second
 	for {
@@ -91,14 +132,10 @@ func (c *respClient) run() {
 
 		reqData, err := c.readRequest()
 		if err == nil {
-			c.handleRequest(reqData)
+			err = c.handleRequest(reqData)
 		}
 
 		if err != nil {
-			return
-		}
-
-		if c.conn == nil {
 			return
 		}
 	}
@@ -108,7 +145,7 @@ func (c *respClient) readRequest() ([][]byte, error) {
 	return ReadRequest(c.rb, c.ar)
 }
 
-func (c *respClient) handleRequest(reqData [][]byte) {
+func (c *respClient) handleRequest(reqData [][]byte) error {
 	if len(reqData) == 0 {
 		c.cmd = ""
 		c.args = reqData[0:0]
@@ -117,11 +154,11 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 		c.args = reqData[1:]
 	}
 	if c.cmd == "quit" {
+		c.activeQuit = true
 		c.resp.writeStatus(OK)
 		c.resp.flush()
 		c.conn.Close()
-		c.conn = nil
-		return
+		return errClientQuit
 	}
 
 	c.perform()
@@ -131,7 +168,7 @@ func (c *respClient) handleRequest(reqData [][]byte) {
 
 	c.ar.Reset()
 
-	return
+	return nil
 }
 
 //	response writer

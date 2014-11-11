@@ -9,7 +9,6 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -21,10 +20,6 @@ type info struct {
 	Server struct {
 		OS         string
 		ProceessId int
-	}
-
-	Clients struct {
-		ConnectedClients int64
 	}
 
 	Replication struct {
@@ -45,10 +40,6 @@ func newInfo(app *App) (i *info, err error) {
 	i.Server.ProceessId = os.Getpid()
 
 	return i, nil
-}
-
-func (i *info) addClients(delta int64) {
-	atomic.AddInt64(&i.Clients.ConnectedClients, delta)
 }
 
 func (i *info) Close() {
@@ -116,7 +107,7 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 		infoPair{"readonly", i.app.cfg.Readonly},
 		infoPair{"goroutine_num", runtime.NumGoroutine()},
 		infoPair{"cgo_call_num", runtime.NumCgoCall()},
-		infoPair{"client_num", i.Clients.ConnectedClients},
+		infoPair{"resp_client_num", i.app.respClientNum()},
 	)
 }
 

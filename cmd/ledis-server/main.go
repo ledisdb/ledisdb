@@ -88,17 +88,15 @@ func main() {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 
-	go func() {
-		<-sc
-
-		app.Close()
-	}()
-
 	if *usePprof {
 		go func() {
 			log.Println(http.ListenAndServe(fmt.Sprintf(":%d", *pprofPort), nil))
 		}()
 	}
 
-	app.Run()
+	go app.Run()
+
+	<-sc
+
+	app.Close()
 }

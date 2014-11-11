@@ -202,7 +202,7 @@ func (l *Ledis) ReadLogsTo(startLogID uint64, w io.Writer) (n int, nextLogID uin
 }
 
 // try to read events, if no events read, try to wait the new event singal until timeout seconds
-func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (n int, nextLogID uint64, err error) {
+func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int, quitCh chan struct{}) (n int, nextLogID uint64, err error) {
 	n, nextLogID, err = l.ReadLogsTo(startLogID, w)
 	if err != nil {
 		return
@@ -213,6 +213,8 @@ func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (
 	select {
 	case <-l.r.WaitLog():
 	case <-time.After(time.Duration(timeout) * time.Second):
+	case <-quitCh:
+		return
 	}
 	return l.ReadLogsTo(startLogID, w)
 }

@@ -40,15 +40,18 @@ type httpWriter struct {
 }
 
 func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
+	app.connWait.Add(1)
+	defer app.connWait.Done()
+
 	var err error
 	c := new(httpClient)
-	c.client = newClient(app)
 
 	err = c.makeRequest(app, r, w)
 	if err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
+	c.client = newClient(app)
 	c.perform()
 	c.client.close()
 }

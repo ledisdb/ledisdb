@@ -37,6 +37,11 @@ type App struct {
 	slaveSyncAck chan uint64
 
 	snap *snapshotStore
+
+	connWait sync.WaitGroup
+
+	rcm sync.Mutex
+	rcs map[*respClient]struct{}
 }
 
 func netType(s string) string {
@@ -63,6 +68,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	app.slaves = make(map[string]*client)
 	app.slaveSyncAck = make(chan uint64)
+
+	app.rcs = make(map[*respClient]struct{})
 
 	var err error
 
@@ -128,6 +135,11 @@ func (app *App) Close() {
 	if app.httpListener != nil {
 		app.httpListener.Close()
 	}
+
+	app.closeAllRespClients()
+
+	//wait all connection closed
+	app.connWait.Wait()
 
 	app.closeScript()
 
