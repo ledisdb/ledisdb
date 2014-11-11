@@ -209,6 +209,10 @@ func (s *FileStore) PuregeExpired(n int64) error {
 	return nil
 }
 
+func (s *FileStore) Sync() error {
+	return s.w.Sync()
+}
+
 func (s *FileStore) Clear() error {
 	s.wm.Lock()
 	s.rm.Lock()
@@ -244,7 +248,9 @@ func (s *FileStore) Close() error {
 	s.rm.Lock()
 
 	if r, err := s.w.Flush(); err != nil {
-		log.Error("close err: %s", err.Error())
+		if err != errNilHandler {
+			log.Error("close err: %s", err.Error())
+		}
 	} else {
 		r.Close()
 		s.w.Close()

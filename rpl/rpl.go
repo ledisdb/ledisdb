@@ -24,9 +24,8 @@ type Replication struct {
 
 	s LogStore
 
-	commitID       uint64
-	commitLog      *os.File
-	commitLastTime time.Time
+	commitID  uint64
+	commitLog *os.File
 
 	quit chan struct{}
 
@@ -75,7 +74,7 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 	}
 
 	r.wg.Add(1)
-	go r.onPurgeExpired()
+	go r.run()
 
 	return r, nil
 }
@@ -213,9 +212,7 @@ func (r *Replication) Stat() (*Stat, error) {
 }
 
 func (r *Replication) updateCommitID(id uint64, force bool) error {
-	n := time.Now()
-
-	if force || n.Sub(r.commitLastTime) > time.Second {
+	if force {
 		if _, err := r.commitLog.Seek(0, os.SEEK_SET); err != nil {
 			return err
 		}
@@ -226,8 +223,6 @@ func (r *Replication) updateCommitID(id uint64, force bool) error {
 	}
 
 	r.commitID = id
-
-	r.commitLastTime = n
 
 	return nil
 }
@@ -280,19 +275,44 @@ func (r *Replication) ClearWithCommitID(id uint64) error {
 	return r.updateCommitID(id, true)
 }
 
-func (r *Replication) onPurgeExpired() {
+func (r *Replication) run() {
 	defer r.wg.Done()
+
+	syncTc := time.NewTicker(1 * time.Second)
+	purgeTc := time.NewTicker(1 * time.Hour)
 
 	for {
 		select {
-		case <-time.After(1 * time.Hour):
+		case <-purgeTc.C:
 			n := (r.cfg.Replication.ExpiredLogDays * 24 * 3600)
 			r.m.Lock()
-			if err := r.s.PurgeExpired(int64(n)); err != nil {
+			err := r.s.PurgeExpired(int64(n))
+			r.m.Unlock()
+			if err != nil {
 				log.Error("purge expired log error %s", err.Error())
 			}
-			r.m.Unlock()
+		case <-syncTc.C:
+			if r.cfg.Replication.SyncLog == 1 {
+				r.m.Lock()
+				err := r.s.Sync()
+				r.m.Unlock()
+				if err != nil {
+					log.Error("sync store error %s", err.Error())
+				}
+			}
+			if r.cfg.Replication.SyncLog != 2 {
+				//we will sync commit id every 1 second
+				r.m.Lock()
+				err := r.updateCommitID(r.commitID, true)
+				r.m.Unlock()
+
+				if err != nil {
+					log.Error("sync commitid error %s", err.Error())
+				}
+			}
 		case <-r.quit:
+			syncTc.Stop()
+			purgeTc.Stop()
 			return
 		}
 	}

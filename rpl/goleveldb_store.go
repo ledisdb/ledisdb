@@ -156,6 +156,11 @@ func (s *GoLevelDBStore) PurgeExpired(n int64) error {
 	return nil
 }
 
+func (s *GoLevelDBStore) Sync() error {
+	//no other way for sync, so ignore here
+	return nil
+}
+
 func (s *GoLevelDBStore) reset() {
 	s.first = InvalidLogID
 	s.last = InvalidLogID

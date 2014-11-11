@@ -22,6 +22,7 @@ var (
 	log0              = Log{0, 1, 1, []byte("ledisdb")}
 	log0Data          = []byte{}
 	errTableNeedFlush = errors.New("write table need flush")
+	errNilHandler     = errors.New("nil write handler")
 	pageSize          = int64(4096)
 )
 
@@ -225,6 +226,13 @@ func (t *tableReader) repair() error {
 
 	defer t.close()
 
+	st, _ := t.f.Stat()
+	size := st.Size()
+
+	if size == 0 {
+		return fmt.Errorf("empty file, can not repaired")
+	}
+
 	tw := newTableWriter(path.Dir(t.name), t.index, maxLogFileSize)
 
 	tmpName := tw.name + ".tmp"
@@ -239,6 +247,14 @@ func (t *tableReader) repair() error {
 	var l Log
 
 	for {
+		lastPos, _ := t.f.Seek(0, os.SEEK_CUR)
+		if lastPos == size {
+			//no data anymore, we can not read log0
+			//we may meet the log missing risk but have no way
+			log.Error("no more data, maybe missing some logs, use your own risk!!!")
+			break
+		}
+
 		if err := l.Decode(t.f); err != nil {
 			return err
 		}
@@ -442,7 +458,7 @@ func (t *tableWriter) Flush() (*tableReader, error) {
 	defer t.Unlock()
 
 	if t.wf == nil {
-		return nil, fmt.Errorf("nil write handler")
+		return nil, errNilHandler
 	}
 
 	defer t.reset()
@@ -564,7 +580,7 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	//todo add LRU cache
 
-	if t.syncType == 2 || (t.syncType == 1 && time.Now().Unix()-int64(t.lastTime) > 1) {
+	if t.syncType == 2 {
 		if err := t.wf.Sync(); err != nil {
 			log.Error("sync table error %s", err.Error())
 		}
@@ -591,6 +607,16 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 		return fmt.Errorf("invalid log id %d != %d", id, l.ID)
 	}
 
+	return nil
+}
+
+func (t *tableWriter) Sync() error {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.wf != nil {
+		return t.wf.Sync()
+	}
 	return nil
 }
 

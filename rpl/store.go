@@ -26,6 +26,8 @@ type LogStore interface {
 	// Delete logs before n seconds
 	PurgeExpired(n int64) error
 
+	Sync() error
+
 	// Clear all logs
 	Clear() error
 
