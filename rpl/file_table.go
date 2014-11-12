@@ -380,6 +380,8 @@ type tableWriter struct {
 
 	syncType int
 	lastTime uint32
+
+	cache *logLRUCache
 }
 
 func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
@@ -396,6 +398,9 @@ func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
 	t.maxLogSize = maxLogSize
 
 	t.closed = false
+
+	//maybe use config later
+	t.cache = newLogLRUCache(1024*1024, 1000)
 
 	return t
 }
@@ -451,6 +456,7 @@ func (t *tableWriter) reset() {
 	t.index = t.index + 1
 	t.name = path.Join(t.base, fmtTableName(t.index))
 	t.offsetBuf = t.offsetBuf[0:0]
+	t.cache.Reset()
 }
 
 func (t *tableWriter) Flush() (*tableReader, error) {
@@ -565,8 +571,11 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	offsetPos := uint32(st.Size())
 
-	if err := l.Encode(t.wf); err != nil {
+	buf, _ := l.Marshal()
+	if n, err := t.wf.Write(buf); err != nil {
 		return err
+	} else if n != len(buf) {
+		return io.ErrShortWrite
 	}
 
 	t.offsetBuf = append(t.offsetBuf, num.Uint32ToBytes(offsetPos)...)
@@ -578,7 +587,7 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	t.lastTime = l.CreateTime
 
-	//todo add LRU cache
+	t.cache.Set(l.ID, buf)
 
 	if t.syncType == 2 {
 		if err := t.wf.Sync(); err != nil {
@@ -598,6 +607,13 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 	}
 
 	//todo memory cache
+	if cl := t.cache.Get(id); cl != nil {
+		if err := l.Unmarshal(cl); err == nil && l.ID == id {
+			return nil
+		} else {
+			t.cache.Delete(id)
+		}
+	}
 
 	offset := binary.BigEndian.Uint32(t.offsetBuf[(id-t.first)*4:])
 
@@ -606,6 +622,8 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 	} else if l.ID != id {
 		return fmt.Errorf("invalid log id %d != %d", id, l.ID)
 	}
+
+	//todo add cache here?
 
 	return nil
 }
