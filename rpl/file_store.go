@@ -58,10 +58,14 @@ type FileStore struct {
 
 	rs tableReaders
 	w  *tableWriter
+
+	quit chan struct{}
 }
 
 func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) {
 	s := new(FileStore)
+
+	s.quit = make(chan struct{})
 
 	var err error
 
@@ -87,6 +91,8 @@ func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) 
 
 	s.w = newTableWriter(s.base, index, s.maxFileSize)
 	s.w.SetSyncType(syncType)
+
+	go s.checkTableReaders()
 
 	return s, nil
 }
@@ -244,6 +250,8 @@ func (s *FileStore) Clear() error {
 }
 
 func (s *FileStore) Close() error {
+	close(s.quit)
+
 	s.wm.Lock()
 	s.rm.Lock()
 
@@ -265,6 +273,27 @@ func (s *FileStore) Close() error {
 	s.wm.Unlock()
 
 	return nil
+}
+
+func (s *FileStore) checkTableReaders() {
+	t := time.NewTicker(60 * time.Second)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			s.rm.Lock()
+
+			for _, r := range s.rs {
+				if !r.Keepalived() {
+					r.Close()
+				}
+			}
+
+			s.rm.Unlock()
+		case <-s.quit:
+			return
+		}
+	}
 }
 
 func (s *FileStore) load() error {
