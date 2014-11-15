@@ -1,6 +1,7 @@
 package rpl
 
 import (
+	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -33,7 +34,10 @@ func TestFileStore(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	// New level
-	l, err := NewFileStore(dir, 4096, 0)
+	cfg := config.NewConfigDefault()
+	cfg.Replication.MaxLogFileSize = 4096
+
+	l, err := NewFileStore(dir, cfg)
 	if err != nil {
 		t.Fatalf("err: %v ", err)
 	}
@@ -51,7 +55,6 @@ func testLogs(t *testing.T, l LogStore) {
 	if idx != 0 {
 		t.Fatalf("bad idx: %d", idx)
 	}
-
 	// Should be no last index
 	idx, err = l.LastID()
 	if err != nil {

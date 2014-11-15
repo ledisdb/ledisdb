@@ -131,6 +131,9 @@ expired_log_days = 7
 # for file store, if 0, use default 1G, max is 4G
 max_log_file_size = 0
 
+# for file store, if 0, use default 10
+max_log_file_num = 10
+
 # Sync log to disk if possible
 #  0: no sync 
 #  1: sync every second 

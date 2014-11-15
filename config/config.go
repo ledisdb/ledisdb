@@ -76,6 +76,7 @@ type ReplicationConfig struct {
 	ExpiredLogDays   int    `toml:"expired_log_days"`
 	StoreName        string `toml:"store_name"`
 	MaxLogFileSize   int64  `toml:"max_log_file_size"`
+	MaxLogFileNum    int    `toml:"max_log_file_num"`
 	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
 }
@@ -202,9 +203,11 @@ func (cfg *Config) adjust() {
 	cfg.RocksDB.adjust()
 
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
+	cfg.Replication.MaxLogFileNum = getDefault(10, cfg.Replication.MaxLogFileNum)
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
+
 }
 
 func (cfg *LevelDBConfig) adjust() {

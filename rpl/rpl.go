@@ -58,7 +58,7 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 			return nil, err
 		}
 	default:
-		if r.s, err = NewFileStore(path.Join(base, "ldb"), cfg.Replication.MaxLogFileSize, cfg.Replication.SyncLog); err != nil {
+		if r.s, err = NewFileStore(path.Join(base, "ldb"), cfg); err != nil {
 			return nil, err
 		}
 	}

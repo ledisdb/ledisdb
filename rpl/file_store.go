@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -49,7 +50,7 @@ const (
 type FileStore struct {
 	LogStore
 
-	maxFileSize int64
+	cfg *config.Config
 
 	base string
 
@@ -62,7 +63,7 @@ type FileStore struct {
 	quit chan struct{}
 }
 
-func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) {
+func NewFileStore(base string, cfg *config.Config) (*FileStore, error) {
 	s := new(FileStore)
 
 	s.quit = make(chan struct{})
@@ -75,10 +76,13 @@ func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) 
 
 	s.base = base
 
-	s.maxFileSize = num.MinInt64(maxLogFileSize, maxSize)
-	if s.maxFileSize == 0 {
-		s.maxFileSize = defaultMaxLogFileSize
+	if cfg.Replication.MaxLogFileSize == 0 {
+		cfg.Replication.MaxLogFileSize = defaultMaxLogFileSize
 	}
+
+	cfg.Replication.MaxLogFileSize = num.MinInt64(cfg.Replication.MaxLogFileSize, maxLogFileSize)
+
+	s.cfg = cfg
 
 	if err = s.load(); err != nil {
 		return nil, err
@@ -89,8 +93,8 @@ func NewFileStore(base string, maxSize int64, syncType int) (*FileStore, error) 
 		index = s.rs[len(s.rs)-1].index + 1
 	}
 
-	s.w = newTableWriter(s.base, index, s.maxFileSize)
-	s.w.SetSyncType(syncType)
+	s.w = newTableWriter(s.base, index, cfg.Replication.MaxLogFileSize)
+	s.w.SetSyncType(cfg.Replication.SyncLog)
 
 	go s.checkTableReaders()
 
@@ -204,13 +208,7 @@ func (s *FileStore) PurgeExpired(n int64) error {
 
 	s.rm.Unlock()
 
-	for _, r := range purges {
-		name := r.name
-		r.Close()
-		if err := os.Remove(name); err != nil {
-			log.Error("purge table %s err: %s", name, err.Error())
-		}
-	}
+	s.purgeTableReaders(purges)
 
 	return nil
 }
@@ -244,7 +242,7 @@ func (s *FileStore) Clear() error {
 		return err
 	}
 
-	s.w = newTableWriter(s.base, 1, s.maxFileSize)
+	s.w = newTableWriter(s.base, 1, s.cfg.Replication.MaxLogFileSize)
 
 	return nil
 }
@@ -289,9 +287,30 @@ func (s *FileStore) checkTableReaders() {
 				}
 			}
 
+			purges := []*tableReader{}
+			maxNum := s.cfg.Replication.MaxLogFileNum
+			num := len(s.rs)
+			if num > maxNum {
+				purges = s.rs[:num-maxNum]
+				s.rs = s.rs[num-maxNum:]
+			}
+
 			s.rm.Unlock()
+
+			s.purgeTableReaders(purges)
+
 		case <-s.quit:
 			return
+		}
+	}
+}
+
+func (s *FileStore) purgeTableReaders(purges []*tableReader) {
+	for _, r := range purges {
+		name := r.name
+		r.Close()
+		if err := os.Remove(name); err != nil {
+			log.Error("purge table %s err: %s", name, err.Error())
 		}
 	}
 }
