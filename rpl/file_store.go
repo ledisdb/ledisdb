@@ -187,7 +187,7 @@ func (s *FileStore) StoreLog(l *Log) error {
 	return s.w.StoreLog(l)
 }
 
-func (s *FileStore) PuregeExpired(n int64) error {
+func (s *FileStore) PurgeExpired(n int64) error {
 	s.rm.Lock()
 
 	purges := []*tableReader{}
@@ -301,6 +301,8 @@ func (s *FileStore) load() error {
 	if err != nil {
 		return err
 	}
+
+	s.rs = make(tableReaders, 0, len(fs))
 
 	var r *tableReader
 	var index int64
