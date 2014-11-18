@@ -9,9 +9,10 @@ const (
 )
 
 var (
-	ErrLogNotFound = errors.New("log not found")
-	ErrStoreLogID  = errors.New("log id is less")
-	ErrNoBehindLog = errors.New("no behind commit log")
+	ErrLogNotFound    = errors.New("log not found")
+	ErrStoreLogID     = errors.New("log id is less")
+	ErrNoBehindLog    = errors.New("no behind commit log")
+	ErrCommitIDBehind = errors.New("commit id is behind last log id")
 )
 
 type LogStore interface {

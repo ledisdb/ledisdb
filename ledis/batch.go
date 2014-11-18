@@ -104,10 +104,6 @@ func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 
 	var err error
 	if l.r != nil {
-		if b, _ := l.r.CommitIDBehind(); b {
-			return ErrWriteInROnly
-		}
-
 		var rl *rpl.Log
 		if rl, err = l.r.Log(g.Data()); err != nil {
 			log.Fatal("write wal error %s", err.Error())

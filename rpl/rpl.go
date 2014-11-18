@@ -124,6 +124,8 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 	commitId := r.commitID
 	if lastID < commitId {
 		lastID = commitId
+	} else if lastID > commitId {
+		return nil, ErrCommitIDBehind
 	}
 
 	l := new(Log)
