@@ -40,24 +40,21 @@ func (l *Log) Unmarshal(b []byte) error {
 }
 
 func (l *Log) Encode(w io.Writer) error {
-	buf := make([]byte, l.HeadSize())
-
-	pos := 0
-	binary.BigEndian.PutUint64(buf[pos:], l.ID)
-	pos += 8
-
-	binary.BigEndian.PutUint32(buf[pos:], l.CreateTime)
-	pos += 4
-
-	buf[pos] = l.Compression
-	pos++
-
-	binary.BigEndian.PutUint32(buf[pos:], uint32(len(l.Data)))
-
-	if n, err := w.Write(buf); err != nil {
+	if err := binary.Write(w, binary.BigEndian, l.ID); err != nil {
 		return err
-	} else if n != len(buf) {
-		return io.ErrShortWrite
+	}
+
+	if err := binary.Write(w, binary.BigEndian, l.CreateTime); err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte{l.Compression}); err != nil {
+		return err
+	}
+
+	dataLen := uint32(len(l.Data))
+	if err := binary.Write(w, binary.BigEndian, dataLen); err != nil {
+		return err
 	}
 
 	if n, err := w.Write(l.Data); err != nil {
