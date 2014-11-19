@@ -100,12 +100,13 @@ type commitDataGetter interface {
 
 func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 	l.commitLock.Lock()
-	defer l.commitLock.Unlock()
 
 	var err error
 	if l.r != nil {
 		var rl *rpl.Log
 		if rl, err = l.r.Log(g.Data()); err != nil {
+			l.commitLock.Unlock()
+
 			log.Fatal("write wal error %s", err.Error())
 			return err
 		}
@@ -113,19 +114,25 @@ func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 		l.propagate(rl)
 
 		if err = c.Commit(); err != nil {
+			l.commitLock.Unlock()
+
 			log.Fatal("commit error %s", err.Error())
 			l.noticeReplication()
 			return err
 		}
 
 		if err = l.r.UpdateCommitID(rl.ID); err != nil {
+			l.commitLock.Unlock()
+
 			log.Fatal("update commit id error %s", err.Error())
 			l.noticeReplication()
 			return err
 		}
-
-		return nil
 	} else {
-		return c.Commit()
+		err = c.Commit()
 	}
+
+	l.commitLock.Unlock()
+
+	return err
 }

@@ -167,18 +167,9 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 + `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
 
 
-## Thanks
+## Requirement
 
-Gmail: cenqichao@gmail.com
-
-Gmail: chendahui007@gmail.com
-
-Gmail: cppgohan@gmail.com
-
-Gmail: tiaotiaoyly@gmail.com
-
-Gmail: wyk4true@gmail.com
-
++ go version >= 1.3
 
 ## Feedback
 

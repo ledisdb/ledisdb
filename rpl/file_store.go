@@ -163,8 +163,12 @@ func (s *FileStore) LastID() (uint64, error) {
 
 func (s *FileStore) StoreLog(l *Log) error {
 	s.wm.Lock()
-	defer s.wm.Unlock()
+	err := s.storeLog(l)
+	s.wm.Unlock()
+	return err
+}
 
+func (s *FileStore) storeLog(l *Log) error {
 	err := s.w.StoreLog(l)
 	if err == nil {
 		return nil
@@ -172,23 +176,24 @@ func (s *FileStore) StoreLog(l *Log) error {
 		return err
 	}
 
-	s.rm.Lock()
-
 	var r *tableReader
-	if r, err = s.w.Flush(); err != nil {
+	r, err = s.w.Flush()
+
+	if err != nil {
 		log.Error("write table flush error %s, can not store now", err.Error())
 
 		s.w.Close()
 
-		s.rm.Unlock()
-
 		return err
 	}
 
+	s.rm.Lock()
 	s.rs = append(s.rs, r)
 	s.rm.Unlock()
 
-	return s.w.StoreLog(l)
+	err = s.w.StoreLog(l)
+
+	return err
 }
 
 func (s *FileStore) PurgeExpired(n int64) error {

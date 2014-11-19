@@ -114,10 +114,10 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 	}
 
 	r.m.Lock()
-	defer r.m.Unlock()
 
 	lastID, err := r.s.LastID()
 	if err != nil {
+		r.m.Unlock()
 		return nil, err
 	}
 
@@ -125,6 +125,7 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 	if lastID < commitId {
 		lastID = commitId
 	} else if lastID > commitId {
+		r.m.Unlock()
 		return nil, ErrCommitIDBehind
 	}
 
@@ -141,8 +142,11 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 	l.Data = data
 
 	if err = r.s.StoreLog(l); err != nil {
+		r.m.Unlock()
 		return nil, err
 	}
+
+	r.m.Unlock()
 
 	r.ncm.Lock()
 	close(r.nc)
@@ -161,22 +165,24 @@ func (r *Replication) WaitLog() <-chan struct{} {
 
 func (r *Replication) StoreLog(log *Log) error {
 	r.m.Lock()
-	defer r.m.Unlock()
+	err := r.s.StoreLog(log)
+	r.m.Unlock()
 
-	return r.s.StoreLog(log)
+	return err
 }
 
 func (r *Replication) FirstLogID() (uint64, error) {
 	r.m.Lock()
-	defer r.m.Unlock()
 	id, err := r.s.FirstID()
+	r.m.Unlock()
+
 	return id, err
 }
 
 func (r *Replication) LastLogID() (uint64, error) {
 	r.m.Lock()
-	defer r.m.Unlock()
 	id, err := r.s.LastID()
+	r.m.Unlock()
 	return id, err
 }
 
@@ -189,9 +195,10 @@ func (r *Replication) LastCommitID() (uint64, error) {
 
 func (r *Replication) UpdateCommitID(id uint64) error {
 	r.m.Lock()
-	defer r.m.Unlock()
+	err := r.updateCommitID(id, r.cfg.Replication.SyncLog == 2)
+	r.m.Unlock()
 
-	return r.updateCommitID(id, r.cfg.Replication.SyncLog == 2)
+	return err
 }
 
 func (r *Replication) Stat() (*Stat, error) {
@@ -231,14 +238,17 @@ func (r *Replication) updateCommitID(id uint64, force bool) error {
 
 func (r *Replication) CommitIDBehind() (bool, error) {
 	r.m.Lock()
-	defer r.m.Unlock()
 
 	id, err := r.s.LastID()
 	if err != nil {
+		r.m.Unlock()
 		return false, err
 	}
 
-	return id > r.commitID, nil
+	behind := id > r.commitID
+	r.m.Unlock()
+
+	return behind, nil
 }
 
 func (r *Replication) GetLog(id uint64, log *Log) error {

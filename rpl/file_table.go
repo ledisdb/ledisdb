@@ -546,12 +546,17 @@ func (t *tableWriter) Flush() (*tableReader, error) {
 }
 
 func (t *tableWriter) StoreLog(l *Log) error {
+	t.Lock()
+	err := t.storeLog(l)
+	t.Unlock()
+
+	return err
+}
+
+func (t *tableWriter) storeLog(l *Log) error {
 	if l.ID == 0 {
 		return ErrStoreLogID
 	}
-
-	t.Lock()
-	defer t.Unlock()
 
 	if t.closed {
 		return fmt.Errorf("table writer is closed")
@@ -588,9 +593,11 @@ func (t *tableWriter) StoreLog(l *Log) error {
 
 	offsetPos := t.offsetPos
 
-	if err := l.Encode(t.wb); err != nil {
+	if err = l.Encode(t.wb); err != nil {
 		return err
-	} else if err = t.wb.Flush(); err != nil {
+	}
+
+	if err = t.wb.Flush(); err != nil {
 		return err
 	}
 
@@ -652,12 +659,14 @@ func (t *tableWriter) GetLog(id uint64, l *Log) error {
 
 func (t *tableWriter) Sync() error {
 	t.Lock()
-	defer t.Unlock()
 
+	var err error
 	if t.wf != nil {
-		return t.wf.Sync()
+		err = t.wf.Sync()
 	}
-	return nil
+	t.Unlock()
+
+	return err
 }
 
 func (t *tableWriter) getLog(l *Log, pos int64) error {

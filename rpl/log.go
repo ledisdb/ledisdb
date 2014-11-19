@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+	"sync"
 )
+
+const LogHeadSize = 17
 
 type Log struct {
 	ID          uint64
@@ -15,7 +18,7 @@ type Log struct {
 }
 
 func (l *Log) HeadSize() int {
-	return 17
+	return LogHeadSize
 }
 
 func (l *Log) Size() int {
@@ -23,7 +26,7 @@ func (l *Log) Size() int {
 }
 
 func (l *Log) Marshal() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, l.HeadSize()+len(l.Data)))
+	buf := bytes.NewBuffer(make([]byte, l.Size()))
 	buf.Reset()
 
 	if err := l.Encode(buf); err != nil {
@@ -39,25 +42,32 @@ func (l *Log) Unmarshal(b []byte) error {
 	return l.Decode(buf)
 }
 
+var headPool = sync.Pool{
+	New: func() interface{} { return make([]byte, LogHeadSize) },
+}
+
 func (l *Log) Encode(w io.Writer) error {
-	if err := binary.Write(w, binary.BigEndian, l.ID); err != nil {
+	b := headPool.Get().([]byte)
+	pos := 0
+
+	binary.BigEndian.PutUint64(b[pos:], l.ID)
+	pos += 8
+	binary.BigEndian.PutUint32(b[pos:], uint32(l.CreateTime))
+	pos += 4
+	b[pos] = l.Compression
+	pos++
+	binary.BigEndian.PutUint32(b[pos:], uint32(len(l.Data)))
+
+	n, err := w.Write(b)
+	headPool.Put(b)
+
+	if err != nil {
 		return err
+	} else if n != LogHeadSize {
+		return io.ErrShortWrite
 	}
 
-	if err := binary.Write(w, binary.BigEndian, l.CreateTime); err != nil {
-		return err
-	}
-
-	if _, err := w.Write([]byte{l.Compression}); err != nil {
-		return err
-	}
-
-	dataLen := uint32(len(l.Data))
-	if err := binary.Write(w, binary.BigEndian, dataLen); err != nil {
-		return err
-	}
-
-	if n, err := w.Write(l.Data); err != nil {
+	if n, err = w.Write(l.Data); err != nil {
 		return err
 	} else if n != len(l.Data) {
 		return io.ErrShortWrite
@@ -86,9 +96,10 @@ func (l *Log) Decode(r io.Reader) error {
 }
 
 func (l *Log) DecodeHead(r io.Reader) (uint32, error) {
-	buf := make([]byte, l.HeadSize())
+	buf := headPool.Get().([]byte)
 
 	if _, err := io.ReadFull(r, buf); err != nil {
+		headPool.Put(buf)
 		return 0, err
 	}
 
@@ -103,6 +114,8 @@ func (l *Log) DecodeHead(r io.Reader) (uint32, error) {
 	pos++
 
 	length := binary.BigEndian.Uint32(buf[pos:])
+
+	headPool.Put(buf)
 
 	return length, nil
 }
