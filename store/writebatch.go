@@ -14,6 +14,8 @@ type WriteBatch struct {
 	putNum    int64
 	deleteNum int64
 	db        *DB
+
+	data *BatchData
 }
 
 func (wb *WriteBatch) Close() {
@@ -60,13 +62,12 @@ func (wb *WriteBatch) Rollback() error {
 // the data will be undefined after commit or rollback
 func (wb *WriteBatch) BatchData() *BatchData {
 	data := wb.wb.Data()
-	d, err := NewBatchData(data)
-	if err != nil {
-		//can not enter this
-		panic(err)
+	if wb.data == nil {
+		wb.data = new(BatchData)
 	}
 
-	return d
+	wb.data.Load(data)
+	return wb.data
 }
 
 func (wb *WriteBatch) Data() []byte {
