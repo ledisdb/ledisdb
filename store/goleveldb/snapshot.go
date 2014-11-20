@@ -1,8 +1,8 @@
 package goleveldb
 
 import (
-	"github.com/siddontang/goleveldb/leveldb"
 	"github.com/siddontang/ledisdb/store/driver"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type Snapshot struct {

@@ -55,8 +55,12 @@
 			"Rev": "ecf49fc0738105e87d20e29aa82c403b666ff0b4"
 		},
 		{
-			"ImportPath": "github.com/siddontang/goleveldb/leveldb",
-			"Rev": "41805642b981fb3d9462f6641bcb94b8609ca791"
+			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
+			"Rev": "c9e0ae706141dc099005d6d247e4880c7feda2e1"
+		},
+		{
+			"ImportPath": "github.com/syndtr/gosnappy/snappy",
+			"Rev": "ce8acff4829e0c2458a67ead32390ac0a381c862"
 		},
 		{
 			"ImportPath": "github.com/szferi/gomdb",

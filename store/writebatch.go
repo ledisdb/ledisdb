@@ -2,8 +2,8 @@ package store
 
 import (
 	"encoding/binary"
-	"github.com/siddontang/goleveldb/leveldb"
 	"github.com/siddontang/ledisdb/store/driver"
+	"github.com/syndtr/goleveldb/leveldb"
 	"time"
 )
 

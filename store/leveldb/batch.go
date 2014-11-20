@@ -8,7 +8,7 @@ package leveldb
 import "C"
 
 import (
-	"github.com/siddontang/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb"
 	"unsafe"
 )
 

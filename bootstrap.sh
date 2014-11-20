@@ -17,8 +17,8 @@ go get -u github.com/boltdb/bolt
 go get -u github.com/ugorji/go/codec
 go get -u github.com/BurntSushi/toml
 go get -u github.com/edsrzf/mmap-go
+go get -u github.com/syndtr/goleveldb/leveldb
 
-go get -u github.com/siddontang/goleveldb/leveldb
 go get -u github.com/siddontang/go/bson
 go get -u github.com/siddontang/go/log
 go get -u github.com/siddontang/go/snappy
