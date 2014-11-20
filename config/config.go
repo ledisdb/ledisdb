@@ -203,7 +203,7 @@ func (cfg *Config) adjust() {
 	cfg.RocksDB.adjust()
 
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
-	cfg.Replication.MaxLogFileNum = getDefault(10, cfg.Replication.MaxLogFileNum)
+	cfg.Replication.MaxLogFileNum = getDefault(50, cfg.Replication.MaxLogFileNum)
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)

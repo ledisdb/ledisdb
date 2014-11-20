@@ -81,13 +81,8 @@ func (l *Log) Decode(r io.Reader) error {
 		return err
 	}
 
-	l.Data = l.Data[0:0]
+	l.growData(int(length))
 
-	if cap(l.Data) >= int(length) {
-		l.Data = l.Data[0:length]
-	} else {
-		l.Data = make([]byte, length)
-	}
 	if _, err := io.ReadFull(r, l.Data); err != nil {
 		return err
 	}
@@ -103,6 +98,60 @@ func (l *Log) DecodeHead(r io.Reader) (uint32, error) {
 		return 0, err
 	}
 
+	length := l.decodeHeadBuf(buf)
+
+	headPool.Put(buf)
+
+	return length, nil
+}
+
+func (l *Log) DecodeAt(r io.ReaderAt, pos int64) error {
+	length, err := l.DecodeHeadAt(r, pos)
+	if err != nil {
+		return err
+	}
+
+	l.growData(int(length))
+	var n int
+	n, err = r.ReadAt(l.Data, pos+int64(LogHeadSize))
+	if err == io.EOF && n == len(l.Data) {
+		err = nil
+	}
+
+	return err
+}
+
+func (l *Log) growData(length int) {
+	l.Data = l.Data[0:0]
+
+	if cap(l.Data) >= length {
+		l.Data = l.Data[0:length]
+	} else {
+		l.Data = make([]byte, length)
+	}
+}
+
+func (l *Log) DecodeHeadAt(r io.ReaderAt, pos int64) (uint32, error) {
+	buf := headPool.Get().([]byte)
+
+	n, err := r.ReadAt(buf, pos)
+	if err != nil && err != io.EOF {
+		headPool.Put(buf)
+
+		return 0, err
+	}
+
+	length := l.decodeHeadBuf(buf)
+	headPool.Put(buf)
+
+	if err == io.EOF && (length != 0 || n != len(buf)) {
+		return 0, err
+	}
+
+	return length, nil
+}
+
+func (l *Log) decodeHeadBuf(buf []byte) uint32 {
 	pos := 0
 	l.ID = binary.BigEndian.Uint64(buf[pos:])
 	pos += 8
@@ -114,8 +163,5 @@ func (l *Log) DecodeHead(r io.Reader) (uint32, error) {
 	pos++
 
 	length := binary.BigEndian.Uint32(buf[pos:])
-
-	headPool.Put(buf)
-
-	return length, nil
+	return length
 }

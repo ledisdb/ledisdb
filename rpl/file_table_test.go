@@ -10,6 +10,17 @@ import (
 )
 
 func TestFileTable(t *testing.T) {
+	useMmap = true
+	testFileTable(t)
+
+	useMmap = false
+	testFileTable(t)
+	useMmap = true
+}
+
+func testFileTable(t *testing.T) {
+	log.SetLevel(log.LevelInfo)
+
 	base, err := ioutil.TempDir("", "test_table")
 	if err != nil {
 		t.Fatal(err)
@@ -50,10 +61,6 @@ func TestFileTable(t *testing.T) {
 
 	var ll Log
 
-	if err = ll.Unmarshal(log0Data); err != nil {
-		t.Fatal(err)
-	}
-
 	for i := 0; i < 10; i++ {
 		if err := w.GetLog(uint64(i+1), &ll); err != nil {
 			t.Fatal(err)
@@ -70,7 +77,7 @@ func TestFileTable(t *testing.T) {
 
 	var r *tableReader
 
-	name := w.name
+	name := fmtTableDataName(w.base, w.index)
 
 	if r, err = w.Flush(); err != nil {
 		t.Fatal(err)
@@ -130,24 +137,17 @@ func TestFileTable(t *testing.T) {
 		t.Fatal("must nil")
 	}
 
-	st, _ := r.f.Stat()
-	s := st.Size()
+	s := int64(r.data.Size())
 
 	r.Close()
 
 	log.SetLevel(log.LevelFatal)
 
 	testRepair(t, name, 1, s, 11)
-	testRepair(t, name, 1, s, 32)
-	testRepair(t, name, 1, s, 42)
-	testRepair(t, name, 1, s, 72)
+	testRepair(t, name, 1, s, 20)
 
-	if err := os.Truncate(name, s-(73+4096)); err != nil {
+	if err := os.Truncate(name, s-21); err != nil {
 		t.Fatal(err)
-	}
-
-	if r, err = newTableReader(base, 1); err == nil {
-		t.Fatal("can not repair")
 	}
 
 	if r, err := w.Flush(); err != nil {
@@ -159,7 +159,7 @@ func TestFileTable(t *testing.T) {
 	if r, err = newTableReader(base, 2); err != nil {
 		t.Fatal(err)
 	}
-	defer r.Close()
+	r.Close()
 }
 
 func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) {
@@ -178,7 +178,7 @@ func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) 
 	var ll Log
 	for i := 0; i < 10; i++ {
 		if err := r.GetLog(uint64(i+1), &ll); err != nil {
-			t.Fatal(err)
+			t.Fatal(err, i)
 		} else if len(ll.Data) != 4096 {
 			t.Fatal(len(ll.Data))
 		} else if ll.Data[0] != byte(i+1) {
@@ -190,9 +190,8 @@ func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) 
 		t.Fatal("must nil")
 	}
 
-	st, _ := r.f.Stat()
-	if s != st.Size() {
-		t.Fatalf("repair error size %d != %d", s, st.Size())
+	if s != int64(r.data.Size()) {
+		t.Fatalf("repair error size %d != %d", s, r.data.Size())
 	}
 
 }

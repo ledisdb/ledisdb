@@ -13,32 +13,29 @@ import (
 )
 
 const (
-	defaultMaxLogFileSize = int64(1024 * 1024 * 1024)
+	defaultMaxLogFileSize = int64(256 * 1024 * 1024)
 
-	//why 4G, we can use uint32 as offset, reduce memory useage
-	maxLogFileSize = int64(uint32(4*1024*1024*1024 - 1))
+	maxLogFileSize = int64(1024 * 1024 * 1024)
 
-	maxLogNumInFile = uint64(10000000)
+	defaultLogNumInFile = int64(1024 * 1024)
 )
 
 /*
 	File Store:
-	00000001.ldb
-	00000002.ldb
+	00000001.data
+	00000001.meta
+	00000002.data
+	00000002.meta
 
-	log: log1 data | log2 data | split data | log1 offset | log 2 offset | offset start pos | offset length | magic data
+	data: log1 data | log2 data | magic data
 
-	log id can not be 0, we use here for split data
 	if data has no magic data, it means that we don't close replication gracefully.
 	so we must repair the log data
 	log data: id (bigendian uint64), create time (bigendian uint32), compression (byte), data len(bigendian uint32), data
 	split data = log0 data + [padding 0] -> file % pagesize() == 0
-	log0: id 0, create time 0, compression 0, data len 7, data "ledisdb"
 
+	meta: log1 offset | log2 offset
 	log offset: bigendian uint32 | bigendian uint32
-
-	offset start pos: bigendian uint64
-	offset length: bigendian uint32
 
 	//sha1 of github.com/siddontang/ledisdb 20 bytes
 	magic data = "\x1c\x1d\xb8\x88\xff\x9e\x45\x55\x40\xf0\x4c\xda\xe0\xce\x47\xde\x65\x48\x71\x17"
@@ -270,6 +267,7 @@ func (s *FileStore) Close() error {
 	for i := range s.rs {
 		s.rs[i].Close()
 	}
+
 	s.rs = tableReaders{}
 
 	s.rm.Unlock()
@@ -312,11 +310,16 @@ func (s *FileStore) checkTableReaders() {
 
 func (s *FileStore) purgeTableReaders(purges []*tableReader) {
 	for _, r := range purges {
-		name := r.name
+		dataName := fmtTableDataName(r.base, r.index)
+		metaName := fmtTableMetaName(r.base, r.index)
 		r.Close()
-		if err := os.Remove(name); err != nil {
-			log.Error("purge table %s err: %s", name, err.Error())
+		if err := os.Remove(dataName); err != nil {
+			log.Error("purge table data %s err: %s", dataName, err.Error())
 		}
+		if err := os.Remove(metaName); err != nil {
+			log.Error("purge table meta %s err: %s", metaName, err.Error())
+		}
+
 	}
 }
 
@@ -331,7 +334,7 @@ func (s *FileStore) load() error {
 	var r *tableReader
 	var index int64
 	for _, f := range fs {
-		if _, err := fmt.Sscanf(f.Name(), "%08d.ldb", &index); err == nil {
+		if _, err := fmt.Sscanf(f.Name(), "%08d.data", &index); err == nil {
 			if r, err = newTableReader(s.base, index); err != nil {
 				log.Error("load table %s err: %s", f.Name(), err.Error())
 			} else {
@@ -391,16 +394,16 @@ func (ts tableReaders) check() error {
 	index := ts[0].index
 
 	if first == 0 || first > last {
-		return fmt.Errorf("invalid log in table %s", ts[0].name)
+		return fmt.Errorf("invalid log in table %s", ts[0])
 	}
 
 	for i := 1; i < len(ts); i++ {
 		if ts[i].first <= last {
-			return fmt.Errorf("invalid first log id %d in table %s", ts[i].first, ts[i].name)
+			return fmt.Errorf("invalid first log id %d in table %s", ts[i].first, ts[i])
 		}
 
 		if ts[i].index <= index {
-			return fmt.Errorf("invalid index %d in table %s", ts[i].index, ts[i].name)
+			return fmt.Errorf("invalid index %d in table %s", ts[i].index, ts[i])
 		}
 
 		first = ts[i].first
