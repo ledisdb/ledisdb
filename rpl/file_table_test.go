@@ -10,15 +10,11 @@ import (
 )
 
 func TestFileTable(t *testing.T) {
-	useMmap = true
-	testFileTable(t)
-
-	useMmap = false
-	testFileTable(t)
-	useMmap = true
+	testFileTable(t, true)
+	testFileTable(t, false)
 }
 
-func testFileTable(t *testing.T) {
+func testFileTable(t *testing.T, useMmap bool) {
 	log.SetLevel(log.LevelInfo)
 
 	base, err := ioutil.TempDir("", "test_table")
@@ -34,7 +30,7 @@ func testFileTable(t *testing.T) {
 	l.Compression = 0
 	l.Data = make([]byte, 4096)
 
-	w := newTableWriter(base, 1, 1024*1024)
+	w := newTableWriter(base, 1, 1024*1024, useMmap)
 	defer w.Close()
 
 	for i := 0; i < 10; i++ {
@@ -118,7 +114,7 @@ func testFileTable(t *testing.T) {
 
 	r.Close()
 
-	if r, err = newTableReader(base, 1); err != nil {
+	if r, err = newTableReader(base, 1, useMmap); err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()
@@ -143,8 +139,8 @@ func testFileTable(t *testing.T) {
 
 	log.SetLevel(log.LevelFatal)
 
-	testRepair(t, name, 1, s, 11)
-	testRepair(t, name, 1, s, 20)
+	testRepair(t, name, 1, s, 11, useMmap)
+	testRepair(t, name, 1, s, 20, useMmap)
 
 	if err := os.Truncate(name, s-21); err != nil {
 		t.Fatal(err)
@@ -156,13 +152,13 @@ func testFileTable(t *testing.T) {
 		r.Close()
 	}
 
-	if r, err = newTableReader(base, 2); err != nil {
+	if r, err = newTableReader(base, 2, useMmap); err != nil {
 		t.Fatal(err)
 	}
 	r.Close()
 }
 
-func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) {
+func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64, useMmap bool) {
 	var r *tableReader
 	var err error
 
@@ -170,7 +166,7 @@ func testRepair(t *testing.T, name string, index int64, s int64, cutSize int64) 
 		t.Fatal(err)
 	}
 
-	if r, err = newTableReader(path.Dir(name), index); err != nil {
+	if r, err = newTableReader(path.Dir(name), index, useMmap); err != nil {
 		t.Fatal(err)
 	}
 	defer r.Close()

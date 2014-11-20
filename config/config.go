@@ -79,6 +79,7 @@ type ReplicationConfig struct {
 	MaxLogFileNum    int    `toml:"max_log_file_num"`
 	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
+	UseMmap          bool   `toml:"use_mmap"`
 }
 
 type SnapshotConfig struct {
@@ -175,6 +176,7 @@ func NewConfigDefault() *Config {
 	cfg.Replication.Compression = true
 	cfg.Replication.WaitMaxSlaveAcks = 2
 	cfg.Replication.SyncLog = 0
+	cfg.Replication.UseMmap = true
 	cfg.Snapshot.MaxNum = 1
 
 	cfg.RocksDB.AllowOsBuffer = true

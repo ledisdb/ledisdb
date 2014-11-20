@@ -29,9 +29,6 @@ func fmtTableMetaName(base string, index int64) string {
 	return path.Join(base, fmt.Sprintf("%08d.meta", index))
 }
 
-//todo config
-var useMmap = true
-
 type tableReader struct {
 	sync.Mutex
 
@@ -51,7 +48,7 @@ type tableReader struct {
 	useMmap bool
 }
 
-func newTableReader(base string, index int64) (*tableReader, error) {
+func newTableReader(base string, index int64, useMmap bool) (*tableReader, error) {
 	if index <= 0 {
 		return nil, fmt.Errorf("invalid index %d", index)
 	}
@@ -59,7 +56,6 @@ func newTableReader(base string, index int64) (*tableReader, error) {
 	t.base = base
 	t.index = index
 
-	//todo, use config
 	t.useMmap = useMmap
 
 	var err error
@@ -122,7 +118,8 @@ func (t *tableReader) getLogPos(index int) (uint32, error) {
 
 func (t *tableReader) checkData() error {
 	var err error
-	if t.data, err = newReadFile(t.useMmap, fmtTableDataName(t.base, t.index)); err != nil {
+	//check will use raw file mode
+	if t.data, err = newReadFile(false, fmtTableDataName(t.base, t.index)); err != nil {
 		return err
 	}
 
@@ -144,7 +141,8 @@ func (t *tableReader) checkData() error {
 
 func (t *tableReader) checkMeta() error {
 	var err error
-	if t.meta, err = newReadFile(t.useMmap, fmtTableMetaName(t.base, t.index)); err != nil {
+	//check will use raw file mode
+	if t.meta, err = newReadFile(false, fmtTableMetaName(t.base, t.index)); err != nil {
 		return err
 	}
 
@@ -205,10 +203,11 @@ func (t *tableReader) repair() error {
 	var data writeFile
 	var meta writeFile
 
-	data, err = newWriteFile(t.useMmap, fmtTableDataName(t.base, t.index), 0)
+	//repair will use raw file mode
+	data, err = newWriteFile(false, fmtTableDataName(t.base, t.index), 0)
 	data.SetOffset(int64(data.Size()))
 
-	meta, err = newWriteFile(t.useMmap, fmtTableMetaName(t.base, t.index), int64(defaultLogNumInFile*4))
+	meta, err = newWriteFile(false, fmtTableMetaName(t.base, t.index), int64(defaultLogNumInFile*4))
 
 	var l Log
 	var pos int64 = 0
@@ -254,13 +253,17 @@ func (t *tableReader) repair() error {
 	}
 
 	var e error
-	if err := meta.Close(false); err != nil {
+	if err := meta.Close(); err != nil {
 		e = err
 	}
 
 	data.SetOffset(pos)
 
-	if err = data.Close(true); err != nil {
+	if _, err = data.Write(magic); err != nil {
+		log.Error("write magic error %s", err.Error())
+	}
+
+	if err = data.Close(); err != nil {
 		return err
 	}
 
@@ -348,7 +351,7 @@ type tableWriter struct {
 	useMmap bool
 }
 
-func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
+func newTableWriter(base string, index int64, maxLogSize int64, useMmap bool) *tableWriter {
 	if index <= 0 {
 		panic(fmt.Errorf("invalid index %d", index))
 	}
@@ -364,7 +367,6 @@ func newTableWriter(base string, index int64, maxLogSize int64) *tableWriter {
 
 	t.posBuf = make([]byte, 4)
 
-	//todo, use config
 	t.useMmap = useMmap
 
 	return t
@@ -384,14 +386,18 @@ func (t *tableWriter) SetSyncType(tp int) {
 
 func (t *tableWriter) close() {
 	if t.meta != nil {
-		if err := t.meta.Close(false); err != nil {
+		if err := t.meta.Close(); err != nil {
 			log.Fatal("close log meta error %s", err.Error())
 		}
 		t.meta = nil
 	}
 
 	if t.data != nil {
-		if err := t.data.Close(true); err != nil {
+		if _, err := t.data.Write(magic); err != nil {
+			log.Fatal("write magic error %s", err.Error())
+		}
+
+		if err := t.data.Close(); err != nil {
 			log.Fatal("close log data error %s", err.Error())
 		}
 		t.data = nil
@@ -435,8 +441,7 @@ func (t *tableWriter) Flush() (*tableReader, error) {
 	tr.first = t.first
 	tr.last = t.last
 	tr.lastTime = t.lastTime
-	//todo config
-	tr.useMmap = useMmap
+	tr.useMmap = t.useMmap
 
 	t.close()
 

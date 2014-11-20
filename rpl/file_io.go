@@ -13,7 +13,7 @@ import (
 type writeFile interface {
 	Sync() error
 	Write(b []byte) (n int, err error)
-	Close(addMagic bool) error
+	Close() error
 	ReadAt(buf []byte, offset int64) (int, error)
 	Truncate(size int64) error
 	SetOffset(o int64)
@@ -50,19 +50,9 @@ func newRawWriteFile(name string, size int64) (writeFile, error) {
 	return m, nil
 }
 
-func (m *rawWriteFile) Close(addMagic bool) error {
-	if addMagic {
-		if err := m.f.Truncate(m.offset + int64(len(magic))); err != nil {
-			return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
-		}
-
-		if _, err := m.f.WriteAt(magic, m.offset); err != nil {
-			return fmt.Errorf("close write %s magic error %s", m.name, err.Error())
-		}
-	} else {
-		if err := m.f.Truncate(m.offset); err != nil {
-			return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
-		}
+func (m *rawWriteFile) Close() error {
+	if err := m.f.Truncate(m.offset); err != nil {
+		return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
 	}
 
 	if err := m.f.Close(); err != nil {
@@ -77,7 +67,7 @@ func (m *rawWriteFile) Sync() error {
 }
 
 func (m *rawWriteFile) Write(b []byte) (n int, err error) {
-	n, err = m.f.Write(b)
+	n, err = m.f.WriteAt(b, m.offset)
 	if err != nil {
 		return
 	} else if n != len(b) {
@@ -210,23 +200,13 @@ func (m *mmapWriteFile) Sync() error {
 	return m.m.Flush()
 }
 
-func (m *mmapWriteFile) Close(addMagic bool) error {
+func (m *mmapWriteFile) Close() error {
 	if err := m.m.Unmap(); err != nil {
 		return fmt.Errorf("unmap %s error %s", m.name, err.Error())
 	}
 
-	if addMagic {
-		if err := m.f.Truncate(m.offset + int64(len(magic))); err != nil {
-			return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
-		}
-
-		if _, err := m.f.WriteAt(magic, m.offset); err != nil {
-			return fmt.Errorf("close write %s magic error %s", m.name, err.Error())
-		}
-	} else {
-		if err := m.f.Truncate(m.offset); err != nil {
-			return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
-		}
+	if err := m.f.Truncate(m.offset); err != nil {
+		return fmt.Errorf("close truncate %s error %s", m.name, err.Error())
 	}
 
 	if err := m.f.Close(); err != nil {

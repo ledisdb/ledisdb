@@ -90,7 +90,7 @@ func NewFileStore(base string, cfg *config.Config) (*FileStore, error) {
 		index = s.rs[len(s.rs)-1].index + 1
 	}
 
-	s.w = newTableWriter(s.base, index, cfg.Replication.MaxLogFileSize)
+	s.w = newTableWriter(s.base, index, cfg.Replication.MaxLogFileSize, cfg.Replication.UseMmap)
 	s.w.SetSyncType(cfg.Replication.SyncLog)
 
 	go s.checkTableReaders()
@@ -244,7 +244,7 @@ func (s *FileStore) Clear() error {
 		return err
 	}
 
-	s.w = newTableWriter(s.base, 1, s.cfg.Replication.MaxLogFileSize)
+	s.w = newTableWriter(s.base, 1, s.cfg.Replication.MaxLogFileSize, s.cfg.Replication.UseMmap)
 
 	return nil
 }
@@ -335,7 +335,7 @@ func (s *FileStore) load() error {
 	var index int64
 	for _, f := range fs {
 		if _, err := fmt.Sscanf(f.Name(), "%08d.data", &index); err == nil {
-			if r, err = newTableReader(s.base, index); err != nil {
+			if r, err = newTableReader(s.base, index, s.cfg.Replication.UseMmap); err != nil {
 				log.Error("load table %s err: %s", f.Name(), err.Error())
 			} else {
 				s.rs = append(s.rs, r)
