@@ -4,6 +4,8 @@ import (
 	"errors"
 )
 
+const Version = "0.4"
+
 const (
 	NoneType    byte = 0
 	KVType      byte = 1
