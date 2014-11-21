@@ -220,7 +220,6 @@ func (m *mmapWriteFile) Write(b []byte) (n int, err error) {
 	extra := int64(len(b)) - (m.size - m.offset)
 	if extra > 0 {
 		newSize := m.size + extra + m.size/10
-		println("need truncate ???", newSize, m.size, len(b))
 		if err = m.Truncate(newSize); err != nil {
 			return
 		}

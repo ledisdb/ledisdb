@@ -177,7 +177,7 @@ func (s *FileStore) storeLog(l *Log) error {
 	r, err = s.w.Flush()
 
 	if err != nil {
-		log.Error("write table flush error %s, can not store now", err.Error())
+		log.Fatal("write table flush error %s, can not store!!!", err.Error())
 
 		s.w.Close()
 
