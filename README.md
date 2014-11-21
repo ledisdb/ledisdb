@@ -1,8 +1,13 @@
-# LedisDB
+# LedisDB 
+
+[![Build Status](https://travis-ci.org/siddontang/ledisdb.svg?branch=develop)](https://travis-ci.org/siddontang/ledisdb)
 
 Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set.
 
 LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
+
+### **You must run `ledis-upgrade-ttl` before using LedisDB version 0.4, I fixed a very serious bug for key expiration and ttl.**
+
 
 ## Features
 
