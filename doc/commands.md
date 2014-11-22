@@ -22,6 +22,7 @@ Table of Contents
 	- [MSET key value [key value ...]](#mset-key-value-key-value-)
 	- [SET key value](#set-key-value)
 	- [SETNX key value](#setnx-key-value)
+	- [SETEX key seconds value](#setex-key-seconds-value)
 	- [EXPIRE key seconds](#expire-key-seconds)
 	- [EXPIREAT key timestamp](#expireat-key-timestamp)
 	- [TTL key](#ttl-key)
@@ -387,6 +388,30 @@ ledis> SETNX mykey "world"
 (integer) 0
 ledis> GET mykey
 "hello"
+```
+
+### SETEX key seconds value
+Set key to hold the string value and set key to timeout after a given number of seconds. This command is equivalent to executing the following commands:
+
+```
+SET mykey value
+EXPIRE mykey seconds
+```
+
+**Return value**
+
+Simple string reply
+
+**Examples**
+
+```
+ledis> SETEX mykey 10 "Hello"
+OK
+ledis> TTL mykey
+(integer) 10
+ledis> GET mykey
+"Hello"
+ledis> 
 ```
 
 ### EXPIRE key seconds

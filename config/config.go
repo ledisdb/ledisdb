@@ -7,6 +7,7 @@ import (
 	"github.com/siddontang/go/ioutil2"
 	"io"
 	"io/ioutil"
+	"sync"
 )
 
 var (
@@ -73,8 +74,12 @@ type ReplicationConfig struct {
 	WaitSyncTime     int    `toml:"wait_sync_time"`
 	WaitMaxSlaveAcks int    `toml:"wait_max_slave_acks"`
 	ExpiredLogDays   int    `toml:"expired_log_days"`
+	StoreName        string `toml:"store_name"`
+	MaxLogFileSize   int64  `toml:"max_log_file_size"`
+	MaxLogFileNum    int    `toml:"max_log_file_num"`
 	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
+	UseMmap          bool   `toml:"use_mmap"`
 }
 
 type SnapshotConfig struct {
@@ -83,6 +88,8 @@ type SnapshotConfig struct {
 }
 
 type Config struct {
+	m sync.RWMutex `toml:"-"`
+
 	FileName string `toml:"-"`
 
 	Addr string `toml:"addr"`
@@ -111,8 +118,11 @@ type Config struct {
 
 	Snapshot SnapshotConfig `toml:"snapshot"`
 
-	ConnReadBufferSize  int `toml:"conn_read_buffer_size"`
-	ConnWriteBufferSize int `toml:"conn_write_buffer_size"`
+	ConnReadBufferSize    int `toml:"conn_read_buffer_size"`
+	ConnWriteBufferSize   int `toml:"conn_write_buffer_size"`
+	ConnKeepaliveInterval int `toml:"conn_keepalive_interval"`
+
+	TTLCheckInterval int `toml:"ttl_check_interval"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {
@@ -166,6 +176,7 @@ func NewConfigDefault() *Config {
 	cfg.Replication.Compression = true
 	cfg.Replication.WaitMaxSlaveAcks = 2
 	cfg.Replication.SyncLog = 0
+	cfg.Replication.UseMmap = true
 	cfg.Snapshot.MaxNum = 1
 
 	cfg.RocksDB.AllowOsBuffer = true
@@ -194,8 +205,11 @@ func (cfg *Config) adjust() {
 	cfg.RocksDB.adjust()
 
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
+	cfg.Replication.MaxLogFileNum = getDefault(50, cfg.Replication.MaxLogFileNum)
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
+	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
+
 }
 
 func (cfg *LevelDBConfig) adjust() {
@@ -249,4 +263,17 @@ func (cfg *Config) Rewrite() error {
 	}
 
 	return cfg.DumpFile(cfg.FileName)
+}
+
+func (cfg *Config) GetReadonly() bool {
+	cfg.m.RLock()
+	b := cfg.Readonly
+	cfg.m.RUnlock()
+	return b
+}
+
+func (cfg *Config) SetReadonly(b bool) {
+	cfg.m.Lock()
+	cfg.Readonly = b
+	cfg.m.Unlock()
 }

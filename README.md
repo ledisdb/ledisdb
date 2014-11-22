@@ -1,8 +1,13 @@
-# LedisDB
+# LedisDB 
+
+[![Build Status](https://travis-ci.org/siddontang/ledisdb.svg?branch=develop)](https://travis-ci.org/siddontang/ledisdb)
 
 Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set.
 
 LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
+
+### **You must run `ledis-upgrade-ttl` before using LedisDB version 0.4, I fixed a very serious bug for key expiration and ttl.**
+
 
 ## Features
 
@@ -167,18 +172,9 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 + `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
 
 
-## Thanks
+## Requirement
 
-Gmail: cenqichao@gmail.com
-
-Gmail: chendahui007@gmail.com
-
-Gmail: cppgohan@gmail.com
-
-Gmail: tiaotiaoyly@gmail.com
-
-Gmail: wyk4true@gmail.com
-
++ go version >= 1.3
 
 ## Feedback
 

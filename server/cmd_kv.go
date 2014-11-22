@@ -7,16 +7,35 @@ import (
 	"strings"
 )
 
+// func getCommand(c *client) error {
+// 	args := c.args
+// 	if len(args) != 1 {
+// 		return ErrCmdParams
+// 	}
+
+// 	if v, err := c.db.Get(args[0]); err != nil {
+// 		return err
+// 	} else {
+// 		c.resp.writeBulk(v)
+// 	}
+// 	return nil
+// }
+
 func getCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.Get(args[0]); err != nil {
+	if v, err := c.db.GetSlice(args[0]); err != nil {
 		return err
 	} else {
-		c.resp.writeBulk(v)
+		if v == nil {
+			c.resp.writeBulk(nil)
+		} else {
+			c.resp.writeBulk(v.Data())
+			v.Free()
+		}
 	}
 	return nil
 }
@@ -61,6 +80,26 @@ func setnxCommand(c *client) error {
 		return err
 	} else {
 		c.resp.writeInteger(n)
+	}
+
+	return nil
+}
+
+func setexCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	sec, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return ErrValue
+	}
+
+	if err := c.db.SetEX(args[0], sec, args[2]); err != nil {
+		return err
+	} else {
+		c.resp.writeStatus(OK)
 	}
 
 	return nil
@@ -365,6 +404,7 @@ func init() {
 	register("mset", msetCommand)
 	register("set", setCommand)
 	register("setnx", setnxCommand)
+	register("setex", setexCommand)
 	register("expire", expireCommand)
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)

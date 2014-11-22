@@ -1,12 +1,12 @@
 package goleveldb
 
 import (
-	"github.com/siddontang/goleveldb/leveldb"
-	"github.com/siddontang/goleveldb/leveldb/cache"
-	"github.com/siddontang/goleveldb/leveldb/filter"
-	"github.com/siddontang/goleveldb/leveldb/opt"
-	"github.com/siddontang/goleveldb/leveldb/storage"
-	"github.com/siddontang/goleveldb/leveldb/util"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/cache"
+	"github.com/syndtr/goleveldb/leveldb/filter"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/storage"
+	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
@@ -126,6 +126,12 @@ func newOptions(cfg *config.LevelDBConfig) *opt.Options {
 
 	opts.BlockSize = cfg.BlockSize
 	opts.WriteBuffer = cfg.WriteBufferSize
+	opts.CachedOpenFiles = cfg.MaxOpenFiles
+
+	//here we use default value, later add config support
+	opts.CompactionTableSize = 32 * 1024 * 1024
+	opts.WriteL0SlowdownTrigger = 16
+	opts.WriteL0PauseTrigger = 64
 
 	return opts
 }

@@ -24,6 +24,7 @@ var slaveof = flag.String("slaveof", "", "make the server a slave of another ins
 var readonly = flag.Bool("readonly", false, "set readonly mode, salve server is always readonly")
 var rpl = flag.Bool("rpl", false, "enable replication or not, slave server is always enabled")
 var rplSync = flag.Bool("rpl_sync", false, "enable sync replication or not")
+var ttlCheck = flag.Int("ttl_check", 0, "TTL check interval")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -67,6 +68,10 @@ func main() {
 		cfg.Replication.Sync = *rplSync
 	}
 
+	if *ttlCheck > 0 {
+		cfg.TTLCheckInterval = *ttlCheck
+	}
+
 	var app *server.App
 	app, err = server.NewApp(cfg)
 	if err != nil {
@@ -76,16 +81,12 @@ func main() {
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc,
+		os.Kill,
+		os.Interrupt,
 		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
-
-	go func() {
-		<-sc
-
-		app.Close()
-	}()
 
 	if *usePprof {
 		go func() {
@@ -93,5 +94,9 @@ func main() {
 		}()
 	}
 
-	app.Run()
+	go app.Run()
+
+	<-sc
+
+	app.Close()
 }

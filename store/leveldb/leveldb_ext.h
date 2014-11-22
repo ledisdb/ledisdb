@@ -32,6 +32,7 @@ extern unsigned char leveldb_iter_seek_ext(leveldb_iterator_t*, const char* k, s
 extern unsigned char leveldb_iter_next_ext(leveldb_iterator_t*);
 extern unsigned char leveldb_iter_prev_ext(leveldb_iterator_t*);
 
+extern void leveldb_writebatch_iterate_ext(leveldb_writebatch_t*, void* p);
 
 #ifdef __cplusplus
 }

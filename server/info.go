@@ -6,9 +6,10 @@ import (
 	"github.com/siddontang/go/sync2"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
-	"sync/atomic"
+	"time"
 )
 
 type info struct {
@@ -19,10 +20,6 @@ type info struct {
 	Server struct {
 		OS         string
 		ProceessId int
-	}
-
-	Clients struct {
-		ConnectedClients int64
 	}
 
 	Replication struct {
@@ -45,21 +42,17 @@ func newInfo(app *App) (i *info, err error) {
 	return i, nil
 }
 
-func (i *info) addClients(delta int64) {
-	atomic.AddInt64(&i.Clients.ConnectedClients, delta)
-}
-
 func (i *info) Close() {
 
 }
 
 func getMemoryHuman(m uint64) string {
 	if m > GB {
-		return fmt.Sprintf("%dG", m/GB)
+		return fmt.Sprintf("%0.3fG", float64(m)/float64(GB))
 	} else if m > MB {
-		return fmt.Sprintf("%dM", m/MB)
+		return fmt.Sprintf("%0.3fM", float64(m)/float64(MB))
 	} else if m > KB {
-		return fmt.Sprintf("%dK", m/KB)
+		return fmt.Sprintf("%0.3fK", float64(m)/float64(KB))
 	} else {
 		return fmt.Sprintf("%d", m)
 	}
@@ -72,10 +65,10 @@ func (i *info) Dump(section string) []byte {
 		i.dumpAll(buf)
 	case "server":
 		i.dumpServer(buf)
-	case "client":
-		i.dumpClients(buf)
 	case "mem":
 		i.dumpMem(buf)
+	case "gc":
+		i.dumpGC(buf)
 	case "store":
 		i.dumpStore(buf)
 	case "replication":
@@ -97,9 +90,9 @@ func (i *info) dumpAll(buf *bytes.Buffer) {
 	buf.Write(Delims)
 	i.dumpStore(buf)
 	buf.Write(Delims)
-	i.dumpClients(buf)
-	buf.Write(Delims)
 	i.dumpMem(buf)
+	buf.Write(Delims)
+	i.dumpGC(buf)
 	buf.Write(Delims)
 	i.dumpReplication(buf)
 }
@@ -113,13 +106,9 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 		infoPair{"http_addr", i.app.cfg.HttpAddr},
 		infoPair{"readonly", i.app.cfg.Readonly},
 		infoPair{"goroutine_num", runtime.NumGoroutine()},
+		infoPair{"cgo_call_num", runtime.NumCgoCall()},
+		infoPair{"resp_client_num", i.app.respClientNum()},
 	)
-}
-
-func (i *info) dumpClients(buf *bytes.Buffer) {
-	buf.WriteString("# Client\r\n")
-
-	i.dumpPairs(buf, infoPair{"client_num", i.Clients.ConnectedClients})
 }
 
 func (i *info) dumpMem(buf *bytes.Buffer) {
@@ -128,8 +117,46 @@ func (i *info) dumpMem(buf *bytes.Buffer) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	i.dumpPairs(buf, infoPair{"mem_alloc", mem.Alloc},
-		infoPair{"mem_alloc_human", getMemoryHuman(mem.Alloc)})
+	i.dumpPairs(buf, infoPair{"mem_alloc", getMemoryHuman(mem.Alloc)},
+		infoPair{"mem_sys", getMemoryHuman(mem.Sys)},
+		infoPair{"mem_looksups", getMemoryHuman(mem.Lookups)},
+		infoPair{"mem_mallocs", getMemoryHuman(mem.Mallocs)},
+		infoPair{"mem_frees", getMemoryHuman(mem.Frees)},
+		infoPair{"mem_total", getMemoryHuman(mem.TotalAlloc)},
+		infoPair{"mem_heap_alloc", getMemoryHuman(mem.HeapAlloc)},
+		infoPair{"mem_heap_sys", getMemoryHuman(mem.HeapSys)},
+		infoPair{"mem_head_idle", getMemoryHuman(mem.HeapIdle)},
+		infoPair{"mem_head_inuse", getMemoryHuman(mem.HeapInuse)},
+		infoPair{"mem_head_released", getMemoryHuman(mem.HeapReleased)},
+		infoPair{"mem_head_objects", mem.HeapObjects},
+	)
+}
+
+const (
+	gcTimeFormat = "2006/01/02 15:04:05.000"
+)
+
+func (i *info) dumpGC(buf *bytes.Buffer) {
+	buf.WriteString("# GC\r\n")
+
+	count := 5
+
+	var st debug.GCStats
+	st.Pause = make([]time.Duration, count)
+	// st.PauseQuantiles = make([]time.Duration, count)
+	debug.ReadGCStats(&st)
+
+	h := make([]string, 0, count)
+
+	for i := 0; i < count && i < len(st.Pause); i++ {
+		h = append(h, st.Pause[i].String())
+	}
+
+	i.dumpPairs(buf, infoPair{"gc_last_time", st.LastGC.Format(gcTimeFormat)},
+		infoPair{"gc_num", st.NumGC},
+		infoPair{"gc_pause_total", st.PauseTotal.String()},
+		infoPair{"gc_pause_history", strings.Join(h, ",")},
+	)
 }
 
 func (i *info) dumpStore(buf *bytes.Buffer) {
@@ -137,15 +164,33 @@ func (i *info) dumpStore(buf *bytes.Buffer) {
 
 	s := i.app.ldb.StoreStat()
 
+	// getNum := s.GetNum.Get()
+	// getTotalTime := s.GetTotalTime.Get()
+
+	// gt := int64(0)
+	// if getNum > 0 {
+	// 	gt = getTotalTime.Nanoseconds() / (getNum * 1e3)
+	// }
+
+	// commitNum := s.BatchCommitNum.Get()
+	// commitTotalTime := s.BatchCommitTotalTime.Get()
+
+	// ct := int64(0)
+	// if commitNum > 0 {
+	// 	ct = commitTotalTime.Nanoseconds() / (commitNum * 1e3)
+	// }
+
 	i.dumpPairs(buf, infoPair{"name", i.app.cfg.DBName},
 		infoPair{"get", s.GetNum},
 		infoPair{"get_missing", s.GetMissingNum},
 		infoPair{"put", s.PutNum},
 		infoPair{"delete", s.DeleteNum},
+		infoPair{"get_total_time", s.GetTotalTime.Get().String()},
 		infoPair{"iter", s.IterNum},
 		infoPair{"iter_seek", s.IterSeekNum},
 		infoPair{"iter_close", s.IterCloseNum},
 		infoPair{"batch_commit", s.BatchCommitNum},
+		infoPair{"batch_commit_total_time", s.BatchCommitTotalTime.Get().String()},
 	)
 }
 

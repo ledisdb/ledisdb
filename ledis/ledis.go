@@ -34,6 +34,8 @@ type Ledis struct {
 	commitLock sync.Mutex   //allow one write commit at same time
 
 	lock io.Closer
+
+	tcs [MaxDBNumber]*ttlChecker
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
@@ -80,8 +82,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 		l.dbs[i] = l.newDB(i)
 	}
 
-	l.wg.Add(1)
-	go l.onDataExpired()
+	l.checkTTL()
 
 	return l, nil
 }
@@ -94,12 +95,12 @@ func (l *Ledis) Close() {
 
 	if l.r != nil {
 		l.r.Close()
-		l.r = nil
+		//l.r = nil
 	}
 
 	if l.lock != nil {
 		l.lock.Close()
-		l.lock = nil
+		//l.lock = nil
 	}
 }
 
@@ -155,7 +156,7 @@ func (l *Ledis) flushAll() error {
 }
 
 func (l *Ledis) IsReadOnly() bool {
-	if l.cfg.Readonly {
+	if l.cfg.GetReadonly() {
 		return true
 	} else if l.r != nil {
 		if b, _ := l.r.CommitIDBehind(); b {
@@ -165,37 +166,47 @@ func (l *Ledis) IsReadOnly() bool {
 	return false
 }
 
-func (l *Ledis) onDataExpired() {
-	defer l.wg.Done()
-
-	var executors []*elimination = make([]*elimination, len(l.dbs))
+func (l *Ledis) checkTTL() {
 	for i, db := range l.dbs {
-		executors[i] = db.newEliminator()
+		c := newTTLChecker(db)
+
+		c.register(KVType, db.kvBatch, db.delete)
+		c.register(ListType, db.listBatch, db.lDelete)
+		c.register(HashType, db.hashBatch, db.hDelete)
+		c.register(ZSetType, db.zsetBatch, db.zDelete)
+		c.register(BitType, db.binBatch, db.bDelete)
+		c.register(SetType, db.setBatch, db.sDelete)
+
+		l.tcs[i] = c
 	}
 
-	tick := time.NewTicker(1 * time.Second)
-	defer tick.Stop()
+	if l.cfg.TTLCheckInterval == 0 {
+		l.cfg.TTLCheckInterval = 1
+	}
 
-	done := make(chan struct{})
+	l.wg.Add(1)
+	go func() {
+		defer l.wg.Done()
 
-	for {
-		select {
-		case <-tick.C:
-			if l.IsReadOnly() {
-				break
-			}
+		tick := time.NewTicker(time.Duration(l.cfg.TTLCheckInterval) * time.Second)
+		defer tick.Stop()
 
-			go func() {
-				for _, eli := range executors {
-					eli.active()
+		for {
+			select {
+			case <-tick.C:
+				if l.IsReadOnly() {
+					break
 				}
-				done <- struct{}{}
-			}()
-			<-done
-		case <-l.quit:
-			return
+
+				for _, c := range l.tcs {
+					c.check()
+				}
+			case <-l.quit:
+				return
+			}
 		}
-	}
+
+	}()
 
 }
 

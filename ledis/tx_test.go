@@ -195,7 +195,7 @@ func testTx(t *testing.T, name string) {
 
 	cfg.DBName = name
 	cfg.LMDB.MapSize = 10 * 1024 * 1024
-	cfg.UseReplication = true
+	//cfg.UseReplication = true
 
 	os.RemoveAll(cfg.DataDir)
 

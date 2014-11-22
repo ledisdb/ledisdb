@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
+	"github.com/siddontang/ledisdb/ledis"
 	"os"
 	"runtime"
 	"sync"
@@ -24,7 +24,8 @@ var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
 var wg sync.WaitGroup
 
-var db *store.DB
+var ldb *ledis.Ledis
+var db *ledis.DB
 
 var loop int = 0
 
@@ -46,25 +47,31 @@ func bench(cmd string, f func()) {
 	t2 := time.Now()
 
 	d := t2.Sub(t1)
-	fmt.Printf("%s: %0.3f micros/op, %0.2fmb/s %0.2fop/s\n", cmd, float64(d.Nanoseconds()/1e3)/float64(*number),
-		float64((*valueSize+16)*(*number))/(1024.0*1024.0*(d.Seconds())), float64(*number)/d.Seconds())
+	fmt.Printf("%s %s: %0.3f micros/op, %0.2fmb/s %0.2fop/s\n",
+		cmd,
+		d.String(),
+		float64(d.Nanoseconds()/1e3)/float64(*number),
+		float64((*valueSize+16)*(*number))/(1024.0*1024.0*(d.Seconds())),
+		float64(*number)/d.Seconds())
 }
 
 var kvSetBase int64 = 0
 var kvGetBase int64 = 0
 
+var value []byte
+
 func benchSet() {
 	f := func() {
-		value := make([]byte, *valueSize)
 		n := atomic.AddInt64(&kvSetBase, 1)
 
-		db.Put(num.Int64ToBytes(n), value)
+		db.Set(num.Int64ToBytes(n), value)
 	}
 
 	bench("set", f)
 }
 
 func benchGet() {
+	kvGetBase = 0
 	f := func() {
 		n := atomic.AddInt64(&kvGetBase, 1)
 		v, err := db.Get(num.Int64ToBytes(n))
@@ -76,6 +83,23 @@ func benchGet() {
 	}
 
 	bench("get", f)
+}
+
+var kvGetSliceBase int64 = 0
+
+func benchGetSlice() {
+	kvGetSliceBase = 0
+	f := func() {
+		n := atomic.AddInt64(&kvGetSliceBase, 1)
+		v, err := db.GetSlice(num.Int64ToBytes(n))
+		if err != nil {
+			println(err.Error())
+		} else if v != nil {
+			v.Free()
+		}
+	}
+
+	bench("getslice", f)
 }
 
 func setRocksDB(cfg *config.RocksDBConfig) {
@@ -99,10 +123,15 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 
+	value = make([]byte, *valueSize)
+
 	cfg := config.NewConfigDefault()
-	cfg.DBPath = "./var/store_test"
+	cfg.DataDir = "./var/ledis_dbbench"
 	cfg.DBName = *name
 	os.RemoveAll(cfg.DBPath)
+	defer os.RemoveAll(cfg.DBPath)
+
+	os.MkdirAll(cfg.DBPath, 0755)
 
 	cfg.LevelDB.BlockSize = 32 * KB
 	cfg.LevelDB.CacheSize = 512 * MB
@@ -112,11 +141,13 @@ func main() {
 	setRocksDB(&cfg.RocksDB)
 
 	var err error
-	db, err = store.Open(cfg)
+	ldb, err = ledis.Open(cfg)
 	if err != nil {
-		panic(err)
+		println(err.Error())
 		return
 	}
+
+	db, _ = ldb.Select(0)
 
 	if *number <= 0 {
 		panic("invalid number")
@@ -137,6 +168,9 @@ func main() {
 	for i := 0; i < *round; i++ {
 		benchSet()
 		benchGet()
+		benchGetSlice()
+		benchGet()
+		benchGetSlice()
 
 		println("")
 	}

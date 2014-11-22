@@ -4,6 +4,7 @@ package rocksdb
 
 // #cgo LDFLAGS: -lrocksdb
 // #include "rocksdb/c.h"
+// #include "rocksdb_ext.h"
 import "C"
 
 import (
@@ -11,17 +12,21 @@ import (
 )
 
 type WriteBatch struct {
-	db     *DB
-	wbatch *C.rocksdb_writebatch_t
+	db       *DB
+	wbatch   *C.rocksdb_writebatch_t
+	commitOk bool
 }
 
-func (w *WriteBatch) Close() error {
-	C.rocksdb_writebatch_destroy(w.wbatch)
-	w.wbatch = nil
-	return nil
+func (w *WriteBatch) Close() {
+	if w.wbatch != nil {
+		C.rocksdb_writebatch_destroy(w.wbatch)
+		w.wbatch = nil
+	}
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
+	w.commitOk = false
+
 	var k, v *C.char
 	if len(key) != 0 {
 		k = (*C.char)(unsafe.Pointer(&key[0]))
@@ -37,6 +42,8 @@ func (w *WriteBatch) Put(key, value []byte) {
 }
 
 func (w *WriteBatch) Delete(key []byte) {
+	w.commitOk = false
+
 	C.rocksdb_writebatch_delete(w.wbatch,
 		(*C.char)(unsafe.Pointer(&key[0])), C.size_t(len(key)))
 }
@@ -50,15 +57,27 @@ func (w *WriteBatch) SyncCommit() error {
 }
 
 func (w *WriteBatch) Rollback() error {
-	C.rocksdb_writebatch_clear(w.wbatch)
+	if !w.commitOk {
+		C.rocksdb_writebatch_clear(w.wbatch)
+	}
 	return nil
 }
 
 func (w *WriteBatch) commit(wb *WriteOptions) error {
+	w.commitOk = true
+
 	var errStr *C.char
-	C.rocksdb_write(w.db.db, wb.Opt, w.wbatch, &errStr)
+	C.rocksdb_write_ext(w.db.db, wb.Opt, w.wbatch, &errStr)
 	if errStr != nil {
+		w.commitOk = false
 		return saveError(errStr)
 	}
 	return nil
+}
+
+func (w *WriteBatch) Data() []byte {
+	var vallen C.size_t
+	value := C.rocksdb_writebatch_data(w.wbatch, &vallen)
+
+	return slice(unsafe.Pointer(value), int(vallen))
 }

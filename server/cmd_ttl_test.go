@@ -72,8 +72,8 @@ func TestExpire(t *testing.T) {
 
 		if ttl, err := ledis.Int64(c.Do(ttl, key)); err != nil {
 			t.Fatal(err)
-		} else if ttl != exp {
-			t.Fatal(ttl)
+		} else if ttl == -1 {
+			t.Fatal("no ttl")
 		}
 
 		//	expireat + ttl
@@ -86,8 +86,8 @@ func TestExpire(t *testing.T) {
 
 		if ttl, err := ledis.Int64(c.Do(ttl, key)); err != nil {
 			t.Fatal(err)
-		} else if ttl != 3 {
-			t.Fatal(ttl)
+		} else if ttl == -1 {
+			t.Fatal("no ttl")
 		}
 
 		kErr := "not_exist_ttl"

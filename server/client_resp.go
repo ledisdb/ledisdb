@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"github.com/siddontang/go/arena"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
@@ -11,20 +12,54 @@ import (
 	"net"
 	"runtime"
 	"strconv"
-	"strings"
+	"time"
 )
 
 var errReadRequest = errors.New("invalid request protocol")
+var errClientQuit = errors.New("remote client quit")
 
 type respClient struct {
 	*client
 
 	conn net.Conn
 	rb   *bufio.Reader
+
+	ar *arena.Arena
+
+	activeQuit bool
 }
 
 type respWriter struct {
 	buff *bufio.Writer
+}
+
+func (app *App) addRespClient(c *respClient) {
+	app.rcm.Lock()
+	app.rcs[c] = struct{}{}
+	app.rcm.Unlock()
+}
+
+func (app *App) delRespClient(c *respClient) {
+	app.rcm.Lock()
+	delete(app.rcs, c)
+	app.rcm.Unlock()
+}
+
+func (app *App) closeAllRespClients() {
+	app.rcm.Lock()
+
+	for c := range app.rcs {
+		c.conn.Close()
+	}
+
+	app.rcm.Unlock()
+}
+
+func (app *App) respClientNum() int {
+	app.rcm.Lock()
+	n := len(app.rcs)
+	app.rcm.Unlock()
+	return n
 }
 
 func newClientRESP(conn net.Conn, app *App) {
@@ -33,14 +68,24 @@ func newClientRESP(conn net.Conn, app *App) {
 	c.client = newClient(app)
 	c.conn = conn
 
+	c.activeQuit = false
+
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		tcpConn.SetReadBuffer(app.cfg.ConnReadBufferSize)
 		tcpConn.SetWriteBuffer(app.cfg.ConnWriteBufferSize)
 	}
+
 	c.rb = bufio.NewReaderSize(conn, app.cfg.ConnReadBufferSize)
 
 	c.resp = newWriterRESP(conn, app.cfg.ConnWriteBufferSize)
 	c.remoteAddr = conn.RemoteAddr().String()
+
+	//maybe another config?
+	c.ar = arena.NewArena(app.cfg.ConnReadBufferSize)
+
+	app.connWait.Add(1)
+
+	app.addRespClient(c)
 
 	go c.run()
 }
@@ -55,109 +100,75 @@ func (c *respClient) run() {
 			log.Fatal("client run panic %s:%v", buf, e)
 		}
 
-		handleQuit := true
-		if c.conn != nil {
-			//if handle quit command before, conn is nil
-			handleQuit = false
-			c.conn.Close()
-		}
+		c.client.close()
+
+		c.conn.Close()
 
 		if c.tx != nil {
 			c.tx.Rollback()
 			c.tx = nil
 		}
 
-		c.app.removeSlave(c.client, handleQuit)
+		c.app.removeSlave(c.client, c.activeQuit)
+
+		c.app.delRespClient(c)
+
+		c.app.connWait.Done()
 	}()
 
+	select {
+	case <-c.app.quit:
+		//check app closed
+		return
+	default:
+		break
+	}
+
+	kc := time.Duration(c.app.cfg.ConnKeepaliveInterval) * time.Second
 	for {
+		if kc > 0 {
+			c.conn.SetReadDeadline(time.Now().Add(kc))
+		}
+
 		reqData, err := c.readRequest()
+		if err == nil {
+			err = c.handleRequest(reqData)
+		}
+
 		if err != nil {
 			return
 		}
-
-		c.handleRequest(reqData)
 	}
 }
 
-func (c *respClient) readLine() ([]byte, error) {
-	return ReadLine(c.rb)
-}
-
-//A client sends to the Redis server a RESP Array consisting of just Bulk Strings.
 func (c *respClient) readRequest() ([][]byte, error) {
-	l, err := c.readLine()
-	if err != nil {
-		return nil, err
-	} else if len(l) == 0 || l[0] != '*' {
-		return nil, errReadRequest
-	}
-
-	var nparams int
-	if nparams, err = strconv.Atoi(hack.String(l[1:])); err != nil {
-		return nil, err
-	} else if nparams <= 0 {
-		return nil, errReadRequest
-	}
-
-	req := make([][]byte, 0, nparams)
-	var n int
-	for i := 0; i < nparams; i++ {
-		if l, err = c.readLine(); err != nil {
-			return nil, err
-		}
-
-		if len(l) == 0 {
-			return nil, errReadRequest
-		} else if l[0] == '$' {
-			//handle resp string
-			if n, err = strconv.Atoi(hack.String(l[1:])); err != nil {
-				return nil, err
-			} else if n == -1 {
-				req = append(req, nil)
-			} else {
-				buf := make([]byte, n)
-				if _, err = io.ReadFull(c.rb, buf); err != nil {
-					return nil, err
-				}
-
-				if l, err = c.readLine(); err != nil {
-					return nil, err
-				} else if len(l) != 0 {
-					return nil, errors.New("bad bulk string format")
-				}
-
-				req = append(req, buf)
-
-			}
-
-		} else {
-			return nil, errReadRequest
-		}
-	}
-
-	return req, nil
+	return ReadRequest(c.rb, c.ar)
 }
 
-func (c *respClient) handleRequest(reqData [][]byte) {
+func (c *respClient) handleRequest(reqData [][]byte) error {
 	if len(reqData) == 0 {
 		c.cmd = ""
 		c.args = reqData[0:0]
 	} else {
-		c.cmd = strings.ToLower(hack.String(reqData[0]))
+		c.cmd = hack.String(lowerSlice(reqData[0]))
 		c.args = reqData[1:]
 	}
 	if c.cmd == "quit" {
+		c.activeQuit = true
 		c.resp.writeStatus(OK)
 		c.resp.flush()
 		c.conn.Close()
-		c.conn = nil
-		return
+		return errClientQuit
 	}
 
 	c.perform()
 
-	return
+	c.cmd = ""
+	c.args = nil
+
+	c.ar.Reset()
+
+	return nil
 }
 
 //	response writer

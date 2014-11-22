@@ -21,6 +21,10 @@ func (s *Snapshot) Get(key []byte) ([]byte, error) {
 	return s.db.get(s.readOpts, key)
 }
 
+func (s *Snapshot) GetSlice(key []byte) (driver.ISlice, error) {
+	return s.db.getSlice(s.readOpts, key)
+}
+
 func (s *Snapshot) NewIterator() driver.IIterator {
 	it := new(Iterator)
 	it.it = C.leveldb_create_iterator(s.db.db, s.db.iteratorOpts.Opt)

@@ -42,6 +42,7 @@ func TestReplication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer master.Close()
 
 	cfgS := config.NewConfigDefault()
 	cfgS.DataDir = "/tmp/test_repl/slave"
@@ -54,6 +55,7 @@ func TestReplication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer slave.Close()
 
 	db, _ := master.Select(0)
 	db.Set([]byte("a"), []byte("value"))

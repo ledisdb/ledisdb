@@ -58,6 +58,8 @@ type IWriteBatch interface {
 	Commit() error
 	SyncCommit() error
 	Rollback() error
+	Data() []byte
+	Close()
 }
 
 type Tx interface {
@@ -70,4 +72,8 @@ type Tx interface {
 
 	Commit() error
 	Rollback() error
+}
+
+type ISliceGeter interface {
+	GetSlice(key []byte) (ISlice, error)
 }

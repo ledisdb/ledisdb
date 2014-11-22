@@ -4,22 +4,37 @@ package leveldb
 
 // #cgo LDFLAGS: -lleveldb
 // #include "leveldb/c.h"
+// #include "leveldb_ext.h"
 import "C"
 
 import (
+	"github.com/syndtr/goleveldb/leveldb"
 	"unsafe"
 )
 
 type WriteBatch struct {
 	db     *DB
 	wbatch *C.leveldb_writebatch_t
+
+	gbatch *leveldb.Batch
 }
 
-func (w *WriteBatch) Close() error {
-	C.leveldb_writebatch_destroy(w.wbatch)
-	w.wbatch = nil
+func newWriteBatch(db *DB) *WriteBatch {
+	w := new(WriteBatch)
+	w.db = db
+	w.wbatch = C.leveldb_writebatch_create()
+	w.gbatch = new(leveldb.Batch)
 
-	return nil
+	return w
+}
+
+func (w *WriteBatch) Close() {
+	if w.wbatch != nil {
+		C.leveldb_writebatch_destroy(w.wbatch)
+		w.wbatch = nil
+	}
+
+	w.gbatch = nil
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
@@ -52,6 +67,7 @@ func (w *WriteBatch) SyncCommit() error {
 
 func (w *WriteBatch) Rollback() error {
 	C.leveldb_writebatch_clear(w.wbatch)
+
 	return nil
 }
 
@@ -62,4 +78,27 @@ func (w *WriteBatch) commit(wb *WriteOptions) error {
 		return saveError(errStr)
 	}
 	return nil
+}
+
+//export leveldb_writebatch_iterate_put
+func leveldb_writebatch_iterate_put(p unsafe.Pointer, k *C.char, klen C.size_t, v *C.char, vlen C.size_t) {
+	b := (*leveldb.Batch)(p)
+	key := slice(unsafe.Pointer(k), int(klen))
+	value := slice(unsafe.Pointer(v), int(vlen))
+	b.Put(key, value)
+}
+
+//export leveldb_writebatch_iterate_delete
+func leveldb_writebatch_iterate_delete(p unsafe.Pointer, k *C.char, klen C.size_t) {
+	b := (*leveldb.Batch)(p)
+	key := slice(unsafe.Pointer(k), int(klen))
+	b.Delete(key)
+}
+
+func (w *WriteBatch) Data() []byte {
+	w.gbatch.Reset()
+	C.leveldb_writebatch_iterate_ext(w.wbatch,
+		unsafe.Pointer(w.gbatch))
+	b := w.gbatch.Dump()
+	return b
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	"os"
+	"runtime"
 	"unsafe"
 )
 
@@ -131,6 +132,7 @@ func (db *DB) initOptions(cfg *config.RocksDBConfig) {
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 	opts.SetMaxBackgroundCompactions(cfg.MaxBackgroundCompactions)
 	opts.SetMaxBackgroundFlushes(cfg.MaxBackgroundFlushes)
+	opts.SetLevel0FileNumCompactionTrigger(cfg.Level0FileNumCompactionTrigger)
 	opts.SetLevel0SlowdownWritesTrigger(cfg.Level0SlowdownWritesTrigger)
 	opts.SetLevel0StopWritesTrigger(cfg.Level0StopWritesTrigger)
 	opts.SetTargetFileSizeBase(cfg.TargetFileSizeBase)
@@ -215,6 +217,10 @@ func (db *DB) NewWriteBatch() driver.IWriteBatch {
 		wbatch: C.rocksdb_writebatch_create(),
 	}
 
+	runtime.SetFinalizer(wb, func(w *WriteBatch) {
+		w.Close()
+	})
+
 	return wb
 }
 
@@ -284,6 +290,28 @@ func (db *DB) get(ro *ReadOptions, key []byte) ([]byte, error) {
 	return C.GoBytes(unsafe.Pointer(value), C.int(vallen)), nil
 }
 
+func (db *DB) getSlice(ro *ReadOptions, key []byte) (driver.ISlice, error) {
+	var errStr *C.char
+	var vallen C.size_t
+	var k *C.char
+	if len(key) != 0 {
+		k = (*C.char)(unsafe.Pointer(&key[0]))
+	}
+
+	value := C.rocksdb_get(
+		db.db, ro.Opt, k, C.size_t(len(key)), &vallen, &errStr)
+
+	if errStr != nil {
+		return nil, saveError(errStr)
+	}
+
+	if value == nil {
+		return nil, nil
+	}
+
+	return NewCSlice(unsafe.Pointer(value), int(vallen)), nil
+}
+
 func (db *DB) delete(wo *WriteOptions, key []byte) error {
 	var errStr *C.char
 	var k *C.char
@@ -307,6 +335,10 @@ func (db *DB) Begin() (driver.Tx, error) {
 func (db *DB) Compact() error {
 	C.rocksdb_compact_range(db.db, nil, 0, nil, 0)
 	return nil
+}
+
+func (db *DB) GetSlice(key []byte) (driver.ISlice, error) {
+	return db.getSlice(db.readOpts, key)
 }
 
 func init() {

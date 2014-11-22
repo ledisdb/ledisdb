@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"github.com/siddontang/ledisdb/store"
+	"sync"
 	"time"
 )
 
@@ -12,12 +13,16 @@ var (
 	errExpTimeKey = errors.New("invalid expire time key")
 )
 
-type retireCallback func(*batch, []byte) int64
+type onExpired func(*batch, []byte) int64
 
-type elimination struct {
-	db         *DB
-	exp2Tx     []*batch
-	exp2Retire []retireCallback
+type ttlChecker struct {
+	sync.Mutex
+	db  *DB
+	txs []*batch
+	cbs []onExpired
+
+	//next check time
+	nc int64
 }
 
 var errExpType = errors.New("invalid expire type")
@@ -27,11 +32,13 @@ func (db *DB) expEncodeTimeKey(dataType byte, key []byte, when int64) []byte {
 
 	buf[0] = db.index
 	buf[1] = ExpTimeType
-	buf[2] = dataType
-	pos := 3
+	pos := 2
 
 	binary.BigEndian.PutUint64(buf[pos:], uint64(when))
 	pos += 8
+
+	buf[pos] = dataType
+	pos++
 
 	copy(buf[pos:], key)
 
@@ -64,7 +71,7 @@ func (db *DB) expDecodeTimeKey(tk []byte) (byte, []byte, int64, error) {
 		return 0, nil, 0, errExpTimeKey
 	}
 
-	return tk[2], tk[11:], int64(binary.BigEndian.Uint64(tk[3:])), nil
+	return tk[10], tk[11:], int64(binary.BigEndian.Uint64(tk[2:])), nil
 }
 
 func (db *DB) expire(t *batch, dataType byte, key []byte, duration int64) {
@@ -77,6 +84,9 @@ func (db *DB) expireAt(t *batch, dataType byte, key []byte, when int64) {
 
 	t.Put(tk, mk)
 	t.Put(mk, PutInt64(when))
+
+	tc := db.l.tcs[db.index]
+	tc.setNextCheckTime(when, false)
 }
 
 func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
@@ -111,48 +121,68 @@ func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 	}
 }
 
-//////////////////////////////////////////////////////////
-//
-//////////////////////////////////////////////////////////
-
-func newEliminator(db *DB) *elimination {
-	eli := new(elimination)
-	eli.db = db
-	eli.exp2Tx = make([]*batch, maxDataType)
-	eli.exp2Retire = make([]retireCallback, maxDataType)
-	return eli
+func newTTLChecker(db *DB) *ttlChecker {
+	c := new(ttlChecker)
+	c.db = db
+	c.txs = make([]*batch, maxDataType)
+	c.cbs = make([]onExpired, maxDataType)
+	c.nc = 0
+	return c
 }
 
-func (eli *elimination) regRetireContext(dataType byte, t *batch, onRetire retireCallback) {
-
-	//	todo .. need to ensure exist - mapExpMetaType[expType]
-
-	eli.exp2Tx[dataType] = t
-	eli.exp2Retire[dataType] = onRetire
+func (c *ttlChecker) register(dataType byte, t *batch, f onExpired) {
+	c.txs[dataType] = t
+	c.cbs[dataType] = f
 }
 
-//	call by outside ... (from *db to another *db)
-func (eli *elimination) active() {
+func (c *ttlChecker) setNextCheckTime(when int64, force bool) {
+	c.Lock()
+	if force {
+		c.nc = when
+	} else if !force && c.nc > when {
+		c.nc = when
+	}
+	c.Unlock()
+}
+
+func (c *ttlChecker) check() {
 	now := time.Now().Unix()
-	db := eli.db
+
+	c.Lock()
+	nc := c.nc
+	c.Unlock()
+
+	if now < nc {
+		return
+	}
+
+	nc = now + 3600
+
+	db := c.db
 	dbGet := db.bucket.Get
 
 	minKey := db.expEncodeTimeKey(NoneType, nil, 0)
-	maxKey := db.expEncodeTimeKey(maxDataType, nil, now)
+	maxKey := db.expEncodeTimeKey(maxDataType, nil, nc)
 
 	it := db.bucket.RangeLimitIterator(minKey, maxKey, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		tk := it.RawKey()
 		mk := it.RawValue()
 
-		dt, k, _, err := db.expDecodeTimeKey(tk)
+		dt, k, nt, err := db.expDecodeTimeKey(tk)
 		if err != nil {
 			continue
 		}
 
-		t := eli.exp2Tx[dt]
-		onRetire := eli.exp2Retire[dt]
-		if tk == nil || onRetire == nil {
+		if nt > now {
+			//the next ttl check time is nt!
+			nc = nt
+			break
+		}
+
+		t := c.txs[dt]
+		cb := c.cbs[dt]
+		if tk == nil || cb == nil {
 			continue
 		}
 
@@ -161,7 +191,7 @@ func (eli *elimination) active() {
 		if exp, err := Int64(dbGet(mk)); err == nil {
 			// check expire again
 			if exp <= now {
-				onRetire(t, k)
+				cb(t, k)
 				t.Delete(tk)
 				t.Delete(mk)
 
@@ -173,6 +203,8 @@ func (eli *elimination) active() {
 		t.Unlock()
 	}
 	it.Close()
+
+	c.setNextCheckTime(nc, true)
 
 	return
 }

@@ -8,6 +8,7 @@ import (
 
 type ibucket interface {
 	Get(key []byte) ([]byte, error)
+	GetSlice(key []byte) (store.Slice, error)
 
 	Put(key []byte, value []byte) error
 	Delete(key []byte) error
@@ -98,19 +99,6 @@ func (db *DB) FlushAll() (drop int64, err error) {
 	}
 
 	return
-}
-
-func (db *DB) newEliminator() *elimination {
-	eliminator := newEliminator(db)
-
-	eliminator.regRetireContext(KVType, db.kvBatch, db.delete)
-	eliminator.regRetireContext(ListType, db.listBatch, db.lDelete)
-	eliminator.regRetireContext(HashType, db.hashBatch, db.hDelete)
-	eliminator.regRetireContext(ZSetType, db.zsetBatch, db.zDelete)
-	eliminator.regRetireContext(BitType, db.binBatch, db.bDelete)
-	eliminator.regRetireContext(SetType, db.setBatch, db.sDelete)
-
-	return eliminator
 }
 
 func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {

@@ -3,6 +3,7 @@ package ledis
 import (
 	"errors"
 	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/store"
 	"time"
 )
 
@@ -164,6 +165,16 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	return db.bucket.Get(key)
 }
 
+func (db *DB) GetSlice(key []byte) (store.Slice, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+
+	key = db.encodeKVKey(key)
+
+	return db.bucket.GetSlice(key)
+}
+
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -298,6 +309,32 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	}
 
 	return n, err
+}
+
+func (db *DB) SetEX(key []byte, duration int64, value []byte) error {
+	if err := checkKeySize(key); err != nil {
+		return err
+	} else if err := checkValueSize(value); err != nil {
+		return err
+	} else if duration <= 0 {
+		return errExpireValue
+	}
+
+	ek := db.encodeKVKey(key)
+
+	t := db.kvBatch
+
+	t.Lock()
+	defer t.Unlock()
+
+	t.Put(ek, value)
+	db.expireAt(t, KVType, key, time.Now().Unix()+duration)
+
+	if err := t.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *DB) flush() (drop int64, err error) {

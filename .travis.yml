@@ -1,0 +1,9 @@
+language: go
+go: 1.3.3
+before_install:
+  - go get github.com/tools/godep
+  - go get code.google.com/p/go.tools/cmd/cover
+  - go install -race std
+script:
+  - godep go test -cover ./...
+  - godep go test -race ./...

@@ -6,6 +6,7 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/rpl"
+	"github.com/siddontang/ledisdb/store"
 	"io"
 	"time"
 )
@@ -49,7 +50,12 @@ func (l *Ledis) handleReplication() error {
 				}
 			}
 
-			decodeEventBatch(l.rbatch, rl.Data)
+			if bd, err := store.NewBatchData(rl.Data); err != nil {
+				log.Error("decode batch log error %s", err.Error())
+				return err
+			} else if err = bd.Replay(l.rbatch); err != nil {
+				log.Error("replay batch log error %s", err.Error())
+			}
 
 			l.commitLock.Lock()
 			if err = l.rbatch.Commit(); err != nil {
@@ -196,7 +202,7 @@ func (l *Ledis) ReadLogsTo(startLogID uint64, w io.Writer) (n int, nextLogID uin
 }
 
 // try to read events, if no events read, try to wait the new event singal until timeout seconds
-func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (n int, nextLogID uint64, err error) {
+func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int, quitCh chan struct{}) (n int, nextLogID uint64, err error) {
 	n, nextLogID, err = l.ReadLogsTo(startLogID, w)
 	if err != nil {
 		return
@@ -207,6 +213,8 @@ func (l *Ledis) ReadLogsToTimeout(startLogID uint64, w io.Writer, timeout int) (
 	select {
 	case <-l.r.WaitLog():
 	case <-time.After(time.Duration(timeout) * time.Second):
+	case <-quitCh:
+		return
 	}
 	return l.ReadLogsTo(startLogID, w)
 }
