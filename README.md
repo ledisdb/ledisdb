@@ -2,26 +2,26 @@
 
 [![Build Status](https://travis-ci.org/siddontang/ledisdb.svg?branch=develop)](https://travis-ci.org/siddontang/ledisdb)
 
-Ledisdb is a high performance NoSQL like Redis written by go. It supports some data structure like kv, list, hash, zset, bitmap,set.
+Ledisdb is a high-performance NoSQL database, similar to Redis, written in [Go](http://golang.org/). It supports many data structures including kv, list, hash, zset, bitmap,set.
 
-LedisDB now supports multiple databases as backend to store data, you can test and choose the proper one for you.
+LedisDB now supports multiple different databases as backends.
 
-### **You must run `ledis-upgrade-ttl` before using LedisDB version 0.4, I fixed a very serious bug for key expiration and ttl.**
+### **You must run `ledis-upgrade-ttl` before using LedisDB version 0.4, I fixed a very serious bug for key expiration and TTL.**
 
 
 ## Features
 
 + Rich data structure: KV, List, Hash, ZSet, Bitmap, Set.
-+ Stores lots of data, over the memory limit. 
-+ Various backend database to use: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, Memory.
-+ Supports transaction using LMDB or BotlDB.
-+ Supports lua scripting.
-+ Supports expiration and ttl.
-+ Supports using redis-cli directly.
++ Data storage is not limited by RAM.
++ Various backends supported: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, RAM.
++ Supports transactions using LMDB or BotlDB.
++ Supports Lua scripting.
++ Supports expiration and TTL.
++ Can be managed via redis-cli.
 + Easy to embed in your own Go application. 
-+ HTTP API support, json/bson/msgpack output.
-+ Replication to guarantee data safe.
-+ Supplies tools to load, dump, repair database. 
++ HTTP API support, JSON/BSON/msgpack output.
++ Replication to guarantee data safety.
++ Supplies tools to load, dump, and repair database. 
 
 ## Build and Install
 
@@ -33,7 +33,7 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
-    #install go dependences
+    #install Go dependences
     ./bootstrap.sh
 
     #set build and run environment 
@@ -44,7 +44,7 @@ Create a workspace and checkout ledisdb source
 
 ## Godep support
 
-LedisDB supports building with [godep](https://github.com/tools/godep) which can manage LedisDB go dependence automatically.
+LedisDB can be built with [godep](https://github.com/tools/godep) which can manage LedisDB Go dependency automatically.
 
 ## LevelDB support
 
@@ -54,11 +54,11 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 
         sudo sh tools/build_leveldb.sh
 
-    It will default install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy.
+    It will install leveldb at /usr/local/leveldb and snappy at /usr/local/snappy by default.
 
-    LedisDB use the modified LevelDB for better performance, see [here](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification).
+    LedisDB uses the modified LevelDB for better performance. [Details.](https://github.com/siddontang/ledisdb/wiki/leveldb-source-modification)
 
-    You can use other LevelDB (like Hyper LevelDB, Basho LevelDB) instead easily, the only thing you may pay attention to is that the header files must be in `include/leveldb` folder not `include/hyperleveldb` or other. 
+    You can easily use other LevelDB versions (like Hyper LevelDB or Basho LevelDB) instead, as long as the header files are in `include/leveldb`, not `include/hyperleveldb` or any other location.
 
 + Set `LEVELDB_DIR` and `SNAPPY_DIR` to the actual install path in dev.sh.
 + `make clean && make` 
@@ -67,20 +67,20 @@ LedisDB supports building with [godep](https://github.com/tools/godep) which can
 
 + [Install rocksdb](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)(`make shared_lib`) and snappy first.
 
-    LedisDB has not supplied a simple script to install, maybe later.
+    LedisDB has not yet supplied a simple script to install.
 
 + Set `ROCKSDB_DIR` and `SNAPPY_DIR` to the actual install path in `dev.sh`.
 + `make clean && make` 
 
 
-Because RocksDB API may change sometimes, LedisDB may not build successfully. Now LedisDB supports RocksDB version 3.5 or newest master branch.
+If the RocksDB API changes, LedisDB may not build successfully. LedisDB currently supports RocksDB version 3.5 or later.
     
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, memory. it will use goleveldb as default to store data if you don't set.
+LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, and RAM. It will use goleveldb by default. 
 
-Choosing a store database to use is very simple, you have two ways:
+Choosing a store database to use is very simple.
 
 + Set in server config file
 
@@ -90,11 +90,11 @@ Choosing a store database to use is very simple, you have two ways:
 
         ledis-server -config=/etc/ledis.conf -db_name=leveldb
 
-    Flag command set will overwrite config set.
+    Flag command set will overwrite config setting.
 
 ## Lua support
 
-+ Compile and install lua
++ Compile and install Lua
 + Set `LUA_DIR` to the actual path in `dev.sh`
 + `make clean && make` 
 
@@ -167,14 +167,14 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 ## Caveat
 
-+ You must known that changing store database runtime is very dangerous, LedisDB will not guarantee the data validation if you do it.
-+ Begin a transaction will block any other write operators before you call `commit` or `rollback`. Don't use long-time transaction. 
-+ `pcall` and `xpcall` are not supported in lua, you can see the readme in [golua](https://github.com/aarzilli/golua).
++ Changing the backend database at runtime is very dangerous. Data validation is not guaranteed if this is done.
++ Beginning a transaction will block any other write operators until `commit` or `rollback` is called. Avoid long-running transactions.
++ `pcall` and `xpcall` are not supported in Lua. See the README in [golua](https://github.com/aarzilli/golua).
 
 
 ## Requirement
 
-+ go version >= 1.3
++ Go version >= 1.3
 
 ## Feedback
 
