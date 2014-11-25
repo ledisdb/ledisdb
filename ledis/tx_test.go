@@ -3,6 +3,7 @@ package ledis
 import (
 	"github.com/siddontang/ledisdb/config"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -201,6 +202,9 @@ func testTx(t *testing.T, name string) {
 
 	l, err := Open(cfg)
 	if err != nil {
+		if strings.Contains(err.Error(), "not registered") {
+			return
+		}
 		t.Fatal(err)
 	}
 
