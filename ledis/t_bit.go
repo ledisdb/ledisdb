@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+/*
+	We will not maintain bitmap anymore, and will add bit operations for kv type later.
+	Use your own risk.
+*/
+
 const (
 	OPand uint8 = iota + 1
 	OPor
