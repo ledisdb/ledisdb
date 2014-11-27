@@ -148,7 +148,7 @@ Table of Contents
 	- [INFO [section]](#info-section)
 	- [TIME](#time)
 	- [CONFIG REWRITE](#config-rewrite)
-	- [RESTORE](#restore-key-ttl-value)
+	- [RESTORE key ttl value](#restore-key-ttl-value)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
