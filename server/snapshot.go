@@ -137,8 +137,7 @@ func (s *snapshotStore) purge(create bool) {
 	}
 
 	if num > 0 {
-		names = s.names[0:num]
-
+		names = append([]string{}, s.names[0:num]...)
 		n := copy(s.names, s.names[num:])
 		s.names = s.names[0:n]
 	}

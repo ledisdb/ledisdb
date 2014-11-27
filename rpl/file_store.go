@@ -196,14 +196,15 @@ func (s *FileStore) storeLog(l *Log) error {
 func (s *FileStore) PurgeExpired(n int64) error {
 	s.rm.Lock()
 
-	purges := []*tableReader{}
+	var purges []*tableReader
 
 	t := uint32(time.Now().Unix() - int64(n))
 
 	for i, r := range s.rs {
 		if r.lastTime > t {
-			purges = s.rs[0:i]
-			s.rs = s.rs[i:]
+			purges = append([]*tableReader{}, s.rs[0:i]...)
+			n := copy(s.rs, s.rs[i:])
+			s.rs = s.rs[0:n]
 			break
 		}
 	}
