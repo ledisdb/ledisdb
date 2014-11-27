@@ -21,7 +21,7 @@ func line(prompt string) (string, error) {
 	defer C.free(unsafe.Pointer(resultCString))
 
 	if resultCString == nil {
-		return "", errors.New("quited by a signal")
+		return "", errors.New("exiting due to signal")
 	}
 
 	result := C.GoString(resultCString)
