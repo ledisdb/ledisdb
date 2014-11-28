@@ -14,11 +14,11 @@ LedisDB has no Strings data type but KV and Bitmap, any some Keys and Strings co
 In Redis, `del` can delete all type data, like String, Hash, List, etc, but in LedisDB, `del` can only delete KV data. To delete other type data, you will use "clear" commands.
 
 + KV:     `del`, `mdel` 
-+ Hash:   `hclear`, `mhclear` 
-+ List:   `lclear`, `mlclear`
-+ Set:    `sclear`, `msclear`  
-+ Zset:   `zclear`, `mzclear`
-+ Bitmap: `bclear`, `mbclear`
++ Hash:   `hclear`, `hmclear` 
++ List:   `lclear`, `lmclear`
++ Set:    `sclear`, `smclear`  
++ Zset:   `zclear`, `zmclear`
++ Bitmap: `bclear`, `bmclear`
 
 ## Expire, Persist, and TTL
 
