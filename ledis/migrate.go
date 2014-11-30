@@ -97,6 +97,10 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 
 	switch value := d.(type) {
 	case rdb.String:
+		if _, err = db.Del(key); err != nil {
+			return err
+		}
+
 		if err = db.Set(key, value); err != nil {
 			return err
 		}
@@ -107,6 +111,11 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 			}
 		}
 	case rdb.HashMap:
+		//first clear old key
+		if _, err = db.HClear(key); err != nil {
+			return err
+		}
+
 		fv := make([]FVPair, len(value))
 		for i := 0; i < len(value); i++ {
 			fv[i] = FVPair{Field: value[i].Field, Value: value[i].Value}
@@ -122,6 +131,11 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 			}
 		}
 	case rdb.List:
+		//first clear old key
+		if _, err = db.LClear(key); err != nil {
+			return err
+		}
+
 		if _, err = db.RPush(key, value...); err != nil {
 			return err
 		}
@@ -132,6 +146,11 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 			}
 		}
 	case rdb.ZSet:
+		//first clear old key
+		if _, err = db.ZClear(key); err != nil {
+			return err
+		}
+
 		sp := make([]ScorePair, len(value))
 		for i := 0; i < len(value); i++ {
 			sp[i] = ScorePair{int64(value[i].Score), value[i].Member}
@@ -147,6 +166,11 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 			}
 		}
 	case rdb.Set:
+		//first clear old key
+		if _, err = db.SClear(key); err != nil {
+			return err
+		}
+
 		if _, err = db.SAdd(key, value...); err != nil {
 			return err
 		}
