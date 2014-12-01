@@ -1,6 +1,7 @@
 package server
 
 import (
+	goledis "github.com/siddontang/ledisdb/client/go/ledis"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
@@ -42,6 +43,9 @@ type App struct {
 
 	rcm sync.Mutex
 	rcs map[*respClient]struct{}
+
+	migrateConnM sync.Mutex
+	migrateConns map[string]*goledis.Conn
 }
 
 func netType(s string) string {
@@ -70,6 +74,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.slaveSyncAck = make(chan uint64)
 
 	app.rcs = make(map[*respClient]struct{})
+
+	app.migrateConns = make(map[string]*goledis.Conn)
 
 	var err error
 
@@ -131,6 +137,14 @@ func (app *App) Close() {
 	close(app.quit)
 
 	app.listener.Close()
+
+	//close all migrate connections
+	app.migrateConnM.Lock()
+	for k, c := range app.migrateConns {
+		c.Close()
+		delete(app.migrateConns, k)
+	}
+	app.migrateConnM.Unlock()
 
 	if app.httpListener != nil {
 		app.httpListener.Close()

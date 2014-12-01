@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
+	"time"
 )
 
 // Error represents an error returned in a command reply.
@@ -40,6 +41,8 @@ type Conn struct {
 
 	// Scratch space for formatting integers and floats.
 	numScratch [40]byte
+
+	connectTimeout time.Duration
 }
 
 func NewConn(addr string) *Conn {
@@ -67,6 +70,12 @@ func (c *Conn) Close() {
 	} else {
 		c.finalize()
 	}
+}
+
+func (c *Conn) SetConnectTimeout(t time.Duration) {
+	c.cm.Lock()
+	c.connectTimeout = t
+	c.cm.Unlock()
 }
 
 func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
@@ -144,7 +153,7 @@ func (c *Conn) connect() error {
 	}
 
 	var err error
-	c.c, err = net.Dial(getProto(c.addr), c.addr)
+	c.c, err = net.DialTimeout(getProto(c.addr), c.addr, c.connectTimeout)
 	if err != nil {
 		c.c = nil
 		return err
