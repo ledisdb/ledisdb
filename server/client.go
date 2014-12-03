@@ -11,25 +11,29 @@ import (
 )
 
 var txUnsupportedCmds = map[string]struct{}{
-	"select":   struct{}{},
-	"slaveof":  struct{}{},
-	"fullsync": struct{}{},
-	"sync":     struct{}{},
-	"begin":    struct{}{},
-	"flushall": struct{}{},
-	"flushdb":  struct{}{},
-	"eval":     struct{}{},
+	"select":     struct{}{},
+	"slaveof":    struct{}{},
+	"fullsync":   struct{}{},
+	"sync":       struct{}{},
+	"begin":      struct{}{},
+	"flushall":   struct{}{},
+	"flushdb":    struct{}{},
+	"eval":       struct{}{},
+	"xmigrate":   struct{}{},
+	"xmigratedb": struct{}{},
 }
 
 var scriptUnsupportedCmds = map[string]struct{}{
-	"slaveof":  struct{}{},
-	"fullsync": struct{}{},
-	"sync":     struct{}{},
-	"begin":    struct{}{},
-	"commit":   struct{}{},
-	"rollback": struct{}{},
-	"flushall": struct{}{},
-	"flushdb":  struct{}{},
+	"slaveof":    struct{}{},
+	"fullsync":   struct{}{},
+	"sync":       struct{}{},
+	"begin":      struct{}{},
+	"commit":     struct{}{},
+	"rollback":   struct{}{},
+	"flushall":   struct{}{},
+	"flushdb":    struct{}{},
+	"xmigrate":   struct{}{},
+	"xmigratedb": struct{}{},
 }
 
 type responseWriter interface {
