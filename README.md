@@ -178,5 +178,5 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 ## Feedback
 
-Gmail: siddontang@gmail.com
-Skype: live:siddontang_1
++ Gmail: siddontang@gmail.com
++ Skype: live:siddontang_1
