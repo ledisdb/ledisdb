@@ -18,7 +18,7 @@ func checkLedisEqual(master *Ledis, slave *Ledis) error {
 		if v, err := slave.ldb.Get(key); err != nil {
 			return err
 		} else if !bytes.Equal(v, value) {
-			return fmt.Errorf("replication error %d != %d", len(v), len(value))
+			return fmt.Errorf("equal error at %q, %d != %d", key, len(v), len(value))
 		}
 	}
 

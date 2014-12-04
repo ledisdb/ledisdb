@@ -374,6 +374,8 @@ func (db *DB) SMembers(key []byte) ([][]byte, error) {
 	v := make([][]byte, 0, 16)
 
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
 		_, m, err := db.sDecodeSetKey(it.Key())
 		if err != nil {
@@ -382,8 +384,6 @@ func (db *DB) SMembers(key []byte) ([][]byte, error) {
 
 		v = append(v, m)
 	}
-
-	it.Close()
 
 	return v, nil
 }

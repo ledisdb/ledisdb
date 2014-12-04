@@ -8,7 +8,9 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
+	"time"
 )
 
 // Error represents an error returned in a command reply.
@@ -40,6 +42,8 @@ type Conn struct {
 
 	// Scratch space for formatting integers and floats.
 	numScratch [40]byte
+
+	connectTimeout time.Duration
 }
 
 func NewConn(addr string) *Conn {
@@ -69,6 +73,28 @@ func (c *Conn) Close() {
 	}
 }
 
+func (c *Conn) SetConnectTimeout(t time.Duration) {
+	c.cm.Lock()
+	c.connectTimeout = t
+	c.cm.Unlock()
+}
+
+func (c *Conn) SetReadDeadline(t time.Time) {
+	c.cm.Lock()
+	if c.c != nil {
+		c.c.SetReadDeadline(t)
+	}
+	c.cm.Unlock()
+}
+
+func (c *Conn) SetWriteDeadline(t time.Time) {
+	c.cm.Lock()
+	if c.c != nil {
+		c.c.SetWriteDeadline(t)
+	}
+	c.cm.Unlock()
+}
+
 func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 	if err := c.Send(cmd, args...); err != nil {
 		return nil, err
@@ -78,6 +104,21 @@ func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 }
 
 func (c *Conn) Send(cmd string, args ...interface{}) error {
+	var err error
+	for i := 0; i < 2; i++ {
+		if err = c.send(cmd, args...); err != nil {
+			if e, ok := err.(*net.OpError); ok && strings.Contains(e.Error(), "use of closed network connection") {
+				//send to a closed connection, try again
+				continue
+			}
+		} else {
+			return nil
+		}
+	}
+	return err
+}
+
+func (c *Conn) send(cmd string, args ...interface{}) error {
 	if err := c.connect(); err != nil {
 		return err
 	}
@@ -129,7 +170,9 @@ func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 func (c *Conn) finalize() {
 	c.cm.Lock()
 	if !c.closed {
-		c.c.Close()
+		if c.c != nil {
+			c.c.Close()
+		}
 		c.closed = true
 	}
 	c.cm.Unlock()
@@ -144,7 +187,7 @@ func (c *Conn) connect() error {
 	}
 
 	var err error
-	c.c, err = net.Dial(getProto(c.addr), c.addr)
+	c.c, err = net.DialTimeout(getProto(c.addr), c.addr, c.connectTimeout)
 	if err != nil {
 		c.c = nil
 		return err

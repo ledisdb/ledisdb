@@ -691,5 +691,42 @@
         "arguments" : "-",
         "group": "Server",
         "readonly": false
+    },
+
+    "DUMP": {
+        "arguments" : "key",
+        "group": "KV",
+        "readonly": true
+    },
+
+    "LDUMP": {
+        "arguments" : "key",
+        "group": "List",
+        "readonly": true
+    },
+
+    "HDUMP": {
+        "arguments" : "key",
+        "group": "Hash",
+        "readonly": true
+    },
+
+
+    "SDUMP": {
+        "arguments" : "key",
+        "group": "Set",
+        "readonly": true
+    },
+
+    "ZDUMP": {
+        "arguments" : "key",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "RESTORE": {
+        "arguments" : "key ttl value",
+        "group" : "Server",
+        "readonly" : false
     }
 }

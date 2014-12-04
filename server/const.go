@@ -20,8 +20,9 @@ var (
 	NullBulk  = []byte("-1")
 	NullArray = []byte("-1")
 
-	PONG = "PONG"
-	OK   = "OK"
+	PONG  = "PONG"
+	OK    = "OK"
+	NOKEY = "NOKEY"
 )
 
 const (

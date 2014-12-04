@@ -22,6 +22,7 @@ LedisDB now supports multiple different databases as backends.
 + HTTP API support, JSON/BSON/msgpack output.
 + Replication to guarantee data safety.
 + Supplies tools to load, dump, and repair database. 
++ Supports cluster, use [xcodis](https://github.com/siddontang/xcodis)
 
 ## Build and Install
 
@@ -147,6 +148,10 @@ Set slaveof in config or dynamiclly
     ledis 127.0.0.1:6381> slaveof 127.0.0.1 6380
     OK
 
+## Cluster support
+
+LedisDB uses a proxy named [xcodis](https://github.com/siddontang/xcodis) to support cluster.
+
 ## Benchmark
 
 See [benchmark](https://github.com/siddontang/ledisdb/wiki/Benchmark) for more.
@@ -178,5 +183,5 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 ## Feedback
 
-Gmail: siddontang@gmail.com
-Skype: live:siddontang_1
++ Gmail: siddontang@gmail.com
++ Skype: live:siddontang_1

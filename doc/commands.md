@@ -29,6 +29,7 @@ Table of Contents
 	- [PERSIST key](#persist-key)
 	- [XSCAN key [MATCH match] [COUNT count]](#xscan-key-match-match-count-count)
 	- [XREVSCAN key [MATCH match] [COUNT count]](#xrevscan-key-match-match-count-count)
+	- [DUMP key](#dump-key)
 - [Hash](#hash)
 	- [HDEL key field [field ...]](#hdel-key-field-field-)
 	- [HEXISTS key field](#hexists-key-field)
@@ -49,6 +50,7 @@ Table of Contents
 	- [HPERSIST key](#hpersist-key)
 	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
 	- [HXREVSCAN key [MATCH match] [COUNT count]](#hxrevscan-key-match-match-count-count)
+	- [HDUMP key](#hdump-key)
 - [List](#list)
 	- [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
 	- [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
@@ -67,6 +69,7 @@ Table of Contents
 	- [LPERSIST key](#lpersist-key)
 	- [LXSCAN key [MATCH match] [COUNT count]](#lxscan-key-match-match-count-count)
 	- [LXREVSCAN key [MATCH match] [COUNT count]](#lxrevscan-key-match-match-count-count)
+	- [LDUMP key](#ldump-key)
 - [Set](#set)
 	- [SADD key member [member ...]](#sadd-key-member-member-)
 	- [SCARD key](#scard-key)
@@ -87,6 +90,7 @@ Table of Contents
 	- [SPERSIST key](#spersist-key)
 	- [SXSCAN key [MATCH match] [COUNT count]](#sxscan-key-match-match-count-count)
 	- [SXREVSCAN key [MATCH match] [COUNT count]](#sxrevscan-key-match-match-count-count)
+	- [SDUMP key](#sdump-key)
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
 	- [ZCARD key](#zcard-key)
@@ -117,6 +121,7 @@ Table of Contents
 	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
 	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
 	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
+	- [ZDUMP key](#zdump-key)
 - [Bitmap](#bitmap)
 	- [BGET key](#bget-key)
 	- [BGETBIT key offset](#bgetbit-key-offset)
@@ -143,6 +148,7 @@ Table of Contents
 	- [INFO [section]](#info-section)
 	- [TIME](#time)
 	- [CONFIG REWRITE](#config-rewrite)
+	- [RESTORE key ttl value](#restore-key-ttl-value)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -583,6 +589,22 @@ ledis>xrevscan "a" count 1
 2) []
 ```
 
+### DUMP key
+
+Serialize the value stored at key with KV type in a Redis-specific format like RDB and return it to the user. The returned value can be synthesized back into a key using the RESTORE command.
+
+**Return value**
+
+bulk: the serialized value
+
+**Examples**
+
+```
+ledis> set mykey 10
+OK
+ledis>DUMP mykey
+"\x00\xc0\n\x06\x00\xf8r?\xc5\xfb\xfb_("
+```
 
 ## Hash
 
@@ -959,6 +981,10 @@ Reverse iterate Hash keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
+### HDUMP key
+
+See [DUMP](#dump-key) for more information.
+
 ## List
 
 ### BLPOP key [key ...] timeout
@@ -1292,6 +1318,10 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 Reverse iterate list keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
+### LDUMP key
+
+See [DUMP](#dump-key) for more information.
 
 
 ## Set
@@ -1727,6 +1757,10 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 Reverse iterate Set keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
+### SDUMP key
+
+See [DUMP](#dump-key) for more information.
 
 ## ZSet
 
@@ -2425,6 +2459,9 @@ ledis> ZLEXCOUNT myzset - [c
 (integer) 3
 ```
 
+### ZDUMP key
+
+See [DUMP](#dump-key) for more information.
 
 ## Bitmap
 
@@ -2718,6 +2755,14 @@ Rewrites the config file the server was started with.
 **Return value**
 
 String: OK or error msg.
+
+### RESTORE key ttl value 
+
+Create a key associated with a value that is obtained by deserializing the provided serialized value (obtained via DUMP, LDUMP, HDUMP, SDUMP, ZDUMP).
+
+If ttl is 0 the key is created without any expire, otherwise the specified expire time (in milliseconds) is set. But you must know that now the checking ttl accuracy is second.
+
+RESTORE checks the RDB version and data checksum. If they don't match an error is returned.
 
 ## Transaction
 

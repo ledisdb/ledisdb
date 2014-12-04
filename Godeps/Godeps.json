@@ -11,8 +11,12 @@
 		},
 		{
 			"ImportPath": "github.com/boltdb/bolt",
-			"Comment": "data/v1-254-gd285804",
-			"Rev": "d285804df1760edf4c602ecd901be5d5e67bf982"
+			"Comment": "data/v1-256-ge65c902",
+			"Rev": "e65c9027c35b7ef1014db9e02686889e51aadb2e"
+		},
+		{
+			"ImportPath": "github.com/cupcake/rdb",
+			"Rev": "3454dcabd33cb8ea8261ffd6a45f4d836eb504cc"
 		},
 		{
 			"ImportPath": "github.com/edsrzf/mmap-go",

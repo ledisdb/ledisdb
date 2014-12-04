@@ -14,11 +14,11 @@ LedisDB has no Strings data type but KV and Bitmap, any some Keys and Strings co
 In Redis, `del` can delete all type data, like String, Hash, List, etc, but in LedisDB, `del` can only delete KV data. To delete other type data, you will use "clear" commands.
 
 + KV:     `del`, `mdel` 
-+ Hash:   `hclear`, `mhclear` 
-+ List:   `lclear`, `mlclear`
-+ Set:    `sclear`, `msclear`  
-+ Zset:   `zclear`, `mzclear`
-+ Bitmap: `bclear`, `mbclear`
++ Hash:   `hclear`, `hmclear` 
++ List:   `lclear`, `lmclear`
++ Set:    `sclear`, `smclear`  
++ Zset:   `zclear`, `zmclear`
++ Bitmap: `bclear`, `bmclear`
 
 ## Expire, Persist, and TTL
 
@@ -56,5 +56,14 @@ LedisDB supplies `xscan`, `xrevscan`, etc, to fetch data iteratively and reverse
 + Zset:   `zxscan`, `zxrevscan`
 + Bitmap: `bxscan`, `bxrevscan`
 
+## DUMP
+
++ KV: `dump`
++ Hash: `hdump`
++ List: `ldump`
++ Set: `sdump`
++ ZSet: `zdump`
+
+LedisDB supports `dump` to serialize the value with key, the data format is the same as Redis, so you can use it in Redis and vice versa. 
 
 Of course, LedisDB has not implemented all APIs in Redis, you can see full commands in commands.json, commands.doc or [wiki](https://github.com/siddontang/ledisdb/wiki/Commands).
