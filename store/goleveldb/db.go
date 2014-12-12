@@ -113,7 +113,7 @@ func newOptions(cfg *config.LevelDBConfig) *opt.Options {
 	opts := &opt.Options{}
 	opts.ErrorIfMissing = false
 
-	opts.BlockCache = cache.NewLRUCache(cfg.CacheSize)
+	opts.BlockCacheCapacity = cfg.CacheSize
 
 	//we must use bloomfilter
 	opts.Filter = filter.NewBloomFilter(defaultFilterBits)
@@ -126,7 +126,7 @@ func newOptions(cfg *config.LevelDBConfig) *opt.Options {
 
 	opts.BlockSize = cfg.BlockSize
 	opts.WriteBuffer = cfg.WriteBufferSize
-	opts.CachedOpenFiles = cfg.MaxOpenFiles
+	opts.OpenFilesCacheCapacity = cfg.MaxOpenFiles
 
 	//here we use default value, later add config support
 	opts.CompactionTableSize = 32 * 1024 * 1024
