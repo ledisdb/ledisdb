@@ -34,6 +34,7 @@ func startTestApp() {
 		os.RemoveAll(cfg.DataDir)
 
 		cfg.Addr = "127.0.0.1:16380"
+		cfg.HttpAddr = "127.0.0.1:21181"
 
 		os.RemoveAll("/tmp/testdb")
 
