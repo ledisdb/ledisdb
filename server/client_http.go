@@ -45,13 +45,14 @@ func newClientHTTP(app *App, w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	c := new(httpClient)
+	c.client = newClient(app)
 
 	err = c.makeRequest(app, r, w)
 	if err != nil {
+		c.client.close()
 		w.Write([]byte(err.Error()))
 		return
 	}
-	c.client = newClient(app)
 	c.perform()
 	c.client.close()
 }

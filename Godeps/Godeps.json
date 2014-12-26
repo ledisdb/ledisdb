@@ -11,8 +11,8 @@
 		},
 		{
 			"ImportPath": "github.com/boltdb/bolt",
-			"Comment": "data/v1-256-ge65c902",
-			"Rev": "e65c9027c35b7ef1014db9e02686889e51aadb2e"
+			"Comment": "v1.0-5-g33e7a07",
+			"Rev": "33e7a074e2c470b6d0b7ee23322a1c4cc759044b"
 		},
 		{
 			"ImportPath": "github.com/cupcake/rdb",
@@ -60,7 +60,7 @@
 		},
 		{
 			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
-			"Rev": "c9e0ae706141dc099005d6d247e4880c7feda2e1"
+			"Rev": "63c9e642efad852f49e20a6f90194cae112fd2ac"
 		},
 		{
 			"ImportPath": "github.com/syndtr/gosnappy/snappy",
