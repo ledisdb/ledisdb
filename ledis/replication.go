@@ -33,7 +33,7 @@ func (l *Ledis) handleReplication() error {
 	for {
 		if err = l.r.NextNeedCommitLog(rl); err != nil {
 			if err != rpl.ErrNoBehindLog {
-				log.Error("get next commit log err, %s", err.Error)
+				log.Errorf("get next commit log err, %s", err.Error)
 				return err
 			} else {
 				l.rwg.Done()
@@ -45,23 +45,23 @@ func (l *Ledis) handleReplication() error {
 			if rl.Compression == 1 {
 				//todo optimize
 				if rl.Data, err = snappy.Decode(nil, rl.Data); err != nil {
-					log.Error("decode log error %s", err.Error())
+					log.Errorf("decode log error %s", err.Error())
 					return err
 				}
 			}
 
 			if bd, err := store.NewBatchData(rl.Data); err != nil {
-				log.Error("decode batch log error %s", err.Error())
+				log.Errorf("decode batch log error %s", err.Error())
 				return err
 			} else if err = bd.Replay(l.rbatch); err != nil {
-				log.Error("replay batch log error %s", err.Error())
+				log.Errorf("replay batch log error %s", err.Error())
 			}
 
 			l.commitLock.Lock()
 			if err = l.rbatch.Commit(); err != nil {
-				log.Error("commit log error %s", err.Error())
+				log.Errorf("commit log error %s", err.Error())
 			} else if err = l.r.UpdateCommitID(rl.ID); err != nil {
-				log.Error("update commit id error %s", err.Error())
+				log.Errorf("update commit id error %s", err.Error())
 			}
 
 			l.commitLock.Unlock()

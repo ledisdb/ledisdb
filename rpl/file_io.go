@@ -320,14 +320,14 @@ func (m *mmapReadFile) ReadAt(buf []byte, offset int64) (int, error) {
 func (m *mmapReadFile) Close() error {
 	if m.m != nil {
 		if err := m.m.Unmap(); err != nil {
-			log.Error("unmap %s error %s", m.name, err.Error())
+			log.Errorf("unmap %s error %s", m.name, err.Error())
 		}
 		m.m = nil
 	}
 
 	if m.f != nil {
 		if err := m.f.Close(); err != nil {
-			log.Error("close %s error %s", m.name, err.Error())
+			log.Errorf("close %s error %s", m.name, err.Error())
 		}
 		m.f = nil
 	}

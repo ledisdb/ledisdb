@@ -97,7 +97,7 @@ func (c *respClient) run() {
 			n := runtime.Stack(buf, false)
 			buf = buf[0:n]
 
-			log.Fatal("client run panic %s:%v", buf, e)
+			log.Fatalf("client run panic %s:%v", buf, e)
 		}
 
 		c.client.close()

@@ -106,7 +106,7 @@ func (m *master) runReplication(restart bool) {
 	defer m.wg.Done()
 
 	if err := m.resetConn(); err != nil {
-		log.Error("reset conn error %s", err.Error())
+		log.Errorf("reset conn error %s", err.Error())
 		return
 	}
 
@@ -116,20 +116,20 @@ func (m *master) runReplication(restart bool) {
 			return
 		default:
 			if _, err := m.conn.Do("ping"); err != nil {
-				log.Error("ping master %s error %s, try 2s later", m.addr, err.Error())
+				log.Errorf("ping master %s error %s, try 2s later", m.addr, err.Error())
 				time.Sleep(2 * time.Second)
 				continue
 			}
 		}
 
 		if err := m.replConf(); err != nil {
-			log.Error("replconf error %s", err.Error())
+			log.Errorf("replconf error %s", err.Error())
 			return
 		}
 
 		if restart {
 			if err := m.fullSync(); err != nil {
-				log.Error("restart fullsync error %s", err.Error())
+				log.Errorf("restart fullsync error %s", err.Error())
 				return
 			}
 		}
@@ -140,7 +140,7 @@ func (m *master) runReplication(restart bool) {
 				return
 			default:
 				if err := m.sync(); err != nil {
-					log.Error("sync error %s", err.Error())
+					log.Errorf("sync error %s", err.Error())
 					return
 				}
 			}
@@ -183,12 +183,12 @@ func (m *master) fullSync() error {
 	err = m.conn.ReceiveBulkTo(f)
 	f.Close()
 	if err != nil {
-		log.Error("read dump data error %s", err.Error())
+		log.Errorf("read dump data error %s", err.Error())
 		return err
 	}
 
 	if _, err = m.app.ldb.LoadDumpFile(dumpPath); err != nil {
-		log.Error("load dump file error %s", err.Error())
+		log.Errorf("load dump file error %s", err.Error())
 		return err
 	}
 
@@ -319,7 +319,7 @@ func (app *App) removeSlave(c *client, activeQuit bool) {
 
 	if _, ok := app.slaves[addr]; ok {
 		delete(app.slaves, addr)
-		log.Info("remove slave %s", addr)
+		log.Infof("remove slave %s", addr)
 		if activeQuit {
 			asyncNotifyUint64(app.slaveSyncAck, c.lastLogID.Get())
 		}
@@ -372,7 +372,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 			//slave has already owned this log
 			n++
 		} else if lastLogID > logId {
-			log.Error("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, lastLogID, logId)
+			log.Errorf("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, lastLogID, logId)
 		}
 	}
 
@@ -390,7 +390,7 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		for i := 0; i < slaveNum; i++ {
 			id := <-app.slaveSyncAck
 			if id < logId {
-				log.Info("some slave may close with last logid %d < %d", id, logId)
+				log.Infof("some slave may close with last logid %d < %d", id, logId)
 			} else {
 				n++
 				if n >= total {

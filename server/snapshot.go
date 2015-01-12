@@ -76,20 +76,20 @@ func (s *snapshotStore) checkSnapshots() error {
 	cfg := s.cfg
 	snapshots, err := ioutil.ReadDir(cfg.Snapshot.Path)
 	if err != nil {
-		log.Error("read %s error: %s", cfg.Snapshot.Path, err.Error())
+		log.Errorf("read %s error: %s", cfg.Snapshot.Path, err.Error())
 		return err
 	}
 
 	names := []string{}
 	for _, info := range snapshots {
 		if path.Ext(info.Name()) == ".tmp" {
-			log.Error("temp snapshot file name %s, try remove", info.Name())
+			log.Errorf("temp snapshot file name %s, try remove", info.Name())
 			os.Remove(path.Join(cfg.Snapshot.Path, info.Name()))
 			continue
 		}
 
 		if _, err := parseSnapshotName(info.Name()); err != nil {
-			log.Error("invalid snapshot file name %s, err: %s", info.Name(), err.Error())
+			log.Errorf("invalid snapshot file name %s, err: %s", info.Name(), err.Error())
 			continue
 		}
 
@@ -115,7 +115,7 @@ func (s *snapshotStore) run() {
 		case <-t.C:
 			s.Lock()
 			if err := s.checkSnapshots(); err != nil {
-				log.Error("check snapshots error %s", err.Error())
+				log.Errorf("check snapshots error %s", err.Error())
 			}
 			s.Unlock()
 		case <-s.quit:
@@ -144,7 +144,7 @@ func (s *snapshotStore) purge(create bool) {
 
 	for _, name := range names {
 		if err := os.Remove(s.snapshotPath(name)); err != nil {
-			log.Error("purge snapshot %s error %s", name, err.Error())
+			log.Errorf("purge snapshot %s error %s", name, err.Error())
 		}
 	}
 }
