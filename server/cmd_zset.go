@@ -804,4 +804,6 @@ func init() {
 	register("zpersist", zpersistCommand)
 	register("zxscan", zxscanCommand)
 	register("zxrevscan", zxrevscanCommand)
+	register("xzscan", zxscanCommand)
+	register("xzrevscan", zxrevscanCommand)
 }

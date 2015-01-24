@@ -307,4 +307,6 @@ func init() {
 	register("lpersist", lpersistCommand)
 	register("lxscan", lxscanCommand)
 	register("lxrevscan", lxrevscanCommand)
+	register("xlscan", lxscanCommand)
+	register("xlrevscan", lxrevscanCommand)
 }

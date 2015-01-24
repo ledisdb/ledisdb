@@ -323,4 +323,6 @@ func init() {
 	register("hpersist", hpersistCommand)
 	register("hxscan", hxscanCommand)
 	register("hxrevscan", hxrevscanCommand)
+	register("xhscan", hxscanCommand)
+	register("xhrevscan", hxrevscanCommand)
 }

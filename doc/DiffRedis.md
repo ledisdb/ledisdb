@@ -50,11 +50,11 @@ Transaction API:
 LedisDB supplies `xscan`, `xrevscan`, etc, to fetch data iteratively and reverse iteratively.
 
 + KV:     `xscan`, `xrevscan`
-+ Hash:   `hxscan`, `hxrevscan`
-+ List:   `lxscan`, `lxrevscan`
-+ Set:    `sxscan` , `sxrevscan`
-+ Zset:   `zxscan`, `zxrevscan`
-+ Bitmap: `bxscan`, `bxrevscan`
++ Hash:   `hxscan`, `hxrevscan`, `xhscan`, `xhrevscan`
++ List:   `lxscan`, `lxrevscan`, `xlscan`, `xlrevscan`
++ Set:    `sxscan` , `sxrevscan`, `xsscan`, `xsrevscan`
++ Zset:   `zxscan`, `zxrevscan`, `xzscan`, `xzrevscan`
++ Bitmap: `bxscan`, `bxrevscan`, `xbscan`, `xbrevscan`
 
 ## DUMP
 

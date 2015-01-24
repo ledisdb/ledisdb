@@ -118,8 +118,8 @@ func testHashScan(t *testing.T, c *ledis.Client) {
 		}
 	}
 
-	checkScan(t, c, "hxscan")
-	checkRevScan(t, c, "hxrevscan")
+	checkScan(t, c, "xhscan")
+	checkRevScan(t, c, "xhrevscan")
 }
 
 func testListScan(t *testing.T, c *ledis.Client) {
@@ -129,8 +129,8 @@ func testListScan(t *testing.T, c *ledis.Client) {
 		}
 	}
 
-	checkScan(t, c, "lxscan")
-	checkRevScan(t, c, "lxrevscan")
+	checkScan(t, c, "xlscan")
+	checkRevScan(t, c, "xlrevscan")
 }
 
 func testZSetScan(t *testing.T, c *ledis.Client) {
@@ -151,8 +151,8 @@ func testSetScan(t *testing.T, c *ledis.Client) {
 		}
 	}
 
-	checkScan(t, c, "sxscan")
-	checkRevScan(t, c, "sxrevscan")
+	checkScan(t, c, "xsscan")
+	checkRevScan(t, c, "xsrevscan")
 }
 
 func testBitScan(t *testing.T, c *ledis.Client) {
@@ -162,6 +162,6 @@ func testBitScan(t *testing.T, c *ledis.Client) {
 		}
 	}
 
-	checkScan(t, c, "bxscan")
-	checkRevScan(t, c, "bxrevscan")
+	checkScan(t, c, "xbscan")
+	checkRevScan(t, c, "xbrevscan")
 }

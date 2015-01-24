@@ -290,4 +290,6 @@ func init() {
 	register("spersist", spersistCommand)
 	register("sxscan", sxscanCommand)
 	register("sxrevscan", sxrevscanCommand)
+	register("xsscan", sxscanCommand)
+	register("xsrevscan", sxrevscanCommand)
 }
