@@ -286,6 +286,18 @@ func (db *DB) SDiffStore(dstKey []byte, keys ...[]byte) (int64, error) {
 	return n, err
 }
 
+func (db *DB) XSExists(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	sk := db.sEncodeSizeKey(key)
+	v, err := db.bucket.Get(sk)
+	if v != nil && err == nil {
+		return 1, nil
+	}
+	return 0, err
+}
+
 func (db *DB) sInterGeneric(keys ...[]byte) ([][]byte, error) {
 	destMap := make(map[string]bool)
 

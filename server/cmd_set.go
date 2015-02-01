@@ -270,6 +270,19 @@ func sxrevscanCommand(c *client) error {
 	return xscanGeneric(c, c.db.SRevScan)
 }
 
+func xsexistsCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+	if n, err := c.db.XSExists(args[0]); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
 	register("sadd", saddCommand)
 	register("scard", scardCommand)
@@ -292,4 +305,6 @@ func init() {
 	register("sxrevscan", sxrevscanCommand)
 	register("xsscan", sxscanCommand)
 	register("xsrevscan", sxrevscanCommand)
+	register("xsexists", xsexistsCommand)
+
 }

@@ -13,9 +13,22 @@ func TestZSet(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
+
+	if n, err := ledis.Int(c.Do("xzexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xzexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
 		t.Fatal(n)
 	}
 
