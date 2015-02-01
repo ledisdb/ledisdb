@@ -300,7 +300,7 @@ func hxrevscanCommand(c *client) error {
 	return xscanGeneric(c, c.db.HRevScan)
 }
 
-func hxexistsCommand(c *client) error {
+func xhexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
@@ -338,5 +338,5 @@ func init() {
 	register("hxrevscan", hxrevscanCommand)
 	register("xhscan", hxscanCommand)
 	register("xhrevscan", hxrevscanCommand)
-	register("xhexists", hxexistsCommand)
+	register("xhexists", xhexistsCommand)
 }

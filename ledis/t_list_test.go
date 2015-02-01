@@ -163,3 +163,19 @@ func TestLFlush(t *testing.T) {
 		t.Fatal("invalid value length ", len(v))
 	}
 }
+
+func TestXLExists(t *testing.T) {
+	db := getTestDB()
+	key := []byte("xlexists_test")
+	if n, err := db.XLExists(key); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 0 {
+		t.Fatal("invalid value ", n)
+	}
+	db.LPush(key, []byte("hello"), []byte("world"))
+	if n, err := db.XLExists(key); err != nil {
+		t.Fatal(err.Error())
+	} else if n != 1 {
+		t.Fatal("invalid value ", n)
+	}
+}
