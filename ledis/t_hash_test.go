@@ -79,6 +79,29 @@ func TestHashPersist(t *testing.T) {
 		t.Fatal(n)
 	}
 }
+func TestXHashExists(t *testing.T) {
+	db := getTestDB()
+	key := []byte("xhexists_test")
+	v, err := db.XHExists(key)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 0 {
+		t.Fatal("invalid value ", v)
+	}
+
+	if _, err := db.HSet(key, []byte("hello"), []byte("world")); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	v, err = db.XHExists(key)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	if v != 1 {
+		t.Fatal("invalid value ", v)
+	}
+}
 
 func TestHFlush(t *testing.T) {
 	db := getTestDB()

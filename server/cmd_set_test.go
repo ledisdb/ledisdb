@@ -12,9 +12,21 @@ func TestSet(t *testing.T) {
 	key1 := "testdb_cmd_set_1"
 	key2 := "testdb_cmd_set_2"
 
+	if n, err := ledis.Int(c.Do("xsexists", key1)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("sadd", key1, 0, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xsexists", key1)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
 		t.Fatal(n)
 	}
 

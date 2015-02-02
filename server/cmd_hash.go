@@ -300,6 +300,19 @@ func hxrevscanCommand(c *client) error {
 	return xscanGeneric(c, c.db.HRevScan)
 }
 
+func xhexistsCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+	if n, err := c.db.XHExists(args[0]); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
 	register("hdel", hdelCommand)
 	register("hexists", hexistsCommand)
@@ -325,4 +338,5 @@ func init() {
 	register("hxrevscan", hxrevscanCommand)
 	register("xhscan", hxscanCommand)
 	register("xhrevscan", hxrevscanCommand)
+	register("xhexists", xhexistsCommand)
 }

@@ -12,7 +12,18 @@ func TestHash(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("a")
+	if n, err := ledis.Int(c.Do("xhexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("hset", key, 1, 0)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+	if n, err := ledis.Int(c.Do("xhexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
@@ -296,5 +307,4 @@ func TestHashErrorParams(t *testing.T) {
 	if _, err := c.Do("hpersist"); err == nil {
 		t.Fatal("invalid err of %v", err)
 	}
-
 }
