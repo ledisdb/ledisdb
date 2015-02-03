@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	goledis "github.com/siddontang/ledisdb/client/go/ledis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"reflect"
@@ -120,6 +121,32 @@ func TestReplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	mStat, _ := master.ldb.ReplicationStat()
+	sStat, _ := slave.ldb.ReplicationStat()
+
+	if err = checkTestRole(masterCfg.Addr, []interface{}{
+		[]byte("master"),
+		int64(mStat.LastID),
+		[]interface{}{
+			[]interface{}{
+				[]byte("127.0.0.1"),
+				[]byte("11183"),
+				[]byte(fmt.Sprintf("%d", sStat.LastID)),
+			}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = checkTestRole(slaveCfg.Addr, []interface{}{
+		[]byte("slave"),
+		[]byte("127.0.0.1"),
+		int64(11183),
+		[]byte("connected"),
+		int64(sStat.LastID),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	slave.tryReSlaveof()
 
 	time.Sleep(1 * time.Second)
@@ -129,5 +156,16 @@ func TestReplication(t *testing.T) {
 	if err = checkDataEqual(master, slave); err != nil {
 		t.Fatal(err)
 	}
+}
 
+func checkTestRole(addr string, checkRoles []interface{}) error {
+	conn := goledis.NewConn(addr)
+	defer conn.Close()
+	roles, err := goledis.MultiBulk(conn.Do("ROLE"))
+	if err != nil {
+		return err
+	} else if !reflect.DeepEqual(roles, checkRoles) {
+		return fmt.Errorf("%v != %v", roles, checkRoles)
+	}
+	return nil
 }

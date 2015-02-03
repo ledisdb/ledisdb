@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
+	"github.com/siddontang/go/sync2"
 	goledis "github.com/siddontang/ledisdb/client/go/ledis"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
@@ -22,6 +23,17 @@ var (
 	errReplClosed    = errors.New("replication is closed")
 )
 
+const (
+	// slave needs to connect to its master
+	replConnectState int32 = iota + 1
+	// slave-master connection is in progress
+	replConnectingState
+	// perform the synchronization
+	replSyncState
+	// slave is online
+	replConnectedState
+)
+
 type master struct {
 	sync.Mutex
 
@@ -36,6 +48,8 @@ type master struct {
 	wg sync.WaitGroup
 
 	syncBuf bytes.Buffer
+
+	state sync2.AtomicInt32
 }
 
 func newMaster(app *App) *master {
@@ -43,6 +57,8 @@ func newMaster(app *App) *master {
 	m.app = app
 
 	m.quit = make(chan struct{}, 1)
+
+	m.state.Set(replConnectState)
 
 	return m
 }
@@ -58,6 +74,8 @@ func (m *master) Close() {
 	case <-m.quit:
 	default:
 	}
+
+	m.state.Set(replConnectState)
 }
 
 func (m *master) resetConn() error {
@@ -103,8 +121,12 @@ func (m *master) startReplication(masterAddr string, restart bool) error {
 }
 
 func (m *master) runReplication(restart bool) {
-	defer m.wg.Done()
+	defer func() {
+		m.state.Set(replConnectState)
+		m.wg.Done()
+	}()
 
+	m.state.Set(replConnectingState)
 	if err := m.resetConn(); err != nil {
 		log.Errorf("reset conn error %s", err.Error())
 		return
@@ -122,12 +144,15 @@ func (m *master) runReplication(restart bool) {
 			}
 		}
 
+		m.state.Set(replConnectedState)
+
 		if err := m.replConf(); err != nil {
 			log.Errorf("replconf error %s", err.Error())
 			return
 		}
 
 		if restart {
+			m.state.Set(replSyncState)
 			if err := m.fullSync(); err != nil {
 				log.Errorf("restart fullsync error %s", err.Error())
 				return
@@ -139,6 +164,7 @@ func (m *master) runReplication(restart bool) {
 			case <-m.quit:
 				return
 			default:
+				m.state.Set(replConnectedState)
 				if err := m.sync(); err != nil {
 					log.Errorf("sync error %s", err.Error())
 					return
@@ -250,6 +276,7 @@ func (m *master) sync() error {
 		return nil
 	}
 
+	m.state.Set(replSyncState)
 	if err = m.app.ldb.StoreLogsFromData(buf); err != nil {
 		return err
 	}
