@@ -6,7 +6,6 @@ import (
 	"github.com/siddontang/go/sync2"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
-	"sync"
 	"time"
 )
 
@@ -79,13 +78,6 @@ type client struct {
 	script *ledis.Multi
 
 	slaveListeningAddr string
-
-	quit chan struct{}
-	done chan error
-
-	wg sync.WaitGroup
-
-	fc chan CommandFunc
 }
 
 func newClient(app *App) *client {
@@ -95,35 +87,11 @@ func newClient(app *App) *client {
 	c.ldb = app.ldb
 	c.db, _ = app.ldb.Select(0) //use default db
 
-	// c.reqErr = make(chan error)
-
-	c.quit = make(chan struct{})
-	c.done = make(chan error, 1)
-	c.fc = make(chan CommandFunc, 1)
-
-	c.wg.Add(1)
-	go c.run()
-
 	return c
 }
 
 func (c *client) close() {
-	close(c.quit)
 
-	c.wg.Wait()
-}
-
-func (c *client) run() {
-	defer c.wg.Done()
-
-	for {
-		select {
-		case <-c.quit:
-			return
-		case f := <-c.fc:
-			c.done <- f(c)
-		}
-	}
 }
 
 func (c *client) perform() {
@@ -147,14 +115,7 @@ func (c *client) perform() {
 		}
 
 		if err == nil {
-			// go func() {
-			// 	c.reqErr <- exeCmd(c)
-			// }()
-
-			// err = <-c.reqErr
-			c.fc <- exeCmd
-
-			err = <-c.done
+			err = exeCmd(c)
 		}
 	}
 
