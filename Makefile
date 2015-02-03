@@ -20,7 +20,16 @@ clean:
 	$(GO) clean -i ./...
 
 test:
-	$(GO) test -tags '$(GO_BUILD_TAGS)' ./...
+	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./...
 
-test_race:
-	$(GO) test -race -tags '$(GO_BUILD_TAGS)' ./...
+test_ledis:
+	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./ledis
+
+test_server:
+	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./server
+
+test_store:
+	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./store
+
+test_rpl:
+	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./rpl
