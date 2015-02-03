@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"github.com/siddontang/go/arena"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
@@ -235,7 +236,7 @@ func (w *respWriter) writeArray(lst []interface{}) {
 			case int64:
 				w.writeInteger(v)
 			default:
-				panic("invalid array type")
+				panic(fmt.Sprintf("invalid array type %T %v", lst[i], v))
 			}
 		}
 	}
