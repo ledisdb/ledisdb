@@ -159,6 +159,7 @@ Table of Contents
 	- [TIME](#time)
 	- [CONFIG REWRITE](#config-rewrite)
 	- [RESTORE key ttl value](#restore-key-ttl-value)
+	- [ROLE](#role)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -2837,6 +2838,45 @@ Create a key associated with a value that is obtained by deserializing the provi
 If ttl is 0 the key is created without any expire, otherwise the specified expire time (in milliseconds) is set. But you must know that now the checking ttl accuracy is second.
 
 RESTORE checks the RDB version and data checksum. If they don't match an error is returned.
+
+### ROLE
+
+Provide information on the role of an intance in the context of replication. 
+
+Role: master and slave
+
+Master output:
+
+```
+1) "master"
+2) (integer) 3129659
+3) 1) 1) "127.0.0.1"
+      2) "9001"
+      3) "3129242"
+   2) 1) "127.0.0.1"
+      2) "9002"
+      3) "3129543"
+```
+
+1. The string master.
+2. The current master replication binlog last log id.
+3. An array about the slaves, each sub array contains slave IP, port, and the last acknowledged replication binlog id. 
+
+Slave output:
+
+```
+1) "slave"
+2) "127.0.0.1"
+3) (integer) 9000
+4) "connected"
+5) (integer) 3167038
+```
+
+1. The string slave
+2. The slave IP
+3. The slave port
+4. The slave replication state, includes connect, connecting, sync and connected.
+5. The slave current replication binlog id.
 
 ## Transaction
 

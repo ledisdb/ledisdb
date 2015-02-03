@@ -788,5 +788,11 @@
         "arguments" : "key ttl value",
         "group" : "Server",
         "readonly" : false
+    },
+
+    "ROLE": {
+        "arguments" : "-",
+        "group" : "Server",
+        "readonly" : true
     }
 }
