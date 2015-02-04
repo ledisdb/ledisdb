@@ -61,10 +61,10 @@ func newTableReader(base string, index int64, useMmap bool) (*tableReader, error
 	var err error
 
 	if err = t.check(); err != nil {
-		log.Error("check %d error: %s, try to repair", t.index, err.Error())
+		log.Errorf("check %d error: %s, try to repair", t.index, err.Error())
 
 		if err = t.repair(); err != nil {
-			log.Error("repair %d error: %s", t.index, err.Error())
+			log.Errorf("repair %d error: %s", t.index, err.Error())
 			return nil, err
 		}
 	}
@@ -221,12 +221,12 @@ func (t *tableReader) repair() error {
 		nextPos, err = t.decodeLogHead(&l, data, pos)
 		if err != nil {
 			//if error, we may lost all logs from pos
-			log.Error("%s may lost logs from %d", data.Name(), pos)
+			log.Errorf("%s may lost logs from %d", data.Name(), pos)
 			break
 		}
 
 		if l.ID == 0 {
-			log.Error("%s may lost logs from %d, invalid log 0", data.Name(), pos)
+			log.Errorf("%s may lost logs from %d, invalid log 0", data.Name(), pos)
 			break
 		}
 
@@ -237,7 +237,7 @@ func (t *tableReader) repair() error {
 		if t.last == 0 {
 			t.last = l.ID
 		} else if l.ID <= t.last {
-			log.Error("%s may lost logs from %d, invalid logid %d", t.data.Name(), pos, l.ID)
+			log.Errorf("%s may lost logs from %d, invalid logid %d", t.data.Name(), pos, l.ID)
 			break
 		}
 
@@ -260,7 +260,7 @@ func (t *tableReader) repair() error {
 	data.SetOffset(pos)
 
 	if _, err = data.Write(magic); err != nil {
-		log.Error("write magic error %s", err.Error())
+		log.Errorf("write magic error %s", err.Error())
 	}
 
 	if err = data.Close(); err != nil {
@@ -387,18 +387,18 @@ func (t *tableWriter) SetSyncType(tp int) {
 func (t *tableWriter) close() {
 	if t.meta != nil {
 		if err := t.meta.Close(); err != nil {
-			log.Fatal("close log meta error %s", err.Error())
+			log.Fatalf("close log meta error %s", err.Error())
 		}
 		t.meta = nil
 	}
 
 	if t.data != nil {
 		if _, err := t.data.Write(magic); err != nil {
-			log.Fatal("write magic error %s", err.Error())
+			log.Fatalf("write magic error %s", err.Error())
 		}
 
 		if err := t.data.Close(); err != nil {
-			log.Fatal("close log data error %s", err.Error())
+			log.Fatalf("close log data error %s", err.Error())
 		}
 		t.data = nil
 	}
@@ -519,7 +519,7 @@ func (t *tableWriter) storeLog(l *Log) error {
 
 	if t.syncType == 2 {
 		if err := t.data.Sync(); err != nil {
-			log.Error("sync table error %s", err.Error())
+			log.Errorf("sync table error %s", err.Error())
 		}
 	}
 

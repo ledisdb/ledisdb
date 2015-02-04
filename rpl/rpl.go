@@ -93,7 +93,7 @@ func (r *Replication) Close() error {
 	}
 
 	if err := r.updateCommitID(r.commitID, true); err != nil {
-		log.Error("update commit id err %s", err.Error())
+		log.Errorf("update commit id err %s", err.Error())
 	}
 
 	if r.commitLog != nil {
@@ -301,7 +301,7 @@ func (r *Replication) run() {
 			err := r.s.PurgeExpired(int64(n))
 			r.m.Unlock()
 			if err != nil {
-				log.Error("purge expired log error %s", err.Error())
+				log.Errorf("purge expired log error %s", err.Error())
 			}
 		case <-syncTc.C:
 			if r.cfg.Replication.SyncLog == 1 {
@@ -309,7 +309,7 @@ func (r *Replication) run() {
 				err := r.s.Sync()
 				r.m.Unlock()
 				if err != nil {
-					log.Error("sync store error %s", err.Error())
+					log.Errorf("sync store error %s", err.Error())
 				}
 			}
 			if r.cfg.Replication.SyncLog != 2 {
@@ -319,7 +319,7 @@ func (r *Replication) run() {
 				r.m.Unlock()
 
 				if err != nil {
-					log.Error("sync commitid error %s", err.Error())
+					log.Errorf("sync commitid error %s", err.Error())
 				}
 			}
 		case <-r.quit:

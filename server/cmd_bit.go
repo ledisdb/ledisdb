@@ -296,4 +296,6 @@ func init() {
 	register("bpersist", bpersistCommand)
 	register("bxscan", bxscanCommand)
 	register("bxrevscan", bxrevscanCommand)
+	register("xbscan", bxscanCommand)
+	register("xbrevscan", bxrevscanCommand)
 }

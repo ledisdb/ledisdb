@@ -132,7 +132,7 @@ func (w *httpWriter) genericWrite(result interface{}) {
 	case "msgpack":
 		writeMsgPack(&m, w.w)
 	default:
-		log.Error("invalid content type %s", w.contentType)
+		log.Errorf("invalid content type %s", w.contentType)
 	}
 }
 

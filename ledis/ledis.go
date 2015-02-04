@@ -132,7 +132,7 @@ func (l *Ledis) flushAll() error {
 		n++
 		if n == 10000 {
 			if err := w.Commit(); err != nil {
-				log.Fatal("flush all commit error: %s", err.Error())
+				log.Fatalf("flush all commit error: %s", err.Error())
 				return err
 			}
 			n = 0
@@ -141,13 +141,13 @@ func (l *Ledis) flushAll() error {
 	}
 
 	if err := w.Commit(); err != nil {
-		log.Fatal("flush all commit error: %s", err.Error())
+		log.Fatalf("flush all commit error: %s", err.Error())
 		return err
 	}
 
 	if l.r != nil {
 		if err := l.r.Clear(); err != nil {
-			log.Fatal("flush all replication clear error: %s", err.Error())
+			log.Fatalf("flush all replication clear error: %s", err.Error())
 			return err
 		}
 	}

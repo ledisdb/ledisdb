@@ -177,7 +177,7 @@ func (s *FileStore) storeLog(l *Log) error {
 	r, err = s.w.Flush()
 
 	if err != nil {
-		log.Fatal("write table flush error %s, can not store!!!", err.Error())
+		log.Fatalf("write table flush error %s, can not store!!!", err.Error())
 
 		s.w.Close()
 
@@ -258,7 +258,7 @@ func (s *FileStore) Close() error {
 
 	if r, err := s.w.Flush(); err != nil {
 		if err != errNilHandler {
-			log.Error("close err: %s", err.Error())
+			log.Errorf("close err: %s", err.Error())
 		}
 	} else {
 		r.Close()
@@ -315,10 +315,10 @@ func (s *FileStore) purgeTableReaders(purges []*tableReader) {
 		metaName := fmtTableMetaName(r.base, r.index)
 		r.Close()
 		if err := os.Remove(dataName); err != nil {
-			log.Error("purge table data %s err: %s", dataName, err.Error())
+			log.Errorf("purge table data %s err: %s", dataName, err.Error())
 		}
 		if err := os.Remove(metaName); err != nil {
-			log.Error("purge table meta %s err: %s", metaName, err.Error())
+			log.Errorf("purge table meta %s err: %s", metaName, err.Error())
 		}
 
 	}
@@ -337,7 +337,7 @@ func (s *FileStore) load() error {
 	for _, f := range fs {
 		if _, err := fmt.Sscanf(f.Name(), "%08d.data", &index); err == nil {
 			if r, err = newTableReader(s.base, index, s.cfg.Replication.UseMmap); err != nil {
-				log.Error("load table %s err: %s", f.Name(), err.Error())
+				log.Errorf("load table %s err: %s", f.Name(), err.Error())
 			} else {
 				s.rs = append(s.rs, r)
 			}

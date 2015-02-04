@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"github.com/siddontang/go/arena"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
@@ -97,7 +98,7 @@ func (c *respClient) run() {
 			n := runtime.Stack(buf, false)
 			buf = buf[0:n]
 
-			log.Fatal("client run panic %s:%v", buf, e)
+			log.Fatalf("client run panic %s:%v", buf, e)
 		}
 
 		c.client.close()
@@ -235,7 +236,7 @@ func (w *respWriter) writeArray(lst []interface{}) {
 			case int64:
 				w.writeInteger(v)
 			default:
-				panic("invalid array type")
+				panic(fmt.Sprintf("invalid array type %T %v", lst[i], v))
 			}
 		}
 	}

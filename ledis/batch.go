@@ -107,7 +107,7 @@ func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 		if rl, err = l.r.Log(g.Data()); err != nil {
 			l.commitLock.Unlock()
 
-			log.Fatal("write wal error %s", err.Error())
+			log.Fatalf("write wal error %s", err.Error())
 			return err
 		}
 
@@ -116,7 +116,7 @@ func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 		if err = c.Commit(); err != nil {
 			l.commitLock.Unlock()
 
-			log.Fatal("commit error %s", err.Error())
+			log.Fatalf("commit error %s", err.Error())
 			l.noticeReplication()
 			return err
 		}
@@ -124,7 +124,7 @@ func (l *Ledis) handleCommit(g commitDataGetter, c commiter) error {
 		if err = l.r.UpdateCommitID(rl.ID); err != nil {
 			l.commitLock.Unlock()
 
-			log.Fatal("update commit id error %s", err.Error())
+			log.Fatalf("update commit id error %s", err.Error())
 			l.noticeReplication()
 			return err
 		}

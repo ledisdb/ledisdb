@@ -506,6 +506,18 @@ func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error)
 	return db.lblockPop(keys, listTailSeq, timeout)
 }
 
+func (db *DB) XLExists(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	sk := db.lEncodeMetaKey(key)
+	v, err := db.bucket.Get(sk)
+	if v != nil && err == nil {
+		return 1, nil
+	}
+	return 0, err
+}
+
 func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
 	ch := make(chan []byte)
 

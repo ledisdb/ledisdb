@@ -509,3 +509,15 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 	err = t.Commit()
 	return n, err
 }
+
+func (db *DB) XHExists(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	sk := db.hEncodeSizeKey(key)
+	v, err := db.bucket.Get(sk)
+	if v != nil && err == nil {
+		return 1, nil
+	}
+	return 0, err
+}

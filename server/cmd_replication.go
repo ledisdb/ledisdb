@@ -182,9 +182,86 @@ func replconfCommand(c *client) error {
 	return nil
 }
 
+func roleCommand(c *client) error {
+	if len(c.args) != 0 {
+		return ErrCmdParams
+	}
+
+	c.app.m.Lock()
+	isMaster := len(c.app.cfg.SlaveOf) == 0
+	c.app.m.Unlock()
+
+	ay := make([]interface{}, 0, 5)
+
+	var lastId int64 = 0
+
+	stat, _ := c.app.ldb.ReplicationStat()
+	if stat != nil {
+		lastId = int64(stat.LastID)
+	}
+
+	if isMaster {
+		ay = append(ay, []byte("master"))
+		ay = append(ay, lastId)
+
+		items := make([]interface{}, 0, 3)
+
+		c.app.slock.Lock()
+		for addr, slave := range c.app.slaves {
+			host, port, _ := splitHostPort(addr)
+
+			items = append(items, []interface{}{[]byte(host),
+				strconv.AppendUint(nil, uint64(port), 10),
+				strconv.AppendUint(nil, slave.lastLogID.Get(), 10)})
+		}
+		c.app.slock.Unlock()
+		ay = append(ay, items)
+	} else {
+		host, port, _ := splitHostPort(c.app.cfg.Addr)
+		ay = append(ay, []byte("slave"))
+		ay = append(ay, []byte(host))
+		ay = append(ay, int64(port))
+		ay = append(ay, []byte(replStatetring(c.app.m.state.Get())))
+		ay = append(ay, lastId)
+	}
+
+	c.resp.writeArray(ay)
+	return nil
+}
+
+func replStatetring(r int32) string {
+	switch r {
+	case replConnectState:
+		return "connect"
+	case replConnectingState:
+		return "connecting"
+	case replSyncState:
+		return "sync"
+	case replConnectedState:
+		return "connected"
+	default:
+		return "unknown"
+	}
+}
+
+func splitHostPort(str string) (string, int16, error) {
+	host, port, err := net.SplitHostPort(str)
+	if err != nil {
+		return "", 0, err
+	}
+
+	p, err := strconv.ParseInt(port, 10, 16)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return host, int16(p), nil
+}
+
 func init() {
 	register("slaveof", slaveofCommand)
 	register("fullsync", fullsyncCommand)
 	register("sync", syncCommand)
 	register("replconf", replconfCommand)
+	register("role", roleCommand)
 }

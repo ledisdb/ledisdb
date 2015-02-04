@@ -34,8 +34,8 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
-    #install Go dependences
-    ./bootstrap.sh
+    #install godep and be sure godep command can be found in $PATH
+    go get github.com/tools/godep
 
     #set build and run environment 
     source dev.sh
@@ -45,7 +45,10 @@ Create a workspace and checkout ledisdb source
 
 ## Godep support
 
-LedisDB can be built with [godep](https://github.com/tools/godep) which can manage LedisDB Go dependency automatically.
+LedisDB now prefers using [godep](https://github.com/tools/godep) to build, godep can manage the go dependences easily.
+
+If you don't want to use godep, you can first run `sh bootstrap.sh` to download the depencenecs and then `make`, 
+but I will not guarantee the dependence compatibility.
 
 ## LevelDB support
 

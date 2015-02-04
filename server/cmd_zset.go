@@ -771,6 +771,19 @@ func zlexcountCommand(c *client) error {
 	return nil
 }
 
+func xzexistsCommand(c *client) error {
+	args := c.args
+	if len(args) != 1 {
+		return ErrCmdParams
+	}
+	if n, err := c.db.XZExists(args[0]); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
 	register("zadd", zaddCommand)
 	register("zcard", zcardCommand)
@@ -804,4 +817,7 @@ func init() {
 	register("zpersist", zpersistCommand)
 	register("zxscan", zxscanCommand)
 	register("zxrevscan", zxrevscanCommand)
+	register("xzscan", zxscanCommand)
+	register("xzrevscan", zxrevscanCommand)
+	register("xzexists", xzexistsCommand)
 }

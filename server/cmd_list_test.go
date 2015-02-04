@@ -58,11 +58,22 @@ func TestList(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("a")
+	if n, err := ledis.Int(c.Do("xlexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
 
 	if n, err := ledis.Int(c.Do("lpush", key, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xlexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(1)
 	}
 
 	if n, err := ledis.Int(c.Do("rpush", key, 2)); err != nil {

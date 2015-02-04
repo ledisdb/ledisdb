@@ -1023,3 +1023,15 @@ func (db *DB) ZLexCount(key []byte, min []byte, max []byte, rangeType uint8) (in
 
 	return n, nil
 }
+
+func (db *DB) XZExists(key []byte) (int64, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	sk := db.zEncodeSizeKey(key)
+	v, err := db.bucket.Get(sk)
+	if v != nil && err == nil {
+		return 1, nil
+	}
+	return 0, err
+}

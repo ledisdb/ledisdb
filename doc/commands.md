@@ -50,6 +50,8 @@ Table of Contents
 	- [HPERSIST key](#hpersist-key)
 	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
 	- [HXREVSCAN key [MATCH match] [COUNT count]](#hxrevscan-key-match-match-count-count)
+	- [XHSCAN key [MATCH match] [COUNT count]](#xhscan-key-match-match-count-count)
+	- [XHREVSCAN key [MATCH match] [COUNT count]](#xhrevscan-key-match-match-count-count)
 	- [HDUMP key](#hdump-key)
 - [List](#list)
 	- [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
@@ -69,6 +71,8 @@ Table of Contents
 	- [LPERSIST key](#lpersist-key)
 	- [LXSCAN key [MATCH match] [COUNT count]](#lxscan-key-match-match-count-count)
 	- [LXREVSCAN key [MATCH match] [COUNT count]](#lxrevscan-key-match-match-count-count)
+	- [XLSCAN key [MATCH match] [COUNT count]](#xlscan-key-match-match-count-count)
+	- [XLREVSCAN key [MATCH match] [COUNT count]](#xlrevscan-key-match-match-count-count)
 	- [LDUMP key](#ldump-key)
 - [Set](#set)
 	- [SADD key member [member ...]](#sadd-key-member-member-)
@@ -90,6 +94,8 @@ Table of Contents
 	- [SPERSIST key](#spersist-key)
 	- [SXSCAN key [MATCH match] [COUNT count]](#sxscan-key-match-match-count-count)
 	- [SXREVSCAN key [MATCH match] [COUNT count]](#sxrevscan-key-match-match-count-count)
+	- [XSSCAN key [MATCH match] [COUNT count]](#xsscan-key-match-match-count-count)
+	- [XSREVSCAN key [MATCH match] [COUNT count]](#xsrevscan-key-match-match-count-count)
 	- [SDUMP key](#sdump-key)
 - [ZSet](#zset)
 	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
@@ -118,6 +124,8 @@ Table of Contents
 ](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
 	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
 	- [ZXREVSCAN key [MATCH match] [COUNT count]](#zxrevscan-key-match-match-count-count)
+	- [XZSCAN key [MATCH match] [COUNT count]](#xzscan-key-match-match-count-count)
+	- [XZREVSCAN key [MATCH match] [COUNT count]](#xzrevscan-key-match-match-count-count)
 	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
 	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
 	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
@@ -135,6 +143,8 @@ Table of Contents
 	- [BPERSIST key](#bpersist-key)
 	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
 	- [BXREVSCAN key [MATCH match] [COUNT count]](#bxrevscan-key-match-match-count-count)
+	- [XBSCAN key [MATCH match] [COUNT count]](#xbscan-key-match-match-count-count)
+	- [XBREVSCAN key [MATCH match] [COUNT count]](#xbrevscan-key-match-match-count-count)
 - [Replication](#replication)
 	- [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
 	- [FULLSYNC [NEW]](#fullsync-new)
@@ -149,6 +159,7 @@ Table of Contents
 	- [TIME](#time)
 	- [CONFIG REWRITE](#config-rewrite)
 	- [RESTORE key ttl value](#restore-key-ttl-value)
+	- [ROLE](#role)
 - [Transaction](#transaction)
 	- [BEGIN](#begin)
 	- [ROLLBACK](#rollback)
@@ -981,6 +992,19 @@ Reverse iterate Hash keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
+### XHSCAN key [MATCH match] [COUNT count] 
+
+Iterate Hash keys incrementally.
+
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### XHREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Hash keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
+
 ### HDUMP key
 
 See [DUMP](#dump-key) for more information.
@@ -1318,6 +1342,19 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 Reverse iterate list keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
+### XLSCAN key [MATCH match] [COUNT count] 
+
+Iterate list keys incrementally.
+
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### XLREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate list keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 
 ### LDUMP key
 
@@ -1757,6 +1794,20 @@ See [XSCAN](#xscan-key-match-match-count-count) for more information.
 Reverse iterate Set keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
+### XSSCAN key [MATCH match] [COUNT count] 
+
+Iterate Set keys incrementally.
+
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+
+### XSREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Set keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 
 ### SDUMP key
 
@@ -2393,6 +2444,18 @@ Reverse iterate ZSet keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
+### XZSCAN key [MATCH match] [COUNT count] 
+
+Iterate ZSet keys incrementally.
+
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### XZREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate ZSet keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 ### ZRANGEBYLEX key min max [LIMIT offset count]
 
 When all the elements in a sorted set are inserted with the same score, in order to force lexicographical ordering, this command returns all the elements in the sorted set at key with a value between min and max.
@@ -2633,6 +2696,18 @@ Reverse iterate Bitmap keys incrementally.
 
 See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
 
+### XBSCAN key [MATCH match] [COUNT count] 
+
+Iterate Bitmap keys incrementally.
+
+See [XSCAN](#xscan-key-match-match-count-count) for more information.
+
+### XBREVSCAN key [MATCH match] [COUNT count] 
+
+Reverse iterate Bitmap keys incrementally.
+
+See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+
 
 ## Replication
 
@@ -2763,6 +2838,45 @@ Create a key associated with a value that is obtained by deserializing the provi
 If ttl is 0 the key is created without any expire, otherwise the specified expire time (in milliseconds) is set. But you must know that now the checking ttl accuracy is second.
 
 RESTORE checks the RDB version and data checksum. If they don't match an error is returned.
+
+### ROLE
+
+Provide information on the role of an intance in the context of replication. 
+
+Role: master and slave
+
+Master output:
+
+```
+1) "master"
+2) (integer) 3129659
+3) 1) 1) "127.0.0.1"
+      2) "9001"
+      3) "3129242"
+   2) 1) "127.0.0.1"
+      2) "9002"
+      3) "3129543"
+```
+
+1. The string master.
+2. The current master replication binlog last log id.
+3. An array about the slaves, each sub array contains slave IP, port, and the last acknowledged replication binlog id. 
+
+Slave output:
+
+```
+1) "slave"
+2) "127.0.0.1"
+3) (integer) 9000
+4) "connected"
+5) (integer) 3167038
+```
+
+1. The string slave
+2. The slave IP
+3. The slave port
+4. The slave replication state, includes connect, connecting, sync and connected.
+5. The slave current replication binlog id.
 
 ## Transaction
 

@@ -724,9 +724,75 @@
         "readonly": true
     },
 
+    "XBSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Bitmap",
+        "readonly": true
+    },
+
+    "XLSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "List",
+        "readonly": true
+    },
+
+    "XHSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Hash",
+        "readonly": true
+    },
+
+    "XSSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Set",
+        "readonly": true
+    },
+
+    "XZSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "XHREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Hash",
+        "readonly": true
+    },
+
+    "XLREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "List",
+        "readonly": true
+    },
+
+    "XSREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Set",
+        "readonly": true
+    },
+
+    "XZREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "ZSet",
+        "readonly": true
+    },
+
+    "XBREVSCAN": {
+        "arguments": "key [MATCH match] [COUNT count]",
+        "group": "Bitmap",
+        "readonly": true
+    },
+
     "RESTORE": {
         "arguments" : "key ttl value",
         "group" : "Server",
         "readonly" : false
+    },
+
+    "ROLE": {
+        "arguments" : "-",
+        "group" : "Server",
+        "readonly" : true
     }
 }
