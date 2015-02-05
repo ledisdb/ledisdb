@@ -42,6 +42,62 @@ func TestDBKV(t *testing.T) {
 		t.Fatal(string(v2))
 	}
 
+	key3 := []byte("testdb_kv_range")
+
+	if n, err := db.Append(key3, []byte("Hello")); err != nil {
+		t.Fatal(err)
+	} else if n != 5 {
+		t.Fatal(n)
+	}
+
+	if n, err := db.Append(key3, []byte(" World")); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
+
+	if n, err := db.StrLen(key3); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
+
+	if v, err := db.GetRange(key3, 0, 4); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "Hello" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.GetRange(key3, 0, -1); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "Hello World" {
+		t.Fatal(string(v))
+	}
+
+	if v, err := db.GetRange(key3, -5, -1); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "World" {
+		t.Fatal(string(v))
+	}
+
+	if n, err := db.SetRange(key3, 6, []byte("Redis")); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
+
+	if v, err := db.Get(key3); err != nil {
+		t.Fatal(err)
+	} else if string(v) != "Hello Redis" {
+		t.Fatal(string(v))
+	}
+
+	key4 := []byte("testdb_kv_range_none")
+	if n, err := db.SetRange(key4, 6, []byte("Redis")); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
 }
 
 func TestKVPersist(t *testing.T) {

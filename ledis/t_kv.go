@@ -394,3 +394,128 @@ func (db *DB) Persist(key []byte) (int64, error) {
 	err = t.Commit()
 	return n, err
 }
+
+func (db *DB) SetRange(key []byte, offset int, value []byte) (int64, error) {
+	if len(value) == 0 {
+		return 0, nil
+	}
+
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	} else if len(value)+offset > MaxValueSize {
+		return 0, errValueSize
+	}
+
+	key = db.encodeKVKey(key)
+
+	t := db.kvBatch
+
+	t.Lock()
+	defer t.Unlock()
+
+	oldValue, err := db.bucket.Get(key)
+	if err != nil {
+		return 0, err
+	}
+
+	extra := offset + len(value) - len(oldValue)
+	if extra > 0 {
+		oldValue = append(oldValue, make([]byte, extra)...)
+	}
+
+	copy(oldValue[offset:], value)
+
+	t.Put(key, oldValue)
+
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
+	return int64(len(oldValue)), nil
+}
+
+func (db *DB) GetRange(key []byte, start int, end int) ([]byte, error) {
+	if err := checkKeySize(key); err != nil {
+		return nil, err
+	}
+	key = db.encodeKVKey(key)
+
+	value, err := db.bucket.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	valLen := len(value)
+
+	if start < 0 {
+		start = valLen + start
+	}
+
+	if end < 0 {
+		end = valLen + end
+	}
+
+	if start < 0 {
+		start = 0
+	}
+
+	if end < 0 {
+		end = 0
+	}
+
+	if end >= valLen {
+		end = valLen - 1
+	}
+
+	if start > end {
+		return nil, nil
+	}
+
+	return value[start : end+1], nil
+}
+
+func (db *DB) StrLen(key []byte) (int64, error) {
+	s, err := db.GetSlice(key)
+	if err != nil {
+		return 0, err
+	}
+
+	n := s.Size()
+	s.Free()
+	return int64(n), nil
+}
+
+func (db *DB) Append(key []byte, value []byte) (int64, error) {
+	if len(value) == 0 {
+		return 0, nil
+	}
+
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+	key = db.encodeKVKey(key)
+
+	t := db.kvBatch
+
+	t.Lock()
+	defer t.Unlock()
+
+	oldValue, err := db.bucket.Get(key)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(oldValue)+len(value) > MaxValueSize {
+		return 0, errValueSize
+	}
+
+	oldValue = append(oldValue, value...)
+
+	t.Put(key, oldValue)
+
+	if err := t.Commit(); err != nil {
+		return 0, nil
+	}
+
+	return int64(len(oldValue)), nil
+}
