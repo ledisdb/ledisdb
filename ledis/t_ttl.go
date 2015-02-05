@@ -139,7 +139,7 @@ func (c *ttlChecker) setNextCheckTime(when int64, force bool) {
 	c.Lock()
 	if force {
 		c.nc = when
-	} else if  c.nc > when {
+	} else if c.nc > when {
 		c.nc = when
 	}
 	c.Unlock()
