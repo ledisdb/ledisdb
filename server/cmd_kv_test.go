@@ -78,6 +78,32 @@ func TestKV(t *testing.T) {
 	} else if n != 0 {
 		t.Fatal(n)
 	}
+
+	rangeKey := "range_key"
+	if n, err := ledis.Int(c.Do("append", rangeKey, "Hello ")); err != nil {
+		t.Fatal(err)
+	} else if n != 6 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("setrange", rangeKey, 6, "Redis")); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("strlen", rangeKey)); err != nil {
+		t.Fatal(err)
+	} else if n != 11 {
+		t.Fatal(n)
+	}
+
+	if v, err := ledis.String(c.Do("getrange", rangeKey, 0, -1)); err != nil {
+		t.Fatal(err)
+	} else if v != "Hello Redis" {
+		t.Fatal(v)
+	}
+
 }
 
 func TestKVM(t *testing.T) {

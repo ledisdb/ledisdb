@@ -391,12 +391,90 @@ func xrevscanCommand(c *client) error {
 	return xscanGeneric(c, c.db.RevScan)
 }
 
+func appendCommand(c *client) error {
+	args := c.args
+	if len(args) != 2 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.Append(args[0], args[1]); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
+func getrangeCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	start, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return err
+	}
+
+	end, err := strconv.Atoi(string(args[2]))
+	if err != nil {
+		return err
+	}
+
+	if v, err := c.db.GetRange(key, start, end); err != nil {
+		return err
+	} else {
+		c.resp.writeBulk(v)
+	}
+
+	return nil
+
+}
+
+func setrangeCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	offset, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return err
+	}
+
+	value := args[2]
+
+	if n, err := c.db.SetRange(key, offset, value); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
+func strlenCommand(c *client) error {
+	if len(c.args) != 1 {
+		return ErrCmdParams
+	}
+
+	if n, err := c.db.StrLen(c.args[0]); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
+	register("append", appendCommand)
 	register("decr", decrCommand)
 	register("decrby", decrbyCommand)
 	register("del", delCommand)
 	register("exists", existsCommand)
 	register("get", getCommand)
+	register("getrange", getrangeCommand)
 	register("getset", getsetCommand)
 	register("incr", incrCommand)
 	register("incrby", incrbyCommand)
@@ -405,6 +483,8 @@ func init() {
 	register("set", setCommand)
 	register("setnx", setnxCommand)
 	register("setex", setexCommand)
+	register("setrange", setrangeCommand)
+	register("strlen", strlenCommand)
 	register("expire", expireCommand)
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)
