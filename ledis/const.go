@@ -98,3 +98,10 @@ const (
 	DBInTransaction uint8 = 0x1
 	DBInMulti       uint8 = 0x2
 )
+
+const (
+	BitAND = "and"
+	BitOR  = "or"
+	BitXOR = "xor"
+	BitNot = "not"
+)

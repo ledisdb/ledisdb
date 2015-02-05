@@ -467,13 +467,142 @@ func strlenCommand(c *client) error {
 	return nil
 }
 
+func parseBitRange(args [][]byte) (start int, end int, err error) {
+	start = 0
+	end = -1
+	if len(args) > 0 {
+		if start, err = strconv.Atoi(string(args[0])); err != nil {
+			return
+		}
+	}
+
+	if len(args) == 2 {
+		if end, err = strconv.Atoi(string(args[1])); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func bitcountCommand(c *client) error {
+	args := c.args
+	if len(args) == 0 || len(args) > 3 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	start, end, err := parseBitRange(args[1:])
+	if err != nil {
+		return err
+	}
+
+	if n, err := c.db.BitCount(key, start, end); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
+func bitopCommand(c *client) error {
+	args := c.args
+	if len(args) < 3 {
+		return ErrCmdParams
+	}
+
+	op := string(args[0])
+	destKey := args[1]
+	srcKeys := args[2:]
+
+	if n, err := c.db.BitOP(op, destKey, srcKeys...); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+
+	return nil
+}
+
+func bitposCommand(c *client) error {
+	args := c.args
+	if len(args) < 2 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	bit, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return err
+	}
+	start, end, err := parseBitRange(args[2:])
+	if err != nil {
+		return err
+	}
+
+	if n, err := c.db.BitPos(key, bit, start, end); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
+func getbitCommand(c *client) error {
+	args := c.args
+	if len(args) != 2 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	offset, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return err
+	}
+
+	if n, err := c.db.GetBit(key, offset); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
+func setbitCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	key := args[0]
+	offset, err := strconv.Atoi(string(args[1]))
+	if err != nil {
+		return err
+	}
+
+	value, err := strconv.Atoi(string(args[2]))
+	if err != nil {
+		return err
+	}
+
+	if n, err := c.db.SetBit(key, offset, value); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(n)
+	}
+	return nil
+}
+
 func init() {
 	register("append", appendCommand)
+	register("bitcount", bitcountCommand)
+	register("bitop", bitopCommand)
+	register("bitpos", bitposCommand)
 	register("decr", decrCommand)
 	register("decrby", decrbyCommand)
 	register("del", delCommand)
 	register("exists", existsCommand)
 	register("get", getCommand)
+	register("getbit", getbitCommand)
 	register("getrange", getrangeCommand)
 	register("getset", getsetCommand)
 	register("incr", incrCommand)
@@ -481,6 +610,7 @@ func init() {
 	register("mget", mgetCommand)
 	register("mset", msetCommand)
 	register("set", setCommand)
+	register("setbit", setbitCommand)
 	register("setnx", setnxCommand)
 	register("setex", setexCommand)
 	register("setrange", setrangeCommand)

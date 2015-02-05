@@ -13,7 +13,7 @@ func now() int64 {
 
 func TestExpire(t *testing.T) {
 	// test for kv, list, hash, set, zset, bitmap in all
-	ttlType := []string{"k", "l", "h", "s", "z", "b"}
+	ttlType := []string{"k", "l", "h", "s", "z"}
 
 	var (
 		expire   string
@@ -61,7 +61,6 @@ func TestExpire(t *testing.T) {
 			key = "bitmap_ttl"
 			c.Do("bsetbit", key, 0, 1)
 		}
-
 		//	expire + ttl
 		exp := int64(10)
 		if n, err := ledis.Int(c.Do(expire, key, exp)); err != nil {

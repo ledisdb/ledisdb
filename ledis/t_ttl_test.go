@@ -195,50 +195,50 @@ func setAdaptor(db *DB) *adaptor {
 
 }
 
-func bitAdaptor(db *DB) *adaptor {
-	adp := new(adaptor)
-	adp.showIdent = func() string {
-		return "bit-adaptor"
-	}
+// func bitAdaptor(db *DB) *adaptor {
+// 	adp := new(adaptor)
+// 	adp.showIdent = func() string {
+// 		return "bit-adaptor"
+// 	}
 
-	adp.set = func(k []byte, v []byte) (int64, error) {
-		datas := make([]BitPair, 3)
-		datas[0] = BitPair{0, 1}
-		datas[1] = BitPair{2, 1}
-		datas[2] = BitPair{5, 1}
+// 	adp.set = func(k []byte, v []byte) (int64, error) {
+// 		datas := make([]BitPair, 3)
+// 		datas[0] = BitPair{0, 1}
+// 		datas[1] = BitPair{2, 1}
+// 		datas[2] = BitPair{5, 1}
 
-		if _, err := db.BMSetBit(k, datas...); err != nil {
-			return 0, err
-		} else {
-			return int64(len(datas)), nil
-		}
-	}
+// 		if _, err := db.BMSetBit(k, datas...); err != nil {
+// 			return 0, err
+// 		} else {
+// 			return int64(len(datas)), nil
+// 		}
+// 	}
 
-	adp.exists = func(k []byte) (int64, error) {
-		var start, end int32 = 0, -1
-		if blen, err := db.BCount(k, start, end); err != nil || blen <= 0 {
-			return 0, err
-		} else {
-			return 1, nil
-		}
-	}
+// 	adp.exists = func(k []byte) (int64, error) {
+// 		var start, end int32 = 0, -1
+// 		if blen, err := db.BCount(k, start, end); err != nil || blen <= 0 {
+// 			return 0, err
+// 		} else {
+// 			return 1, nil
+// 		}
+// 	}
 
-	adp.del = db.BDelete
-	adp.expire = db.BExpire
-	adp.expireAt = db.BExpireAt
-	adp.ttl = db.BTTL
+// 	adp.del = db.BDelete
+// 	adp.expire = db.BExpire
+// 	adp.expireAt = db.BExpireAt
+// 	adp.ttl = db.BTTL
 
-	return adp
-}
+// 	return adp
+// }
 
 func allAdaptors(db *DB) []*adaptor {
-	adps := make([]*adaptor, 6)
+	adps := make([]*adaptor, 5)
 	adps[0] = kvAdaptor(db)
 	adps[1] = listAdaptor(db)
 	adps[2] = hashAdaptor(db)
 	adps[3] = zsetAdaptor(db)
 	adps[4] = setAdaptor(db)
-	adps[5] = bitAdaptor(db)
+	//adps[5] = bitAdaptor(db)
 	return adps
 }
 

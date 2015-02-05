@@ -104,6 +104,46 @@ func TestKV(t *testing.T) {
 		t.Fatal(v)
 	}
 
+	bitKey := "bit_key"
+	if n, err := ledis.Int(c.Do("setbit", bitKey, 7, 1)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("getbit", bitKey, 7)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("bitcount", bitKey)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("bitpos", bitKey, 1)); err != nil {
+		t.Fatal(err)
+	} else if n != 7 {
+		t.Fatal(n)
+	}
+
+	c.Do("set", "key1", "foobar")
+	c.Do("set", "key2", "abcdef")
+
+	if n, err := ledis.Int(c.Do("bitop", "and", "bit_dest_key", "key1", "key2")); err != nil {
+		t.Fatal(err)
+	} else if n != 6 {
+		t.Fatal(n)
+	}
+
+	if v, err := ledis.String(c.Do("get", "bit_dest_key")); err != nil {
+		t.Fatal(err)
+	} else if v != "`bc`ab" {
+		t.Fatal(v)
+	}
+
 }
 
 func TestKVM(t *testing.T) {
