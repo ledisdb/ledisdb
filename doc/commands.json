@@ -794,5 +794,59 @@
         "arguments" : "-",
         "group" : "Server",
         "readonly" : true
+    },
+
+    "APPEND": {
+        "arguments" : "key value",
+        "group" : "KV",
+        "readonly" : false
+    },
+
+    "GETRANGE": {
+        "arguments" : "key start end",
+        "group" : "KV",
+        "readonly" : true
+    },
+
+    "SETRANGE": {
+        "arguments" : "key offset value",
+        "group" : "KV",
+        "readonly" : false
+    },
+
+    "STRLEN": {
+        "arguments" : "key",
+        "group" : "KV",
+        "readonly" : true
+    },
+
+    "BITCOUNT": {
+        "arguments" : "key [start] [end]",
+        "group" : "KV",
+        "readonly" : true
+    },
+
+    "BITOP": {
+        "arguments" : "operation destkey key [key ...]",
+        "group" : "KV",
+        "readonly" : false
+    },
+
+    "BITPOS": {
+        "arguments" : "key bit [start] [end]",
+        "group" : "KV",
+        "readonly" : true
+    },
+
+    "GETBIT": {
+        "arguments" : "key offset",
+        "group" : "KV",
+        "readonly" : true
+    },
+
+    "SETBIT": {
+        "arguments" : "key offset value",
+        "group" : "KV",
+        "readonly" : false
     }
 }
