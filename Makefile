@@ -33,3 +33,6 @@ test_store:
 
 test_rpl:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./rpl
+
+fmt:
+	go fmt ./...

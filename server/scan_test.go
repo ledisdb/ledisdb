@@ -33,7 +33,6 @@ func TestScan(t *testing.T) {
 	testListScan(t, c)
 	testZSetScan(t, c)
 	testSetScan(t, c)
-	testBitScan(t, c)
 
 }
 
@@ -153,15 +152,4 @@ func testSetScan(t *testing.T, c *ledis.Client) {
 
 	checkScan(t, c, "xsscan")
 	checkRevScan(t, c, "xsrevscan")
-}
-
-func testBitScan(t *testing.T, c *ledis.Client) {
-	for i := 0; i < 10; i++ {
-		if _, err := c.Do("bsetbit", fmt.Sprintf("%d", i), 1024, 1); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	checkScan(t, c, "xbscan")
-	checkRevScan(t, c, "xbrevscan")
 }

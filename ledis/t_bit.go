@@ -3,6 +3,7 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
 	"sort"
@@ -49,19 +50,6 @@ const (
 	minSeq uint32 = 0
 	maxSeq uint32 = uint32((maxByteSize << 3) - 1)
 )
-
-var bitsInByte = [256]int32{0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3,
-	4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3,
-	3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4,
-	5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4,
-	3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4,
-	5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2,
-	2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3,
-	4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4,
-	5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6,
-	6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5,
-	6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}
 
 var fillBits = [...]uint8{1, 3, 7, 15, 31, 63, 127, 255}
 
@@ -442,6 +430,8 @@ func (db *DB) bCountSeg(key []byte, seq uint32, soff uint32, eoff uint32) (cnt i
 }
 
 func (db *DB) BGet(key []byte) (data []byte, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	if err = checkKeySize(key); err != nil {
 		return
 	}
@@ -476,6 +466,8 @@ func (db *DB) BGet(key []byte) (data []byte, err error) {
 }
 
 func (db *DB) BDelete(key []byte) (drop int64, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	if err = checkKeySize(key); err != nil {
 		return
 	}
@@ -492,6 +484,8 @@ func (db *DB) BDelete(key []byte) (drop int64, err error) {
 }
 
 func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	if err = checkKeySize(key); err != nil {
 		return
 	}
@@ -528,6 +522,8 @@ func (db *DB) BSetBit(key []byte, offset int32, val uint8) (ori uint8, err error
 }
 
 func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int64, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	if err = checkKeySize(key); err != nil {
 		return
 	}
@@ -608,6 +604,8 @@ func (db *DB) BMSetBit(key []byte, args ...BitPair) (place int64, err error) {
 }
 
 func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	if seq, off, err := db.bParseOffset(key, offset); err != nil {
 		return 0, err
 	} else {
@@ -631,6 +629,8 @@ func (db *DB) BGetBit(key []byte, offset int32) (uint8, error) {
 // }
 
 func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	var sseq, soff uint32
 	if sseq, soff, err = db.bParseOffset(key, start); err != nil {
 		return
@@ -686,6 +686,8 @@ func (db *DB) BCount(key []byte, start int32, end int32) (cnt int32, err error) 
 }
 
 func (db *DB) BTail(key []byte) (int32, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	// effective length of data, the highest bit-pos set in history
 	tailSeq, tailOff, err := db.bGetMeta(key)
 	if err != nil {
@@ -701,6 +703,8 @@ func (db *DB) BTail(key []byte) (int32, error) {
 }
 
 func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32, err error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
+
 	//	blen -
 	//		the total bit size of data stored in destination key,
 	//		that is equal to the size of the longest input string.
@@ -865,6 +869,7 @@ func (db *DB) BOperation(op uint8, dstkey []byte, srckeys ...[]byte) (blen int32
 }
 
 func (db *DB) BExpire(key []byte, duration int64) (int64, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	if duration <= 0 {
 		return 0, errExpireValue
 	}
@@ -877,6 +882,7 @@ func (db *DB) BExpire(key []byte, duration int64) (int64, error) {
 }
 
 func (db *DB) BExpireAt(key []byte, when int64) (int64, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	if when <= time.Now().Unix() {
 		return 0, errExpireValue
 	}
@@ -889,6 +895,7 @@ func (db *DB) BExpireAt(key []byte, when int64) (int64, error) {
 }
 
 func (db *DB) BTTL(key []byte) (int64, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	if err := checkKeySize(key); err != nil {
 		return -1, err
 	}
@@ -897,6 +904,7 @@ func (db *DB) BTTL(key []byte) (int64, error) {
 }
 
 func (db *DB) BPersist(key []byte) (int64, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}
@@ -915,10 +923,12 @@ func (db *DB) BPersist(key []byte) (int64, error) {
 }
 
 func (db *DB) BScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	return db.scan(BitMetaType, key, count, inclusive, match)
 }
 
 func (db *DB) BRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	log.Error("bitmap type will be deprecated later, please use bit operations in kv type")
 	return db.revscan(BitMetaType, key, count, inclusive, match)
 }
 
