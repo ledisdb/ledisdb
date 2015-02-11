@@ -34,6 +34,17 @@ const (
 	replConnectedState
 )
 
+type syncBuffer struct {
+	m *master
+	bytes.Buffer
+}
+
+func (b *syncBuffer) Write(data []byte) (int, error) {
+	b.m.state.Set(replSyncState)
+	n, err := b.Buffer.Write(data)
+	return n, err
+}
+
 type master struct {
 	sync.Mutex
 
@@ -47,7 +58,7 @@ type master struct {
 
 	wg sync.WaitGroup
 
-	syncBuf bytes.Buffer
+	syncBuf syncBuffer
 
 	state sync2.AtomicInt32
 }
@@ -57,6 +68,7 @@ func newMaster(app *App) *master {
 	m.app = app
 
 	m.quit = make(chan struct{}, 1)
+	m.syncBuf = syncBuffer{m: m}
 
 	m.state.Set(replConnectState)
 
@@ -255,7 +267,7 @@ func (m *master) sync() error {
 		return err
 	}
 
-	m.state.Set(replSyncState)
+	m.state.Set(replConnectedState)
 
 	m.syncBuf.Reset()
 
@@ -270,6 +282,8 @@ func (m *master) sync() error {
 			return err
 		}
 	}
+
+	m.state.Set(replConnectedState)
 
 	buf := m.syncBuf.Bytes()
 
