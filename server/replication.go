@@ -155,6 +155,10 @@ func (m *master) runReplication(restart bool) {
 	for {
 		m.state.Set(replConnectState)
 
+		if m.needQuit() {
+			return
+		}
+
 		if _, err := m.conn.Do("ping"); err != nil {
 			log.Errorf("ping master %s error %s, try 3s later", m.addr, err.Error())
 			time.Sleep(3 * time.Second)
