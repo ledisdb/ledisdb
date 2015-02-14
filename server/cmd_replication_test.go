@@ -140,7 +140,7 @@ func TestReplication(t *testing.T) {
 	if err = checkTestRole(slaveCfg.Addr, []interface{}{
 		[]byte("slave"),
 		[]byte("127.0.0.1"),
-		int64(11183),
+		int64(11182),
 		[]byte("connected"),
 		int64(sStat.LastID),
 	}); err != nil {
