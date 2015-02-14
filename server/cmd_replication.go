@@ -188,8 +188,10 @@ func roleCommand(c *client) error {
 	}
 
 	c.app.m.Lock()
-	isMaster := len(c.app.cfg.SlaveOf) == 0
+	slaveof := c.app.cfg.SlaveOf
 	c.app.m.Unlock()
+
+	isMaster := len(slaveof) == 0
 
 	ay := make([]interface{}, 0, 5)
 
@@ -217,7 +219,7 @@ func roleCommand(c *client) error {
 		c.app.slock.Unlock()
 		ay = append(ay, items)
 	} else {
-		host, port, _ := splitHostPort(c.app.cfg.Addr)
+		host, port, _ := splitHostPort(slaveof)
 		ay = append(ay, []byte("slave"))
 		ay = append(ay, []byte(host))
 		ay = append(ay, int64(port))
