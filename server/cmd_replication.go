@@ -157,6 +157,10 @@ func replconfCommand(c *client) error {
 		return ErrCmdParams
 	}
 
+	if !c.app.ldb.ReplicationUsed() {
+		return ledis.ErrRplNotSupport
+	}
+
 	//now only support "listening-port"
 	for i := 0; i < len(args); i += 2 {
 		switch strings.ToLower(hack.String(args[i])) {

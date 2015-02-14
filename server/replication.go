@@ -76,7 +76,11 @@ func newMaster(app *App) *master {
 }
 
 func (m *master) Close() {
-	m.quit <- struct{}{}
+	select {
+	case m.quit <- struct{}{}:
+	default:
+		break
+	}
 
 	m.closeConn()
 
@@ -161,7 +165,12 @@ func (m *master) runReplication(restart bool) {
 
 		if _, err := m.conn.Do("ping"); err != nil {
 			log.Errorf("ping master %s error %s, try 3s later", m.addr, err.Error())
-			time.Sleep(3 * time.Second)
+
+			select {
+			case <-time.After(3 * time.Second):
+			case <-m.quit:
+				return
+			}
 			continue
 		}
 
@@ -172,7 +181,17 @@ func (m *master) runReplication(restart bool) {
 		m.state.Set(replConnectedState)
 
 		if err := m.replConf(); err != nil {
-			log.Errorf("replconf error %s", err.Error())
+			if strings.Contains(err.Error(), ledis.ErrRplNotSupport.Error()) {
+				log.Fatalf("master doesn't support replication, wait 10s and retry")
+				select {
+				case <-time.After(10 * time.Second):
+				case <-m.quit:
+					return
+				}
+			} else {
+				log.Errorf("replconf error %s", err.Error())
+			}
+
 			continue
 		}
 
