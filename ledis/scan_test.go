@@ -111,7 +111,7 @@ func TestDBScan(t *testing.T) {
 
 }
 
-func TestDBHScan(t *testing.T) {
+func TestDBHKeyScan(t *testing.T) {
 	db := getTestDB()
 
 	db.hFlush()
@@ -155,7 +155,7 @@ func TestDBHScan(t *testing.T) {
 
 }
 
-func TestDBZScan(t *testing.T) {
+func TestDBZKeyScan(t *testing.T) {
 	db := getTestDB()
 
 	db.zFlush()
@@ -199,7 +199,7 @@ func TestDBZScan(t *testing.T) {
 
 }
 
-func TestDBLScan(t *testing.T) {
+func TestDBLKeyScan(t *testing.T) {
 	db := getTestDB()
 
 	db.lFlush()
@@ -249,10 +249,10 @@ func TestDBLScan(t *testing.T) {
 
 }
 
-func TestDBSScan(t *testing.T) {
+func TestDBSKeyScan(t *testing.T) {
 	db := getTestDB()
 
-	db.bFlush()
+	db.sFlush()
 
 	k1 := []byte("k1")
 	if _, err := db.SAdd(k1, []byte("1")); err != nil {
@@ -296,5 +296,77 @@ func TestDBSScan(t *testing.T) {
 	} else if string(v[1]) != "k3" {
 		t.Fatal("invalid value ", string(v[1]))
 	}
+}
 
+func TestDBHScan(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("scan_h_key")
+	value := []byte("hello world")
+	db.HSet(key, []byte("1"), value)
+	db.HSet(key, []byte("222"), value)
+	db.HSet(key, []byte("19"), value)
+	db.HSet(key, []byte("1234"), value)
+
+	v, err := db.HScan(key, nil, 100, true, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 4 {
+		t.Fatal("invalid count", len(v))
+	}
+
+	v, err = db.HScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0].Field) != "222" {
+		t.Fatal(string(v[0].Field))
+	}
+}
+
+func TestDBSScan(t *testing.T) {
+	db := getTestDB()
+	key := []byte("scan_s_key")
+
+	db.SAdd(key, []byte("1"), []byte("222"), []byte("19"), []byte("1234"))
+
+	v, err := db.SScan(key, nil, 100, true, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 4 {
+		t.Fatal("invalid count", len(v))
+	}
+
+	v, err = db.SScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0]) != "222" {
+		t.Fatal(string(v[0]))
+	}
+}
+
+func TestDBZScan(t *testing.T) {
+	db := getTestDB()
+	key := []byte("scan_z_key")
+
+	db.ZAdd(key, ScorePair{1, []byte("1")}, ScorePair{2, []byte("222")}, ScorePair{3, []byte("19")}, ScorePair{4, []byte("1234")})
+
+	v, err := db.ZScan(key, nil, 100, true, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 4 {
+		t.Fatal("invalid count", len(v))
+	}
+
+	v, err = db.ZScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0].Member) != "222" {
+		t.Fatal(string(v[0].Member))
+	}
 }
