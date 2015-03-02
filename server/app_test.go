@@ -22,7 +22,8 @@ func newTestLedisClient() {
 
 func getTestConn() *ledis.Conn {
 	startTestApp()
-	return testLedisClient.Get()
+	conn, _ := testLedisClient.Get()
+	return conn
 }
 
 func startTestApp() {

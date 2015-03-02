@@ -157,7 +157,9 @@ func (app *App) Close() {
 
 	app.closeScript()
 
+	app.m.Lock()
 	app.m.Close()
+	app.m.Unlock()
 
 	app.snap.Close()
 

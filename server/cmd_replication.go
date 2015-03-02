@@ -131,7 +131,7 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Write(dummyBuf)
 
-	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 30, c.app.quit); err != nil {
+	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 1, c.app.quit); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()

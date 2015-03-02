@@ -266,11 +266,13 @@ func xmigratedbCommand(c *client) error {
 
 	mc := c.app.getMigrateClient(addr)
 
-	conn := mc.Get()
+	conn, err := mc.Get()
+	if err != nil {
+		return err
+	}
 
 	//timeout is milliseconds
 	t := time.Duration(timeout) * time.Millisecond
-	conn.SetConnectTimeout(t)
 
 	if _, err = conn.Do("select", db); err != nil {
 		return err
@@ -358,11 +360,13 @@ func xmigrateCommand(c *client) error {
 
 	mc := c.app.getMigrateClient(addr)
 
-	conn := mc.Get()
+	conn, err := mc.Get()
+	if err != nil {
+		return err
+	}
 
 	//timeout is milliseconds
 	t := time.Duration(timeout) * time.Millisecond
-	conn.SetConnectTimeout(t)
 
 	if _, err = conn.Do("select", db); err != nil {
 		return err

@@ -38,7 +38,7 @@ func bench(cmd string, f func(c *ledis.Conn)) {
 	t1 := time.Now()
 	for i := 0; i < *clients; i++ {
 		go func() {
-			c := client.Get()
+			c, _ := client.Get()
 			for j := 0; j < loop; j++ {
 				f(c)
 			}
@@ -277,7 +277,7 @@ func main() {
 	client = ledis.NewClient(cfg)
 
 	for i := 0; i < *clients; i++ {
-		c := client.Get()
+		c, _ := client.Get()
 		c.Close()
 	}
 

@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"container/list"
+	"net"
 	"strings"
 	"sync"
 )
@@ -46,11 +47,34 @@ func NewClient(cfg *Config) *Client {
 }
 
 func (c *Client) Do(cmd string, args ...interface{}) (interface{}, error) {
-	co := c.get()
-	r, err := co.Do(cmd, args...)
-	c.put(co)
+	var co *Conn
+	var err error
+	var r interface{}
 
-	return r, err
+	for i := 0; i < 2; i++ {
+		co, err = c.get()
+		if err != nil {
+			return nil, err
+		}
+
+		r, err = co.Do(cmd, args...)
+		if err != nil {
+			co.finalize()
+
+			if e, ok := err.(*net.OpError); ok && strings.Contains(e.Error(), "use of closed network connection") {
+				//send to a closed connection, try again
+				continue
+			}
+
+			return nil, err
+		} else {
+			c.put(co)
+		}
+
+		return r, nil
+	}
+
+	return nil, err
 }
 
 func (c *Client) Close() {
@@ -66,11 +90,11 @@ func (c *Client) Close() {
 	}
 }
 
-func (c *Client) Get() *Conn {
+func (c *Client) Get() (*Conn, error) {
 	return c.get()
 }
 
-func (c *Client) get() *Conn {
+func (c *Client) get() (*Conn, error) {
 	c.Lock()
 	if c.conns.Len() == 0 {
 		c.Unlock()
@@ -83,7 +107,7 @@ func (c *Client) get() *Conn {
 
 		c.Unlock()
 
-		return co
+		return co, nil
 	}
 }
 

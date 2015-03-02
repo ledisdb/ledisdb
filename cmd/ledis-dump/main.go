@@ -32,7 +32,11 @@ func main() {
 		addr = fmt.Sprintf("%s:%d", *host, *port)
 	}
 
-	c := ledis.NewConnSize(addr, 16*1024, 4096)
+	c, err := ledis.ConnectWithSize(addr, 16*1024, 4096)
+	if err != nil {
+		println(err.Error())
+		return
+	}
 
 	defer c.Close()
 

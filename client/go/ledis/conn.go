@@ -8,8 +8,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"strings"
-	"sync"
 	"time"
 )
 
@@ -19,22 +17,11 @@ type Error string
 func (err Error) Error() string { return string(err) }
 
 type Conn struct {
-	cm sync.Mutex
-	wm sync.Mutex
-	rm sync.Mutex
-
-	closed bool
-
 	client *Client
-
-	addr string
 
 	c  net.Conn
 	br *bufio.Reader
 	bw *bufio.Writer
-
-	rSize int
-	wSize int
 
 	// Scratch space for formatting argument length.
 	// '*' or '$', length, "\r\n"
@@ -42,27 +29,25 @@ type Conn struct {
 
 	// Scratch space for formatting integers and floats.
 	numScratch [40]byte
-
-	connectTimeout time.Duration
 }
 
-func NewConn(addr string) *Conn {
-	co := new(Conn)
-	co.addr = addr
-
-	co.rSize = 4096
-	co.wSize = 4096
-
-	co.closed = false
-
-	return co
+func Connect(addr string) (*Conn, error) {
+	return ConnectWithSize(addr, 4096, 4096)
 }
 
-func NewConnSize(addr string, readSize int, writeSize int) *Conn {
-	co := NewConn(addr)
-	co.rSize = readSize
-	co.wSize = writeSize
-	return co
+func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
+	c := new(Conn)
+
+	var err error
+	c.c, err = net.Dial(getProto(addr), addr)
+	if err != nil {
+		return nil, err
+	}
+
+	c.br = bufio.NewReaderSize(c.c, readSize)
+	c.bw = bufio.NewWriterSize(c.c, writeSize)
+
+	return c, nil
 }
 
 func (c *Conn) Close() {
@@ -73,26 +58,12 @@ func (c *Conn) Close() {
 	}
 }
 
-func (c *Conn) SetConnectTimeout(t time.Duration) {
-	c.cm.Lock()
-	c.connectTimeout = t
-	c.cm.Unlock()
-}
-
 func (c *Conn) SetReadDeadline(t time.Time) {
-	c.cm.Lock()
-	if c.c != nil {
-		c.c.SetReadDeadline(t)
-	}
-	c.cm.Unlock()
+	c.c.SetReadDeadline(t)
 }
 
 func (c *Conn) SetWriteDeadline(t time.Time) {
-	c.cm.Lock()
-	if c.c != nil {
-		c.c.SetWriteDeadline(t)
-	}
-	c.cm.Unlock()
+	c.c.SetWriteDeadline(t)
 }
 
 func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
@@ -104,28 +75,6 @@ func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 }
 
 func (c *Conn) Send(cmd string, args ...interface{}) error {
-	var err error
-	for i := 0; i < 2; i++ {
-		if err = c.send(cmd, args...); err != nil {
-			if e, ok := err.(*net.OpError); ok && strings.Contains(e.Error(), "use of closed network connection") {
-				//send to a closed connection, try again
-				continue
-			}
-		} else {
-			return nil
-		}
-	}
-	return err
-}
-
-func (c *Conn) send(cmd string, args ...interface{}) error {
-	if err := c.connect(); err != nil {
-		return err
-	}
-
-	c.wm.Lock()
-	defer c.wm.Unlock()
-
 	if err := c.writeCommand(cmd, args); err != nil {
 		c.finalize()
 		return err
@@ -139,9 +88,6 @@ func (c *Conn) send(cmd string, args ...interface{}) error {
 }
 
 func (c *Conn) Receive() (interface{}, error) {
-	c.rm.Lock()
-	defer c.rm.Unlock()
-
 	if reply, err := c.readReply(); err != nil {
 		c.finalize()
 		return nil, err
@@ -155,9 +101,6 @@ func (c *Conn) Receive() (interface{}, error) {
 }
 
 func (c *Conn) ReceiveBulkTo(w io.Writer) error {
-	c.rm.Lock()
-	defer c.rm.Unlock()
-
 	err := c.readBulkReplyTo(w)
 	if err != nil {
 		if _, ok := err.(Error); !ok {
@@ -168,44 +111,7 @@ func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 }
 
 func (c *Conn) finalize() {
-	c.cm.Lock()
-	if !c.closed {
-		if c.c != nil {
-			c.c.Close()
-		}
-		c.closed = true
-	}
-	c.cm.Unlock()
-}
-
-func (c *Conn) connect() error {
-	c.cm.Lock()
-	defer c.cm.Unlock()
-
-	if !c.closed && c.c != nil {
-		return nil
-	}
-
-	var err error
-	c.c, err = net.DialTimeout(getProto(c.addr), c.addr, c.connectTimeout)
-	if err != nil {
-		c.c = nil
-		return err
-	}
-
-	if c.br != nil {
-		c.br.Reset(c.c)
-	} else {
-		c.br = bufio.NewReaderSize(c.c, c.rSize)
-	}
-
-	if c.bw != nil {
-		c.bw.Reset(c.c)
-	} else {
-		c.bw = bufio.NewWriterSize(c.c, c.wSize)
-	}
-
-	return nil
+	c.c.Close()
 }
 
 func (c *Conn) writeLen(prefix byte, n int) error {
@@ -447,9 +353,12 @@ func (c *Conn) readReply() (interface{}, error) {
 	return nil, errors.New("ledis: unexpected response line")
 }
 
-func (c *Client) newConn(addr string) *Conn {
-	co := NewConnSize(addr, c.cfg.ReadBufferSize, c.cfg.WriteBufferSize)
+func (c *Client) newConn(addr string) (*Conn, error) {
+	co, err := ConnectWithSize(addr, c.cfg.ReadBufferSize, c.cfg.WriteBufferSize)
+	if err != nil {
+		return nil, err
+	}
 	co.client = c
 
-	return co
+	return co, nil
 }

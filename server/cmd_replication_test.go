@@ -159,7 +159,7 @@ func TestReplication(t *testing.T) {
 }
 
 func checkTestRole(addr string, checkRoles []interface{}) error {
-	conn := goledis.NewConn(addr)
+	conn, _ := goledis.Connect(addr)
 	defer conn.Close()
 	roles, err := goledis.MultiBulk(conn.Do("ROLE"))
 	if err != nil {
