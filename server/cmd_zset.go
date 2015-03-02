@@ -641,14 +641,6 @@ func zinterstoreCommand(c *client) error {
 	return err
 }
 
-func zxscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.ZScan)
-}
-
-func zxrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.ZRevScan)
-}
-
 func zparseMemberRange(minBuf []byte, maxBuf []byte) (min []byte, max []byte, rangeType uint8, err error) {
 	rangeType = store.RangeClose
 	if strings.ToLower(hack.String(minBuf)) == "-" {
@@ -815,9 +807,5 @@ func init() {
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
 	register("zpersist", zpersistCommand)
-	register("zxscan", zxscanCommand)
-	register("zxrevscan", zxrevscanCommand)
-	register("xzscan", zxscanCommand)
-	register("xzrevscan", zxrevscanCommand)
 	register("xzexists", xzexistsCommand)
 }

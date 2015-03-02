@@ -262,14 +262,6 @@ func spersistCommand(c *client) error {
 	return nil
 }
 
-func sxscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.SScan)
-}
-
-func sxrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.SRevScan)
-}
-
 func xsexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -301,10 +293,6 @@ func init() {
 	register("sexpireat", sexpireAtCommand)
 	register("sttl", sttlCommand)
 	register("spersist", spersistCommand)
-	register("sxscan", sxscanCommand)
-	register("sxrevscan", sxrevscanCommand)
-	register("xsscan", sxscanCommand)
-	register("xsrevscan", sxrevscanCommand)
 	register("xsexists", xsexistsCommand)
 
 }

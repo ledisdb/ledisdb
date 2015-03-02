@@ -607,11 +607,3 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 	err = t.Commit()
 	return n, err
 }
-
-func (db *DB) SScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scan(SSizeType, key, count, inclusive, match)
-}
-
-func (db *DB) SRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.revscan(SSizeType, key, count, inclusive, match)
-}

@@ -292,14 +292,6 @@ func hpersistCommand(c *client) error {
 	return nil
 }
 
-func hxscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.HScan)
-}
-
-func hxrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.HRevScan)
-}
-
 func xhexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -334,9 +326,5 @@ func init() {
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
 	register("hpersist", hpersistCommand)
-	register("hxscan", hxscanCommand)
-	register("hxrevscan", hxrevscanCommand)
-	register("xhscan", hxscanCommand)
-	register("xhrevscan", hxrevscanCommand)
 	register("xhexists", xhexistsCommand)
 }

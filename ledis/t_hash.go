@@ -354,6 +354,8 @@ func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 	v := make([]FVPair, 0, 16)
 
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -362,8 +364,6 @@ func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 
 		v = append(v, FVPair{Field: f, Value: it.Value()})
 	}
-
-	it.Close()
 
 	return v, nil
 }
@@ -379,6 +379,8 @@ func (db *DB) HKeys(key []byte) ([][]byte, error) {
 	v := make([][]byte, 0, 16)
 
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
 		_, f, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -386,8 +388,6 @@ func (db *DB) HKeys(key []byte) ([][]byte, error) {
 		}
 		v = append(v, f)
 	}
-
-	it.Close()
 
 	return v, nil
 }
@@ -403,6 +403,8 @@ func (db *DB) HValues(key []byte) ([][]byte, error) {
 	v := make([][]byte, 0, 16)
 
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
+	defer it.Close()
+
 	for ; it.Valid(); it.Next() {
 		_, _, err := db.hDecodeHashKey(it.Key())
 		if err != nil {
@@ -411,8 +413,6 @@ func (db *DB) HValues(key []byte) ([][]byte, error) {
 
 		v = append(v, it.Value())
 	}
-
-	it.Close()
 
 	return v, nil
 }
@@ -458,14 +458,6 @@ func (db *DB) hFlush() (drop int64, err error) {
 	defer t.Unlock()
 
 	return db.flushType(t, HashType)
-}
-
-func (db *DB) HScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scan(HSizeType, key, count, inclusive, match)
-}
-
-func (db *DB) HRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.revscan(HSizeType, key, count, inclusive, match)
 }
 
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {

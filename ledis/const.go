@@ -6,6 +6,43 @@ import (
 
 const Version = "0.4"
 
+type DataType byte
+
+// for out use
+const (
+	KV DataType = iota
+	LIST
+	HASH
+	SET
+	ZSET
+)
+
+func (d DataType) String() string {
+	switch d {
+	case KV:
+		return KVName
+	case LIST:
+		return ListName
+	case HASH:
+		return HashName
+	case SET:
+		return SetName
+	case ZSET:
+		return ZSetName
+	default:
+		return "unknown"
+	}
+}
+
+const (
+	KVName   = "KV"
+	ListName = "LIST"
+	HashName = "HASH"
+	SetName  = "SET"
+	ZSetName = "ZSET"
+)
+
+// for backend store
 const (
 	NoneType    byte = 0
 	KVType      byte = 1

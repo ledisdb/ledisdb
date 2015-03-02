@@ -14,8 +14,8 @@ func checkDataEqual(master *App, slave *App) error {
 	mdb, _ := master.ldb.Select(0)
 	sdb, _ := slave.ldb.Select(0)
 
-	mkeys, _ := mdb.Scan(nil, 100, true, "")
-	skeys, _ := sdb.Scan(nil, 100, true, "")
+	mkeys, _ := mdb.Scan(KV, nil, 100, true, "")
+	skeys, _ := sdb.Scan(KV, nil, 100, true, "")
 
 	if len(mkeys) != len(skeys) {
 		return fmt.Errorf("keys number not equal %d != %d", len(mkeys), len(skeys))

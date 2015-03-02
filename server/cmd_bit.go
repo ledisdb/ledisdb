@@ -274,14 +274,6 @@ func bpersistCommand(c *client) error {
 	return nil
 }
 
-func bxscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.BScan)
-}
-
-func bxrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.BRevScan)
-}
-
 func init() {
 	register("bget", bgetCommand)
 	register("bdelete", bdeleteCommand)
@@ -294,8 +286,4 @@ func init() {
 	register("bexpireat", bexpireAtCommand)
 	register("bttl", bttlCommand)
 	register("bpersist", bpersistCommand)
-	register("bxscan", bxscanCommand)
-	register("bxrevscan", bxrevscanCommand)
-	register("xbscan", bxscanCommand)
-	register("xbrevscan", bxrevscanCommand)
 }

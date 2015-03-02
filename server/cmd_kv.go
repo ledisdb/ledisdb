@@ -1,10 +1,8 @@
 package server
 
 import (
-	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
-	"strings"
 )
 
 // func getCommand(c *client) error {
@@ -315,82 +313,6 @@ func persistCommand(c *client) error {
 	return nil
 }
 
-func parseScanArgs(c *client) (key []byte, match string, count int, err error) {
-	args := c.args
-	count = 10
-
-	switch len(args) {
-	case 0:
-		key = nil
-		return
-	case 1, 3, 5:
-		key = args[0]
-		break
-	default:
-		err = ErrCmdParams
-		return
-	}
-
-	if len(args) == 3 {
-		switch strings.ToLower(hack.String(args[1])) {
-		case "match":
-			match = hack.String(args[2])
-		case "count":
-			count, err = strconv.Atoi(hack.String(args[2]))
-		default:
-			err = ErrCmdParams
-			return
-		}
-	} else if len(args) == 5 {
-		if strings.ToLower(hack.String(args[1])) != "match" {
-			err = ErrCmdParams
-			return
-		} else if strings.ToLower(hack.String(args[3])) != "count" {
-			err = ErrCmdParams
-			return
-		}
-
-		match = hack.String(args[2])
-		count, err = strconv.Atoi(hack.String(args[4]))
-	}
-
-	if count <= 0 {
-		err = ErrCmdParams
-	}
-
-	return
-}
-
-func xscanGeneric(c *client,
-	f func(key []byte, count int, inclusive bool, match string) ([][]byte, error)) error {
-	key, match, count, err := parseScanArgs(c)
-	if err != nil {
-		return err
-	}
-
-	if ay, err := f(key, count, false, match); err != nil {
-		return err
-	} else {
-		data := make([]interface{}, 2)
-		if len(ay) < count {
-			data[0] = []byte("")
-		} else {
-			data[0] = ay[len(ay)-1]
-		}
-		data[1] = ay
-		c.resp.writeArray(data)
-	}
-	return nil
-}
-
-func xscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.Scan)
-}
-
-func xrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.RevScan)
-}
-
 func appendCommand(c *client) error {
 	args := c.args
 	if len(args) != 2 {
@@ -619,6 +541,4 @@ func init() {
 	register("expireat", expireAtCommand)
 	register("ttl", ttlCommand)
 	register("persist", persistCommand)
-	register("xscan", xscanCommand)
-	register("xrevscan", xrevscanCommand)
 }

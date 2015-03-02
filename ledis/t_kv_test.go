@@ -282,7 +282,7 @@ func TestKVFlush(t *testing.T) {
 		}
 	}
 
-	if v, err := db.Scan(nil, 3000, true, ""); err != nil {
+	if v, err := db.Scan(KV, nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
 	} else if len(v) != 2000 {
 		t.Fatal("invalid value ", len(v))
@@ -303,7 +303,7 @@ func TestKVFlush(t *testing.T) {
 		t.Fatal("invalid value ", n)
 	}
 
-	if v, err := db.Scan(nil, 3000, true, ""); err != nil {
+	if v, err := db.Scan(KV, nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
 	} else if len(v) != 0 {
 		t.Fatal("invalid value length ", len(v))
