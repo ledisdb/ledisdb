@@ -165,15 +165,15 @@ func xttl(db *ledis.DB, tp string, key []byte) (int64, error) {
 func xscan(db *ledis.DB, tp string, count int) ([][]byte, error) {
 	switch strings.ToUpper(tp) {
 	case "KV":
-		return db.Scan(nil, count, false, "")
+		return db.Scan(KV, nil, count, false, "")
 	case "HASH":
-		return db.HScan(nil, count, false, "")
+		return db.Scan(HASH, nil, count, false, "")
 	case "LIST":
-		return db.LScan(nil, count, false, "")
+		return db.Scan(LIST, nil, count, false, "")
 	case "SET":
-		return db.SScan(nil, count, false, "")
+		return db.Scan(SET, nil, count, false, "")
 	case "ZSET":
-		return db.ZScan(nil, count, false, "")
+		return db.Scan(ZSET, nil, count, false, "")
 	default:
 		return nil, fmt.Errorf("invalid key type %s", tp)
 	}

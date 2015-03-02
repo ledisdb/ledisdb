@@ -9,15 +9,46 @@ import (
 var errDataType = errors.New("error data type")
 var errMetaKey = errors.New("error meta key")
 
-func (db *DB) scan(dataType byte, key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scanGeneric(dataType, key, count, inclusive, match, false)
+//fif inclusive is true, scan range [cursor, inf) else (cursor, inf)
+func (db *DB) Scan(dataType DataType, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	storeDataType, err := getDataStoreType(dataType)
+	if err != nil {
+		return nil, err
+	}
+
+	return db.scanGeneric(storeDataType, cursor, count, inclusive, match, false)
 }
 
-func (db *DB) revscan(dataType byte, key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scanGeneric(dataType, key, count, inclusive, match, true)
+//if inclusive is true, revscan range (-inf, cursor] else (inf, cursor)
+func (db *DB) RevScan(dataType DataType, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	storeDataType, err := getDataStoreType(dataType)
+	if err != nil {
+		return nil, err
+	}
+
+	return db.scanGeneric(storeDataType, cursor, count, inclusive, match, true)
 }
 
-func (db *DB) scanGeneric(dataType byte, key []byte, count int,
+func getDataStoreType(dataType DataType) (byte, error) {
+	var storeDataType byte
+	switch dataType {
+	case KV:
+		storeDataType = KVType
+	case LIST:
+		storeDataType = LMetaType
+	case HASH:
+		storeDataType = HSizeType
+	case SET:
+		storeDataType = SSizeType
+	case ZSET:
+		storeDataType = ZSizeType
+	default:
+		return 0, errDataType
+	}
+	return storeDataType, nil
+}
+
+func (db *DB) scanGeneric(storeDataType byte, key []byte, count int,
 	inclusive bool, match string, reverse bool) ([][]byte, error) {
 	var minKey, maxKey []byte
 	var err error
@@ -32,10 +63,10 @@ func (db *DB) scanGeneric(dataType byte, key []byte, count int,
 	tp := store.RangeOpen
 
 	if !reverse {
-		if minKey, err = db.encodeScanMinKey(dataType, key); err != nil {
+		if minKey, err = db.encodeScanMinKey(storeDataType, key); err != nil {
 			return nil, err
 		}
-		if maxKey, err = db.encodeScanMaxKey(dataType, nil); err != nil {
+		if maxKey, err = db.encodeScanMaxKey(storeDataType, nil); err != nil {
 			return nil, err
 		}
 
@@ -43,10 +74,10 @@ func (db *DB) scanGeneric(dataType byte, key []byte, count int,
 			tp = store.RangeROpen
 		}
 	} else {
-		if minKey, err = db.encodeScanMinKey(dataType, nil); err != nil {
+		if minKey, err = db.encodeScanMinKey(storeDataType, nil); err != nil {
 			return nil, err
 		}
-		if maxKey, err = db.encodeScanMaxKey(dataType, key); err != nil {
+		if maxKey, err = db.encodeScanMaxKey(storeDataType, key); err != nil {
 			return nil, err
 		}
 
@@ -69,7 +100,7 @@ func (db *DB) scanGeneric(dataType byte, key []byte, count int,
 	v := make([][]byte, 0, count)
 
 	for i := 0; it.Valid() && i < count; it.Next() {
-		if k, err := db.decodeScanKey(dataType, it.Key()); err != nil {
+		if k, err := db.decodeScanKey(storeDataType, it.Key()); err != nil {
 			continue
 		} else if r != nil && !r.Match(k) {
 			continue
@@ -82,36 +113,36 @@ func (db *DB) scanGeneric(dataType byte, key []byte, count int,
 	return v, nil
 }
 
-func (db *DB) encodeScanMinKey(dataType byte, key []byte) ([]byte, error) {
+func (db *DB) encodeScanMinKey(storeDataType byte, key []byte) ([]byte, error) {
 	if len(key) == 0 {
-		return db.encodeScanKey(dataType, nil)
+		return db.encodeScanKey(storeDataType, nil)
 	} else {
 		if err := checkKeySize(key); err != nil {
 			return nil, err
 		}
-		return db.encodeScanKey(dataType, key)
+		return db.encodeScanKey(storeDataType, key)
 	}
 }
 
-func (db *DB) encodeScanMaxKey(dataType byte, key []byte) ([]byte, error) {
+func (db *DB) encodeScanMaxKey(storeDataType byte, key []byte) ([]byte, error) {
 	if len(key) > 0 {
 		if err := checkKeySize(key); err != nil {
 			return nil, err
 		}
 
-		return db.encodeScanKey(dataType, key)
+		return db.encodeScanKey(storeDataType, key)
 	}
 
-	k, err := db.encodeScanKey(dataType, nil)
+	k, err := db.encodeScanKey(storeDataType, nil)
 	if err != nil {
 		return nil, err
 	}
-	k[len(k)-1] = dataType + 1
+	k[len(k)-1] = storeDataType + 1
 	return k, nil
 }
 
-func (db *DB) encodeScanKey(dataType byte, key []byte) ([]byte, error) {
-	switch dataType {
+func (db *DB) encodeScanKey(storeDataType byte, key []byte) ([]byte, error) {
+	switch storeDataType {
 	case KVType:
 		return db.encodeKVKey(key), nil
 	case LMetaType:
@@ -128,8 +159,8 @@ func (db *DB) encodeScanKey(dataType byte, key []byte) ([]byte, error) {
 		return nil, errDataType
 	}
 }
-func (db *DB) decodeScanKey(dataType byte, ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != dataType {
+func (db *DB) decodeScanKey(storeDataType byte, ek []byte) ([]byte, error) {
+	if len(ek) < 2 || ek[0] != db.index || ek[1] != storeDataType {
 		return nil, errMetaKey
 	}
 	return ek[2:], nil
