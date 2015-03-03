@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	goledis "github.com/siddontang/ledisdb/client/go/ledis"
+	goledis "github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/ledis"
 	"strings"
 	"time"

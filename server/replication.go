@@ -7,7 +7,7 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/go/sync2"
-	goledis "github.com/siddontang/ledisdb/client/go/ledis"
+	goledis "github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
 	"net"

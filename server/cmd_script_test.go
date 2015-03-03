@@ -4,7 +4,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"reflect"
 	"testing"
 )
