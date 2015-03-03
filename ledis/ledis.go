@@ -174,7 +174,7 @@ func (l *Ledis) checkTTL() {
 		c.register(ListType, db.listBatch, db.lDelete)
 		c.register(HashType, db.hashBatch, db.hDelete)
 		c.register(ZSetType, db.zsetBatch, db.zDelete)
-		c.register(BitType, db.binBatch, db.bDelete)
+		//		c.register(BitType, db.binBatch, db.bDelete)
 		c.register(SetType, db.setBatch, db.sDelete)
 
 		l.tcs[i] = c

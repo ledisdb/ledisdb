@@ -44,19 +44,19 @@ const (
 
 // for backend store
 const (
-	NoneType    byte = 0
-	KVType      byte = 1
-	HashType    byte = 2
-	HSizeType   byte = 3
-	ListType    byte = 4
-	LMetaType   byte = 5
-	ZSetType    byte = 6
-	ZSizeType   byte = 7
-	ZScoreType  byte = 8
-	BitType     byte = 9
-	BitMetaType byte = 10
-	SetType     byte = 11
-	SSizeType   byte = 12
+	NoneType   byte = 0
+	KVType     byte = 1
+	HashType   byte = 2
+	HSizeType  byte = 3
+	ListType   byte = 4
+	LMetaType  byte = 5
+	ZSetType   byte = 6
+	ZSizeType  byte = 7
+	ZScoreType byte = 8
+	// BitType     byte = 9
+	// BitMetaType byte = 10
+	SetType   byte = 11
+	SSizeType byte = 12
 
 	maxDataType byte = 100
 
@@ -73,16 +73,16 @@ const (
 
 var (
 	TypeName = map[byte]string{
-		KVType:      "kv",
-		HashType:    "hash",
-		HSizeType:   "hsize",
-		ListType:    "list",
-		LMetaType:   "lmeta",
-		ZSetType:    "zset",
-		ZSizeType:   "zsize",
-		ZScoreType:  "zscore",
-		BitType:     "bit",
-		BitMetaType: "bitmeta",
+		KVType:     "kv",
+		HashType:   "hash",
+		HSizeType:  "hsize",
+		ListType:   "list",
+		LMetaType:  "lmeta",
+		ZSetType:   "zset",
+		ZSizeType:  "zsize",
+		ZScoreType: "zscore",
+		// BitType:     "bit",
+		// BitMetaType: "bitmeta",
 		SetType:     "set",
 		SSizeType:   "ssize",
 		ExpTimeType: "exptime",

@@ -58,7 +58,6 @@ func (db *DB) Begin() (*Tx, error) {
 	tx.DB.listBatch = tx.newBatch()
 	tx.DB.hashBatch = tx.newBatch()
 	tx.DB.zsetBatch = tx.newBatch()
-	tx.DB.binBatch = tx.newBatch()
 	tx.DB.setBatch = tx.newBatch()
 
 	tx.DB.lbkeys = db.lbkeys
