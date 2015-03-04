@@ -45,7 +45,7 @@ func main() {
 
 	wb := db.NewWriteBatch()
 
-	for i := uint8(0); i < ledis.MaxDBNumber; i++ {
+	for i := uint8(0); i < cfg.Databases; i++ {
 		minK, maxK := oldKeyPair(i)
 
 		it := db.RangeIterator(minK, maxK, store.RangeROpen)

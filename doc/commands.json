@@ -566,6 +566,12 @@
         "readonly": false
     },
 
+    "CONFIG GET": {
+        "arguments" : "parameter",
+        "group": "Server",
+        "readonly": true
+    },
+
     "DUMP": {
         "arguments" : "key",
         "group": "KV",

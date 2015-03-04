@@ -111,6 +111,23 @@ func timeCommand(c *client) error {
 	return nil
 }
 
+func configGetCommand(c *client) error {
+	args := c.args
+	if len(args) != 2 {
+		return ErrCmdParams
+	}
+
+	ay := make([][]byte, 0, 2)
+	key := hack.String(args[1])
+	switch key {
+	case "databases":
+		ay = append(ay, []byte("databases"), num.FormatUint8ToSlice(c.app.cfg.Databases))
+	}
+
+	c.resp.writeSliceArray(ay)
+	return nil
+}
+
 func configCommand(c *client) error {
 	if len(c.args) < 1 {
 		return ErrCmdParams
@@ -124,6 +141,8 @@ func configCommand(c *client) error {
 			c.resp.writeStatus(OK)
 			return nil
 		}
+	case "get":
+		return configGetCommand(c)
 	default:
 		return ErrCmdParams
 	}

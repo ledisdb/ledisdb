@@ -239,8 +239,8 @@ func xmigratedbCommand(c *client) error {
 	db, err := ledis.StrUint64(args[4], nil)
 	if err != nil {
 		return err
-	} else if db >= uint64(ledis.MaxDBNumber) {
-		return fmt.Errorf("invalid db index %d, must < %d", db, ledis.MaxDBNumber)
+	} else if db >= uint64(c.app.cfg.Databases) {
+		return fmt.Errorf("invalid db index %d, must < %d", db, c.app.cfg.Databases)
 	}
 
 	timeout, err := ledis.StrInt64(args[5], nil)
@@ -328,8 +328,8 @@ func xmigrateCommand(c *client) error {
 	db, err := ledis.StrUint64(args[4], nil)
 	if err != nil {
 		return err
-	} else if db >= uint64(ledis.MaxDBNumber) {
-		return fmt.Errorf("invalid db index %d, must < %d", db, ledis.MaxDBNumber)
+	} else if db >= uint64(c.app.cfg.Databases) {
+		return fmt.Errorf("invalid db index %d, must < %d", db, c.app.cfg.Databases)
 	}
 
 	timeout, err := ledis.StrInt64(args[5], nil)

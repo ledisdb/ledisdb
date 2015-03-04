@@ -66,7 +66,7 @@ func (m *Multi) Close() error {
 }
 
 func (m *Multi) Select(index int) error {
-	if index < 0 || index >= int(MaxDBNumber) {
+	if index < 0 || index >= int(m.l.cfg.Databases) {
 		return fmt.Errorf("invalid db index %d", index)
 	}
 

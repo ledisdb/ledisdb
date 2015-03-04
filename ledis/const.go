@@ -104,9 +104,6 @@ var (
 )
 
 const (
-	//we don't support too many databases
-	MaxDBNumber uint8 = 16
-
 	//max key size
 	MaxKeySize int = 1024
 
