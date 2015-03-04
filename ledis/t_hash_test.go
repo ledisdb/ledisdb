@@ -79,10 +79,10 @@ func TestHashPersist(t *testing.T) {
 		t.Fatal(n)
 	}
 }
-func TestXHashExists(t *testing.T) {
+func TestHashKeyExists(t *testing.T) {
 	db := getTestDB()
-	key := []byte("xhexists_test")
-	v, err := db.XHExists(key)
+	key := []byte("hkeyexists_test")
+	v, err := db.HKeyExists(key)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -94,7 +94,7 @@ func TestXHashExists(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	v, err = db.XHExists(key)
+	v, err = db.HKeyExists(key)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

@@ -262,12 +262,12 @@ func spersistCommand(c *client) error {
 	return nil
 }
 
-func xsexistsCommand(c *client) error {
+func skeyexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.XSExists(args[0]); err != nil {
+	if n, err := c.db.SKeyExists(args[0]); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(n)
@@ -287,12 +287,13 @@ func init() {
 	register("srem", sremCommand)
 	register("sunion", sunionCommand)
 	register("sunionstore", sunionstoreCommand)
+
 	register("sclear", sclearCommand)
 	register("smclear", smclearCommand)
 	register("sexpire", sexpireCommand)
 	register("sexpireat", sexpireAtCommand)
 	register("sttl", sttlCommand)
 	register("spersist", spersistCommand)
-	register("xsexists", xsexistsCommand)
+	register("skeyexists", skeyexistsCommand)
 
 }

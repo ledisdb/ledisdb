@@ -57,6 +57,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [HTTL key](#httl-key)
   - [HPERSIST key](#hpersist-key)
   - [HDUMP key](#hdump-key)
+  - [HKEYEXISTS key](#hkeyexists-key)
 - [List](#list)
   - [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
   - [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
@@ -74,6 +75,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [LTTL key](#lttl-key)
   - [LPERSIST key](#lpersist-key)
   - [LDUMP key](#ldump-key)
+  - [LKEYEXISTS key](#lkeyexists-key)
 - [Set](#set)
   - [SADD key member [member ...]](#sadd-key-member-member-)
   - [SCARD key](#scard-key)
@@ -93,6 +95,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [STTL key](#sttl-key)
   - [SPERSIST key](#spersist-key)
   - [SDUMP key](#sdump-key)
+  - [SKEYEXISTS key](#skeyexists-key)
 - [ZSet](#zset)
   - [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
   - [ZCARD key](#zcard-key)
@@ -120,6 +123,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
   - [ZLEXCOUNT key min max](#zlexcount-key-min-max)
   - [ZDUMP key](#zdump-key)
+  - [ZKEYEXISTS key](#zkeyexists-key)
 - [Scan](#scan)
   - [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count)
   - [XHSCAN key cursor [MATCH match] [COUNT count]](#xhscan-key-cursor-match-match-count-count)
@@ -909,6 +913,10 @@ ledis> HPERSIST not_exists_key
 
 See [DUMP](#dump-key) for more information.
 
+### HKEYEXISTS key
+
+Check key exists for hash data, like [EXISTS key](#exists-key)
+
 ## List
 
 ### BLPOP key [key ...] timeout
@@ -1235,6 +1243,9 @@ ledis> LPERSIST b
 
 See [DUMP](#dump-key) for more information.
 
+### LKEYEXISTS key
+
+Check key exists for list data, like [EXISTS key](#exists-key)
 
 ## Set
 
@@ -1660,6 +1671,10 @@ ledis> STTL key
 ### SDUMP key
 
 See [DUMP](#dump-key) for more information.
+
+### SKEYEXISTS key
+
+Check key exists for set data, like [EXISTS key](#exists-key)
 
 ## ZSet
 
@@ -2349,6 +2364,10 @@ ledis> ZLEXCOUNT myzset - [c
 ### ZDUMP key
 
 See [DUMP](#dump-key) for more information.
+
+### ZKEYEXISTS key
+
+Check key exists for zset data, like [EXISTS key](#exists-key)
 
 ## Scan
 

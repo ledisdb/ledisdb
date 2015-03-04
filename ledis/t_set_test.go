@@ -372,10 +372,10 @@ func TestSFlush(t *testing.T) {
 
 }
 
-func TestXSExists(t *testing.T) {
+func TestSKeyExists(t *testing.T) {
 	db := getTestDB()
-	key := []byte("xsexists_test")
-	if n, err := db.XSExists(key); err != nil {
+	key := []byte("skeyexists_test")
+	if n, err := db.SKeyExists(key); err != nil {
 		t.Fatal(err.Error())
 	} else if n != 0 {
 		t.Fatal("invalid value ", n)
@@ -383,7 +383,7 @@ func TestXSExists(t *testing.T) {
 
 	db.SAdd(key, []byte("hello"), []byte("world"))
 
-	if n, err := db.XSExists(key); err != nil {
+	if n, err := db.SKeyExists(key); err != nil {
 		t.Fatal(err.Error())
 	} else if n != 1 {
 		t.Fatal("invalid value ", n)

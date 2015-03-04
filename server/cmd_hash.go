@@ -292,12 +292,12 @@ func hpersistCommand(c *client) error {
 	return nil
 }
 
-func xhexistsCommand(c *client) error {
+func hkeyexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.XHExists(args[0]); err != nil {
+	if n, err := c.db.HKeyExists(args[0]); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(n)
@@ -326,5 +326,5 @@ func init() {
 	register("hexpireat", hexpireAtCommand)
 	register("httl", httlCommand)
 	register("hpersist", hpersistCommand)
-	register("xhexists", xhexistsCommand)
+	register("hkeyexists", hkeyexistsCommand)
 }

@@ -277,12 +277,13 @@ func lParseBPopArgs(c *client) (keys [][]byte, timeout time.Duration, err error)
 	keys = args[0 : len(args)-1]
 	return
 }
-func xlexistsCommand(c *client) error {
+
+func lkeyexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.XLExists(args[0]); err != nil {
+	if n, err := c.db.LKeyExists(args[0]); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(n)
@@ -309,5 +310,5 @@ func init() {
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
-	register("xlexists", xlexistsCommand)
+	register("lkeyexists", lkeyexistsCommand)
 }

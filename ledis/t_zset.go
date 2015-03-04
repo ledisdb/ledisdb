@@ -1016,7 +1016,7 @@ func (db *DB) ZLexCount(key []byte, min []byte, max []byte, rangeType uint8) (in
 	return n, nil
 }
 
-func (db *DB) XZExists(key []byte) (int64, error) {
+func (db *DB) ZKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}

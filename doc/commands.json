@@ -691,5 +691,29 @@
         "arguments" : "key offset value",
         "group" : "KV",
         "readonly" : false
+    },
+
+    "HKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "Hash",
+        "readonly" : true
+    },
+
+    "LKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "List",
+        "readonly" : true
+    },
+
+    "SKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "Set",
+        "readonly" : true
+    },
+
+    "ZKEYEXISTS": {
+        "arguments" : "ZSet",
+        "group" : "Hash",
+        "readonly" : true
     }
 }

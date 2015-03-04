@@ -763,12 +763,12 @@ func zlexcountCommand(c *client) error {
 	return nil
 }
 
-func xzexistsCommand(c *client) error {
+func zkeyexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.XZExists(args[0]); err != nil {
+	if n, err := c.db.ZKeyExists(args[0]); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(n)
@@ -807,5 +807,5 @@ func init() {
 	register("zexpireat", zexpireAtCommand)
 	register("zttl", zttlCommand)
 	register("zpersist", zpersistCommand)
-	register("xzexists", xzexistsCommand)
+	register("zkeyexists", zkeyexistsCommand)
 }

@@ -498,7 +498,7 @@ func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error)
 	return db.lblockPop(keys, listTailSeq, timeout)
 }
 
-func (db *DB) XLExists(key []byte) (int64, error) {
+func (db *DB) LKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}

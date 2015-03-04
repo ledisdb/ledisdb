@@ -502,7 +502,7 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) XHExists(key []byte) (int64, error) {
+func (db *DB) HKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}
