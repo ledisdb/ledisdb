@@ -102,7 +102,7 @@ type Config struct {
 
 	DataDir string `toml:"data_dir"`
 
-	Databases uint8 `toml:"databases"`
+	Databases int `toml:"databases"`
 
 	DBName       string `toml:"db_name"`
 	DBPath       string `toml:"db_path"`
@@ -214,6 +214,10 @@ func (cfg *Config) adjust() {
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
+	cfg.Databases = getDefault(0, cfg.Databases)
+	if cfg.Databases > 256 {
+		cfg.Databases = 256
+	}
 }
 
 func (cfg *LevelDBConfig) adjust() {

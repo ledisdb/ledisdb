@@ -121,7 +121,7 @@ func configGetCommand(c *client) error {
 	key := hack.String(args[1])
 	switch key {
 	case "databases":
-		ay = append(ay, []byte("databases"), num.FormatUint8ToSlice(c.app.cfg.Databases))
+		ay = append(ay, []byte("databases"), num.FormatIntToSlice(c.app.cfg.Databases))
 	}
 
 	c.resp.writeSliceArray(ay)

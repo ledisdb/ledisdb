@@ -45,18 +45,18 @@ func main() {
 
 	wb := db.NewWriteBatch()
 
-	for i := uint8(0); i < cfg.Databases; i++ {
-		minK, maxK := oldKeyPair(i)
+	for i := 0; i < cfg.Databases; i++ {
+		minK, maxK := oldKeyPair(uint8(i))
 
 		it := db.RangeIterator(minK, maxK, store.RangeROpen)
 		num := 0
 		for ; it.Valid(); it.Next() {
-			dt, k, t, err := decodeOldKey(i, it.RawKey())
+			dt, k, t, err := decodeOldKey(uint8(i), it.RawKey())
 			if err != nil {
 				continue
 			}
 
-			newKey := encodeNewKey(i, dt, k, t)
+			newKey := encodeNewKey(uint8(i), dt, k, t)
 
 			wb.Put(newKey, it.RawValue())
 			wb.Delete(it.RawKey())
