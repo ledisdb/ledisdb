@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"sync"
@@ -22,7 +22,8 @@ func newTestLedisClient() {
 
 func getTestConn() *ledis.Conn {
 	startTestApp()
-	return testLedisClient.Get()
+	conn, _ := testLedisClient.Get()
+	return conn
 }
 
 func startTestApp() {

@@ -231,14 +231,6 @@ func lpersistCommand(c *client) error {
 	return nil
 }
 
-func lxscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.LScan)
-}
-
-func lxrevscanCommand(c *client) error {
-	return xscanGeneric(c, c.db.LRevScan)
-}
-
 func blpopCommand(c *client) error {
 	keys, timeout, err := lParseBPopArgs(c)
 	if err != nil {
@@ -285,12 +277,13 @@ func lParseBPopArgs(c *client) (keys [][]byte, timeout time.Duration, err error)
 	keys = args[0 : len(args)-1]
 	return
 }
-func xlexistsCommand(c *client) error {
+
+func lkeyexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.XLExists(args[0]); err != nil {
+	if n, err := c.db.LKeyExists(args[0]); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(n)
@@ -317,9 +310,5 @@ func init() {
 	register("lexpireat", lexpireAtCommand)
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
-	register("lxscan", lxscanCommand)
-	register("lxrevscan", lxrevscanCommand)
-	register("xlscan", lxscanCommand)
-	register("xlrevscan", lxrevscanCommand)
-	register("xlexists", xlexistsCommand)
+	register("lkeyexists", lkeyexistsCommand)
 }

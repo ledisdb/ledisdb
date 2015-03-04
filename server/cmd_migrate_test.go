@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
@@ -80,10 +80,10 @@ func TestMigrate(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	c1 := ledis.NewConn(s1Cfg.Addr)
+	c1, _ := ledis.Connect(s1Cfg.Addr)
 	defer c1.Close()
 
-	c2 := ledis.NewConn(s2Cfg.Addr)
+	c2, _ := ledis.Connect(s2Cfg.Addr)
 	defer c2.Close()
 
 	if _, err = c1.Do("set", "a", "1"); err != nil {

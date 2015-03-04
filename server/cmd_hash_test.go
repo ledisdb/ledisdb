@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"strconv"
 	"testing"
 )
@@ -12,7 +12,7 @@ func TestHash(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("a")
-	if n, err := ledis.Int(c.Do("xhexists", key)); err != nil {
+	if n, err := ledis.Int(c.Do("hkeyexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -23,7 +23,7 @@ func TestHash(t *testing.T) {
 	} else if n != 1 {
 		t.Fatal(n)
 	}
-	if n, err := ledis.Int(c.Do("xhexists", key)); err != nil {
+	if n, err := ledis.Int(c.Do("hkeyexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)

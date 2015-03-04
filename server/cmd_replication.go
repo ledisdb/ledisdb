@@ -131,7 +131,7 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Write(dummyBuf)
 
-	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 30, c.app.quit); err != nil {
+	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 1, c.app.quit); err != nil {
 		return err
 	} else {
 		buf := c.syncBuf.Bytes()
@@ -155,6 +155,10 @@ func replconfCommand(c *client) error {
 	args := c.args
 	if len(args)%2 != 0 {
 		return ErrCmdParams
+	}
+
+	if !c.app.ldb.ReplicationUsed() {
+		return ledis.ErrRplNotSupport
 	}
 
 	//now only support "listening-port"
@@ -188,8 +192,10 @@ func roleCommand(c *client) error {
 	}
 
 	c.app.m.Lock()
-	isMaster := len(c.app.cfg.SlaveOf) == 0
+	slaveof := c.app.cfg.SlaveOf
 	c.app.m.Unlock()
+
+	isMaster := len(slaveof) == 0
 
 	ay := make([]interface{}, 0, 5)
 
@@ -217,7 +223,7 @@ func roleCommand(c *client) error {
 		c.app.slock.Unlock()
 		ay = append(ay, items)
 	} else {
-		host, port, _ := splitHostPort(c.app.cfg.Addr)
+		host, port, _ := splitHostPort(slaveof)
 		ay = append(ay, []byte("slave"))
 		ay = append(ay, []byte(host))
 		ay = append(ay, int64(port))

@@ -1,0 +1,1 @@
+doctoc --title '**Commands List**' commands.md 

@@ -286,7 +286,7 @@ func (db *DB) SDiffStore(dstKey []byte, keys ...[]byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) XSExists(key []byte) (int64, error) {
+func (db *DB) SKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}
@@ -606,12 +606,4 @@ func (db *DB) SPersist(key []byte) (int64, error) {
 	}
 	err = t.Commit()
 	return n, err
-}
-
-func (db *DB) SScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scan(SSizeType, key, count, inclusive, match)
-}
-
-func (db *DB) SRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.revscan(SSizeType, key, count, inclusive, match)
 }

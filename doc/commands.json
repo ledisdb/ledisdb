@@ -1,59 +1,4 @@
 {
-    "BCOUNT": {
-        "arguments": "key [start end]",
-        "group": "Bitmap",
-        "readonly": true
-    },
-    "BDELETE": {
-        "arguments": "key",
-        "group": "ZSet",
-        "readonly": false
-    },
-    "BEXPIRE": {
-        "arguments": "key seconds",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BEXPIREAT": {
-        "arguments": "key timestamp",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BGET": {
-        "arguments": "key",
-        "group": "Bitmap",
-        "readonly": true
-    },
-    "BGETBIT": {
-        "arguments": "key offset",
-        "group": "Bitmap",
-        "readonly": true
-    },
-    "BMSETBIT": {
-        "arguments": "key offset value [offset value ...]",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BOPT": {
-        "arguments": "operation destkey key [key ...]",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BPERSIST": {
-        "arguments": "key",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BSETBIT": {
-        "arguments": "key offset value",
-        "group": "Bitmap",
-        "readonly": false
-    },
-    "BTTL": {
-        "arguments": "key",
-        "group": "Bitmap",
-        "readonly": true
-    },
     "DECR": {
         "arguments": "key",
         "group": "KV",
@@ -560,79 +505,7 @@
         "group": "Transaction",
         "readonly": false
     },
-
-    "XSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "KV",
-        "readonly": true
-    },
-
-    "HXSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Hash",
-        "readonly": true
-    },
-
-    "LXSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "List",
-        "readonly": true
-    },
-
-    "SXSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Set",
-        "readonly": true
-    },
-
-    "ZXSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "ZSet",
-        "readonly": true
-    },
-
-    "BXSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Bitmap",
-        "readonly": true
-    },
-    
-    "XREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "KV",
-        "readonly": true
-    },
-
-    "HXREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Hash",
-        "readonly": true
-    },
-
-    "LXREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "List",
-        "readonly": true
-    },
-
-    "SXREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Set",
-        "readonly": true
-    },
-
-    "ZXREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "ZSet",
-        "readonly": true
-    },
-
-    "BXREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Bitmap",
-        "readonly": true
-    },
-
+ 
     "FLUSHALL": {
         "arguments": "-",
         "group": "Server",
@@ -693,6 +566,12 @@
         "readonly": false
     },
 
+    "CONFIG GET": {
+        "arguments" : "parameter",
+        "group": "Server",
+        "readonly": true
+    },
+
     "DUMP": {
         "arguments" : "key",
         "group": "KV",
@@ -724,63 +603,27 @@
         "readonly": true
     },
 
-    "XBSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Bitmap",
-        "readonly": true
-    },
-
-    "XLSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "List",
+    "XSCAN": {
+        "arguments": "type cursor [MATCH match] [COUNT count]",
+        "group": "Server",
         "readonly": true
     },
 
     "XHSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count]",
         "group": "Hash",
         "readonly": true
     },
 
     "XSSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count]",
         "group": "Set",
         "readonly": true
     },
 
     "XZSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count]",
         "group": "ZSet",
-        "readonly": true
-    },
-
-    "XHREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Hash",
-        "readonly": true
-    },
-
-    "XLREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "List",
-        "readonly": true
-    },
-
-    "XSREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Set",
-        "readonly": true
-    },
-
-    "XZREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "ZSet",
-        "readonly": true
-    },
-
-    "XBREVSCAN": {
-        "arguments": "key [MATCH match] [COUNT count]",
-        "group": "Bitmap",
         "readonly": true
     },
 
@@ -848,5 +691,29 @@
         "arguments" : "key offset value",
         "group" : "KV",
         "readonly" : false
+    },
+
+    "HKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "Hash",
+        "readonly" : true
+    },
+
+    "LKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "List",
+        "readonly" : true
+    },
+
+    "SKEYEXISTS": {
+        "arguments" : "key",
+        "group" : "Set",
+        "readonly" : true
+    },
+
+    "ZKEYEXISTS": {
+        "arguments" : "ZSet",
+        "group" : "Hash",
+        "readonly" : true
     }
 }

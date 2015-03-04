@@ -36,8 +36,8 @@ type DB struct {
 	listBatch *batch
 	hashBatch *batch
 	zsetBatch *batch
-	binBatch  *batch
-	setBatch  *batch
+	//	binBatch  *batch
+	setBatch *batch
 
 	status uint8
 
@@ -60,7 +60,7 @@ func (l *Ledis) newDB(index uint8) *DB {
 	d.listBatch = d.newBatch()
 	d.hashBatch = d.newBatch()
 	d.zsetBatch = d.newBatch()
-	d.binBatch = d.newBatch()
+	// d.binBatch = d.newBatch()
 	d.setBatch = d.newBatch()
 
 	d.lbkeys = newLBlockKeys()
@@ -86,7 +86,6 @@ func (db *DB) FlushAll() (drop int64, err error) {
 		db.lFlush,
 		db.hFlush,
 		db.zFlush,
-		db.bFlush,
 		db.sFlush}
 
 	for _, flush := range all {
@@ -117,9 +116,9 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 	case ZSetType:
 		deleteFunc = db.zDelete
 		metaDataType = ZSizeType
-	case BitType:
-		deleteFunc = db.bDelete
-		metaDataType = BitMetaType
+	// case BitType:
+	// 	deleteFunc = db.bDelete
+	// 	metaDataType = BitMetaType
 	case SetType:
 		deleteFunc = db.sDelete
 		metaDataType = SSizeType
@@ -128,7 +127,7 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 	}
 
 	var keys [][]byte
-	keys, err = db.scan(metaDataType, nil, 1024, false, "")
+	keys, err = db.scanGeneric(metaDataType, nil, 1024, false, "", false)
 	for len(keys) != 0 || err != nil {
 		for _, key := range keys {
 			deleteFunc(t, key)
@@ -141,7 +140,7 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 		} else {
 			drop += int64(len(keys))
 		}
-		keys, err = db.scan(metaDataType, nil, 1024, false, "")
+		keys, err = db.scanGeneric(metaDataType, nil, 1024, false, "", false)
 	}
 	return
 }

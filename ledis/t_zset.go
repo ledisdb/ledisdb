@@ -936,14 +936,6 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	return n, nil
 }
 
-func (db *DB) ZScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scan(ZSizeType, key, count, inclusive, match)
-}
-
-func (db *DB) ZRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.revscan(ZSizeType, key, count, inclusive, match)
-}
-
 func (db *DB) ZRangeByLex(key []byte, min []byte, max []byte, rangeType uint8, offset int, count int) ([][]byte, error) {
 	if min == nil {
 		min = db.zEncodeStartSetKey(key)
@@ -1024,7 +1016,7 @@ func (db *DB) ZLexCount(key []byte, min []byte, max []byte, rangeType uint8) (in
 	return n, nil
 }
 
-func (db *DB) XZExists(key []byte) (int64, error) {
+func (db *DB) ZKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}

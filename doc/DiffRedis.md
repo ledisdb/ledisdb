@@ -5,10 +5,6 @@ so you can easily write your own LedisDB client based on a Redis one.
 
 Before you write a client, you must know some differences between LedisDB and Redis.
 
-## Data Structure
-
-LedisDB has no Strings data type but KV and Bitmap, any some Keys and Strings commands in Redis will only affect KV data, and "bit" commands affect Bitmap.
-
 ## Del
 
 In Redis, `del` can delete all type data, like String, Hash, List, etc, but in LedisDB, `del` can only delete KV data. To delete other type data, you will use "clear" commands.
@@ -17,8 +13,7 @@ In Redis, `del` can delete all type data, like String, Hash, List, etc, but in L
 + Hash:   `hclear`, `hmclear` 
 + List:   `lclear`, `lmclear`
 + Set:    `sclear`, `smclear`  
-+ Zset:   `zclear`, `zmclear`
-+ Bitmap: `bclear`, `bmclear`
++ ZSet:   `zclear`, `zmclear`
 
 ## Expire, Persist, and TTL
 
@@ -29,7 +24,6 @@ The same for Del.
 + List:   `lexpire`, `lpersist`, `lttl`
 + Set:    `sexpire`, `spersist`, `sttl`  
 + Zset:   `zexpire`, `zpersist`, `zttl`
-+ Bitmap: `bexpire`, `bpersist`, `bttl`
 
 ## ZSet
 
@@ -47,14 +41,14 @@ Transaction API:
 
 ## Scan
 
-LedisDB supplies `xscan`, `xrevscan`, etc, to fetch data iteratively and reverse iteratively.
+LedisDB supplies `xscan`, `xhscan`, `xsscan`, `xzscan` to fetch data iteratively and reverse iteratively.
 
-+ KV:     `xscan`, `xrevscan`
-+ Hash:   `hxscan`, `hxrevscan`, `xhscan`, `xhrevscan`
-+ List:   `lxscan`, `lxrevscan`, `xlscan`, `xlrevscan`
-+ Set:    `sxscan` , `sxrevscan`, `xsscan`, `xsrevscan`
-+ Zset:   `zxscan`, `zxrevscan`, `xzscan`, `xzrevscan`
-+ Bitmap: `bxscan`, `bxrevscan`, `xbscan`, `xbrevscan`
+```
+XSCAN type cursor [MATCH match] [COUNT count]
+XHSCAN key cursor [MATCH match] [COUNT count]
+XSSCAN key cursor [MATCH match] [COUNT count]
+XZSCAN key cursor [MATCH match] [COUNT count]
+```
 
 ## DUMP
 

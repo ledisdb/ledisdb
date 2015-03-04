@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ func TestSet(t *testing.T) {
 	key1 := "testdb_cmd_set_1"
 	key2 := "testdb_cmd_set_2"
 
-	if n, err := ledis.Int(c.Do("xsexists", key1)); err != nil {
+	if n, err := ledis.Int(c.Do("skeyexists", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -24,7 +24,7 @@ func TestSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("xsexists", key1)); err != nil {
+	if n, err := ledis.Int(c.Do("skeyexists", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)

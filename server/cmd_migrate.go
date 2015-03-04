@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	goledis "github.com/siddontang/ledisdb/client/go/ledis"
+	goledis "github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/ledis"
 	"strings"
 	"time"
@@ -165,15 +165,15 @@ func xttl(db *ledis.DB, tp string, key []byte) (int64, error) {
 func xscan(db *ledis.DB, tp string, count int) ([][]byte, error) {
 	switch strings.ToUpper(tp) {
 	case "KV":
-		return db.Scan(nil, count, false, "")
+		return db.Scan(KV, nil, count, false, "")
 	case "HASH":
-		return db.HScan(nil, count, false, "")
+		return db.Scan(HASH, nil, count, false, "")
 	case "LIST":
-		return db.LScan(nil, count, false, "")
+		return db.Scan(LIST, nil, count, false, "")
 	case "SET":
-		return db.SScan(nil, count, false, "")
+		return db.Scan(SET, nil, count, false, "")
 	case "ZSET":
-		return db.ZScan(nil, count, false, "")
+		return db.Scan(ZSET, nil, count, false, "")
 	default:
 		return nil, fmt.Errorf("invalid key type %s", tp)
 	}
@@ -239,8 +239,8 @@ func xmigratedbCommand(c *client) error {
 	db, err := ledis.StrUint64(args[4], nil)
 	if err != nil {
 		return err
-	} else if db >= uint64(ledis.MaxDBNumber) {
-		return fmt.Errorf("invalid db index %d, must < %d", db, ledis.MaxDBNumber)
+	} else if db >= uint64(c.app.cfg.Databases) {
+		return fmt.Errorf("invalid db index %d, must < %d", db, c.app.cfg.Databases)
 	}
 
 	timeout, err := ledis.StrInt64(args[5], nil)
@@ -266,11 +266,13 @@ func xmigratedbCommand(c *client) error {
 
 	mc := c.app.getMigrateClient(addr)
 
-	conn := mc.Get()
+	conn, err := mc.Get()
+	if err != nil {
+		return err
+	}
 
 	//timeout is milliseconds
 	t := time.Duration(timeout) * time.Millisecond
-	conn.SetConnectTimeout(t)
 
 	if _, err = conn.Do("select", db); err != nil {
 		return err
@@ -326,8 +328,8 @@ func xmigrateCommand(c *client) error {
 	db, err := ledis.StrUint64(args[4], nil)
 	if err != nil {
 		return err
-	} else if db >= uint64(ledis.MaxDBNumber) {
-		return fmt.Errorf("invalid db index %d, must < %d", db, ledis.MaxDBNumber)
+	} else if db >= uint64(c.app.cfg.Databases) {
+		return fmt.Errorf("invalid db index %d, must < %d", db, c.app.cfg.Databases)
 	}
 
 	timeout, err := ledis.StrInt64(args[5], nil)
@@ -358,11 +360,13 @@ func xmigrateCommand(c *client) error {
 
 	mc := c.app.getMigrateClient(addr)
 
-	conn := mc.Get()
+	conn, err := mc.Get()
+	if err != nil {
+		return err
+	}
 
 	//timeout is milliseconds
 	t := time.Duration(timeout) * time.Millisecond
-	conn.SetConnectTimeout(t)
 
 	if _, err = conn.Do("select", db); err != nil {
 		return err

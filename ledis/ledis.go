@@ -18,7 +18,7 @@ type Ledis struct {
 	cfg *config.Config
 
 	ldb *store.DB
-	dbs [MaxDBNumber]*DB
+	dbs []*DB
 
 	quit chan struct{}
 	wg   sync.WaitGroup
@@ -35,12 +35,16 @@ type Ledis struct {
 
 	lock io.Closer
 
-	tcs [MaxDBNumber]*ttlChecker
+	tcs []*ttlChecker
 }
 
 func Open(cfg *config.Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		cfg.DataDir = config.DefaultDataDir
+	}
+
+	if cfg.Databases == 0 {
+		cfg.Databases = 16
 	}
 
 	os.MkdirAll(cfg.DataDir, 0755)
@@ -78,7 +82,8 @@ func Open(cfg *config.Config) (*Ledis, error) {
 		l.r = nil
 	}
 
-	for i := uint8(0); i < MaxDBNumber; i++ {
+	l.dbs = make([]*DB, cfg.Databases)
+	for i := uint8(0); i < cfg.Databases; i++ {
 		l.dbs[i] = l.newDB(i)
 	}
 
@@ -105,7 +110,7 @@ func (l *Ledis) Close() {
 }
 
 func (l *Ledis) Select(index int) (*DB, error) {
-	if index < 0 || index >= int(MaxDBNumber) {
+	if index < 0 || index >= len(l.dbs) {
 		return nil, fmt.Errorf("invalid db index %d", index)
 	}
 
@@ -167,6 +172,7 @@ func (l *Ledis) IsReadOnly() bool {
 }
 
 func (l *Ledis) checkTTL() {
+	l.tcs = make([]*ttlChecker, len(l.dbs))
 	for i, db := range l.dbs {
 		c := newTTLChecker(db)
 
@@ -174,7 +180,7 @@ func (l *Ledis) checkTTL() {
 		c.register(ListType, db.listBatch, db.lDelete)
 		c.register(HashType, db.hashBatch, db.hDelete)
 		c.register(ZSetType, db.zsetBatch, db.zDelete)
-		c.register(BitType, db.binBatch, db.bDelete)
+		//		c.register(BitType, db.binBatch, db.bDelete)
 		c.register(SetType, db.setBatch, db.sDelete)
 
 		l.tcs[i] = c

@@ -480,14 +480,6 @@ func (db *DB) LPersist(key []byte) (int64, error) {
 	return n, err
 }
 
-func (db *DB) LScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.scan(LMetaType, key, count, inclusive, match)
-}
-
-func (db *DB) LRevScan(key []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	return db.revscan(LMetaType, key, count, inclusive, match)
-}
-
 func (db *DB) lEncodeMinKey() []byte {
 	return db.lEncodeMetaKey(nil)
 }
@@ -506,7 +498,7 @@ func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error)
 	return db.lblockPop(keys, listTailSeq, timeout)
 }
 
-func (db *DB) XLExists(key []byte) (int64, error) {
+func (db *DB) LKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
 	}

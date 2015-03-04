@@ -145,7 +145,7 @@ func TestLFlush(t *testing.T) {
 		}
 	}
 
-	if v, err := db.LScan(nil, 3000, true, ""); err != nil {
+	if v, err := db.Scan(LIST, nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
 	} else if len(v) != 2000 {
 		t.Fatal("invalid value ", len(v))
@@ -157,23 +157,23 @@ func TestLFlush(t *testing.T) {
 		t.Fatal("invalid value ", n)
 	}
 
-	if v, err := db.LScan(nil, 3000, true, ""); err != nil {
+	if v, err := db.Scan(LIST, nil, 3000, true, ""); err != nil {
 		t.Fatal(err.Error())
 	} else if len(v) != 0 {
 		t.Fatal("invalid value length ", len(v))
 	}
 }
 
-func TestXLExists(t *testing.T) {
+func TestLKeyExists(t *testing.T) {
 	db := getTestDB()
-	key := []byte("xlexists_test")
-	if n, err := db.XLExists(key); err != nil {
+	key := []byte("lkeyexists_test")
+	if n, err := db.LKeyExists(key); err != nil {
 		t.Fatal(err.Error())
 	} else if n != 0 {
 		t.Fatal("invalid value ", n)
 	}
 	db.LPush(key, []byte("hello"), []byte("world"))
-	if n, err := db.XLExists(key); err != nil {
+	if n, err := db.LKeyExists(key); err != nil {
 		t.Fatal(err.Error())
 	} else if n != 1 {
 		t.Fatal("invalid value ", n)

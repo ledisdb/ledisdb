@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/client/go/ledis"
+	"github.com/siddontang/ledisdb/client/goledis"
 	"regexp"
 	"strconv"
 	"strings"

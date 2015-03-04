@@ -6,20 +6,57 @@ import (
 
 const Version = "0.4"
 
+type DataType byte
+
+// for out use
 const (
-	NoneType    byte = 0
-	KVType      byte = 1
-	HashType    byte = 2
-	HSizeType   byte = 3
-	ListType    byte = 4
-	LMetaType   byte = 5
-	ZSetType    byte = 6
-	ZSizeType   byte = 7
-	ZScoreType  byte = 8
-	BitType     byte = 9
-	BitMetaType byte = 10
-	SetType     byte = 11
-	SSizeType   byte = 12
+	KV DataType = iota
+	LIST
+	HASH
+	SET
+	ZSET
+)
+
+func (d DataType) String() string {
+	switch d {
+	case KV:
+		return KVName
+	case LIST:
+		return ListName
+	case HASH:
+		return HashName
+	case SET:
+		return SetName
+	case ZSET:
+		return ZSetName
+	default:
+		return "unknown"
+	}
+}
+
+const (
+	KVName   = "KV"
+	ListName = "LIST"
+	HashName = "HASH"
+	SetName  = "SET"
+	ZSetName = "ZSET"
+)
+
+// for backend store
+const (
+	NoneType   byte = 0
+	KVType     byte = 1
+	HashType   byte = 2
+	HSizeType  byte = 3
+	ListType   byte = 4
+	LMetaType  byte = 5
+	ZSetType   byte = 6
+	ZSizeType  byte = 7
+	ZScoreType byte = 8
+	// BitType     byte = 9
+	// BitMetaType byte = 10
+	SetType   byte = 11
+	SSizeType byte = 12
 
 	maxDataType byte = 100
 
@@ -36,16 +73,16 @@ const (
 
 var (
 	TypeName = map[byte]string{
-		KVType:      "kv",
-		HashType:    "hash",
-		HSizeType:   "hsize",
-		ListType:    "list",
-		LMetaType:   "lmeta",
-		ZSetType:    "zset",
-		ZSizeType:   "zsize",
-		ZScoreType:  "zscore",
-		BitType:     "bit",
-		BitMetaType: "bitmeta",
+		KVType:     "kv",
+		HashType:   "hash",
+		HSizeType:  "hsize",
+		ListType:   "list",
+		LMetaType:  "lmeta",
+		ZSetType:   "zset",
+		ZSizeType:  "zsize",
+		ZScoreType: "zscore",
+		// BitType:     "bit",
+		// BitMetaType: "bitmeta",
 		SetType:     "set",
 		SSizeType:   "ssize",
 		ExpTimeType: "exptime",
@@ -67,9 +104,6 @@ var (
 )
 
 const (
-	//we don't support too many databases
-	MaxDBNumber uint8 = 16
-
 	//max key size
 	MaxKeySize int = 1024
 

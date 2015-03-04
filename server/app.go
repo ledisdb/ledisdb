@@ -1,7 +1,7 @@
 package server
 
 import (
-	goledis "github.com/siddontang/ledisdb/client/go/ledis"
+	goledis "github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
@@ -157,7 +157,9 @@ func (app *App) Close() {
 
 	app.closeScript()
 
+	app.m.Lock()
 	app.m.Close()
+	app.m.Unlock()
 
 	app.snap.Close()
 

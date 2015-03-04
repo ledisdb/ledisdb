@@ -1,175 +1,161 @@
 ## Summary
 
-ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
+Ledisdb use redis protocol called RESP(REdis Serialization Protocol), [here](http://redis.io/topics/protocol).
 
-ledisdb all commands return RESP format and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
+Ledisdb all commands return RESP format and it will use `int64` instead of  `RESP integer`, `string` instead of `RESP simple string`, `bulk string` instead of `RESP bulk string`, and `array` instead of `RESP arrays` below.
 
-Table of Contents
-=================
+Most of the Ledisdb's commands are the same as Redis's, you can see the redis commands document for detailed information too.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Commands List**
 
-- [Summary](#summary)
 - [KV](#kv)
-	- [DECR key](#decr-key)
-	- [DECRBY key decrement](#decrby-key-decrement)
-	- [DEL key [key ...]](#del-key-key-)
-	- [EXISTS key](#exists-key)
-	- [GET key](#get-key)
-	- [GETSET key value](#getset-key-value)
-	- [INCR key](#incr-key)
-	- [INCRBY key increment](#incrby-key-increment)
-	- [MGET key [key ...]](#mget-key-key-)
-	- [MSET key value [key value ...]](#mset-key-value-key-value-)
-	- [SET key value](#set-key-value)
-	- [SETNX key value](#setnx-key-value)
-	- [SETEX key seconds value](#setex-key-seconds-value)
-	- [EXPIRE key seconds](#expire-key-seconds)
-	- [EXPIREAT key timestamp](#expireat-key-timestamp)
-	- [TTL key](#ttl-key)
-	- [PERSIST key](#persist-key)
-	- [XSCAN key [MATCH match] [COUNT count]](#xscan-key-match-match-count-count)
-	- [XREVSCAN key [MATCH match] [COUNT count]](#xrevscan-key-match-match-count-count)
-	- [DUMP key](#dump-key)
+  - [DECR key](#decr-key)
+  - [DECRBY key decrement](#decrby-key-decrement)
+  - [DEL key [key ...]](#del-key-key-)
+  - [EXISTS key](#exists-key)
+  - [GET key](#get-key)
+  - [GETSET key value](#getset-key-value)
+  - [INCR key](#incr-key)
+  - [INCRBY key increment](#incrby-key-increment)
+  - [MGET key [key ...]](#mget-key-key-)
+  - [MSET key value [key value ...]](#mset-key-value-key-value-)
+  - [SET key value](#set-key-value)
+  - [SETNX key value](#setnx-key-value)
+  - [SETEX key seconds value](#setex-key-seconds-value)
+  - [EXPIRE key seconds](#expire-key-seconds)
+  - [EXPIREAT key timestamp](#expireat-key-timestamp)
+  - [TTL key](#ttl-key)
+  - [PERSIST key](#persist-key)
+  - [DUMP key](#dump-key)
+  - [APPEND key value](#append-key-value)
+  - [GETRANGE key start end](#getrange-key-start-end)
+  - [SETRANGE key offset value](#setrange-key-offset-value)
+  - [STRLEN key](#strlen-key)
+  - [BITCOUNT key [start] [end]](#bitcount-key-start-end)
+  - [BITOP operation destkey key [key ...]](#bitop-operation-destkey-key-key-)
+  - [BITPOS key bit [start] [end]](#bitpos-key-bit-start-end)
+  - [GETBIT key offset](#getbit-key-offset)
+  - [SETBIT key offset value](#setbit-key-offset-value)
 - [Hash](#hash)
-	- [HDEL key field [field ...]](#hdel-key-field-field-)
-	- [HEXISTS key field](#hexists-key-field)
-	- [HGET key field](#hget-key-field)
-	- [HGETALL key](#hgetall-key)
-	- [HINCRBY key field increment](#hincrby-key-field-increment)
-	- [HKEYS key](#hkeys-key)
-	- [HLEN key](#hlen-key)
-	- [HMGET key field [field ...]](#hmget-key-field-field-)
-	- [HMSET key field value [field value ...]](#hmset-key-field-value-field-value-)
-	- [HSET key field value](#hset-key-field-value)
-	- [HVALS key](#hvals-key)
-	- [HCLEAR key](#hclear-key)
-	- [HMCLEAR key [key ...]](#hmclear-key-key)
-	- [HEXPIRE key seconds](#hexpire-key-seconds)
-	- [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
-	- [HTTL key](#httl-key)
-	- [HPERSIST key](#hpersist-key)
-	- [HXSCAN key [MATCH match] [COUNT count]](#hxscan-key-match-match-count-count)
-	- [HXREVSCAN key [MATCH match] [COUNT count]](#hxrevscan-key-match-match-count-count)
-	- [XHSCAN key [MATCH match] [COUNT count]](#xhscan-key-match-match-count-count)
-	- [XHREVSCAN key [MATCH match] [COUNT count]](#xhrevscan-key-match-match-count-count)
-	- [HDUMP key](#hdump-key)
+  - [HDEL key field [field ...]](#hdel-key-field-field-)
+  - [HEXISTS key field](#hexists-key-field)
+  - [HGET key field](#hget-key-field)
+  - [HGETALL key](#hgetall-key)
+  - [HINCRBY key field increment](#hincrby-key-field-increment)
+  - [HKEYS key](#hkeys-key)
+  - [HLEN key](#hlen-key)
+  - [HMGET key field [field ...]](#hmget-key-field-field-)
+  - [HMSET key field value [field value ...]](#hmset-key-field-value-field-value-)
+  - [HSET key field value](#hset-key-field-value)
+  - [HVALS key](#hvals-key)
+  - [HCLEAR key](#hclear-key)
+  - [HMCLEAR key [key...]](#hmclear-key-key)
+  - [HEXPIRE key seconds](#hexpire-key-seconds)
+  - [HEXPIREAT key timestamp](#hexpireat-key-timestamp)
+  - [HTTL key](#httl-key)
+  - [HPERSIST key](#hpersist-key)
+  - [HDUMP key](#hdump-key)
+  - [HKEYEXISTS key](#hkeyexists-key)
 - [List](#list)
-	- [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
-	- [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
-	- [LINDEX key index](#lindex-key-index)
-	- [LLEN key](#llen-key)
-	- [LPOP key](#lpop-key)
-	- [LRANGE key start stop](#lrange-key-start-stop)
-	- [LPUSH key value [value ...]](#lpush-key-value-value-)
-	- [RPOP key](#rpop-keuser-content-y)
-	- [RPUSH key value [value ...]](#rpush-key-value-value-)
-	- [LCLEAR key](#lclear-key)
-	- [LMCLEAR key [key...]](#lmclear-key-key-)
-	- [LEXPIRE key seconds](#lexpire-key-seconds)
-	- [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
-	- [LTTL key](#lttl-key)
-	- [LPERSIST key](#lpersist-key)
-	- [LXSCAN key [MATCH match] [COUNT count]](#lxscan-key-match-match-count-count)
-	- [LXREVSCAN key [MATCH match] [COUNT count]](#lxrevscan-key-match-match-count-count)
-	- [XLSCAN key [MATCH match] [COUNT count]](#xlscan-key-match-match-count-count)
-	- [XLREVSCAN key [MATCH match] [COUNT count]](#xlrevscan-key-match-match-count-count)
-	- [LDUMP key](#ldump-key)
+  - [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
+  - [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
+  - [LINDEX key index](#lindex-key-index)
+  - [LLEN key](#llen-key)
+  - [LPOP key](#lpop-key)
+  - [LRANGE key start stop](#lrange-key-start-stop)
+  - [LPUSH key value [value ...]](#lpush-key-value-value-)
+  - [RPOP key](#rpop-key)
+  - [RPUSH key value [value ...]](#rpush-key-value-value-)
+  - [LCLEAR key](#lclear-key)
+  - [LMCLEAR key [key ...]](#lmclear-key-key-)
+  - [LEXPIRE key seconds](#lexpire-key-seconds)
+  - [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
+  - [LTTL key](#lttl-key)
+  - [LPERSIST key](#lpersist-key)
+  - [LDUMP key](#ldump-key)
+  - [LKEYEXISTS key](#lkeyexists-key)
 - [Set](#set)
-	- [SADD key member [member ...]](#sadd-key-member-member-)
-	- [SCARD key](#scard-key)
-	- [SDIFF key [key ...]](#sdiff-key-key-)
-	- [SDIFFSTORE destination key [key ...]](#sdiffstore-destination-key-key-)
-	- [SINTER key [key ...]](#sinter-key-key-)
-	- [SINTERSTORE destination key [key ...]](#sinterstore-destination-key-key-)
-	- [SISMEMBER key member](#sismember-key-member)
-	- [SMEMBERS key](#smembers-key)
-	- [SREM key member [member ...]](#srem-key-member-member-)
-	- [SUNION key [key ...]](#sunion-key-key-)
-	- [SUNIONSTORE destination key [key ...]](#sunionstore-destination-key-key-)
-	- [SCLEAR key](#sclear-key)
-	- [SMCLEAR key [key...]](#smclear-key-key)
-	- [SEXPIRE key seconds](#sexpire-key-seconds)
-	- [SEXPIREAT key timestamp](#sexpireat-key-timestamp)
-	- [STTL key](#sttl-key)
-	- [SPERSIST key](#spersist-key)
-	- [SXSCAN key [MATCH match] [COUNT count]](#sxscan-key-match-match-count-count)
-	- [SXREVSCAN key [MATCH match] [COUNT count]](#sxrevscan-key-match-match-count-count)
-	- [XSSCAN key [MATCH match] [COUNT count]](#xsscan-key-match-match-count-count)
-	- [XSREVSCAN key [MATCH match] [COUNT count]](#xsrevscan-key-match-match-count-count)
-	- [SDUMP key](#sdump-key)
+  - [SADD key member [member ...]](#sadd-key-member-member-)
+  - [SCARD key](#scard-key)
+  - [SDIFF key [key ...]](#sdiff-key-key-)
+  - [SDIFFSTORE destination key [key ...]](#sdiffstore-destination-key-key-)
+  - [SINTER key [key ...]](#sinter-key-key-)
+  - [SINTERSTORE  destination key [key ...]](#sinterstore--destination-key-key-)
+  - [SISMEMBER  key member](#sismember--key-member)
+  - [SMEMBERS key](#smembers-key)
+  - [SREM  key member [member ...]](#srem--key-member-member-)
+  - [SUNION key [key ...]](#sunion-key-key-)
+  - [SUNIONSTORE destination key [key]](#sunionstore-destination-key-key)
+  - [SCLEAR key](#sclear-key)
+  - [SMCLEAR key [key ...]](#smclear-key-key-)
+  - [SEXPIRE key seconds](#sexpire-key-seconds)
+  - [SEXPIREAT key timestamp](#sexpireat-key-timestamp)
+  - [STTL key](#sttl-key)
+  - [SPERSIST key](#spersist-key)
+  - [SDUMP key](#sdump-key)
+  - [SKEYEXISTS key](#skeyexists-key)
 - [ZSet](#zset)
-	- [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
-	- [ZCARD key](#zcard-key)
-	- [ZCOUNT key min max](#zcount-key-min-max)
-	- [ZINCRBY key increment member](#zincrby-key-increment-member)
-	- [ZRANGE key start stop [WITHSCORES]](#zrange-key-start-stop-withscores)
-	- [ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]](#zrangebyscore-key-min-max-withscores-limit-offset-count)
-	- [ZRANK key member](#zrank-key-member)
-	- [ZREM key member [member ...]](#zrem-key-member-member-)
-	- [ZREMRANGEBYRANK key start stop](#zremrangebyrank-key-start-stop)
-	- [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
-	- [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
-	- [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore-key-max-min-withscores-limit-offset-count)
-	- [ZREVRANK key member](#zrevrank-key-member)
-	- [ZSCORE key member](#zscore-key-member)
-	- [ZCLEAR key](#zclear-key)
-	- [ZMCLEAR key [key ...]](#zmclear-key-key-)
-	- [ZEXPIRE key seconds](#zexpire-key-seconds)
-	- [ZEXPIREAT key timestamp](#zexpireat-key-timestamp)
-	- [ZTTL key](#zttl-key)
-	- [ZPERSIST key](#zpersist-key)
-    - [ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
-](#zunionstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
-    - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
-](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-summinmax)
-	- [ZXSCAN key [MATCH match] [COUNT count]](#zxscan-key-match-match-count-count)
-	- [ZXREVSCAN key [MATCH match] [COUNT count]](#zxrevscan-key-match-match-count-count)
-	- [XZSCAN key [MATCH match] [COUNT count]](#xzscan-key-match-match-count-count)
-	- [XZREVSCAN key [MATCH match] [COUNT count]](#xzrevscan-key-match-match-count-count)
-	- [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
-	- [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
-	- [ZLEXCOUNT key min max](#zlexcount-key-min-max)
-	- [ZDUMP key](#zdump-key)
-- [Bitmap](#bitmap)
-	- [BGET key](#bget-key)
-	- [BGETBIT key offset](#bgetbit-key-offset)
-	- [BSETBIT key offset value](#bsetbit-key-offset-value)
-	- [BMSETBIT key offset value[offset value ...]](#bmsetbit-key-offset-value-offset-value-)
-	- [BOPT operation destkey key [key ...]](#bopt-operation-destkey-key-key-)
-	- [BCOUNT key [start, end]](#bcount-key-start-end)
-	- [BEXPIRE key seconds](#bexpire-key-seconds)
-	- [BEXPIREAT key timestamp](#bexpireat-key-timestamp)
-	- [BTTL key](#bttl-key)
-	- [BPERSIST key](#bpersist-key)
-	- [BXSCAN key [MATCH match] [COUNT count]](#bxscan-key-match-match-count-count)
-	- [BXREVSCAN key [MATCH match] [COUNT count]](#bxrevscan-key-match-match-count-count)
-	- [XBSCAN key [MATCH match] [COUNT count]](#xbscan-key-match-match-count-count)
-	- [XBREVSCAN key [MATCH match] [COUNT count]](#xbrevscan-key-match-match-count-count)
+  - [ZADD key score member [score member ...]](#zadd-key-score-member-score-member-)
+  - [ZCARD key](#zcard-key)
+  - [ZCOUNT key min max](#zcount-key-min-max)
+  - [ZINCRBY key increment member](#zincrby-key-increment-member)
+  - [ZRANGE key start stop [WITHSCORES]](#zrange-key-start-stop-withscores)
+  - [ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]](#zrangebyscore-key-min-max-withscores-limit-offset-count)
+  - [ZRANK key member](#zrank-key-member)
+  - [ZREM key member [member ...]](#zrem-key-member-member-)
+  - [ZREMRANGEBYRANK key start stop](#zremrangebyrank-key-start-stop)
+  - [ZREMRANGEBYSCORE key min max](#zremrangebyscore-key-min-max)
+  - [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
+  - [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
+  - [ZREVRANK key member](#zrevrank-key-member)
+  - [ZSCORE key member](#zscore-key-member)
+  - [ZCLEAR key](#zclear-key)
+  - [ZMCLEAR key [key ...]](#zmclear-key-key-)
+  - [ZEXPIRE key seconds](#zexpire-key-seconds)
+  - [ZEXPIREAT key timestamp](#zexpireat-key-timestamp)
+  - [ZTTL key](#zttl-key)
+  - [ZPERSIST key](#zpersist-key)
+  - [ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]](#zunionstore-destination-numkeys-key-key--weights-weight-weight--aggregate-sum|min|max)
+  - [ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]](#zinterstore-destination-numkeys-key-key--weights-weight-weight--aggregate-sum|min|max)
+  - [ZRANGEBYLEX key min max [LIMIT offset count]](#zrangebylex-key-min-max-limit-offset-count)
+  - [ZREMRANGEBYLEX key min max](#zremrangebylex-key-min-max)
+  - [ZLEXCOUNT key min max](#zlexcount-key-min-max)
+  - [ZDUMP key](#zdump-key)
+  - [ZKEYEXISTS key](#zkeyexists-key)
+- [Scan](#scan)
+  - [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count)
+  - [XHSCAN key cursor [MATCH match] [COUNT count]](#xhscan-key-cursor-match-match-count-count)
+  - [XSSCAN key cursor [MATCH match] [COUNT count]](#xsscan-key-cursor-match-match-count-count)
+  - [XZSCAN key cursor [MATCH match] [COUNT count]](#xzscan-key-cursor-match-match-count-count)
 - [Replication](#replication)
-	- [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
-	- [FULLSYNC [NEW]](#fullsync-new)
-	- [SYNC logid](#sync-logid)
+  - [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
+  - [FULLSYNC [NEW]](#fullsync-new)
+  - [SYNC logid](#sync-logid)
 - [Server](#server)
-	- [PING](#ping)
-	- [ECHO message](#echo-message)
-	- [SELECT index](#select-index)
-	- [FLUSHALL](#flushall)
-	- [FLUSHDB](#flushdb)
-	- [INFO [section]](#info-section)
-	- [TIME](#time)
-	- [CONFIG REWRITE](#config-rewrite)
-	- [RESTORE key ttl value](#restore-key-ttl-value)
-	- [ROLE](#role)
+  - [PING](#ping)
+  - [ECHO message](#echo-message)
+  - [SELECT index](#select-index)
+  - [FLUSHALL](#flushall)
+  - [FLUSHDB](#flushdb)
+  - [INFO [section]](#info-section)
+  - [TIME](#time)
+  - [CONFIG REWRITE](#config-rewrite)
+  - [RESTORE key ttl value](#restore-key-ttl-value)
+  - [ROLE](#role)
 - [Transaction](#transaction)
-	- [BEGIN](#begin)
-	- [ROLLBACK](#rollback)
-	- [COMMIT](#commit)
+  - [BEGIN](#begin)
+  - [ROLLBACK](#rollback)
+  - [COMMIT](#commit)
 - [Script](#script)
-	- [EVAL script numkeys key [key ...] arg [arg ...]](#eval-script-numkeys-key-key--arg-arg-)
-	- [EVALSHA sha1 numkeys key [key ...] arg [arg ...]](#evalsha-sha1-numkeys-key-key--arg-arg-)
-	- [SCRIPT LOAD script](#script-load-script)
-	- [SCRIPT EXISTS script [script ...]](#script-exists-script-script-)
-	- [SCRIPT FLUSH](#script-flush)
+  - [EVAL script numkeys key [key ...] arg [arg ...]](#eval-script-numkeys-key-key--arg-arg-)
+  - [EVALSHA sha1 numkeys key [key ...] arg [arg ...]](#evalsha-sha1-numkeys-key-key--arg-arg-)
+  - [SCRIPT LOAD script](#script-load-script)
+  - [SCRIPT EXISTS script [script ...]](#script-exists-script-script-)
+  - [SCRIPT FLUSH](#script-flush)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## KV 
 
@@ -524,82 +510,6 @@ ledis> TTL mykey
 (integer) -1
 ```
 
-### XSCAN key [MATCH match] [COUNT count] 
-
-Iterate KV keys incrementally.
-
-Key is the start for the current iteration.
-Match is the regexp for checking matched key.
-Count is the maximum retrieved elememts number, default is 10.
-
-**Return value**
-
-an array of two values, first value is the key for next iteration, second value is an array of elements.
-
-**Examples**
-
-```
-ledis>set a 1
-OK
-ledis>set b 2
-OK
-ledis>set c 3
-OK
-127.0.0.1:6380>xscan "" 
-1) ""
-2) ["a" "b" "c"]
-ledis>xscan "" count 1
-1) "a"
-2) ["a"]
-ledis>xscan "a" count 1
-1) "b"
-2) ["b"]
-ledis>xscan "b" count 1
-1) "c"
-2) ["c"]
-ledis>xscan "c" count 1
-1) ""
-2) []
-```
-
-### XREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate KV keys incrementally.
-
-Key is the start for the current iteration.
-Match is the regexp for checking matched key.
-Count is the maximum retrieved elememts number, default is 10.
-
-**Return value**
-
-an array of two values, first value is the key for next iteration, second value is an array of elements.
-
-**Examples**
-
-```
-ledis>set a 1
-OK
-ledis>set b 2
-OK
-ledis>set c 3
-OK
-127.0.0.1:6380>xrevscan "" 
-1) ""
-2) ["c" "b" "a"]
-ledis>xrevscan "" count 1
-1) "c"
-2) ["c"]
-ledis>xrevscan "c" count 1
-1) "b"
-2) ["b"]
-ledis>xrevscan "b" count 1
-1) "a"
-2) ["a"]
-ledis>xrevscan "a" count 1
-1) ""
-2) []
-```
-
 ### DUMP key
 
 Serialize the value stored at key with KV type in a Redis-specific format like RDB and return it to the user. The returned value can be synthesized back into a key using the RESTORE command.
@@ -616,6 +526,25 @@ OK
 ledis>DUMP mykey
 "\x00\xc0\n\x06\x00\xf8r?\xc5\xfb\xfb_("
 ```
+
+### APPEND key value
+
+### GETRANGE key start end
+
+### SETRANGE key offset value
+
+### STRLEN key
+
+### BITCOUNT key [start] [end]
+
+### BITOP operation destkey key [key ...]
+
+### BITPOS key bit [start] [end]
+
+### GETBIT key offset
+
+### SETBIT key offset value
+
 
 ## Hash
 
@@ -980,34 +909,13 @@ ledis> HPERSIST not_exists_key
 (integer) 0
 ```
 
-### HXSCAN key [MATCH match] [COUNT count] 
-
-Iterate Hash keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### HXREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Hash keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-### XHSCAN key [MATCH match] [COUNT count] 
-
-Iterate Hash keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### XHREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Hash keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-
 ### HDUMP key
 
 See [DUMP](#dump-key) for more information.
+
+### HKEYEXISTS key
+
+Check key exists for hash data, like [EXISTS key](#exists-key)
 
 ## List
 
@@ -1331,35 +1239,13 @@ ledis> LPERSIST b
 (integer) 0
 ```
 
-### LXSCAN key [MATCH match] [COUNT count] 
-
-Iterate list keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### LXREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate list keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-### XLSCAN key [MATCH match] [COUNT count] 
-
-Iterate list keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### XLREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate list keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-
 ### LDUMP key
 
 See [DUMP](#dump-key) for more information.
 
+### LKEYEXISTS key
+
+Check key exists for list data, like [EXISTS key](#exists-key)
 
 ## Set
 
@@ -1782,36 +1668,13 @@ ledis> STTL key
 (integer) -1
 ```
 
-### SXSCAN key [MATCH match] [COUNT count] 
-
-Iterate Set keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-
-### SXREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Set keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-### XSSCAN key [MATCH match] [COUNT count] 
-
-Iterate Set keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-
-### XSREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Set keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-
 ### SDUMP key
 
 See [DUMP](#dump-key) for more information.
+
+### SKEYEXISTS key
+
+Check key exists for set data, like [EXISTS key](#exists-key)
 
 ## ZSet
 
@@ -2432,30 +2295,6 @@ ledis> ZRANGE out 0 -1 WITHSCORES
 4) "10"
 ```
 
-### ZXSCAN key [MATCH match] [COUNT count] 
-
-Iterate ZSet keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### ZXREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate ZSet keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-### XZSCAN key [MATCH match] [COUNT count] 
-
-Iterate ZSet keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### XZREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate ZSet keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
 ### ZRANGEBYLEX key min max [LIMIT offset count]
 
 When all the elements in a sorted set are inserted with the same score, in order to force lexicographical ordering, this command returns all the elements in the sorted set at key with a value between min and max.
@@ -2526,187 +2365,64 @@ ledis> ZLEXCOUNT myzset - [c
 
 See [DUMP](#dump-key) for more information.
 
-## Bitmap
+### ZKEYEXISTS key
 
-### BGET key
+Check key exists for zset data, like [EXISTS key](#exists-key)
 
-Returns the whole binary data stored at `key`.
+## Scan
+
+### XSCAN type cursor [MATCH match] [COUNT count]
+
+Iterate data type keys incrementally.
+
+Type is "KV", "LIST", "HASH", "SET" or "ZSET".
+Cursor is the start for the current iteration.
+Match is the regexp for checking matched key.
+Count is the maximum retrieved elememts number, default is 10.
 
 **Return value**
 
-bulk: the raw value of key, or nil when key does not exist.
+an array of two values, first value is the cursor for next iteration, second value is an array of elements.
 
 **Examples**
 
 ```
-ledis> BMSETBIT flag 0 1 5 1 6 1
-(integer) 3
-ledis> BGET flag
-a
+ledis>set a 1
+OK
+ledis>set b 2
+OK
+ledis>set c 3
+OK
+127.0.0.1:6380>xscan "KV" "" 
+1) ""
+2) ["a" "b" "c"]
+ledis>xscan "KV" "" count 1
+1) "a"
+2) ["a"]
+ledis>xscan "KV" "a" count 1
+1) "b"
+2) ["b"]
+ledis>xscan "KV" "b" count 1
+1) "c"
+2) ["c"]
+ledis>xscan "KV" "c" count 1
+1) ""
+2) []
 ```
 
+### XHSCAN key cursor [MATCH match] [COUNT count]
 
-### BGETBIT key offset
+Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count), but return array of elements 
+contains two elements, a field and a value. 
 
-Returns the bit value at `offset` in the string value stored at `key`.
-When *offset* beyond the data length, ot the target data is not exist, the bit value will be 0 always.
+### XSSCAN key cursor [MATCH match] [COUNT count]
 
-**Return value**
+Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count)
 
-int64 : the bit value stored at offset.
+### XZSCAN key cursor [MATCH match] [COUNT count]
 
-**Examples**
-
-```
-ledis> BSETBIT flag 1024 1
-(integer) 0
-ledis> BGETBIT flag 0
-(integer) 0
-ledis> BGETBIT flag 1024
-(integer) 1
-ledis> BGETBIT flag 65535
-(integer) 0
-```
-
-
-### BSETBIT key offset value
-
-Sets or clear the bit at `offset` in the binary data sotred at `key`.
-The bit is either set or cleared depending on `value`, which can be either `0` or `1`.
-The *offset* argument is required to be qual to 0, and smaller than
-2^23 (this means bitmap limits to 8MB).
-
-**Return value**
-
-int64 : the original bit value stored at offset.
-
-**Examples**
-
-```
-ledis> BSETBIT flag 0 1
-(integer) 0
-ledis> BSETBIT flag 0 0
-(integer) 1
-ledis> BGETBIT flag 0 99
-ERR invalid command param
-```
-
-### BMSETBIT key offset value [offset value ...]
-Sets the given *offset* to their respective values.
-
-**Return value**
-
-int64 : The number of input *offset*
-
-**Examples**
-
-```
-ledis> BMSETBIT flag 0 1 1 1 2 0 3 1
-(integer) 4
-ledis> BCOUNT flag
-(integer) 3
-```
-
-
-### BOPT operation destkey key [key ...]
-Perform a bitwise operation between multiple keys (containing string values) and store the result in the destination key.
-
-**Return value**
-
-Int64:
-The size of the string stored in the destination key, that is equal to the size of the longest input string.
-**Examples**
-
-```
-ledis> BMSETBIT a 0 1 2 1
-(integer) 2
-ledis> BMSETBIT b 1 1 
-(integer) 1
-ledis> BOPT AND res a b    
-(integer) 3
-ledis> BCOUNT res
-(integer) 0
-ledis> BOPT OR res2 a b
-(integer) 3
-ledis> BCOUNT res2
-(integer) 3
-ledis> BOPT XOR res3 a b
-(integer) 3
-ledis> BCOUNT res3
-(integer) 3
-```
-
-### BCOUNT key [start end]
-
-Count the number of set bits in a bitmap.
-
-**Return value**
-
-int64 : The number of bits set to 1.
-
-**Examples**
-
-```
-ledis> BMSETBIT flag 0 1 5 1 6 1
-(integer) 3
-ledis> BGET flag
-a
-ledis> BCOUNT flag
-(integer) 3
-ledis> BCOUNT flag 0 0s
-(integer) 1
-ledis> BCOUNT flag 0 4
-(integer) 1
-ledis> BCOUNT flag 0 5
-(integer) 2
-ledis> BCOUNT flag 5 6
-(integer) 2
-```
-
-
-### BEXPIRE key seconds
-
-(refer to [EXPIRE](#expire-key-seconds) api for other types)
-
-
-### BEXPIREAT key timestamp
-
-(refer to [EXPIREAT](#expireat-key-timestamp) api for other types)
-
-
-### BTTL key
-
-(refer to [TTL](#ttl-key) api for other types)
-
-
-### BPERSIST key
-
-(refer to [PERSIST](#persist-key) api for other types)
-
-
-### BXSCAN key [MATCH match] [COUNT count] 
-
-Iterate Bitmap keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### BXREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Bitmap keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
-
-### XBSCAN key [MATCH match] [COUNT count] 
-
-Iterate Bitmap keys incrementally.
-
-See [XSCAN](#xscan-key-match-match-count-count) for more information.
-
-### XBREVSCAN key [MATCH match] [COUNT count] 
-
-Reverse iterate Bitmap keys incrementally.
-
-See [XREVSCAN](#xrevscan-key-match-match-count-count) for more information.
+Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count), but return array of elements 
+contains two elements, a member and its associated score. 
 
 
 ## Replication

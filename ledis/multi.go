@@ -44,7 +44,7 @@ func (db *DB) Multi() (*Multi, error) {
 	m.DB.listBatch = m.newBatch()
 	m.DB.hashBatch = m.newBatch()
 	m.DB.zsetBatch = m.newBatch()
-	m.DB.binBatch = m.newBatch()
+	//	m.DB.binBatch = m.newBatch()
 	m.DB.setBatch = m.newBatch()
 
 	m.DB.lbkeys = db.lbkeys
@@ -66,7 +66,7 @@ func (m *Multi) Close() error {
 }
 
 func (m *Multi) Select(index int) error {
-	if index < 0 || index >= int(MaxDBNumber) {
+	if index < 0 || index >= int(m.l.cfg.Databases) {
 		return fmt.Errorf("invalid db index %d", index)
 	}
 

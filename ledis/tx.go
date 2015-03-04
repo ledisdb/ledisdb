@@ -58,7 +58,6 @@ func (db *DB) Begin() (*Tx, error) {
 	tx.DB.listBatch = tx.newBatch()
 	tx.DB.hashBatch = tx.newBatch()
 	tx.DB.zsetBatch = tx.newBatch()
-	tx.DB.binBatch = tx.newBatch()
 	tx.DB.setBatch = tx.newBatch()
 
 	tx.DB.lbkeys = db.lbkeys
@@ -103,7 +102,7 @@ func (tx *Tx) newBatch() *batch {
 }
 
 func (tx *Tx) Select(index int) error {
-	if index < 0 || index >= int(MaxDBNumber) {
+	if index < 0 || index >= int(tx.l.cfg.Databases) {
 		return fmt.Errorf("invalid db index %d", index)
 	}
 

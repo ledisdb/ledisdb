@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	goledis "github.com/siddontang/ledisdb/client/go/ledis"
+	goledis "github.com/siddontang/ledisdb/client/goledis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"reflect"
@@ -14,8 +14,8 @@ func checkDataEqual(master *App, slave *App) error {
 	mdb, _ := master.ldb.Select(0)
 	sdb, _ := slave.ldb.Select(0)
 
-	mkeys, _ := mdb.Scan(nil, 100, true, "")
-	skeys, _ := sdb.Scan(nil, 100, true, "")
+	mkeys, _ := mdb.Scan(KV, nil, 100, true, "")
+	skeys, _ := sdb.Scan(KV, nil, 100, true, "")
 
 	if len(mkeys) != len(skeys) {
 		return fmt.Errorf("keys number not equal %d != %d", len(mkeys), len(skeys))
@@ -140,7 +140,7 @@ func TestReplication(t *testing.T) {
 	if err = checkTestRole(slaveCfg.Addr, []interface{}{
 		[]byte("slave"),
 		[]byte("127.0.0.1"),
-		int64(11183),
+		int64(11182),
 		[]byte("connected"),
 		int64(sStat.LastID),
 	}); err != nil {
@@ -159,7 +159,7 @@ func TestReplication(t *testing.T) {
 }
 
 func checkTestRole(addr string, checkRoles []interface{}) error {
-	conn := goledis.NewConn(addr)
+	conn, _ := goledis.Connect(addr)
 	defer conn.Close()
 	roles, err := goledis.MultiBulk(conn.Do("ROLE"))
 	if err != nil {

@@ -205,6 +205,18 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 	}
 	i.app.slock.Unlock()
 
+	i.app.m.Lock()
+	slaveof := i.app.cfg.SlaveOf
+	i.app.m.Unlock()
+
+	isSlave := len(slaveof) > 0
+
+	if isSlave {
+		p = append(p, infoPair{"role", "slave"})
+	} else {
+		p = append(p, infoPair{"role", "master"})
+	}
+
 	num := i.Replication.PubLogNum.Get()
 	p = append(p, infoPair{"pub_log_num", num})
 
@@ -216,13 +228,14 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 		p = append(p, infoPair{"pub_log_ack_per_time", 0})
 	}
 
-	p = append(p, infoPair{"slaveof", i.app.cfg.SlaveOf})
+	p = append(p, infoPair{"slaveof", slaveof})
 
 	if len(slaves) > 0 {
 		p = append(p, infoPair{"slaves", strings.Join(slaves, ",")})
 	}
 
-	if s, _ := i.app.ldb.ReplicationStat(); s != nil {
+	s, _ := i.app.ldb.ReplicationStat()
+	if s != nil {
 		p = append(p, infoPair{"last_log_id", s.LastID})
 		p = append(p, infoPair{"first_log_id", s.FirstID})
 		p = append(p, infoPair{"commit_log_id", s.CommitID})
@@ -233,6 +246,28 @@ func (i *info) dumpReplication(buf *bytes.Buffer) {
 	}
 
 	p = append(p, infoPair{"master_last_log_id", i.Replication.MasterLastLogID.Get()})
+
+	if isSlave {
+		// add some redis slave replication info for outer failover service :-)
+		state := i.app.m.state.Get()
+		if state == replSyncState || state == replConnectedState {
+			p = append(p, infoPair{"master_link_status", "up"})
+		} else {
+			p = append(p, infoPair{"master_link_status", "down"})
+		}
+
+		// here, all the slaves have same priority now
+		p = append(p, infoPair{"slave_priority", 100})
+		if s != nil {
+			if s.LastID > 0 {
+				p = append(p, infoPair{"slave_repl_offset", s.LastID})
+			} else {
+				p = append(p, infoPair{"slave_repl_offset", s.CommitID})
+			}
+		} else {
+			p = append(p, infoPair{"slave_repl_offset", 0})
+		}
+	}
 
 	i.dumpPairs(buf, p...)
 }

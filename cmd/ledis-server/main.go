@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 )
 
@@ -64,7 +65,16 @@ func main() {
 		cfg.UseReplication = true
 	} else {
 		cfg.Readonly = *readonly
-		cfg.UseReplication = *rpl
+
+		// if rpl in command flag, use it.
+		for _, arg := range os.Args {
+			arg := strings.ToLower(arg)
+			if arg == "-rpl" || arg == "-rpl=true" || arg == "-rpl=false" {
+				cfg.UseReplication = *rpl
+				break
+			}
+		}
+
 		cfg.Replication.Sync = *rplSync
 	}
 
