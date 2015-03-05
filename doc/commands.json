@@ -604,25 +604,25 @@
     },
 
     "XSCAN": {
-        "arguments": "type cursor [MATCH match] [COUNT count]",
+        "arguments": "type cursor [MATCH match] [COUNT count] [ASC|DESC]",
         "group": "Server",
         "readonly": true
     },
 
     "XHSCAN": {
-        "arguments": "key cursor [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
         "group": "Hash",
         "readonly": true
     },
 
     "XSSCAN": {
-        "arguments": "key cursor [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
         "group": "Set",
         "readonly": true
     },
 
     "XZSCAN": {
-        "arguments": "key cursor [MATCH match] [COUNT count]",
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
         "group": "ZSet",
         "readonly": true
     },
@@ -712,8 +712,26 @@
     },
 
     "ZKEYEXISTS": {
-        "arguments" : "ZSet",
-        "group" : "Hash",
+        "arguments" : "key",
+        "group" : "ZSet",
         "readonly" : true
+    },
+
+    "XLSORT": {
+        "arguments" : "key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]",
+        "group" : "List",
+        "readonly" : false
+    },
+
+    "XSSORT": {
+        "arguments" : "key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]",
+        "group" : "Set",
+        "readonly" : false
+    },
+
+    "XZSORT": {
+        "arguments" : "key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]",
+        "group" : "ZSet",
+        "readonly" : false
     }
 }

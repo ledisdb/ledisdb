@@ -125,10 +125,14 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [ZDUMP key](#zdump-key)
   - [ZKEYEXISTS key](#zkeyexists-key)
 - [Scan](#scan)
-  - [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count)
-  - [XHSCAN key cursor [MATCH match] [COUNT count]](#xhscan-key-cursor-match-match-count-count)
-  - [XSSCAN key cursor [MATCH match] [COUNT count]](#xsscan-key-cursor-match-match-count-count)
-  - [XZSCAN key cursor [MATCH match] [COUNT count]](#xzscan-key-cursor-match-match-count-count)
+  - [XSCAN type cursor [MATCH match] [COUNT count] [ASC|DESC]](#xscan-type-cursor-match-match-count-count-asc|desc)
+  - [XHSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#xhscan-key-cursor-match-match-count-count-asc|desc)
+  - [XSSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#xsscan-key-cursor-match-match-count-count-asc|desc)
+  - [XZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#xzscan-key-cursor-match-match-count-count-asc|desc)
+- [Sort](#sort)
+  - [XLSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]](#xlsort-key-by-pattern-limit-offset-count-get-pattern-get-pattern--asc|desc-alpha-store-destination)
+  - [XSSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]](#xssort-key-by-pattern-limit-offset-count-get-pattern-get-pattern--asc|desc-alpha-store-destination)
+  - [XZSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]](#xzsort-key-by-pattern-limit-offset-count-get-pattern-get-pattern--asc|desc-alpha-store-destination)
 - [Replication](#replication)
   - [SLAVEOF host port [RESTART] [READONLY]](#slaveof-host-port-restart-readonly)
   - [FULLSYNC [NEW]](#fullsync-new)
@@ -2371,7 +2375,7 @@ Check key exists for zset data, like [EXISTS key](#exists-key)
 
 ## Scan
 
-### XSCAN type cursor [MATCH match] [COUNT count]
+### XSCAN type cursor [MATCH match] [COUNT count] [ASC|DESC]
 
 Iterate data type keys incrementally.
 
@@ -2379,6 +2383,7 @@ Type is "KV", "LIST", "HASH", "SET" or "ZSET".
 Cursor is the start for the current iteration.
 Match is the regexp for checking matched key.
 Count is the maximum retrieved elememts number, default is 10.
+DESC for reverse iterator.
 
 **Return value**
 
@@ -2410,20 +2415,33 @@ ledis>xscan "KV" "c" count 1
 2) []
 ```
 
-### XHSCAN key cursor [MATCH match] [COUNT count]
+### XHSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 
-Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count), but return array of elements 
+Same like XSCAN, but return array of elements.
 contains two elements, a field and a value. 
 
-### XSSCAN key cursor [MATCH match] [COUNT count]
+### XSSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 
-Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count)
+Same like XSCAN.
 
-### XZSCAN key cursor [MATCH match] [COUNT count]
+### XZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 
-Same like [XSCAN type cursor [MATCH match] [COUNT count]](#xscan-type-cursor-match-match-count-count), but return array of elements 
+Same like XSCAN, but return array of elements.
 contains two elements, a member and its associated score. 
 
+## Sort
+
+### XLSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]
+
+Returns or stores the elements contained in the list at key.
+
+### XSSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]
+
+Returns or stores the elements contained in the set at key.
+
+### XZSORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]
+
+Returns or stores the elements contained in the zset at key.
 
 ## Replication
 
