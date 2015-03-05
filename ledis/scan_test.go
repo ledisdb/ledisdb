@@ -323,6 +323,16 @@ func TestDBHScan(t *testing.T) {
 	} else if string(v[0].Field) != "222" {
 		t.Fatal(string(v[0].Field))
 	}
+
+	v, err = db.HRevScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0].Field) != "1234" {
+		t.Fatal(string(v[0].Field))
+	}
+
 }
 
 func TestDBSScan(t *testing.T) {
@@ -346,6 +356,16 @@ func TestDBSScan(t *testing.T) {
 	} else if string(v[0]) != "222" {
 		t.Fatal(string(v[0]))
 	}
+
+	v, err = db.SRevScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0]) != "1234" {
+		t.Fatal(string(v[0]))
+	}
+
 }
 
 func TestDBZScan(t *testing.T) {
@@ -369,4 +389,14 @@ func TestDBZScan(t *testing.T) {
 	} else if string(v[0].Member) != "222" {
 		t.Fatal(string(v[0].Member))
 	}
+
+	v, err = db.ZRevScan(key, []byte("19"), 1, false, "")
+	if err != nil {
+		t.Fatal(err)
+	} else if len(v) != 1 {
+		t.Fatal("invalid count", len(v))
+	} else if string(v[0].Member) != "1234" {
+		t.Fatal(string(v[0].Member))
+	}
+
 }

@@ -9,12 +9,14 @@ import (
 	"strings"
 )
 
-func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, err error) {
+func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, desc bool, err error) {
 	cursor = args[0]
 
 	args = args[1:]
 
 	count = 10
+
+	desc = false
 
 	for i := 0; i < len(args); {
 		switch strings.ToUpper(hack.String(args[i])) {
@@ -25,7 +27,7 @@ func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, err e
 			}
 
 			match = hack.String(args[i+1])
-			i = i + 2
+			i++
 		case "COUNT":
 			if i+1 >= len(args) {
 				err = ErrCmdParams
@@ -37,17 +39,23 @@ func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, err e
 				return
 			}
 
-			i = i + 2
+			i++
+		case "ASC":
+			desc = false
+		case "DESC":
+			desc = true
 		default:
 			err = fmt.Errorf("invalid argument %s", args[i])
 			return
 		}
+
+		i++
 	}
 
 	return
 }
 
-// XSCAN type cursor [MATCH match] [COUNT count]
+// XSCAN type cursor [MATCH match] [COUNT count] [ASC|DESC]
 func xscanCommand(c *client) error {
 	args := c.args
 
@@ -71,13 +79,20 @@ func xscanCommand(c *client) error {
 		return fmt.Errorf("invalid key type %s", args[0])
 	}
 
-	cursor, match, count, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := parseScanArgs(args[1:])
 
 	if err != nil {
 		return err
 	}
 
-	ay, err := c.db.Scan(dataType, cursor, count, false, match)
+	var ay [][]byte
+
+	if !desc {
+		ay, err = c.db.Scan(dataType, cursor, count, false, match)
+	} else {
+		ay, err = c.db.RevScan(dataType, cursor, count, false, match)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -93,7 +108,7 @@ func xscanCommand(c *client) error {
 	return nil
 }
 
-// XHSCAN key cursor [MATCH match] [COUNT count]
+// XHSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 func xhscanCommand(c *client) error {
 	args := c.args
 
@@ -103,13 +118,20 @@ func xhscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := parseScanArgs(args[1:])
 
 	if err != nil {
 		return err
 	}
 
-	ay, err := c.db.HScan(key, cursor, count, false, match)
+	var ay []ledis.FVPair
+
+	if !desc {
+		ay, err = c.db.HScan(key, cursor, count, false, match)
+	} else {
+		ay, err = c.db.HRevScan(key, cursor, count, false, match)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -133,7 +155,7 @@ func xhscanCommand(c *client) error {
 	return nil
 }
 
-// XSSCAN key cursor [MATCH match] [COUNT count]
+// XSSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 func xsscanCommand(c *client) error {
 	args := c.args
 
@@ -143,13 +165,20 @@ func xsscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := parseScanArgs(args[1:])
 
 	if err != nil {
 		return err
 	}
 
-	ay, err := c.db.SScan(key, cursor, count, false, match)
+	var ay [][]byte
+
+	if !desc {
+		ay, err = c.db.SScan(key, cursor, count, false, match)
+	} else {
+		ay, err = c.db.SRevScan(key, cursor, count, false, match)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -167,7 +196,7 @@ func xsscanCommand(c *client) error {
 	return nil
 }
 
-// XZSCAN key cursor [MATCH match] [COUNT count]
+// XZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
 func xzscanCommand(c *client) error {
 	args := c.args
 
@@ -177,13 +206,20 @@ func xzscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := parseScanArgs(args[1:])
 
 	if err != nil {
 		return err
 	}
 
-	ay, err := c.db.ZScan(key, cursor, count, false, match)
+	var ay []ledis.ScorePair
+
+	if !desc {
+		ay, err = c.db.ZScan(key, cursor, count, false, match)
+	} else {
+		ay, err = c.db.ZRevScan(key, cursor, count, false, match)
+	}
+
 	if err != nil {
 		return err
 	}
