@@ -44,8 +44,9 @@ type App struct {
 	rcm sync.Mutex
 	rcs map[*respClient]struct{}
 
-	migrateM       sync.Mutex
-	migrateClients map[string]*goledis.Client
+	migrateM          sync.Mutex
+	migrateClients    map[string]*goledis.Client
+	migrateKeyLockers map[string]*migrateKeyLocker
 }
 
 func netType(s string) string {
@@ -76,6 +77,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	app.rcs = make(map[*respClient]struct{})
 
 	app.migrateClients = make(map[string]*goledis.Client)
+	app.newMigrateKeyLockers()
 
 	var err error
 

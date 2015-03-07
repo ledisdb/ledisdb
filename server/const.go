@@ -35,6 +35,14 @@ const (
 )
 
 const (
+	KVName   = ledis.KVName
+	ListName = ledis.ListName
+	HashName = ledis.HashName
+	SetName  = ledis.SetName
+	ZSetName = ledis.ZSetName
+)
+
+const (
 	GB uint64 = 1024 * 1024 * 1024
 	MB uint64 = 1024 * 1024
 	KB uint64 = 1024
