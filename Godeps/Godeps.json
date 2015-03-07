@@ -59,6 +59,10 @@
 			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
 		},
 		{
+			"ImportPath": "github.com/siddontang/rdb",
+			"Rev": "fc89ed2e418d27e3ea76e708e54276d2b44ae9cf"
+		},
+		{
 			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
 			"Rev": "e9e2c8f6d3b9c313fb4acaac5ab06285bcf30b04"
 		},

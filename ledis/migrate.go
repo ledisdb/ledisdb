@@ -2,7 +2,7 @@ package ledis
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/ledis/rdb"
+	"github.com/siddontang/rdb"
 )
 
 /*
@@ -43,7 +43,7 @@ func (db *DB) HDump(key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	o := make(rdb.HashMap, len(v))
+	o := make(rdb.Hash, len(v))
 	for i := 0; i < len(v); i++ {
 		o[i].Field = v[i].Field
 		o[i].Value = v[i].Value
@@ -110,7 +110,7 @@ func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 				return err
 			}
 		}
-	case rdb.HashMap:
+	case rdb.Hash:
 		//first clear old key
 		if _, err = db.HClear(key); err != nil {
 			return err
