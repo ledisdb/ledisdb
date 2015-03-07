@@ -125,4 +125,19 @@ func TestMigrate(t *testing.T) {
 		t.Fatal(s, "must empty")
 	}
 
+	if _, err = c1.Do("xmigrate", "127.0.0.1", 11186, "ALL", "a", 0, timeout); err != nil {
+		t.Fatal(err)
+	}
+
+	if s, err := ledis.String(c2.Do("get", "a")); err != nil {
+		t.Fatal(err)
+	} else if s != "1" {
+		t.Fatal(s, "must 1")
+	}
+
+	if s, err := ledis.String(c1.Do("get", "a")); err != nil && err != ledis.ErrNil {
+		t.Fatal(err)
+	} else if s != "" {
+		t.Fatal(s, "must empty")
+	}
 }

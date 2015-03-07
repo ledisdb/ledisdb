@@ -47,3 +47,5 @@ const (
 	MB uint64 = 1024 * 1024
 	KB uint64 = 1024
 )
+
+var TypeNames = []string{KVName, ListName, HashName, SetName, ZSetName}
