@@ -20,6 +20,12 @@ func TestZSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xkeyexists", "zset", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
@@ -27,6 +33,12 @@ func TestZSet(t *testing.T) {
 	}
 
 	if n, err := ledis.Int(c.Do("zkeyexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xkeyexists", "zset", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)

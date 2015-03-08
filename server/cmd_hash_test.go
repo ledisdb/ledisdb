@@ -18,12 +18,24 @@ func TestHash(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xkeyexists", "hash", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("hset", key, 1, 0)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 	if n, err := ledis.Int(c.Do("hkeyexists", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xkeyexists", "hash", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
