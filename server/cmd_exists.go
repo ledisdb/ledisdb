@@ -7,7 +7,7 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-func xkeyexists(db *ledis.DB, tp string, key []byte) (int64, error) {
+func xexists(db *ledis.DB, tp string, key []byte) (int64, error) {
 	switch strings.ToUpper(tp) {
 	case KVName:
 		return db.Exists(key)
@@ -24,14 +24,14 @@ func xkeyexists(db *ledis.DB, tp string, key []byte) (int64, error) {
 	}
 }
 
-func xkeyexistsCommand(c *client) error {
+func xexistsCommand(c *client) error {
 	args := c.args
 	if len(args) != 2 {
 		return ErrCmdParams
 	}
 	tp := strings.ToUpper(string(args[0]))
 	key := args[1]
-	if i, err := xkeyexists(c.db, tp, key); err != nil {
+	if i, err := xexists(c.db, tp, key); err != nil {
 		return err
 	} else {
 		c.resp.writeInteger(i)
@@ -40,5 +40,5 @@ func xkeyexistsCommand(c *client) error {
 }
 
 func init() {
-	register("xkeyexists", xkeyexistsCommand)
+	register("xexists", xexistsCommand)
 }

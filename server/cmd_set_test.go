@@ -18,7 +18,7 @@ func TestSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("xkeyexists", "set", key1)); err != nil {
+	if n, err := ledis.Int(c.Do("xexists", "set", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -36,7 +36,7 @@ func TestSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("xkeyexists", "set", key1)); err != nil {
+	if n, err := ledis.Int(c.Do("xexists", "set", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
