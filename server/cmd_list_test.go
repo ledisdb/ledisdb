@@ -64,6 +64,12 @@ func TestList(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xexists", "list", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("lpush", key, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
@@ -73,7 +79,12 @@ func TestList(t *testing.T) {
 	if n, err := ledis.Int(c.Do("lkeyexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
-		t.Fatal(1)
+		t.Fatal(n)
+	}
+	if n, err := ledis.Int(c.Do("xexists", "list", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
 	}
 
 	if n, err := ledis.Int(c.Do("rpush", key, 2)); err != nil {

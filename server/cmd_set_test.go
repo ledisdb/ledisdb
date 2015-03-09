@@ -18,6 +18,12 @@ func TestSet(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xexists", "set", key1)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("sadd", key1, 0, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
@@ -25,6 +31,12 @@ func TestSet(t *testing.T) {
 	}
 
 	if n, err := ledis.Int(c.Do("skeyexists", key1)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
+	if n, err := ledis.Int(c.Do("xexists", "set", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)

@@ -57,12 +57,23 @@ func TestKV(t *testing.T) {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xexists", "kv", "a")); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+
 	if n, err := ledis.Int(c.Do("exists", "empty_key_test")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
+	if n, err := ledis.Int(c.Do("xexists", "kv", "empty_key_test")); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
 	if _, err := ledis.Int(c.Do("del", "a", "b")); err != nil {
 		t.Fatal(err)
 	}
