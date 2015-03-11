@@ -16,11 +16,17 @@ all: build
 build:
 	$(GO) install -tags '$(GO_BUILD_TAGS)' ./...
 
+build_use_lmdb:
+	$(GO) install -tags '$(GO_BUILD_TAGS) lmdb' ./...	
+
 clean:
 	$(GO) clean -i ./...
 
 test:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./...
+
+test_use_lmdb:
+	$(GO) test --race -tags '$(GO_BUILD_TAGS) lmdb' ./...	
 
 test_ledis:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./ledis
