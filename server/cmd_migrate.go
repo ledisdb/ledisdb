@@ -9,7 +9,7 @@ import (
 
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
-	goledis "github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/ledis"
 )
 
@@ -224,14 +224,13 @@ func xdumpCommand(c *client) error {
 	return nil
 }
 
-func (app *App) getMigrateClient(addr string) *goledis.Client {
+func (app *App) getMigrateClient(addr string) *goredis.Client {
 	app.migrateM.Lock()
 
 	mc, ok := app.migrateClients[addr]
 	if !ok {
-		mc = goledis.NewClient(&goledis.Config{addr, 4, 0, 0})
+		mc = goredis.NewClient(addr, "")
 		app.migrateClients[addr] = mc
-
 	}
 
 	app.migrateM.Unlock()
@@ -448,7 +447,7 @@ func xmigrateCommand(c *client) error {
 	return nil
 }
 
-func getMigrateDBConn(c *client, addr string, db uint64) (*goledis.Conn, error) {
+func getMigrateDBConn(c *client, addr string, db uint64) (*goredis.PoolConn, error) {
 	mc := c.app.getMigrateClient(addr)
 
 	conn, err := mc.Get()
@@ -469,7 +468,7 @@ var (
 	errKeyInMigrating = errors.New("key is in migrating yet")
 )
 
-func migrateKey(c *client, conn *goledis.Conn, tp string, key []byte, timeout int64) error {
+func migrateKey(c *client, conn *goredis.PoolConn, tp string, key []byte, timeout int64) error {
 	if !c.app.migrateKeyLock(tp, key) {
 		// other may also migrate this key, skip it
 		return errKeyInMigrating
@@ -506,7 +505,7 @@ func migrateKey(c *client, conn *goledis.Conn, tp string, key []byte, timeout in
 	return nil
 }
 
-func migrateAllTypeKeys(c *client, conn *goledis.Conn, key []byte, timeout int64) error {
+func migrateAllTypeKeys(c *client, conn *goredis.PoolConn, key []byte, timeout int64) error {
 	for _, tp := range TypeNames {
 		err := migrateKey(c, conn, tp, key, timeout)
 		if err != nil {

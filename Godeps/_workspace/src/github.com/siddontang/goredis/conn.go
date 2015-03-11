@@ -1,4 +1,4 @@
-package ledis
+package goredis
 
 import (
 	"bufio"
@@ -16,9 +16,14 @@ type Error string
 
 func (err Error) Error() string { return string(err) }
 
-type Conn struct {
-	client *Client
+type sizeWriter int64
 
+func (s *sizeWriter) Write(p []byte) (int, error) {
+	*s += sizeWriter(len(p))
+	return len(p), nil
+}
+
+type Conn struct {
 	c  net.Conn
 	br *bufio.Reader
 	bw *bufio.Writer
@@ -29,10 +34,13 @@ type Conn struct {
 
 	// Scratch space for formatting integers and floats.
 	numScratch [40]byte
+
+	totalReadSize  sizeWriter
+	totalWriteSize sizeWriter
 }
 
 func Connect(addr string) (*Conn, error) {
-	return ConnectWithSize(addr, 4096, 4096)
+	return ConnectWithSize(addr, 1024, 1024)
 }
 
 func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
@@ -44,18 +52,22 @@ func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
 		return nil, err
 	}
 
-	c.br = bufio.NewReaderSize(c.c, readSize)
-	c.bw = bufio.NewWriterSize(c.c, writeSize)
+	c.br = bufio.NewReaderSize(io.TeeReader(c.c, &c.totalReadSize), readSize)
+	c.bw = bufio.NewWriterSize(io.MultiWriter(c.c, &c.totalWriteSize), writeSize)
 
 	return c, nil
 }
 
 func (c *Conn) Close() {
-	if c.client != nil {
-		c.client.put(c)
-	} else {
-		c.finalize()
-	}
+	c.c.Close()
+}
+
+func (c *Conn) GetTotalReadSize() int64 {
+	return int64(c.totalReadSize)
+}
+
+func (c *Conn) GetTotalWriteSize() int64 {
+	return int64(c.totalWriteSize)
 }
 
 func (c *Conn) SetReadDeadline(t time.Time) {
@@ -76,12 +88,12 @@ func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 
 func (c *Conn) Send(cmd string, args ...interface{}) error {
 	if err := c.writeCommand(cmd, args); err != nil {
-		c.finalize()
+		c.Close()
 		return err
 	}
 
 	if err := c.bw.Flush(); err != nil {
-		c.finalize()
+		c.Close()
 		return err
 	}
 	return nil
@@ -89,7 +101,7 @@ func (c *Conn) Send(cmd string, args ...interface{}) error {
 
 func (c *Conn) Receive() (interface{}, error) {
 	if reply, err := c.readReply(); err != nil {
-		c.finalize()
+		c.Close()
 		return nil, err
 	} else {
 		if e, ok := reply.(Error); ok {
@@ -104,14 +116,10 @@ func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 	err := c.readBulkReplyTo(w)
 	if err != nil {
 		if _, ok := err.(Error); !ok {
-			c.finalize()
+			c.Close()
 		}
 	}
 	return err
-}
-
-func (c *Conn) finalize() {
-	c.c.Close()
 }
 
 func (c *Conn) writeLen(prefix byte, n int) error {
@@ -191,14 +199,14 @@ func (c *Conn) writeCommand(cmd string, args []interface{}) (err error) {
 func (c *Conn) readLine() ([]byte, error) {
 	p, err := c.br.ReadSlice('\n')
 	if err == bufio.ErrBufferFull {
-		return nil, errors.New("ledis: long response line")
+		return nil, errors.New("long response line")
 	}
 	if err != nil {
 		return nil, err
 	}
 	i := len(p) - 2
 	if i < 0 || p[i] != '\r' {
-		return nil, errors.New("ledis: bad response line terminator")
+		return nil, errors.New("bad response line terminator")
 	}
 	return p[:i], nil
 }
@@ -206,7 +214,7 @@ func (c *Conn) readLine() ([]byte, error) {
 // parseLen parses bulk string and array lengths.
 func parseLen(p []byte) (int, error) {
 	if len(p) == 0 {
-		return -1, errors.New("ledis: malformed length")
+		return -1, errors.New("malformed length")
 	}
 
 	if p[0] == '-' && len(p) == 2 && p[1] == '1' {
@@ -218,7 +226,7 @@ func parseLen(p []byte) (int, error) {
 	for _, b := range p {
 		n *= 10
 		if b < '0' || b > '9' {
-			return -1, errors.New("ledis: illegal bytes in length")
+			return -1, errors.New("illegal bytes in length")
 		}
 		n += int(b - '0')
 	}
@@ -229,7 +237,7 @@ func parseLen(p []byte) (int, error) {
 // parseInt parses an integer reply.
 func parseInt(p []byte) (interface{}, error) {
 	if len(p) == 0 {
-		return 0, errors.New("ledis: malformed integer")
+		return 0, errors.New("malformed integer")
 	}
 
 	var negate bool
@@ -237,7 +245,7 @@ func parseInt(p []byte) (interface{}, error) {
 		negate = true
 		p = p[1:]
 		if len(p) == 0 {
-			return 0, errors.New("ledis: malformed integer")
+			return 0, errors.New("malformed integer")
 		}
 	}
 
@@ -245,7 +253,7 @@ func parseInt(p []byte) (interface{}, error) {
 	for _, b := range p {
 		n *= 10
 		if b < '0' || b > '9' {
-			return 0, errors.New("ledis: illegal bytes in length")
+			return 0, errors.New("illegal bytes in length")
 		}
 		n += int64(b - '0')
 	}
@@ -288,11 +296,11 @@ func (c *Conn) readBulkReplyTo(w io.Writer) error {
 		if line, err := c.readLine(); err != nil {
 			return err
 		} else if len(line) != 0 {
-			return errors.New("ledis: bad bulk string format")
+			return errors.New("bad bulk string format")
 		}
 		return nil
 	default:
-		return fmt.Errorf("ledis: not invalid bulk string type, but %c", line[0])
+		return fmt.Errorf("not invalid bulk string type, but %c", line[0])
 	}
 }
 
@@ -302,7 +310,7 @@ func (c *Conn) readReply() (interface{}, error) {
 		return nil, err
 	}
 	if len(line) == 0 {
-		return nil, errors.New("ledis: short response line")
+		return nil, errors.New("short response line")
 	}
 	switch line[0] {
 	case '+':
@@ -333,7 +341,7 @@ func (c *Conn) readReply() (interface{}, error) {
 		if line, err := c.readLine(); err != nil {
 			return nil, err
 		} else if len(line) != 0 {
-			return nil, errors.New("ledis: bad bulk string format")
+			return nil, errors.New("bad bulk string format")
 		}
 		return p, nil
 	case '*':
@@ -350,15 +358,22 @@ func (c *Conn) readReply() (interface{}, error) {
 		}
 		return r, nil
 	}
-	return nil, errors.New("ledis: unexpected response line")
+	return nil, errors.New("unexpected response line")
 }
 
-func (c *Client) newConn(addr string) (*Conn, error) {
-	co, err := ConnectWithSize(addr, c.cfg.ReadBufferSize, c.cfg.WriteBufferSize)
+func (c *Client) newConn(addr string, pass string) (*Conn, error) {
+	co, err := ConnectWithSize(addr, c.readBufferSize, c.writeBufferSize)
 	if err != nil {
 		return nil, err
 	}
-	co.client = c
+
+	if len(pass) > 0 {
+		_, err = co.Do("AUTH", pass)
+		if err != nil {
+			co.Close()
+			return nil, err
+		}
+	}
 
 	return co, nil
 }

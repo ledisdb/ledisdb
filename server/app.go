@@ -1,7 +1,7 @@
 package server
 
 import (
-	goledis "github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
 	"net"
@@ -45,7 +45,7 @@ type App struct {
 	rcs map[*respClient]struct{}
 
 	migrateM          sync.Mutex
-	migrateClients    map[string]*goledis.Client
+	migrateClients    map[string]*goredis.Client
 	migrateKeyLockers map[string]*migrateKeyLocker
 }
 
@@ -76,7 +76,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	app.rcs = make(map[*respClient]struct{})
 
-	app.migrateClients = make(map[string]*goledis.Client)
+	app.migrateClients = make(map[string]*goredis.Client)
 	app.newMigrateKeyLockers()
 
 	var err error

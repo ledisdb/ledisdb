@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"reflect"
 	"strconv"
 	"testing"
@@ -14,103 +14,103 @@ func TestZSet(t *testing.T) {
 
 	key := []byte("myzset")
 
-	if n, err := ledis.Int(c.Do("zkeyexists", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zkeyexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
+	if n, err := goredis.Int(c.Do("zadd", key, 3, "a", 4, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zkeyexists", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zkeyexists", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(n)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b")); err != nil {
+	if n, err := goredis.Int(c.Do("zadd", key, 1, "a", 2, "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(n)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zadd", key, 3, "c", 4, "d")); err != nil {
+	if n, err := goredis.Int(c.Do("zadd", key, 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if s, err := ledis.Int(c.Do("zscore", key, "c")); err != nil {
+	if s, err := goredis.Int(c.Do("zscore", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if s != 3 {
 		t.Fatal(s)
 	}
 
-	if n, err := ledis.Int(c.Do("zrem", key, "d", "e")); err != nil {
+	if n, err := goredis.Int(c.Do("zrem", key, "d", "e")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zincrby", key, 4, "c")); err != nil {
+	if n, err := goredis.Int(c.Do("zincrby", key, 4, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 7 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zincrby", key, -4, "c")); err != nil {
+	if n, err := goredis.Int(c.Do("zincrby", key, -4, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zincrby", key, 4, "d")); err != nil {
+	if n, err := goredis.Int(c.Do("zincrby", key, 4, "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zrem", key, "a", "b", "c", "d")); err != nil {
+	if n, err := goredis.Int(c.Do("zrem", key, "a", "b", "c", "d")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -123,47 +123,47 @@ func TestZSetCount(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
-	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := goredis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, 2, 4)); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, 2, 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, 4, 4)); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, 4, 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, 4, 3)); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, 4, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, "(2", 4)); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, "(2", 4)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, "2", "(4")); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, "2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcount", key, "-inf", "+inf")); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, "-inf", "+inf")); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
@@ -171,7 +171,7 @@ func TestZSetCount(t *testing.T) {
 
 	c.Do("zadd", key, 3, "e")
 
-	if n, err := ledis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
+	if n, err := goredis.Int(c.Do("zcount", key, "(2", "(4")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
@@ -185,27 +185,27 @@ func TestZSetRank(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset")
-	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := goredis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if n, err := ledis.Int(c.Do("zrank", key, "c")); err != nil {
+	if n, err := goredis.Int(c.Do("zrank", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if _, err := ledis.Int(c.Do("zrank", key, "e")); err != ledis.ErrNil {
+	if _, err := goredis.Int(c.Do("zrank", key, "e")); err != goredis.ErrNil {
 		t.Fatal(err)
 	}
 
-	if n, err := ledis.Int(c.Do("zrevrank", key, "c")); err != nil {
+	if n, err := goredis.Int(c.Do("zrevrank", key, "c")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if _, err := ledis.Int(c.Do("zrevrank", key, "e")); err != ledis.ErrNil {
+	if _, err := goredis.Int(c.Do("zrevrank", key, "e")); err != goredis.ErrNil {
 		t.Fatal(err)
 	}
 }
@@ -242,11 +242,11 @@ func TestZSetRangeScore(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset_range")
-	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := goredis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -254,7 +254,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrangebyscore", key, 1, 4, "withscores", "limit", 1, 2)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "c", 3); err != nil {
@@ -262,7 +262,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrangebyscore", key, "-inf", "+inf", "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -270,7 +270,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, "(1", "(4")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrangebyscore", key, "(1", "(4")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", "c"); err != nil {
@@ -278,7 +278,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -286,7 +286,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores", "limit", 1, 2)); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrangebyscore", key, 4, 1, "withscores", "limit", 1, 2)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", 3, "b", 2); err != nil {
@@ -294,7 +294,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "+inf", "-inf", "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrangebyscore", key, "+inf", "-inf", "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -302,7 +302,7 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrangebyscore", key, "(4", "(1")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrangebyscore", key, "(4", "(1")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", "b"); err != nil {
@@ -310,19 +310,19 @@ func TestZSetRangeScore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int(c.Do("zremrangebyscore", key, 2, 3)); err != nil {
+	if n, err := goredis.Int(c.Do("zremrangebyscore", key, 2, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrangebyscore", key, 1, 4)); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrangebyscore", key, 1, 4)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", "d"); err != nil {
@@ -336,11 +336,11 @@ func TestZSetRange(t *testing.T) {
 	defer c.Close()
 
 	key := []byte("myzset_range_rank")
-	if _, err := ledis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
+	if _, err := goredis.Int(c.Do("zadd", key, 1, "a", 2, "b", 3, "c", 4, "d")); err != nil {
 		t.Fatal(err)
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, 3, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, 0, 3, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -348,7 +348,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, 1, 4, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, 1, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "c", 3, "d", 4); err != nil {
@@ -356,7 +356,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, -2, -1, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, -2, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "c", 3, "d", 4); err != nil {
@@ -364,7 +364,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, -1, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, 0, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", 1, "b", 2, "c", 3, "d", 4); err != nil {
@@ -372,13 +372,13 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, -1, -2, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, -1, -2, "withscores")); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 0 {
 		t.Fatal(len(v))
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 0, 4, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrange", key, 0, 4, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -386,7 +386,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 0, -1, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrange", key, 0, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "d", 4, "c", 3, "b", 2, "a", 1); err != nil {
@@ -394,7 +394,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, 2, 3, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrange", key, 2, 3, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "a", 1); err != nil {
@@ -402,7 +402,7 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrevrange", key, -2, -1, "withscores")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrevrange", key, -2, -1, "withscores")); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "b", 2, "a", 1); err != nil {
@@ -410,19 +410,19 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int(c.Do("zremrangebyrank", key, 2, 3)); err != nil {
+	if n, err := goredis.Int(c.Do("zremrangebyrank", key, 2, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("zrange", key, 0, 4)); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("zrange", key, 0, 4)); err != nil {
 		t.Fatal(err)
 	} else {
 		if err := testZSetRange(v, "a", "b"); err != nil {
@@ -430,13 +430,13 @@ func TestZSetRange(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int(c.Do("zclear", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zclear", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("zcard", key)); err != nil {
+	if n, err := goredis.Int(c.Do("zcard", key)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
@@ -634,7 +634,7 @@ func TestZUnionStore(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
+	if n, err := goredis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 3 {
@@ -642,7 +642,7 @@ func TestZUnionStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2", "aggregate", "min")); err != nil {
+	if n, err := goredis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "weights", "1", "2", "aggregate", "min")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 3 {
@@ -650,7 +650,7 @@ func TestZUnionStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "aggregate", "max")); err != nil {
+	if n, err := goredis.Int64(c.Do("zunionstore", "out", "2", "k1", "k2", "aggregate", "max")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 3 {
@@ -658,7 +658,7 @@ func TestZUnionStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+	if n, err := goredis.Int64(c.Do("zscore", "out", "two")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 2 {
@@ -687,7 +687,7 @@ func TestZInterStore(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
+	if n, err := goredis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "weights", "1", "2")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 1 {
@@ -695,7 +695,7 @@ func TestZInterStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "min", "weights", "1", "2")); err != nil {
+	if n, err := goredis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "min", "weights", "1", "2")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 1 {
@@ -703,7 +703,7 @@ func TestZInterStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "sum")); err != nil {
+	if n, err := goredis.Int64(c.Do("zinterstore", "out", "2", "k1", "k2", "aggregate", "sum")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 1 {
@@ -711,7 +711,7 @@ func TestZInterStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+	if n, err := goredis.Int64(c.Do("zscore", "out", "two")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 3 {
@@ -723,7 +723,7 @@ func TestZInterStore(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if n, err := ledis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum")); err != nil {
+	if n, err := goredis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 0 {
@@ -735,7 +735,7 @@ func TestZInterStore(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if n, err := ledis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum", "weights", "3", "2", "2")); err != nil {
+	if n, err := goredis.Int64(c.Do("zinterstore", "out", "3", "k1", "k2", "k3", "aggregate", "sum", "weights", "3", "2", "2")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 1 {
@@ -743,7 +743,7 @@ func TestZInterStore(t *testing.T) {
 		}
 	}
 
-	if n, err := ledis.Int64(c.Do("zscore", "out", "two")); err != nil {
+	if n, err := goredis.Int64(c.Do("zscore", "out", "two")); err != nil {
 		t.Fatal(err.Error())
 	} else {
 		if n != 14 {
@@ -762,37 +762,37 @@ func TestZSetLex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "-", "[c")); err != nil {
+	if ay, err := goredis.Strings(c.Do("zrangebylex", key, "-", "[c")); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(ay, []string{"a", "b", "c"}) {
 		t.Fatal("must equal")
 	}
 
-	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "-", "(c")); err != nil {
+	if ay, err := goredis.Strings(c.Do("zrangebylex", key, "-", "(c")); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(ay, []string{"a", "b"}) {
 		t.Fatal("must equal")
 	}
 
-	if ay, err := ledis.Strings(c.Do("zrangebylex", key, "[aaa", "(g")); err != nil {
+	if ay, err := goredis.Strings(c.Do("zrangebylex", key, "[aaa", "(g")); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(ay, []string{"b", "c", "d", "e", "f"}) {
 		t.Fatal("must equal")
 	}
 
-	if n, err := ledis.Int64(c.Do("zlexcount", key, "-", "(c")); err != nil {
+	if n, err := goredis.Int64(c.Do("zlexcount", key, "-", "(c")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("zremrangebylex", key, "[aaa", "(g")); err != nil {
+	if n, err := goredis.Int64(c.Do("zremrangebylex", key, "[aaa", "(g")); err != nil {
 		t.Fatal(err)
 	} else if n != 5 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("zlexcount", key, "-", "+")); err != nil {
+	if n, err := goredis.Int64(c.Do("zlexcount", key, "-", "+")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)

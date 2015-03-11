@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	goledis "github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"testing"
 )
 
@@ -79,7 +79,7 @@ func TestSort(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if n, err := goledis.Int(c.Do("XLSORT", key, "STORE", storeKey)); err != nil {
+	if n, err := goredis.Int(c.Do("XLSORT", key, "STORE", storeKey)); err != nil {
 		t.Fatal(err)
 	} else if n != 3 {
 		t.Fatalf("invalid return store sort number, %d != 3", n)

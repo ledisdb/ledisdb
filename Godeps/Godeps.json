@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/siddontang/ledisdb",
-	"GoVersion": "go1.4",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
@@ -57,6 +57,10 @@
 		{
 			"ImportPath": "github.com/siddontang/go/sync2",
 			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
+		},
+		{
+			"ImportPath": "github.com/siddontang/goredis",
+			"Rev": "6d2857b0488d1e8b9f96b46802eacb68e29fb003"
 		},
 		{
 			"ImportPath": "github.com/siddontang/rdb",

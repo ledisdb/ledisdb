@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,16 +17,15 @@ var dbn = flag.Int("n", 0, "ledisdb database number(default 0)")
 func main() {
 	flag.Parse()
 
-	cfg := new(ledis.Config)
+	var addr string
 	if len(*socket) > 0 {
-		cfg.Addr = *socket
+		addr = *socket
 	} else {
-		cfg.Addr = fmt.Sprintf("%s:%d", *ip, *port)
+		addr = fmt.Sprintf("%s:%d", *ip, *port)
 	}
 
-	cfg.MaxIdleConns = 1
-
-	c := ledis.NewClient(cfg)
+	c := goredis.NewClient(addr, "")
+	c.SetMaxIdleConns(1)
 	sendSelect(c, *dbn)
 
 	SetCompletionHandler(completionHandler)
@@ -38,9 +37,9 @@ func main() {
 
 	for {
 		if *dbn > 0 && *dbn < 16 {
-			prompt = fmt.Sprintf("%s[%d]>", cfg.Addr, *dbn)
+			prompt = fmt.Sprintf("%s[%d]>", addr, *dbn)
 		} else {
-			prompt = fmt.Sprintf("%s>", cfg.Addr)
+			prompt = fmt.Sprintf("%s>", addr)
 		}
 
 		cmd, err := line(prompt)
@@ -102,7 +101,7 @@ func printReply(level int, reply interface{}) {
 		fmt.Printf("%q", reply)
 	case nil:
 		fmt.Printf("(nil)")
-	case ledis.Error:
+	case goredis.Error:
 		fmt.Printf("%s", string(reply))
 	case []interface{}:
 		for i, v := range reply {
@@ -154,7 +153,7 @@ func printHelp(cmds []string) {
 	}
 }
 
-func sendSelect(client *ledis.Client, index int) {
+func sendSelect(client *goredis.Client, index int) {
 	if index > 16 || index < 0 {
 		index = 0
 		fmt.Println("index out of range, should less than 16")

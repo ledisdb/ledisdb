@@ -1,4 +1,4 @@
-package ledis
+package goredis
 
 import (
 	"container/list"
@@ -7,17 +7,23 @@ import (
 	"sync"
 )
 
-type Config struct {
-	Addr            string
-	MaxIdleConns    int
-	ReadBufferSize  int
-	WriteBufferSize int
+type PoolConn struct {
+	*Conn
+	c *Client
+}
+
+func (c *PoolConn) Close() {
+	c.c.put(c.Conn)
 }
 
 type Client struct {
 	sync.Mutex
 
-	cfg *Config
+	addr            string
+	maxIdleConns    int
+	readBufferSize  int
+	writeBufferSize int
+	password        string
 
 	conns *list.List
 }
@@ -30,20 +36,34 @@ func getProto(addr string) string {
 	}
 }
 
-func NewClient(cfg *Config) *Client {
+func NewClient(addr string, password string) *Client {
 	c := new(Client)
 
-	c.cfg = cfg
-	if c.cfg.ReadBufferSize == 0 {
-		c.cfg.ReadBufferSize = 4096
-	}
-	if c.cfg.WriteBufferSize == 0 {
-		c.cfg.WriteBufferSize = 4096
-	}
+	c.addr = addr
+	c.maxIdleConns = 4
+	c.readBufferSize = 1024
+	c.writeBufferSize = 1024
+	c.password = password
 
 	c.conns = list.New()
 
 	return c
+}
+
+func (c *Client) SetPassword(pass string) {
+	c.password = pass
+}
+
+func (c *Client) SetReadBufferSize(s int) {
+	c.readBufferSize = s
+}
+
+func (c *Client) SetWriteBufferSize(s int) {
+	c.writeBufferSize = s
+}
+
+func (c *Client) SetMaxIdleConns(n int) {
+	c.maxIdleConns = n
 }
 
 func (c *Client) Do(cmd string, args ...interface{}) (interface{}, error) {
@@ -59,7 +79,7 @@ func (c *Client) Do(cmd string, args ...interface{}) (interface{}, error) {
 
 		r, err = co.Do(cmd, args...)
 		if err != nil {
-			co.finalize()
+			co.Close()
 
 			if e, ok := err.(*net.OpError); ok && strings.Contains(e.Error(), "use of closed network connection") {
 				//send to a closed connection, try again
@@ -86,36 +106,41 @@ func (c *Client) Close() {
 		co := e.Value.(*Conn)
 		c.conns.Remove(e)
 
-		co.finalize()
+		co.Close()
 	}
 }
 
-func (c *Client) Get() (*Conn, error) {
-	return c.get()
+func (c *Client) Get() (*PoolConn, error) {
+	co, err := c.get()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PoolConn{co, c}, err
 }
 
-func (c *Client) get() (*Conn, error) {
+func (c *Client) get() (co *Conn, err error) {
 	c.Lock()
 	if c.conns.Len() == 0 {
 		c.Unlock()
 
-		return c.newConn(c.cfg.Addr)
+		co, err = c.newConn(c.addr, c.password)
 	} else {
 		e := c.conns.Front()
-		co := e.Value.(*Conn)
+		co = e.Value.(*Conn)
 		c.conns.Remove(e)
 
 		c.Unlock()
-
-		return co, nil
 	}
+
+	return
 }
 
 func (c *Client) put(conn *Conn) {
 	c.Lock()
-	if c.conns.Len() >= c.cfg.MaxIdleConns {
+	if c.conns.Len() >= c.maxIdleConns {
 		c.Unlock()
-		conn.finalize()
+		conn.Close()
 	} else {
 		c.conns.PushFront(conn)
 		c.Unlock()

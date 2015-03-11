@@ -19,3 +19,5 @@ go get -u github.com/syndtr/goleveldb/leveldb
 go get -u github.com/cupcake/rdb
 
 go get -u github.com/siddontang/go
+go get -u github.com/siddontang/goredis
+go get -u github.com/siddontang/rdb

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"os"
 )
 
@@ -32,7 +32,7 @@ func main() {
 		addr = fmt.Sprintf("%s:%d", *host, *port)
 	}
 
-	c, err := ledis.ConnectWithSize(addr, 16*1024, 4096)
+	c, err := goredis.ConnectWithSize(addr, 16*1024, 4096)
 	if err != nil {
 		println(err.Error())
 		return

@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
@@ -42,8 +42,8 @@ func TestDumpRestore(t *testing.T) {
 	testDumpRestore(c, "zdump", "mtest_za", t)
 }
 
-func testDumpRestore(c *ledis.Conn, dump string, key string, t *testing.T) {
-	if data, err := ledis.Bytes(c.Do(dump, key)); err != nil {
+func testDumpRestore(c *goredis.PoolConn, dump string, key string, t *testing.T) {
+	if data, err := goredis.Bytes(c.Do(dump, key)); err != nil {
 		t.Fatal(err)
 	} else if _, err := c.Do("restore", key, 0, data); err != nil {
 		t.Fatal(err)
@@ -80,10 +80,10 @@ func TestMigrate(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	c1, _ := ledis.Connect(s1Cfg.Addr)
+	c1, _ := goredis.Connect(s1Cfg.Addr)
 	defer c1.Close()
 
-	c2, _ := ledis.Connect(s2Cfg.Addr)
+	c2, _ := goredis.Connect(s2Cfg.Addr)
 	defer c2.Close()
 
 	if _, err = c1.Do("set", "a", "1"); err != nil {
@@ -95,31 +95,31 @@ func TestMigrate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s, err := ledis.String(c2.Do("get", "a")); err != nil {
+	if s, err := goredis.String(c2.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if s != "1" {
 		t.Fatal(s, "must 1")
 	}
 
-	if s, err := ledis.String(c1.Do("get", "a")); err != nil && err != ledis.ErrNil {
+	if s, err := goredis.String(c1.Do("get", "a")); err != nil && err != goredis.ErrNil {
 		t.Fatal(err)
 	} else if s != "" {
 		t.Fatal(s, "must empty")
 	}
 
-	if num, err := ledis.Int(c2.Do("xmigratedb", "127.0.0.1", 11185, "KV", 10, 0, timeout)); err != nil {
+	if num, err := goredis.Int(c2.Do("xmigratedb", "127.0.0.1", 11185, "KV", 10, 0, timeout)); err != nil {
 		t.Fatal(err)
 	} else if num != 1 {
 		t.Fatal(num, "must number 1")
 	}
 
-	if s, err := ledis.String(c1.Do("get", "a")); err != nil {
+	if s, err := goredis.String(c1.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if s != "1" {
 		t.Fatal(s, "must 1")
 	}
 
-	if s, err := ledis.String(c2.Do("get", "a")); err != nil && err != ledis.ErrNil {
+	if s, err := goredis.String(c2.Do("get", "a")); err != nil && err != goredis.ErrNil {
 		t.Fatal(err)
 	} else if s != "" {
 		t.Fatal(s, "must empty")
@@ -129,13 +129,13 @@ func TestMigrate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s, err := ledis.String(c2.Do("get", "a")); err != nil {
+	if s, err := goredis.String(c2.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if s != "1" {
 		t.Fatal(s, "must 1")
 	}
 
-	if s, err := ledis.String(c1.Do("get", "a")); err != nil && err != ledis.ErrNil {
+	if s, err := goredis.String(c1.Do("get", "a")); err != nil && err != goredis.ErrNil {
 		t.Fatal(err)
 	} else if s != "" {
 		t.Fatal(s, "must empty")
