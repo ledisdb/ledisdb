@@ -1,3 +1,5 @@
+// +build linenoise
+
 package main
 
 import (

@@ -5,3 +5,4 @@ nohup.out
 build_config.mk
 var*
 *.log
+bin

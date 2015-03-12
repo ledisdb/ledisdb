@@ -1,3 +1,4 @@
+// +build linenoise
 
 #include "linenoiseCompletionCallbackHook.h"
 
