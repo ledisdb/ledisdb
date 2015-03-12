@@ -7,7 +7,7 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/go/sync2"
-	goledis "github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/rpl"
 	"net"
@@ -49,7 +49,7 @@ type master struct {
 	sync.Mutex
 
 	connLock sync.Mutex
-	conn     *goledis.Conn
+	conn     *goredis.Conn
 
 	app *App
 
@@ -108,7 +108,7 @@ func (m *master) checkConn() error {
 
 	var err error
 	if m.conn == nil {
-		m.conn, err = goledis.Connect(m.addr)
+		m.conn, err = goredis.Connect(m.addr)
 	} else {
 		if _, err = m.conn.Do("PING"); err != nil {
 			m.conn.Close()
@@ -227,7 +227,7 @@ func (m *master) replConf() error {
 		return err
 	}
 
-	if s, err := goledis.String(m.conn.Do("replconf", "listening-port", port)); err != nil {
+	if s, err := goredis.String(m.conn.Do("replconf", "listening-port", port)); err != nil {
 		return err
 	} else if strings.ToUpper(s) != "OK" {
 		return fmt.Errorf("not ok but %s", s)

@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	goledis "github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"reflect"
@@ -159,9 +159,9 @@ func TestReplication(t *testing.T) {
 }
 
 func checkTestRole(addr string, checkRoles []interface{}) error {
-	conn, _ := goledis.Connect(addr)
+	conn, _ := goredis.Connect(addr)
 	defer conn.Close()
-	roles, err := goledis.MultiBulk(conn.Do("ROLE"))
+	roles, err := goredis.MultiBulk(conn.Do("ROLE"))
 	if err != nil {
 		return err
 	} else if !reflect.DeepEqual(roles, checkRoles) {

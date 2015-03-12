@@ -40,7 +40,7 @@ func (d *decoder) Set(key, value []byte, expiry int64) {
 }
 
 func (d *decoder) StartHash(key []byte, length, expiry int64) {
-	d.initObject(HashMap(nil))
+	d.initObject(Hash(nil))
 }
 
 func (d *decoder) Hset(key, field, value []byte) {
@@ -50,7 +50,7 @@ func (d *decoder) Hset(key, field, value []byte) {
 	switch h := d.obj.(type) {
 	default:
 		d.err = fmt.Errorf("invalid object, not a hashmap")
-	case HashMap:
+	case Hash:
 		v := struct {
 			Field, Value []byte
 		}{
@@ -118,7 +118,7 @@ func (d *decoder) Zadd(key []byte, score float64, member []byte) {
 
 type String []byte
 type List [][]byte
-type HashMap []struct {
+type Hash []struct {
 	Field, Value []byte
 }
 type Set [][]byte

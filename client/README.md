@@ -1,1 +1,0 @@
-[Clients](https://github.com/siddontang/ledisdb/wiki/Clients)

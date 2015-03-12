@@ -15,7 +15,7 @@ func Dump(obj interface{}) ([]byte, error) {
 	case String:
 		e.EncodeType(rdb.TypeString)
 		e.EncodeString(v)
-	case HashMap:
+	case Hash:
 		e.EncodeType(rdb.TypeHash)
 		e.EncodeLength(uint32(len(v)))
 

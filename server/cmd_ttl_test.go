@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"testing"
 	"time"
 )
@@ -63,13 +63,13 @@ func TestExpire(t *testing.T) {
 		}
 		//	expire + ttl
 		exp := int64(10)
-		if n, err := ledis.Int(c.Do(expire, key, exp)); err != nil {
+		if n, err := goredis.Int(c.Do(expire, key, exp)); err != nil {
 			t.Fatal(err)
 		} else if n != 1 {
 			t.Fatal(n)
 		}
 
-		if ttl, err := ledis.Int64(c.Do(ttl, key)); err != nil {
+		if ttl, err := goredis.Int64(c.Do(ttl, key)); err != nil {
 			t.Fatal(err)
 		} else if ttl == -1 {
 			t.Fatal("no ttl")
@@ -77,13 +77,13 @@ func TestExpire(t *testing.T) {
 
 		//	expireat + ttl
 		tm := now() + 3
-		if n, err := ledis.Int(c.Do(expireat, key, tm)); err != nil {
+		if n, err := goredis.Int(c.Do(expireat, key, tm)); err != nil {
 			t.Fatal(err)
 		} else if n != 1 {
 			t.Fatal(n)
 		}
 
-		if ttl, err := ledis.Int64(c.Do(ttl, key)); err != nil {
+		if ttl, err := goredis.Int64(c.Do(ttl, key)); err != nil {
 			t.Fatal(err)
 		} else if ttl == -1 {
 			t.Fatal("no ttl")
@@ -92,31 +92,31 @@ func TestExpire(t *testing.T) {
 		kErr := "not_exist_ttl"
 
 		//	err - expire, expireat
-		if n, err := ledis.Int(c.Do(expire, kErr, tm)); err != nil || n != 0 {
+		if n, err := goredis.Int(c.Do(expire, kErr, tm)); err != nil || n != 0 {
 			t.Fatal(false)
 		}
 
-		if n, err := ledis.Int(c.Do(expireat, kErr, tm)); err != nil || n != 0 {
+		if n, err := goredis.Int(c.Do(expireat, kErr, tm)); err != nil || n != 0 {
 			t.Fatal(false)
 		}
 
-		if n, err := ledis.Int(c.Do(ttl, kErr)); err != nil || n != -1 {
+		if n, err := goredis.Int(c.Do(ttl, kErr)); err != nil || n != -1 {
 			t.Fatal(false)
 		}
 
-		if n, err := ledis.Int(c.Do(persist, key)); err != nil {
+		if n, err := goredis.Int(c.Do(persist, key)); err != nil {
 			t.Fatal(err)
 		} else if n != 1 {
 			t.Fatal(n)
 		}
 
-		if n, err := ledis.Int(c.Do(expire, key, 10)); err != nil {
+		if n, err := goredis.Int(c.Do(expire, key, 10)); err != nil {
 			t.Fatal(err)
 		} else if n != 1 {
 			t.Fatal(n)
 		}
 
-		if n, err := ledis.Int(c.Do(persist, key)); err != nil {
+		if n, err := goredis.Int(c.Do(persist, key)); err != nil {
 			t.Fatal(err)
 		} else if n != 1 {
 			t.Fatal(n)

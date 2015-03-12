@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
@@ -22,10 +22,8 @@ func TestScan(t *testing.T) {
 	go s.Run()
 	defer s.Close()
 
-	cc := new(ledis.Config)
-	cc.Addr = cfg.Addr
-	cc.MaxIdleConns = 1
-	c := ledis.NewClient(cc)
+	c := goredis.NewClient(cfg.Addr, "")
+	c.SetMaxIdleConns(1)
 	defer c.Close()
 
 	testKVScan(t, c)
@@ -37,7 +35,7 @@ func TestScan(t *testing.T) {
 }
 
 func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
-	a, err := ledis.Strings(ay, nil)
+	a, err := goredis.Strings(ay, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,8 +51,8 @@ func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
 	}
 }
 
-func checkScan(t *testing.T, c *ledis.Client, tp string) {
-	if ay, err := ledis.Values(c.Do("XSCAN", tp, "", "count", 5)); err != nil {
+func checkScan(t *testing.T, c *goredis.Client, tp string) {
+	if ay, err := goredis.Values(c.Do("XSCAN", tp, "", "count", 5)); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -64,7 +62,7 @@ func checkScan(t *testing.T, c *ledis.Client, tp string) {
 		checkScanValues(t, ay[1], 0, 1, 2, 3, 4)
 	}
 
-	if ay, err := ledis.Values(c.Do("XSCAN", tp, "4", "count", 6)); err != nil {
+	if ay, err := goredis.Values(c.Do("XSCAN", tp, "4", "count", 6)); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -76,7 +74,7 @@ func checkScan(t *testing.T, c *ledis.Client, tp string) {
 
 }
 
-func testKVScan(t *testing.T, c *ledis.Client) {
+func testKVScan(t *testing.T, c *goredis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("set", fmt.Sprintf("%d", i), []byte("value")); err != nil {
 			t.Fatal(err)
@@ -86,7 +84,7 @@ func testKVScan(t *testing.T, c *ledis.Client) {
 	checkScan(t, c, "KV")
 }
 
-func testHashKeyScan(t *testing.T, c *ledis.Client) {
+func testHashKeyScan(t *testing.T, c *goredis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("hset", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i), []byte("value")); err != nil {
 			t.Fatal(err)
@@ -96,7 +94,7 @@ func testHashKeyScan(t *testing.T, c *ledis.Client) {
 	checkScan(t, c, "HASH")
 }
 
-func testListKeyScan(t *testing.T, c *ledis.Client) {
+func testListKeyScan(t *testing.T, c *goredis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("lpush", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i)); err != nil {
 			t.Fatal(err)
@@ -106,7 +104,7 @@ func testListKeyScan(t *testing.T, c *ledis.Client) {
 	checkScan(t, c, "LIST")
 }
 
-func testZSetKeyScan(t *testing.T, c *ledis.Client) {
+func testZSetKeyScan(t *testing.T, c *goredis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("zadd", fmt.Sprintf("%d", i), i, []byte("value")); err != nil {
 			t.Fatal(err)
@@ -116,7 +114,7 @@ func testZSetKeyScan(t *testing.T, c *ledis.Client) {
 	checkScan(t, c, "ZSET")
 }
 
-func testSetKeyScan(t *testing.T, c *ledis.Client) {
+func testSetKeyScan(t *testing.T, c *goredis.Client) {
 	for i := 0; i < 10; i++ {
 		if _, err := c.Do("sadd", fmt.Sprintf("%d", i), fmt.Sprintf("%d", i)); err != nil {
 			t.Fatal(err)
@@ -133,7 +131,7 @@ func TestHashScan(t *testing.T) {
 	key := "scan_hash"
 	c.Do("HMSET", key, "a", 1, "b", 2)
 
-	if ay, err := ledis.Values(c.Do("XHSCAN", key, "")); err != nil {
+	if ay, err := goredis.Values(c.Do("XHSCAN", key, "")); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -149,7 +147,7 @@ func TestSetScan(t *testing.T) {
 	key := "scan_set"
 	c.Do("SADD", key, "a", "b")
 
-	if ay, err := ledis.Values(c.Do("XSSCAN", key, "")); err != nil {
+	if ay, err := goredis.Values(c.Do("XSSCAN", key, "")); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
@@ -166,7 +164,7 @@ func TestZSetScan(t *testing.T) {
 	key := "scan_zset"
 	c.Do("ZADD", key, 1, "a", 2, "b")
 
-	if ay, err := ledis.Values(c.Do("XZSCAN", key, "")); err != nil {
+	if ay, err := goredis.Values(c.Do("XZSCAN", key, "")); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))

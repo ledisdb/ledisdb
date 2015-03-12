@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"testing"
 )
 
@@ -12,91 +12,91 @@ func TestSet(t *testing.T) {
 	key1 := "testdb_cmd_set_1"
 	key2 := "testdb_cmd_set_2"
 
-	if n, err := ledis.Int(c.Do("skeyexists", key1)); err != nil {
+	if n, err := goredis.Int(c.Do("skeyexists", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sadd", key1, 0, 1)); err != nil {
+	if n, err := goredis.Int(c.Do("sadd", key1, 0, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("skeyexists", key1)); err != nil {
+	if n, err := goredis.Int(c.Do("skeyexists", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sadd", key2, 0, 1, 2, 3)); err != nil {
+	if n, err := goredis.Int(c.Do("sadd", key2, 0, 1, 2, 3)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("scard", key1)); err != nil {
+	if n, err := goredis.Int(c.Do("scard", key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.MultiBulk(c.Do("sdiff", key2, key1)); err != nil {
+	if n, err := goredis.MultiBulk(c.Do("sdiff", key2, key1)); err != nil {
 		t.Fatal(err)
 	} else if len(n) != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sdiffstore", []byte("cmd_set_em1"), key2, key1)); err != nil {
+	if n, err := goredis.Int(c.Do("sdiffstore", []byte("cmd_set_em1"), key2, key1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.MultiBulk(c.Do("sunion", key1, key2)); err != nil {
+	if n, err := goredis.MultiBulk(c.Do("sunion", key1, key2)); err != nil {
 		t.Fatal(err)
 	} else if len(n) != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sunionstore", []byte("cmd_set_em2"), key1, key2)); err != nil {
+	if n, err := goredis.Int(c.Do("sunionstore", []byte("cmd_set_em2"), key1, key2)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.MultiBulk(c.Do("sinter", key1, key2)); err != nil {
+	if n, err := goredis.MultiBulk(c.Do("sinter", key1, key2)); err != nil {
 		t.Fatal(err)
 	} else if len(n) != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sinterstore", []byte("cmd_set_em3"), key1, key2)); err != nil {
+	if n, err := goredis.Int(c.Do("sinterstore", []byte("cmd_set_em3"), key1, key2)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("srem", key1, 0, 1)); err != nil {
+	if n, err := goredis.Int(c.Do("srem", key1, 0, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sismember", key2, 0)); err != nil {
+	if n, err := goredis.Int(c.Do("sismember", key2, 0)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.MultiBulk(c.Do("smembers", key2)); err != nil {
+	if n, err := goredis.MultiBulk(c.Do("smembers", key2)); err != nil {
 		t.Fatal(err)
 	} else if len(n) != 4 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("sclear", key2)); err != nil {
+	if n, err := goredis.Int(c.Do("sclear", key2)); err != nil {
 		t.Fatal(err)
 	} else if n != 4 {
 		t.Fatal(n)
@@ -104,7 +104,7 @@ func TestSet(t *testing.T) {
 
 	c.Do("sadd", key1, 0)
 	c.Do("sadd", key2, 1)
-	if n, err := ledis.Int(c.Do("smclear", key1, key2)); err != nil {
+	if n, err := goredis.Int(c.Do("smclear", key1, key2)); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)

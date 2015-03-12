@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"math/rand"
 	"runtime"
 	"strings"
@@ -21,10 +21,10 @@ var valueSize = flag.Int("vsize", 100, "kv value size")
 var tests = flag.String("t", "set,get,randget,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel", "only run the comma separated list of tests")
 var wg sync.WaitGroup
 
-var client *ledis.Client
+var client *goredis.Client
 var loop int = 0
 
-func waitBench(c *ledis.Conn, cmd string, args ...interface{}) {
+func waitBench(c *goredis.PoolConn, cmd string, args ...interface{}) {
 	_, err := c.Do(strings.ToUpper(cmd), args...)
 	if err != nil {
 		fmt.Printf("do %s error %s\n", cmd, err.Error())
@@ -32,7 +32,7 @@ func waitBench(c *ledis.Conn, cmd string, args ...interface{}) {
 
 }
 
-func bench(cmd string, f func(c *ledis.Conn)) {
+func bench(cmd string, f func(c *goredis.PoolConn)) {
 	wg.Add(*clients)
 
 	t1 := time.Now()
@@ -66,7 +66,7 @@ var kvIncrBase int64 = 0
 var kvDelBase int64 = 0
 
 func benchSet() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		value := make([]byte, *valueSize)
 		n := atomic.AddInt64(&kvSetBase, 1)
 		waitBench(c, "SET", n, value)
@@ -76,7 +76,7 @@ func benchSet() {
 }
 
 func benchGet() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&kvGetBase, 1)
 		waitBench(c, "GET", n)
 	}
@@ -85,7 +85,7 @@ func benchGet() {
 }
 
 func benchRandGet() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := rand.Int() % *number
 		waitBench(c, "GET", n)
 	}
@@ -94,7 +94,7 @@ func benchRandGet() {
 }
 
 func benchDel() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&kvDelBase, 1)
 		waitBench(c, "DEL", n)
 	}
@@ -103,7 +103,7 @@ func benchDel() {
 }
 
 func benchPushList() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		value := make([]byte, 100)
 		waitBench(c, "RPUSH", "mytestlist", value)
 	}
@@ -112,7 +112,7 @@ func benchPushList() {
 }
 
 func benchRangeList10() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "LRANGE", "mytestlist", 0, 10)
 	}
 
@@ -120,7 +120,7 @@ func benchRangeList10() {
 }
 
 func benchRangeList50() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "LRANGE", "mytestlist", 0, 50)
 	}
 
@@ -128,7 +128,7 @@ func benchRangeList50() {
 }
 
 func benchRangeList100() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "LRANGE", "mytestlist", 0, 100)
 	}
 
@@ -136,7 +136,7 @@ func benchRangeList100() {
 }
 
 func benchPopList() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "LPOP", "mytestlist")
 	}
 
@@ -149,7 +149,7 @@ var hashGetBase int64 = 0
 var hashDelBase int64 = 0
 
 func benchHset() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		value := make([]byte, 100)
 
 		n := atomic.AddInt64(&hashSetBase, 1)
@@ -160,7 +160,7 @@ func benchHset() {
 }
 
 func benchHGet() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&hashGetBase, 1)
 		waitBench(c, "HGET", "myhashkey", n)
 	}
@@ -169,7 +169,7 @@ func benchHGet() {
 }
 
 func benchHRandGet() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := rand.Int() % *number
 		waitBench(c, "HGET", "myhashkey", n)
 	}
@@ -178,7 +178,7 @@ func benchHRandGet() {
 }
 
 func benchHDel() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&hashDelBase, 1)
 		waitBench(c, "HDEL", "myhashkey", n)
 	}
@@ -191,7 +191,7 @@ var zsetDelBase int64 = 0
 var zsetIncrBase int64 = 0
 
 func benchZAdd() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		member := make([]byte, 16)
 		n := atomic.AddInt64(&zsetAddBase, 1)
 		waitBench(c, "ZADD", "myzsetkey", n, member)
@@ -201,7 +201,7 @@ func benchZAdd() {
 }
 
 func benchZDel() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&zsetDelBase, 1)
 		waitBench(c, "ZREM", "myzsetkey", n)
 	}
@@ -210,7 +210,7 @@ func benchZDel() {
 }
 
 func benchZIncr() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		n := atomic.AddInt64(&zsetIncrBase, 1)
 		waitBench(c, "ZINCRBY", "myzsetkey", 1, n)
 	}
@@ -219,7 +219,7 @@ func benchZIncr() {
 }
 
 func benchZRangeByScore() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "ZRANGEBYSCORE", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
@@ -227,7 +227,7 @@ func benchZRangeByScore() {
 }
 
 func benchZRangeByRank() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "ZRANGE", "myzsetkey", 0, rand.Int()%100)
 	}
 
@@ -235,7 +235,7 @@ func benchZRangeByRank() {
 }
 
 func benchZRevRangeByScore() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "ZREVRANGEBYSCORE", "myzsetkey", 0, rand.Int(), "withscores", "limit", rand.Int()%100, 100)
 	}
 
@@ -243,7 +243,7 @@ func benchZRevRangeByScore() {
 }
 
 func benchZRevRangeByRank() {
-	f := func(c *ledis.Conn) {
+	f := func(c *goredis.PoolConn) {
 		waitBench(c, "ZREVRANGE", "myzsetkey", 0, rand.Int()%100)
 	}
 
@@ -269,12 +269,10 @@ func main() {
 
 	addr := fmt.Sprintf("%s:%d", *ip, *port)
 
-	cfg := new(ledis.Config)
-	cfg.Addr = addr
-	cfg.MaxIdleConns = *clients
-	cfg.ReadBufferSize = 10240
-	cfg.WriteBufferSize = 10240
-	client = ledis.NewClient(cfg)
+	client = goredis.NewClient(addr, "")
+	client.SetReadBufferSize(10240)
+	client.SetWriteBufferSize(10240)
+	client.SetMaxIdleConns(16)
 
 	for i := 0; i < *clients; i++ {
 		c, _ := client.Get()

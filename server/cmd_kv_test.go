@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/client/goledis"
+	"github.com/siddontang/goredis"
 	"testing"
 )
 
@@ -9,121 +9,121 @@ func TestKV(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
-	if ok, err := ledis.String(c.Do("set", "a", "1234")); err != nil {
+	if ok, err := goredis.String(c.Do("set", "a", "1234")); err != nil {
 		t.Fatal(err)
 	} else if ok != OK {
 		t.Fatal(ok)
 	}
 
-	if n, err := ledis.Int(c.Do("setnx", "a", "123")); err != nil {
+	if n, err := goredis.Int(c.Do("setnx", "a", "123")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("setnx", "b", "123")); err != nil {
+	if n, err := goredis.Int(c.Do("setnx", "b", "123")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if ok, err := ledis.String(c.Do("setex", "xx", 10, "hello world")); err != nil {
+	if ok, err := goredis.String(c.Do("setex", "xx", 10, "hello world")); err != nil {
 		t.Fatal(err)
 	} else if ok != OK {
 		t.Fatal(ok)
 	}
 
-	if v, err := ledis.String(c.Do("get", "a")); err != nil {
+	if v, err := goredis.String(c.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if v != "1234" {
 		t.Fatal(v)
 	}
 
-	if v, err := ledis.String(c.Do("getset", "a", "123")); err != nil {
+	if v, err := goredis.String(c.Do("getset", "a", "123")); err != nil {
 		t.Fatal(err)
 	} else if v != "1234" {
 		t.Fatal(v)
 	}
 
-	if v, err := ledis.String(c.Do("get", "a")); err != nil {
+	if v, err := goredis.String(c.Do("get", "a")); err != nil {
 		t.Fatal(err)
 	} else if v != "123" {
 		t.Fatal(v)
 	}
 
-	if n, err := ledis.Int(c.Do("exists", "a")); err != nil {
+	if n, err := goredis.Int(c.Do("exists", "a")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("exists", "empty_key_test")); err != nil {
+	if n, err := goredis.Int(c.Do("exists", "empty_key_test")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if _, err := ledis.Int(c.Do("del", "a", "b")); err != nil {
+	if _, err := goredis.Int(c.Do("del", "a", "b")); err != nil {
 		t.Fatal(err)
 	}
 
-	if n, err := ledis.Int(c.Do("exists", "a")); err != nil {
+	if n, err := goredis.Int(c.Do("exists", "a")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("exists", "b")); err != nil {
+	if n, err := goredis.Int(c.Do("exists", "b")); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
 	rangeKey := "range_key"
-	if n, err := ledis.Int(c.Do("append", rangeKey, "Hello ")); err != nil {
+	if n, err := goredis.Int(c.Do("append", rangeKey, "Hello ")); err != nil {
 		t.Fatal(err)
 	} else if n != 6 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("setrange", rangeKey, 6, "Redis")); err != nil {
+	if n, err := goredis.Int(c.Do("setrange", rangeKey, 6, "Redis")); err != nil {
 		t.Fatal(err)
 	} else if n != 11 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("strlen", rangeKey)); err != nil {
+	if n, err := goredis.Int(c.Do("strlen", rangeKey)); err != nil {
 		t.Fatal(err)
 	} else if n != 11 {
 		t.Fatal(n)
 	}
 
-	if v, err := ledis.String(c.Do("getrange", rangeKey, 0, -1)); err != nil {
+	if v, err := goredis.String(c.Do("getrange", rangeKey, 0, -1)); err != nil {
 		t.Fatal(err)
 	} else if v != "Hello Redis" {
 		t.Fatal(v)
 	}
 
 	bitKey := "bit_key"
-	if n, err := ledis.Int(c.Do("setbit", bitKey, 7, 1)); err != nil {
+	if n, err := goredis.Int(c.Do("setbit", bitKey, 7, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 0 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("getbit", bitKey, 7)); err != nil {
+	if n, err := goredis.Int(c.Do("getbit", bitKey, 7)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("bitcount", bitKey)); err != nil {
+	if n, err := goredis.Int(c.Do("bitcount", bitKey)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int(c.Do("bitpos", bitKey, 1)); err != nil {
+	if n, err := goredis.Int(c.Do("bitpos", bitKey, 1)); err != nil {
 		t.Fatal(err)
 	} else if n != 7 {
 		t.Fatal(n)
@@ -132,13 +132,13 @@ func TestKV(t *testing.T) {
 	c.Do("set", "key1", "foobar")
 	c.Do("set", "key2", "abcdef")
 
-	if n, err := ledis.Int(c.Do("bitop", "and", "bit_dest_key", "key1", "key2")); err != nil {
+	if n, err := goredis.Int(c.Do("bitop", "and", "bit_dest_key", "key1", "key2")); err != nil {
 		t.Fatal(err)
 	} else if n != 6 {
 		t.Fatal(n)
 	}
 
-	if v, err := ledis.String(c.Do("get", "bit_dest_key")); err != nil {
+	if v, err := goredis.String(c.Do("get", "bit_dest_key")); err != nil {
 		t.Fatal(err)
 	} else if v != "`bc`ab" {
 		t.Fatal(v)
@@ -150,13 +150,13 @@ func TestKVM(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
-	if ok, err := ledis.String(c.Do("mset", "a", "1", "b", "2")); err != nil {
+	if ok, err := goredis.String(c.Do("mset", "a", "1", "b", "2")); err != nil {
 		t.Fatal(err)
 	} else if ok != OK {
 		t.Fatal(ok)
 	}
 
-	if v, err := ledis.MultiBulk(c.Do("mget", "a", "b", "c")); err != nil {
+	if v, err := goredis.MultiBulk(c.Do("mget", "a", "b", "c")); err != nil {
 		t.Fatal(err)
 	} else if len(v) != 3 {
 		t.Fatal(len(v))
@@ -179,31 +179,31 @@ func TestKVIncrDecr(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
-	if n, err := ledis.Int64(c.Do("incr", "n")); err != nil {
+	if n, err := goredis.Int64(c.Do("incr", "n")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("incr", "n")); err != nil {
+	if n, err := goredis.Int64(c.Do("incr", "n")); err != nil {
 		t.Fatal(err)
 	} else if n != 2 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("decr", "n")); err != nil {
+	if n, err := goredis.Int64(c.Do("decr", "n")); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("incrby", "n", 10)); err != nil {
+	if n, err := goredis.Int64(c.Do("incrby", "n", 10)); err != nil {
 		t.Fatal(err)
 	} else if n != 11 {
 		t.Fatal(n)
 	}
 
-	if n, err := ledis.Int64(c.Do("decrby", "n", 10)); err != nil {
+	if n, err := goredis.Int64(c.Do("decrby", "n", 10)); err != nil {
 		t.Fatal(err)
 	} else if n != 1 {
 		t.Fatal(n)

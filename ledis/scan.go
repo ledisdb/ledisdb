@@ -61,42 +61,17 @@ func buildMatchRegexp(match string) (*regexp.Regexp, error) {
 	return r, nil
 }
 
-func (db *DB) scanGeneric(storeDataType byte, key []byte, count int,
-	inclusive bool, match string, reverse bool) ([][]byte, error) {
-	var minKey, maxKey []byte
-	r, err := buildMatchRegexp(match)
-	if err != nil {
-		return nil, err
-	}
-
+func (db *DB) buildScanIterator(minKey []byte, maxKey []byte, inclusive bool, reverse bool) *store.RangeLimitIterator {
 	tp := store.RangeOpen
 
 	if !reverse {
-		if minKey, err = db.encodeScanMinKey(storeDataType, key); err != nil {
-			return nil, err
-		}
-		if maxKey, err = db.encodeScanMaxKey(storeDataType, nil); err != nil {
-			return nil, err
-		}
-
 		if inclusive {
 			tp = store.RangeROpen
 		}
 	} else {
-		if minKey, err = db.encodeScanMinKey(storeDataType, nil); err != nil {
-			return nil, err
-		}
-		if maxKey, err = db.encodeScanMaxKey(storeDataType, key); err != nil {
-			return nil, err
-		}
-
 		if inclusive {
 			tp = store.RangeLOpen
 		}
-	}
-
-	if count <= 0 {
-		count = defaultScanCount
 	}
 
 	var it *store.RangeLimitIterator
@@ -105,6 +80,53 @@ func (db *DB) scanGeneric(storeDataType byte, key []byte, count int,
 	} else {
 		it = db.bucket.RevRangeIterator(minKey, maxKey, tp)
 	}
+
+	return it
+}
+
+func (db *DB) buildScanKeyRange(storeDataType byte, key []byte, reverse bool) (minKey []byte, maxKey []byte, err error) {
+	if !reverse {
+		if minKey, err = db.encodeScanMinKey(storeDataType, key); err != nil {
+			return
+		}
+		if maxKey, err = db.encodeScanMaxKey(storeDataType, nil); err != nil {
+			return
+		}
+	} else {
+		if minKey, err = db.encodeScanMinKey(storeDataType, nil); err != nil {
+			return
+		}
+		if maxKey, err = db.encodeScanMaxKey(storeDataType, key); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func checkScanCount(count int) int {
+	if count <= 0 {
+		count = defaultScanCount
+	}
+
+	return count
+}
+
+func (db *DB) scanGeneric(storeDataType byte, key []byte, count int,
+	inclusive bool, match string, reverse bool) ([][]byte, error) {
+
+	r, err := buildMatchRegexp(match)
+	if err != nil {
+		return nil, err
+	}
+
+	minKey, maxKey, err := db.buildScanKeyRange(storeDataType, key, reverse)
+	if err != nil {
+		return nil, err
+	}
+
+	count = checkScanCount(count)
+
+	it := db.buildScanIterator(minKey, maxKey, inclusive, reverse)
 
 	v := make([][]byte, 0, count)
 
@@ -123,22 +145,11 @@ func (db *DB) scanGeneric(storeDataType byte, key []byte, count int,
 }
 
 func (db *DB) encodeScanMinKey(storeDataType byte, key []byte) ([]byte, error) {
-	if len(key) == 0 {
-		return db.encodeScanKey(storeDataType, nil)
-	} else {
-		if err := checkKeySize(key); err != nil {
-			return nil, err
-		}
-		return db.encodeScanKey(storeDataType, key)
-	}
+	return db.encodeScanKey(storeDataType, key)
 }
 
 func (db *DB) encodeScanMaxKey(storeDataType byte, key []byte) ([]byte, error) {
 	if len(key) > 0 {
-		if err := checkKeySize(key); err != nil {
-			return nil, err
-		}
-
 		return db.encodeScanKey(storeDataType, key)
 	}
 
@@ -162,12 +173,11 @@ func (db *DB) encodeScanKey(storeDataType byte, key []byte) ([]byte, error) {
 		return db.zEncodeSizeKey(key), nil
 	case SSizeType:
 		return db.sEncodeSizeKey(key), nil
-	// case BitMetaType:
-	// 	return db.bEncodeMetaKey(key), nil
 	default:
 		return nil, errDataType
 	}
 }
+
 func (db *DB) decodeScanKey(storeDataType byte, ek []byte) ([]byte, error) {
 	if len(ek) < 2 || ek[0] != db.index || ek[1] != storeDataType {
 		return nil, errMetaKey
@@ -177,33 +187,89 @@ func (db *DB) decodeScanKey(storeDataType byte, ek []byte) ([]byte, error) {
 
 // for specail data scan
 
-func (db *DB) buildDataScanIterator(start []byte, stop []byte, inclusive bool) *store.RangeLimitIterator {
-	tp := store.RangeROpen
-
-	if !inclusive {
-		tp = store.RangeOpen
+func (db *DB) buildDataScanKeyRange(storeDataType byte, key []byte, cursor []byte, reverse bool) (minKey []byte, maxKey []byte, err error) {
+	if !reverse {
+		if minKey, err = db.encodeDataScanMinKey(storeDataType, key, cursor); err != nil {
+			return
+		}
+		if maxKey, err = db.encodeDataScanMaxKey(storeDataType, key, nil); err != nil {
+			return
+		}
+	} else {
+		if minKey, err = db.encodeDataScanMinKey(storeDataType, key, nil); err != nil {
+			return
+		}
+		if maxKey, err = db.encodeDataScanMaxKey(storeDataType, key, cursor); err != nil {
+			return
+		}
 	}
-	it := db.bucket.RangeIterator(start, stop, tp)
-	return it
-
+	return
 }
 
-func (db *DB) HScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]FVPair, error) {
+func (db *DB) encodeDataScanMinKey(storeDataType byte, key []byte, cursor []byte) ([]byte, error) {
+	return db.encodeDataScanKey(storeDataType, key, cursor)
+}
+
+func (db *DB) encodeDataScanMaxKey(storeDataType byte, key []byte, cursor []byte) ([]byte, error) {
+	if len(cursor) > 0 {
+		return db.encodeDataScanKey(storeDataType, key, cursor)
+	}
+
+	k, err := db.encodeDataScanKey(storeDataType, key, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// here, the last byte is the start seperator, set it to stop seperator
+	k[len(k)-1] = k[len(k)-1] + 1
+	return k, nil
+}
+
+func (db *DB) encodeDataScanKey(storeDataType byte, key []byte, cursor []byte) ([]byte, error) {
+	switch storeDataType {
+	case HashType:
+		return db.hEncodeHashKey(key, cursor), nil
+	case ZSetType:
+		return db.zEncodeSetKey(key, cursor), nil
+	case SetType:
+		return db.sEncodeSetKey(key, cursor), nil
+	default:
+		return nil, errDataType
+	}
+}
+
+func (db *DB) buildDataScanIterator(storeDataType byte, key []byte, cursor []byte, count int,
+	inclusive bool, reverse bool) (*store.RangeLimitIterator, error) {
+
 	if err := checkKeySize(key); err != nil {
 		return nil, err
 	}
 
-	start := db.hEncodeHashKey(key, cursor)
-	stop := db.hEncodeStopKey(key)
+	minKey, maxKey, err := db.buildDataScanKeyRange(storeDataType, key, cursor, reverse)
+	if err != nil {
+		return nil, err
+	}
 
-	v := make([]FVPair, 0, 16)
+	it := db.buildScanIterator(minKey, maxKey, inclusive, reverse)
+
+	return it, nil
+}
+
+func (db *DB) hScanGeneric(key []byte, cursor []byte, count int, inclusive bool, match string, reverse bool) ([]FVPair, error) {
+	count = checkScanCount(count)
 
 	r, err := buildMatchRegexp(match)
 	if err != nil {
 		return nil, err
 	}
 
-	it := db.buildDataScanIterator(start, stop, inclusive)
+	v := make([]FVPair, 0, count)
+
+	it, err := db.buildDataScanIterator(HashType, key, cursor, count, inclusive, reverse)
+	if err != nil {
+		return nil, err
+	}
+
 	defer it.Close()
 
 	for i := 0; it.Valid() && i < count; it.Next() {
@@ -222,22 +288,29 @@ func (db *DB) HScan(key []byte, cursor []byte, count int, inclusive bool, match 
 	return v, nil
 }
 
-func (db *DB) SScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
-	if err := checkKeySize(key); err != nil {
-		return nil, err
-	}
+func (db *DB) HScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]FVPair, error) {
+	return db.hScanGeneric(key, cursor, count, inclusive, match, false)
+}
 
-	start := db.sEncodeSetKey(key, cursor)
-	stop := db.sEncodeStopKey(key)
+func (db *DB) HRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]FVPair, error) {
+	return db.hScanGeneric(key, cursor, count, inclusive, match, true)
+}
 
-	v := make([][]byte, 0, 16)
+func (db *DB) sScanGeneric(key []byte, cursor []byte, count int, inclusive bool, match string, reverse bool) ([][]byte, error) {
+	count = checkScanCount(count)
 
 	r, err := buildMatchRegexp(match)
 	if err != nil {
 		return nil, err
 	}
 
-	it := db.buildDataScanIterator(start, stop, inclusive)
+	v := make([][]byte, 0, count)
+
+	it, err := db.buildDataScanIterator(SetType, key, cursor, count, inclusive, reverse)
+	if err != nil {
+		return nil, err
+	}
+
 	defer it.Close()
 
 	for i := 0; it.Valid() && i < count; it.Next() {
@@ -256,22 +329,29 @@ func (db *DB) SScan(key []byte, cursor []byte, count int, inclusive bool, match 
 	return v, nil
 }
 
-func (db *DB) ZScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]ScorePair, error) {
-	if err := checkKeySize(key); err != nil {
-		return nil, err
-	}
+func (db *DB) SScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.sScanGeneric(key, cursor, count, inclusive, match, false)
+}
 
-	start := db.zEncodeSetKey(key, cursor)
-	stop := db.zEncodeStopSetKey(key)
+func (db *DB) SRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
+	return db.sScanGeneric(key, cursor, count, inclusive, match, true)
+}
 
-	v := make([]ScorePair, 0, 16)
+func (db *DB) zScanGeneric(key []byte, cursor []byte, count int, inclusive bool, match string, reverse bool) ([]ScorePair, error) {
+	count = checkScanCount(count)
 
 	r, err := buildMatchRegexp(match)
 	if err != nil {
 		return nil, err
 	}
 
-	it := db.buildDataScanIterator(start, stop, inclusive)
+	v := make([]ScorePair, 0, count)
+
+	it, err := db.buildDataScanIterator(ZSetType, key, cursor, count, inclusive, reverse)
+	if err != nil {
+		return nil, err
+	}
+
 	defer it.Close()
 
 	for i := 0; it.Valid() && i < count; it.Next() {
@@ -293,4 +373,12 @@ func (db *DB) ZScan(key []byte, cursor []byte, count int, inclusive bool, match 
 	}
 
 	return v, nil
+}
+
+func (db *DB) ZScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]ScorePair, error) {
+	return db.zScanGeneric(key, cursor, count, inclusive, match, false)
+}
+
+func (db *DB) ZRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]ScorePair, error) {
+	return db.zScanGeneric(key, cursor, count, inclusive, match, true)
 }
