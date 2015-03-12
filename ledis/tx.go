@@ -3,6 +3,7 @@ package ledis
 import (
 	"errors"
 	"fmt"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/store"
 )
 
@@ -26,6 +27,8 @@ func (db *DB) IsTransaction() bool {
 // Begin a transaction, it will block all other write operations before calling Commit or Rollback.
 // You must be very careful to prevent long-time transaction.
 func (db *DB) Begin() (*Tx, error) {
+	log.Warn("Transaction support will be removed later, use your own risk!!!")
+
 	if db.IsTransaction() {
 		return nil, ErrNestTx
 	}
