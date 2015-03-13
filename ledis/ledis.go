@@ -131,6 +131,8 @@ func (l *Ledis) flushAll() error {
 	it := l.ldb.NewIterator()
 	defer it.Close()
 
+	it.SeekToFirst()
+
 	w := l.ldb.NewWriteBatch()
 	defer w.Rollback()
 
