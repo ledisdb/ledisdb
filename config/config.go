@@ -215,8 +215,8 @@ func (cfg *Config) adjust() {
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
 	cfg.Databases = getDefault(0, cfg.Databases)
-	if cfg.Databases > 256 {
-		cfg.Databases = 256
+	if cfg.Databases > 16 {
+		cfg.Databases = 16
 	}
 }
 

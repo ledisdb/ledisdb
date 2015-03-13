@@ -11,7 +11,7 @@ data_dir = "/tmp/ledis_server"
 
 # Set the number of databases. You can use `select dbindex` to choose a db.
 # dbindex must be in [0, databases - 1].
-# Maximum databases is 256. 
+# Maximum databases is 16 now. 
 databases = 16
 
 # Log server command, set empty to disable
