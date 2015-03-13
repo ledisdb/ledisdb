@@ -14,7 +14,7 @@ LedisDB now supports multiple different databases as backends.
 + Rich data structure: KV, List, Hash, ZSet, Set.
 + Data storage is not limited by RAM.
 + Various backends supported: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, RAM.
-+ Supports transactions using LMDB or BotlDB.
++ Supports transactions using LMDB or BoltDB.
 + Supports Lua scripting.
 + Supports expiration and TTL.
 + Can be managed via redis-cli.

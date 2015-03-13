@@ -45,8 +45,8 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 	if cfg.Databases == 0 {
 		cfg.Databases = 16
-	} else if cfg.Databases > 256 {
-		cfg.Databases = 256
+	} else if cfg.Databases > 16 {
+		cfg.Databases = 16
 	}
 
 	os.MkdirAll(cfg.DataDir, 0755)
@@ -130,6 +130,8 @@ func (l *Ledis) FlushAll() error {
 func (l *Ledis) flushAll() error {
 	it := l.ldb.NewIterator()
 	defer it.Close()
+
+	it.SeekToFirst()
 
 	w := l.ldb.NewWriteBatch()
 	defer w.Rollback()
