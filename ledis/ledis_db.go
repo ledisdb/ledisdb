@@ -69,7 +69,7 @@ func (l *Ledis) newDB(index uint8) *DB {
 }
 
 func (db *DB) newBatch() *batch {
-	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock}, nil)
+	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock})
 }
 
 func (db *DB) Index() int {

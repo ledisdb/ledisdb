@@ -105,10 +105,10 @@ func (c *respClient) run() {
 
 		c.conn.Close()
 
-		if c.tx != nil {
-			c.tx.Rollback()
-			c.tx = nil
-		}
+		// if c.tx != nil {
+		// 	c.tx.Rollback()
+		// 	c.tx = nil
+		// }
 
 		c.app.removeSlave(c.client, c.activeQuit)
 

@@ -14,7 +14,6 @@ LedisDB now supports multiple different databases as backends.
 + Rich data structure: KV, List, Hash, ZSet, Set.
 + Data storage is not limited by RAM.
 + Various backends supported: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, RAM.
-+ Supports transactions using LMDB or BoltDB.
 + Supports Lua scripting.
 + Supports expiration and TTL.
 + Can be managed via redis-cli.
@@ -176,7 +175,6 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 ## Caveat
 
 + Changing the backend database at runtime is very dangerous. Data validation is not guaranteed if this is done.
-+ Beginning a transaction will block any other write operators until `commit` or `rollback` is called. Avoid long-running transactions.
 + `pcall` and `xpcall` are not supported in Lua. See the README in [golua](https://github.com/aarzilli/golua).
 
 

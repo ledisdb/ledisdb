@@ -2,38 +2,38 @@ package server
 
 import (
 	"bytes"
-	"fmt"
+	//	"fmt"
 	"github.com/siddontang/go/sync2"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"time"
 )
 
-var txUnsupportedCmds = map[string]struct{}{
-	"select":     struct{}{},
-	"slaveof":    struct{}{},
-	"fullsync":   struct{}{},
-	"sync":       struct{}{},
-	"begin":      struct{}{},
-	"flushall":   struct{}{},
-	"flushdb":    struct{}{},
-	"eval":       struct{}{},
-	"xmigrate":   struct{}{},
-	"xmigratedb": struct{}{},
-}
+// var txUnsupportedCmds = map[string]struct{}{
+// 	"select":     struct{}{},
+// 	"slaveof":    struct{}{},
+// 	"fullsync":   struct{}{},
+// 	"sync":       struct{}{},
+// 	"begin":      struct{}{},
+// 	"flushall":   struct{}{},
+// 	"flushdb":    struct{}{},
+// 	"eval":       struct{}{},
+// 	"xmigrate":   struct{}{},
+// 	"xmigratedb": struct{}{},
+// }
 
-var scriptUnsupportedCmds = map[string]struct{}{
-	"slaveof":    struct{}{},
-	"fullsync":   struct{}{},
-	"sync":       struct{}{},
-	"begin":      struct{}{},
-	"commit":     struct{}{},
-	"rollback":   struct{}{},
-	"flushall":   struct{}{},
-	"flushdb":    struct{}{},
-	"xmigrate":   struct{}{},
-	"xmigratedb": struct{}{},
-}
+// var scriptUnsupportedCmds = map[string]struct{}{
+// 	"slaveof":    struct{}{},
+// 	"fullsync":   struct{}{},
+// 	"sync":       struct{}{},
+// 	"begin":      struct{}{},
+// 	"commit":     struct{}{},
+// 	"rollback":   struct{}{},
+// 	"flushall":   struct{}{},
+// 	"flushdb":    struct{}{},
+// 	"xmigrate":   struct{}{},
+// 	"xmigratedb": struct{}{},
+// }
 
 type responseWriter interface {
 	writeError(error)
@@ -73,9 +73,9 @@ type client struct {
 
 	buf bytes.Buffer
 
-	tx *ledis.Tx
+	// tx *ledis.Tx
 
-	script *ledis.Multi
+	// script *ledis.Multi
 
 	slaveListeningAddr string
 }
@@ -104,19 +104,22 @@ func (c *client) perform() {
 	} else if exeCmd, ok := regCmds[c.cmd]; !ok {
 		err = ErrNotFound
 	} else {
-		if c.db.IsTransaction() {
-			if _, ok := txUnsupportedCmds[c.cmd]; ok {
-				err = fmt.Errorf("%s not supported in transaction", c.cmd)
-			}
-		} else if c.db.IsInMulti() {
-			if _, ok := scriptUnsupportedCmds[c.cmd]; ok {
-				err = fmt.Errorf("%s not supported in multi", c.cmd)
-			}
-		}
+		// if c.db.IsTransaction() {
+		// 	if _, ok := txUnsupportedCmds[c.cmd]; ok {
+		// 		err = fmt.Errorf("%s not supported in transaction", c.cmd)
+		// 	}
+		// } else if c.db.IsInMulti() {
+		// 	if _, ok := scriptUnsupportedCmds[c.cmd]; ok {
+		// 		err = fmt.Errorf("%s not supported in multi", c.cmd)
+		// 	}
+		// }
 
-		if err == nil {
-			err = exeCmd(c)
-		}
+		// if err == nil {
+		// 	err = exeCmd(c)
+		// }
+
+		err = exeCmd(c)
+
 	}
 
 	if c.app.access != nil {

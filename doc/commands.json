@@ -489,22 +489,6 @@
         "group": "ZSet",
         "readonly": true
     },
-
-    "BEGIN": {
-        "arguments": "-",
-        "group": "Transaction",
-        "readonly": false
-    },
-    "COMMIT": {
-        "arguments": "-",
-        "group": "Transaction",
-        "readonly": false
-    },
-    "ROLLBACK": {
-        "arguments": "-",
-        "group": "Transaction",
-        "readonly": false
-    },
  
     "FLUSHALL": {
         "arguments": "-",

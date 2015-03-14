@@ -1,114 +1,114 @@
 package ledis
 
-import (
-	"errors"
-	"fmt"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/ledisdb/store"
-)
+// import (
+// 	"errors"
+// 	"fmt"
+// 	"github.com/siddontang/go/log"
+// 	"github.com/siddontang/ledisdb/store"
+// )
 
-var (
-	ErrNestTx = errors.New("nest transaction not supported")
-	ErrTxDone = errors.New("Transaction has already been committed or rolled back")
-)
+// var (
+// 	ErrNestTx = errors.New("nest transaction not supported")
+// 	ErrTxDone = errors.New("Transaction has already been committed or rolled back")
+// )
 
-type Tx struct {
-	*DB
+// type Tx struct {
+// 	*DB
 
-	tx *store.Tx
+// 	tx *store.Tx
 
-	data *store.BatchData
-}
+// 	data *store.BatchData
+// }
 
-func (db *DB) IsTransaction() bool {
-	return db.status == DBInTransaction
-}
+// func (db *DB) IsTransaction() bool {
+// 	return db.status == DBInTransaction
+// }
 
-// Begin a transaction, it will block all other write operations before calling Commit or Rollback.
-// You must be very careful to prevent long-time transaction.
-func (db *DB) Begin() (*Tx, error) {
-	log.Warn("Transaction support will be removed later, use your own risk!!!")
+// // Begin a transaction, it will block all other write operations before calling Commit or Rollback.
+// // You must be very careful to prevent long-time transaction.
+// func (db *DB) Begin() (*Tx, error) {
+// 	log.Warn("Transaction support will be removed later, use your own risk!!!")
 
-	if db.IsTransaction() {
-		return nil, ErrNestTx
-	}
+// 	if db.IsTransaction() {
+// 		return nil, ErrNestTx
+// 	}
 
-	tx := new(Tx)
+// 	tx := new(Tx)
 
-	tx.data = &store.BatchData{}
+// 	tx.data = &store.BatchData{}
 
-	tx.DB = new(DB)
-	tx.DB.l = db.l
+// 	tx.DB = new(DB)
+// 	tx.DB.l = db.l
 
-	tx.l.wLock.Lock()
+// 	tx.l.wLock.Lock()
 
-	tx.DB.sdb = db.sdb
+// 	tx.DB.sdb = db.sdb
 
-	var err error
-	tx.tx, err = db.sdb.Begin()
-	if err != nil {
-		tx.l.wLock.Unlock()
-		return nil, err
-	}
+// 	var err error
+// 	tx.tx, err = db.sdb.Begin()
+// 	if err != nil {
+// 		tx.l.wLock.Unlock()
+// 		return nil, err
+// 	}
 
-	tx.DB.bucket = tx.tx
+// 	tx.DB.bucket = tx.tx
 
-	tx.DB.status = DBInTransaction
+// 	tx.DB.status = DBInTransaction
 
-	tx.DB.index = db.index
+// 	tx.DB.index = db.index
 
-	tx.DB.kvBatch = tx.newBatch()
-	tx.DB.listBatch = tx.newBatch()
-	tx.DB.hashBatch = tx.newBatch()
-	tx.DB.zsetBatch = tx.newBatch()
-	tx.DB.setBatch = tx.newBatch()
+// 	tx.DB.kvBatch = tx.newBatch()
+// 	tx.DB.listBatch = tx.newBatch()
+// 	tx.DB.hashBatch = tx.newBatch()
+// 	tx.DB.zsetBatch = tx.newBatch()
+// 	tx.DB.setBatch = tx.newBatch()
 
-	tx.DB.lbkeys = db.lbkeys
+// 	tx.DB.lbkeys = db.lbkeys
 
-	return tx, nil
-}
+// 	return tx, nil
+// }
 
-func (tx *Tx) Commit() error {
-	if tx.tx == nil {
-		return ErrTxDone
-	}
+// func (tx *Tx) Commit() error {
+// 	if tx.tx == nil {
+// 		return ErrTxDone
+// 	}
 
-	err := tx.l.handleCommit(tx.data, tx.tx)
-	tx.data.Reset()
+// 	err := tx.l.handleCommit(tx.data, tx.tx)
+// 	tx.data.Reset()
 
-	tx.tx = nil
+// 	tx.tx = nil
 
-	tx.l.wLock.Unlock()
+// 	tx.l.wLock.Unlock()
 
-	tx.DB.bucket = nil
+// 	tx.DB.bucket = nil
 
-	return err
-}
+// 	return err
+// }
 
-func (tx *Tx) Rollback() error {
-	if tx.tx == nil {
-		return ErrTxDone
-	}
+// func (tx *Tx) Rollback() error {
+// 	if tx.tx == nil {
+// 		return ErrTxDone
+// 	}
 
-	err := tx.tx.Rollback()
-	tx.data.Reset()
-	tx.tx = nil
+// 	err := tx.tx.Rollback()
+// 	tx.data.Reset()
+// 	tx.tx = nil
 
-	tx.l.wLock.Unlock()
-	tx.DB.bucket = nil
+// 	tx.l.wLock.Unlock()
+// 	tx.DB.bucket = nil
 
-	return err
-}
+// 	return err
+// }
 
-func (tx *Tx) newBatch() *batch {
-	return tx.l.newBatch(tx.tx.NewWriteBatch(), &txBatchLocker{}, tx)
-}
+// func (tx *Tx) newBatch() *batch {
+// 	return tx.l.newBatch(tx.tx.NewWriteBatch(), &txBatchLocker{}, tx)
+// }
 
-func (tx *Tx) Select(index int) error {
-	if index < 0 || index >= int(tx.l.cfg.Databases) {
-		return fmt.Errorf("invalid db index %d", index)
-	}
+// func (tx *Tx) Select(index int) error {
+// 	if index < 0 || index >= int(tx.l.cfg.Databases) {
+// 		return fmt.Errorf("invalid db index %d", index)
+// 	}
 
-	tx.DB.index = uint8(index)
-	return nil
-}
+// 	tx.DB.index = uint8(index)
+// 	return nil
+// }
