@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/hack"
 
-	"github.com/siddontang/ledisdb/lua"
+	"github.com/siddontang/ledisdb/vendor/lua"
 	"strconv"
 	"strings"
 )

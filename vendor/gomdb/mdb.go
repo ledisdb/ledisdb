@@ -1,3 +1,5 @@
+// +build lmdb
+
 /*
 A thin wrapper for the lmdb C library. These are low-level bindings for the C
 API. The C documentation should be used as a reference while developing

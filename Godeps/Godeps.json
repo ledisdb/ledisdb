@@ -75,10 +75,6 @@
 			"Rev": "ce8acff4829e0c2458a67ead32390ac0a381c862"
 		},
 		{
-			"ImportPath": "github.com/szferi/gomdb",
-			"Rev": "6bcb5a8059f9655a259774650dbe0cad422767a3"
-		},
-		{
 			"ImportPath": "github.com/ugorji/go/codec",
 			"Rev": "71c2886f5a673a35f909803f38ece5810165097b"
 		}

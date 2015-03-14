@@ -8,7 +8,7 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/lua"
+	"github.com/siddontang/ledisdb/vendor/lua"
 	"io"
 	"sync"
 )

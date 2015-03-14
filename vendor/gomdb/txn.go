@@ -1,3 +1,5 @@
+// +build lmdb
+
 package mdb
 
 /*
@@ -66,20 +68,20 @@ func (env *Env) BeginTxn(parent *Txn, flags uint) (*Txn, error) {
 func (txn *Txn) Commit() error {
 	ret := C.mdb_txn_commit(txn._txn)
 	runtime.UnlockOSThread()
-    // The transaction handle is freed if there was no error
-    if ret == C.MDB_SUCCESS {
-        txn._txn = nil
-    }
+	// The transaction handle is freed if there was no error
+	if ret == C.MDB_SUCCESS {
+		txn._txn = nil
+	}
 	return errno(ret)
 }
 
 func (txn *Txn) Abort() {
 	if txn._txn == nil {
-        return
-    }
-    C.mdb_txn_abort(txn._txn)
+		return
+	}
+	C.mdb_txn_abort(txn._txn)
 	runtime.UnlockOSThread()
-    // The transaction handle is always freed.
+	// The transaction handle is always freed.
 	txn._txn = nil
 }
 

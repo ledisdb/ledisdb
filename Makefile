@@ -16,13 +16,13 @@ all: build
 build:
 	$(GO) install -tags 'linenoise $(GO_BUILD_TAGS)' ./...
 
-build_use_lmdb:
+build_lmdb:
 	$(GO) install -tags 'linenoise $(GO_BUILD_TAGS) lmdb' ./...	
 	
 test:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./...
 
-test_use_lmdb:
+test_lmdb:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS) lmdb' ./...	
 
 test_ledis:

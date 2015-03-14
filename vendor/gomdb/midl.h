@@ -1,3 +1,5 @@
+// +build lmdb
+
 /**	@file midl.h
  *	@brief LMDB ID List header file.
  *
