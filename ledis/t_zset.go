@@ -51,28 +51,31 @@ func checkZSetKMSize(key []byte, member []byte) error {
 }
 
 func (db *DB) zEncodeSizeKey(key []byte) []byte {
-	buf := make([]byte, len(key)+2)
-	buf[0] = db.index
-	buf[1] = ZSizeType
-
-	copy(buf[2:], key)
+	buf := make([]byte, len(key)+1+len(db.indexVarBuf))
+	pos := copy(buf, db.indexVarBuf)
+	buf[pos] = ZSizeType
+	pos++
+	copy(buf[pos:], key)
 	return buf
 }
 
 func (db *DB) zDecodeSizeKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != ZSizeType {
-		return nil, errZSizeKey
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, err
 	}
 
-	return ek[2:], nil
+	if pos+1 > len(ek) || ek[pos] != ZSizeType {
+		return nil, errZSizeKey
+	}
+	pos++
+	return ek[pos:], nil
 }
 
 func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
-	buf := make([]byte, len(key)+len(member)+5)
+	buf := make([]byte, len(key)+len(member)+4+len(db.indexVarBuf))
 
-	pos := 0
-	buf[pos] = db.index
-	pos++
+	pos := copy(buf, db.indexVarBuf)
 
 	buf[pos] = ZSetType
 	pos++
@@ -92,22 +95,35 @@ func (db *DB) zEncodeSetKey(key []byte, member []byte) []byte {
 }
 
 func (db *DB) zDecodeSetKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != db.index || ek[1] != ZSetType {
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if pos+1 > len(ek) || ek[pos] != ZSetType {
 		return nil, nil, errZSetKey
 	}
 
-	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
-	if keyLen+5 > len(ek) {
+	pos++
+
+	if pos+2 > len(ek) {
 		return nil, nil, errZSetKey
 	}
 
-	key := ek[4 : 4+keyLen]
-
-	if ek[4+keyLen] != zsetStartMemSep {
+	keyLen := int(binary.BigEndian.Uint16(ek[pos:]))
+	if keyLen+pos > len(ek) {
 		return nil, nil, errZSetKey
 	}
 
-	member := ek[5+keyLen:]
+	pos += 2
+	key := ek[pos : pos+keyLen]
+
+	if ek[pos+keyLen] != zsetStartMemSep {
+		return nil, nil, errZSetKey
+	}
+	pos++
+
+	member := ek[pos+keyLen:]
 	return key, member, nil
 }
 
@@ -123,11 +139,9 @@ func (db *DB) zEncodeStopSetKey(key []byte) []byte {
 }
 
 func (db *DB) zEncodeScoreKey(key []byte, member []byte, score int64) []byte {
-	buf := make([]byte, len(key)+len(member)+14)
+	buf := make([]byte, len(key)+len(member)+13+len(db.indexVarBuf))
 
-	pos := 0
-	buf[pos] = db.index
-	pos++
+	pos := copy(buf, db.indexVarBuf)
 
 	buf[pos] = ZScoreType
 	pos++
@@ -166,19 +180,37 @@ func (db *DB) zEncodeStopScoreKey(key []byte, score int64) []byte {
 }
 
 func (db *DB) zDecodeScoreKey(ek []byte) (key []byte, member []byte, score int64, err error) {
-	if len(ek) < 14 || ek[0] != db.index || ek[1] != ZScoreType {
+	pos := 0
+	pos, err = db.checkKeyIndex(ek)
+	if err != nil {
+		return
+	}
+
+	if pos+1 > len(ek) || ek[pos] != ZScoreType {
+		err = errZScoreKey
+		return
+	}
+	pos++
+
+	if pos+2 > len(ek) {
+		err = errZScoreKey
+		return
+	}
+	keyLen := int(binary.BigEndian.Uint16(ek[pos:]))
+	pos += 2
+
+	if keyLen+pos > len(ek) {
 		err = errZScoreKey
 		return
 	}
 
-	keyLen := int(binary.BigEndian.Uint16(ek[2:]))
-	if keyLen+14 > len(ek) {
+	key = ek[pos : pos+keyLen]
+	pos += keyLen
+
+	if pos+10 > len(ek) {
 		err = errZScoreKey
 		return
 	}
-
-	key = ek[4 : 4+keyLen]
-	pos := 4 + keyLen
 
 	if (ek[pos] != zsetNScoreSep) && (ek[pos] != zsetPScoreSep) {
 		err = errZScoreKey
