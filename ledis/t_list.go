@@ -521,11 +521,8 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([
 		} else if v != nil {
 			return []interface{}{key, v}, nil
 		} else {
-			if db.IsAutoCommit() {
-				//block wait can not be supported in transaction and multi
-				db.lbkeys.wait(key, ch)
-				bkeys = append(bkeys, key)
-			}
+			db.lbkeys.wait(key, ch)
+			bkeys = append(bkeys, key)
 		}
 	}
 	if len(bkeys) == 0 {
@@ -575,12 +572,6 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([
 }
 
 func (db *DB) lSignalAsReady(key []byte, num int) {
-	if db.status == DBInTransaction {
-		//for transaction, only data can be pushed after tx commit and it is hard to signal
-		//so we don't handle it now
-		return
-	}
-
 	db.lbkeys.signal(key, num)
 }
 

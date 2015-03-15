@@ -39,12 +39,14 @@ type DB struct {
 	//	binBatch  *batch
 	setBatch *batch
 
-	status uint8
+	// status uint8
+
+	ttlChecker *ttlChecker
 
 	lbkeys *lBlockKeys
 }
 
-func (l *Ledis) newDB(index uint8) *DB {
+func (l *Ledis) newDB(index int) *DB {
 	d := new(DB)
 
 	d.l = l
@@ -53,8 +55,8 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.bucket = d.sdb
 
-	d.status = DBAutoCommit
-	d.index = index
+	//	d.status = DBAutoCommit
+	d.index = uint8(index)
 
 	d.kvBatch = d.newBatch()
 	d.listBatch = d.newBatch()
@@ -65,7 +67,26 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.lbkeys = newLBlockKeys()
 
+	d.ttlChecker = d.newTTLChecker()
+
 	return d
+}
+
+func (db *DB) newTTLChecker() *ttlChecker {
+	c := new(ttlChecker)
+	c.db = db
+	c.txs = make([]*batch, maxDataType)
+	c.cbs = make([]onExpired, maxDataType)
+	c.nc = 0
+
+	c.register(KVType, db.kvBatch, db.delete)
+	c.register(ListType, db.listBatch, db.lDelete)
+	c.register(HashType, db.hashBatch, db.hDelete)
+	c.register(ZSetType, db.zsetBatch, db.zDelete)
+	//		c.register(BitType, db.binBatch, db.bDelete)
+	c.register(SetType, db.setBatch, db.sDelete)
+
+	return c
 }
 
 func (db *DB) newBatch() *batch {
@@ -76,9 +97,9 @@ func (db *DB) Index() int {
 	return int(db.index)
 }
 
-func (db *DB) IsAutoCommit() bool {
-	return db.status == DBAutoCommit
-}
+// func (db *DB) IsAutoCommit() bool {
+// 	return db.status == DBAutoCommit
+// }
 
 func (db *DB) FlushAll() (drop int64, err error) {
 	all := [...](func() (int64, error)){

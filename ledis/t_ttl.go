@@ -85,8 +85,7 @@ func (db *DB) expireAt(t *batch, dataType byte, key []byte, when int64) {
 	t.Put(tk, mk)
 	t.Put(mk, PutInt64(when))
 
-	tc := db.l.tcs[db.index]
-	tc.setNextCheckTime(when, false)
+	db.ttlChecker.setNextCheckTime(when, false)
 }
 
 func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
@@ -119,15 +118,6 @@ func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 		t.Delete(tk)
 		return 1, nil
 	}
-}
-
-func newTTLChecker(db *DB) *ttlChecker {
-	c := new(ttlChecker)
-	c.db = db
-	c.txs = make([]*batch, maxDataType)
-	c.cbs = make([]onExpired, maxDataType)
-	c.nc = 0
-	return c
 }
 
 func (c *ttlChecker) register(dataType byte, t *batch, f onExpired) {
