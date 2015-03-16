@@ -104,7 +104,7 @@ var (
 )
 
 const (
-	MaxDatabases int = 16
+	MaxDatabases int = 10240
 
 	//max key size
 	MaxKeySize int = 1024

@@ -18,7 +18,11 @@ func formatEventKey(buf []byte, k []byte) ([]byte, error) {
 	buf = append(buf, fmt.Sprintf("%s ", TypeName[k[1]])...)
 
 	db := new(DB)
-	db.index = k[0]
+	index, _, err := decodeDBIndex(k)
+	if err != nil {
+		return nil, err
+	}
+	db.setIndex(index)
 
 	//to do format at respective place
 

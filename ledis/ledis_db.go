@@ -1,6 +1,8 @@
 package ledis
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
@@ -30,7 +32,10 @@ type DB struct {
 
 	bucket ibucket
 
-	index uint8
+	index int
+
+	// buffer to store index varint
+	indexVarBuf []byte
 
 	kvBatch   *batch
 	listBatch *batch
@@ -56,7 +61,7 @@ func (l *Ledis) newDB(index int) *DB {
 	d.bucket = d.sdb
 
 	//	d.status = DBAutoCommit
-	d.index = uint8(index)
+	d.setIndex(index)
 
 	d.kvBatch = d.newBatch()
 	d.listBatch = d.newBatch()
@@ -70,6 +75,37 @@ func (l *Ledis) newDB(index int) *DB {
 	d.ttlChecker = d.newTTLChecker()
 
 	return d
+}
+
+func decodeDBIndex(buf []byte) (int, int, error) {
+	index, n := binary.Uvarint(buf)
+	if n == 0 {
+		return 0, 0, fmt.Errorf("buf is too small to save index")
+	} else if n < 0 {
+		return 0, 0, fmt.Errorf("value larger than 64 bits")
+	} else if index > uint64(MaxDatabases) {
+		return 0, 0, fmt.Errorf("value %d is larger than max databases %d", index, MaxDatabases)
+	}
+	return int(index), n, nil
+}
+
+func (db *DB) setIndex(index int) {
+	db.index = index
+	// the most size for varint is 10 bytes
+	buf := make([]byte, 10)
+	n := binary.PutUvarint(buf, uint64(index))
+
+	db.indexVarBuf = buf[0:n]
+}
+
+func (db *DB) checkKeyIndex(buf []byte) (int, error) {
+	if len(buf) < len(db.indexVarBuf) {
+		return 0, fmt.Errorf("key is too small")
+	} else if !bytes.Equal(db.indexVarBuf, buf[0:len(db.indexVarBuf)]) {
+		return 0, fmt.Errorf("invalid db index")
+	}
+
+	return len(db.indexVarBuf), nil
 }
 
 func (db *DB) newTTLChecker() *ttlChecker {
