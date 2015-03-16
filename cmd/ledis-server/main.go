@@ -26,6 +26,7 @@ var readonly = flag.Bool("readonly", false, "set readonly mode, slave server is 
 var rpl = flag.Bool("rpl", false, "enable replication or not, slave server is always enabled")
 var rplSync = flag.Bool("rpl_sync", false, "enable sync replication or not")
 var ttlCheck = flag.Int("ttl_check", 0, "TTL check interval")
+var databases = flag.Int("databases", 0, "ledisdb maximum database number")
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -57,6 +58,10 @@ func main() {
 
 	if len(*dbName) > 0 {
 		cfg.DBName = *dbName
+	}
+
+	if *databases > 0 {
+		cfg.Databases = *databases
 	}
 
 	if len(*slaveof) > 0 {
