@@ -37,6 +37,8 @@ type Conn struct {
 
 	totalReadSize  sizeWriter
 	totalWriteSize sizeWriter
+
+	closed bool
 }
 
 func Connect(addr string) (*Conn, error) {
@@ -55,11 +57,18 @@ func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
 	c.br = bufio.NewReaderSize(io.TeeReader(c.c, &c.totalReadSize), readSize)
 	c.bw = bufio.NewWriterSize(io.MultiWriter(c.c, &c.totalWriteSize), writeSize)
 
+	c.closed = false
+
 	return c, nil
 }
 
 func (c *Conn) Close() {
+	if c.closed {
+		return
+	}
+
 	c.c.Close()
+	c.closed = true
 }
 
 func (c *Conn) GetTotalReadSize() int64 {
