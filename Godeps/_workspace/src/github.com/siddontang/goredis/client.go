@@ -13,7 +13,7 @@ type PoolConn struct {
 }
 
 func (c *PoolConn) Close() {
-	if c.Conn.closed {
+	if c.Conn.isClosed() {
 		return
 	}
 

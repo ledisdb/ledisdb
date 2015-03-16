@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync/atomic"
 	"time"
 )
 
@@ -38,7 +39,7 @@ type Conn struct {
 	totalReadSize  sizeWriter
 	totalWriteSize sizeWriter
 
-	closed bool
+	closed int32
 }
 
 func Connect(addr string) (*Conn, error) {
@@ -57,18 +58,23 @@ func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
 	c.br = bufio.NewReaderSize(io.TeeReader(c.c, &c.totalReadSize), readSize)
 	c.bw = bufio.NewWriterSize(io.MultiWriter(c.c, &c.totalWriteSize), writeSize)
 
-	c.closed = false
+	atomic.StoreInt32(&c.closed, 0)
 
 	return c, nil
 }
 
 func (c *Conn) Close() {
-	if c.closed {
+	if atomic.LoadInt32(&c.closed) == 1 {
 		return
 	}
 
 	c.c.Close()
-	c.closed = true
+
+	atomic.StoreInt32(&c.closed, 1)
+}
+
+func (c *Conn) isClosed() bool {
+	return atomic.LoadInt32(&c.closed) == 1
 }
 
 func (c *Conn) GetTotalReadSize() int64 {
