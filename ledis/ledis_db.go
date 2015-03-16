@@ -1,6 +1,8 @@
 package ledis
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"github.com/siddontang/ledisdb/store"
 	"sync"
@@ -30,7 +32,10 @@ type DB struct {
 
 	bucket ibucket
 
-	index uint8
+	index int
+
+	// buffer to store index varint
+	indexVarBuf []byte
 
 	kvBatch   *batch
 	listBatch *batch
@@ -39,12 +44,14 @@ type DB struct {
 	//	binBatch  *batch
 	setBatch *batch
 
-	status uint8
+	// status uint8
+
+	ttlChecker *ttlChecker
 
 	lbkeys *lBlockKeys
 }
 
-func (l *Ledis) newDB(index uint8) *DB {
+func (l *Ledis) newDB(index int) *DB {
 	d := new(DB)
 
 	d.l = l
@@ -53,8 +60,8 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.bucket = d.sdb
 
-	d.status = DBAutoCommit
-	d.index = index
+	//	d.status = DBAutoCommit
+	d.setIndex(index)
 
 	d.kvBatch = d.newBatch()
 	d.listBatch = d.newBatch()
@@ -65,20 +72,70 @@ func (l *Ledis) newDB(index uint8) *DB {
 
 	d.lbkeys = newLBlockKeys()
 
+	d.ttlChecker = d.newTTLChecker()
+
 	return d
 }
 
+func decodeDBIndex(buf []byte) (int, int, error) {
+	index, n := binary.Uvarint(buf)
+	if n == 0 {
+		return 0, 0, fmt.Errorf("buf is too small to save index")
+	} else if n < 0 {
+		return 0, 0, fmt.Errorf("value larger than 64 bits")
+	} else if index > uint64(MaxDatabases) {
+		return 0, 0, fmt.Errorf("value %d is larger than max databases %d", index, MaxDatabases)
+	}
+	return int(index), n, nil
+}
+
+func (db *DB) setIndex(index int) {
+	db.index = index
+	// the most size for varint is 10 bytes
+	buf := make([]byte, 10)
+	n := binary.PutUvarint(buf, uint64(index))
+
+	db.indexVarBuf = buf[0:n]
+}
+
+func (db *DB) checkKeyIndex(buf []byte) (int, error) {
+	if len(buf) < len(db.indexVarBuf) {
+		return 0, fmt.Errorf("key is too small")
+	} else if !bytes.Equal(db.indexVarBuf, buf[0:len(db.indexVarBuf)]) {
+		return 0, fmt.Errorf("invalid db index")
+	}
+
+	return len(db.indexVarBuf), nil
+}
+
+func (db *DB) newTTLChecker() *ttlChecker {
+	c := new(ttlChecker)
+	c.db = db
+	c.txs = make([]*batch, maxDataType)
+	c.cbs = make([]onExpired, maxDataType)
+	c.nc = 0
+
+	c.register(KVType, db.kvBatch, db.delete)
+	c.register(ListType, db.listBatch, db.lDelete)
+	c.register(HashType, db.hashBatch, db.hDelete)
+	c.register(ZSetType, db.zsetBatch, db.zDelete)
+	//		c.register(BitType, db.binBatch, db.bDelete)
+	c.register(SetType, db.setBatch, db.sDelete)
+
+	return c
+}
+
 func (db *DB) newBatch() *batch {
-	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock}, nil)
+	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock})
 }
 
 func (db *DB) Index() int {
 	return int(db.index)
 }
 
-func (db *DB) IsAutoCommit() bool {
-	return db.status == DBAutoCommit
-}
+// func (db *DB) IsAutoCommit() bool {
+// 	return db.status == DBAutoCommit
+// }
 
 func (db *DB) FlushAll() (drop int64, err error) {
 	all := [...](func() (int64, error)){

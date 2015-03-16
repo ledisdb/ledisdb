@@ -5,7 +5,7 @@ package server
 import (
 	"fmt"
 	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/lua"
+	"github.com/siddontang/ledisdb/vendor/lua"
 
 	"testing"
 )
@@ -115,16 +115,13 @@ func TestLuaCall(t *testing.T) {
 	defer app.Close()
 
 	db, _ := app.ldb.Select(0)
-	m, _ := db.Multi()
-	defer m.Close()
 
-	luaClient := app.s.c
-	luaClient.db = m.DB
-	luaClient.script = m
+	luaClient := app.script.c
+	luaClient.db = db
 
-	l := app.s.l
+	l := app.script.l
 
-	err := app.s.l.DoString(testScript1)
+	err := app.script.l.DoString(testScript1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +135,7 @@ func TestLuaCall(t *testing.T) {
 		t.Fatal(fmt.Sprintf("%v %T", v, v))
 	}
 
-	err = app.s.l.DoString(testScript2)
+	err = app.script.l.DoString(testScript2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +145,7 @@ func TestLuaCall(t *testing.T) {
 		t.Fatal(fmt.Sprintf("%v %T", v, v))
 	}
 
-	err = app.s.l.DoString(testScript3)
+	err = app.script.l.DoString(testScript3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +156,7 @@ func TestLuaCall(t *testing.T) {
 		t.Fatal(string(v))
 	}
 
-	err = app.s.l.DoString(testScript4)
+	err = app.script.l.DoString(testScript4)
 	if err != nil {
 		t.Fatal(err)
 	}

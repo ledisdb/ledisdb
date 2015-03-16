@@ -60,7 +60,7 @@
 		},
 		{
 			"ImportPath": "github.com/siddontang/goredis",
-			"Rev": "6d2857b0488d1e8b9f96b46802eacb68e29fb003"
+			"Rev": "f711beb9ecead18cf638a898610aa2c24ccb6dc7"
 		},
 		{
 			"ImportPath": "github.com/siddontang/rdb",
@@ -73,10 +73,6 @@
 		{
 			"ImportPath": "github.com/syndtr/gosnappy/snappy",
 			"Rev": "ce8acff4829e0c2458a67ead32390ac0a381c862"
-		},
-		{
-			"ImportPath": "github.com/szferi/gomdb",
-			"Rev": "6bcb5a8059f9655a259774650dbe0cad422767a3"
 		},
 		{
 			"ImportPath": "github.com/ugorji/go/codec",

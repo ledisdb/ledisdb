@@ -13,6 +13,10 @@ type PoolConn struct {
 }
 
 func (c *PoolConn) Close() {
+	if c.Conn.isClosed() {
+		return
+	}
+
 	c.c.put(c.Conn)
 }
 

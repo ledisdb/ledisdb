@@ -29,29 +29,36 @@ func checkSetKMSize(key []byte, member []byte) error {
 }
 
 func (db *DB) sEncodeSizeKey(key []byte) []byte {
-	buf := make([]byte, len(key)+2)
+	buf := make([]byte, len(key)+1+len(db.indexVarBuf))
 
-	buf[0] = db.index
-	buf[1] = SSizeType
+	pos := copy(buf, db.indexVarBuf)
+	buf[pos] = SSizeType
 
-	copy(buf[2:], key)
+	pos++
+
+	copy(buf[pos:], key)
 	return buf
 }
 
 func (db *DB) sDecodeSizeKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != SSizeType {
-		return nil, errSSizeKey
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, err
 	}
 
-	return ek[2:], nil
+	if pos+1 > len(ek) || ek[pos] != SSizeType {
+		return nil, errSSizeKey
+	}
+	pos++
+
+	return ek[pos:], nil
 }
 
 func (db *DB) sEncodeSetKey(key []byte, member []byte) []byte {
-	buf := make([]byte, len(key)+len(member)+1+1+2+1)
+	buf := make([]byte, len(key)+len(member)+1+1+2+len(db.indexVarBuf))
 
-	pos := 0
-	buf[pos] = db.index
-	pos++
+	pos := copy(buf, db.indexVarBuf)
+
 	buf[pos] = SetType
 	pos++
 
@@ -69,15 +76,25 @@ func (db *DB) sEncodeSetKey(key []byte, member []byte) []byte {
 }
 
 func (db *DB) sDecodeSetKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != db.index || ek[1] != SetType {
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if pos+1 > len(ek) || ek[pos] != SetType {
 		return nil, nil, errSetKey
 	}
 
-	pos := 2
+	pos++
+
+	if pos+2 > len(ek) {
+		return nil, nil, errSetKey
+	}
+
 	keyLen := int(binary.BigEndian.Uint16(ek[pos:]))
 	pos += 2
 
-	if keyLen+5 > len(ek) {
+	if keyLen+pos > len(ek) {
 		return nil, nil, errSetKey
 	}
 

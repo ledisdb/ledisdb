@@ -31,29 +31,41 @@ func checkHashKFSize(key []byte, field []byte) error {
 }
 
 func (db *DB) hEncodeSizeKey(key []byte) []byte {
-	buf := make([]byte, len(key)+2)
+	buf := make([]byte, len(key)+1+len(db.indexVarBuf))
 
-	buf[0] = db.index
-	buf[1] = HSizeType
+	pos := 0
+	n := copy(buf, db.indexVarBuf)
 
-	copy(buf[2:], key)
+	pos += n
+	buf[pos] = HSizeType
+
+	pos++
+	copy(buf[pos:], key)
+
 	return buf
 }
 
 func (db *DB) hDecodeSizeKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != HSizeType {
-		return nil, errHSizeKey
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, err
 	}
 
-	return ek[2:], nil
+	if pos+1 > len(ek) || ek[pos] != HSizeType {
+		return nil, errHSizeKey
+	}
+	pos++
+
+	return ek[pos:], nil
 }
 
 func (db *DB) hEncodeHashKey(key []byte, field []byte) []byte {
-	buf := make([]byte, len(key)+len(field)+1+1+2+1)
+	buf := make([]byte, len(key)+len(field)+1+1+2+len(db.indexVarBuf))
 
 	pos := 0
-	buf[pos] = db.index
-	pos++
+	n := copy(buf, db.indexVarBuf)
+	pos += n
+
 	buf[pos] = HashType
 	pos++
 
@@ -71,15 +83,24 @@ func (db *DB) hEncodeHashKey(key []byte, field []byte) []byte {
 }
 
 func (db *DB) hDecodeHashKey(ek []byte) ([]byte, []byte, error) {
-	if len(ek) < 5 || ek[0] != db.index || ek[1] != HashType {
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if pos+1 > len(ek) || ek[pos] != HashType {
+		return nil, nil, errHashKey
+	}
+	pos++
+
+	if pos+2 > len(ek) {
 		return nil, nil, errHashKey
 	}
 
-	pos := 2
 	keyLen := int(binary.BigEndian.Uint16(ek[pos:]))
 	pos += 2
 
-	if keyLen+5 > len(ek) {
+	if keyLen+pos > len(ek) {
 		return nil, nil, errHashKey
 	}
 

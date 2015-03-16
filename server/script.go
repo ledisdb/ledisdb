@@ -8,7 +8,7 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/lua"
+	"github.com/siddontang/ledisdb/vendor/lua"
 	"io"
 	"sync"
 )
@@ -152,7 +152,7 @@ func (app *App) openScript() {
 
 	s.chunks = make(map[string]struct{})
 
-	app.s = s
+	app.script = s
 
 	l := lua.NewState()
 
@@ -204,9 +204,9 @@ func (app *App) openScript() {
 }
 
 func (app *App) closeScript() {
-	app.s.l.Close()
-	delMapState(app.s.l)
-	app.s = nil
+	app.script.l.Close()
+	delMapState(app.script.l)
+	app.script = nil
 }
 
 var mapState = map[*lua.State]*script{}

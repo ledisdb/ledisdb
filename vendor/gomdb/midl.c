@@ -1,3 +1,5 @@
+// +build lmdb
+
 /**	@file midl.c
  *	@brief ldap bdb back-end ID List functions */
 /* $OpenLDAP$ */

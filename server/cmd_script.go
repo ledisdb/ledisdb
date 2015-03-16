@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/siddontang/go/hack"
 
-	"github.com/siddontang/ledisdb/lua"
+	"github.com/siddontang/ledisdb/vendor/lua"
 	"strconv"
 	"strings"
 )
@@ -37,12 +37,7 @@ func parseEvalArgs(l *lua.State, c *client) error {
 }
 
 func evalGenericCommand(c *client, evalSha1 bool) error {
-	m, err := c.db.Multi()
-	if err != nil {
-		return err
-	}
-
-	s := c.app.s
+	s := c.app.script
 	luaClient := s.c
 	l := s.l
 
@@ -53,15 +48,13 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 	defer func() {
 		l.SetTop(base)
 		luaClient.db = nil
-		luaClient.script = nil
+		// luaClient.script = nil
 
 		s.Unlock()
-
-		m.Close()
 	}()
 
-	luaClient.db = m.DB
-	luaClient.script = m
+	luaClient.db = c.db
+	// luaClient.script = m
 	luaClient.remoteAddr = c.remoteAddr
 
 	if err := parseEvalArgs(l, c); err != nil {
@@ -101,7 +94,6 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 		return err
 	} else {
 		r := luaReplyToLedisReply(l)
-		m.Close()
 
 		if v, ok := r.(error); ok {
 			return v
@@ -122,7 +114,7 @@ func evalshaCommand(c *client) error {
 }
 
 func scriptCommand(c *client) error {
-	s := c.app.s
+	s := c.app.script
 	l := s.l
 
 	s.Lock()
@@ -155,7 +147,7 @@ func scriptCommand(c *client) error {
 }
 
 func scriptLoadCommand(c *client) error {
-	s := c.app.s
+	s := c.app.script
 	l := s.l
 
 	if len(c.args) != 2 {
@@ -181,7 +173,7 @@ func scriptLoadCommand(c *client) error {
 }
 
 func scriptExistsCommand(c *client) error {
-	s := c.app.s
+	s := c.app.script
 
 	if len(c.args) < 2 {
 		return ErrCmdParams
@@ -201,7 +193,7 @@ func scriptExistsCommand(c *client) error {
 }
 
 func scriptFlushCommand(c *client) error {
-	s := c.app.s
+	s := c.app.script
 	l := s.l
 
 	if len(c.args) != 1 {

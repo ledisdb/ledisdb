@@ -1,8 +1,10 @@
+// +build lmdb
+
 package mdb
 
 import (
-	"testing"
 	"syscall"
+	"testing"
 )
 
 func TestErrno(t *testing.T) {

@@ -31,19 +31,26 @@ func selectCommand(c *client) error {
 	if index, err := strconv.Atoi(hack.String(c.args[0])); err != nil {
 		return err
 	} else {
-		if c.db.IsInMulti() {
-			if err := c.script.Select(index); err != nil {
-				return err
-			} else {
-				c.db = c.script.DB
-			}
+		// if c.db.IsInMulti() {
+		// 	if err := c.script.Select(index); err != nil {
+		// 		return err
+		// 	} else {
+		// 		c.db = c.script.DB
+		// 	}
+		// } else {
+		// 	if db, err := c.ldb.Select(index); err != nil {
+		// 		return err
+		// 	} else {
+		// 		c.db = db
+		// 	}
+		// }
+
+		if db, err := c.ldb.Select(index); err != nil {
+			return err
 		} else {
-			if db, err := c.ldb.Select(index); err != nil {
-				return err
-			} else {
-				c.db = db
-			}
+			c.db = db
 		}
+
 		c.resp.writeStatus(OK)
 	}
 

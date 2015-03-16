@@ -33,19 +33,26 @@ func checkValueSize(value []byte) error {
 }
 
 func (db *DB) encodeKVKey(key []byte) []byte {
-	ek := make([]byte, len(key)+2)
-	ek[0] = db.index
-	ek[1] = KVType
-	copy(ek[2:], key)
+	ek := make([]byte, len(key)+1+len(db.indexVarBuf))
+	pos := copy(ek, db.indexVarBuf)
+	ek[pos] = KVType
+	pos++
+	copy(ek[pos:], key)
 	return ek
 }
 
 func (db *DB) decodeKVKey(ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != KVType {
+	pos, err := db.checkKeyIndex(ek)
+	if err != nil {
+		return nil, err
+	}
+	if pos+1 > len(ek) || ek[pos] != KVType {
 		return nil, errKVKey
 	}
 
-	return ek[2:], nil
+	pos++
+
+	return ek[pos:], nil
 }
 
 func (db *DB) encodeKVMinKey() []byte {

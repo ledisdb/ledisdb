@@ -214,10 +214,7 @@ func (cfg *Config) adjust() {
 	cfg.ConnReadBufferSize = getDefault(4*KB, cfg.ConnReadBufferSize)
 	cfg.ConnWriteBufferSize = getDefault(4*KB, cfg.ConnWriteBufferSize)
 	cfg.TTLCheckInterval = getDefault(1, cfg.TTLCheckInterval)
-	cfg.Databases = getDefault(0, cfg.Databases)
-	if cfg.Databases > 16 {
-		cfg.Databases = 16
-	}
+	cfg.Databases = getDefault(16, cfg.Databases)
 }
 
 func (cfg *LevelDBConfig) adjust() {

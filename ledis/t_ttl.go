@@ -28,11 +28,12 @@ type ttlChecker struct {
 var errExpType = errors.New("invalid expire type")
 
 func (db *DB) expEncodeTimeKey(dataType byte, key []byte, when int64) []byte {
-	buf := make([]byte, len(key)+11)
+	buf := make([]byte, len(key)+10+len(db.indexVarBuf))
 
-	buf[0] = db.index
-	buf[1] = ExpTimeType
-	pos := 2
+	pos := copy(buf, db.indexVarBuf)
+
+	buf[pos] = ExpTimeType
+	pos++
 
 	binary.BigEndian.PutUint64(buf[pos:], uint64(when))
 	pos += 8
@@ -46,12 +47,13 @@ func (db *DB) expEncodeTimeKey(dataType byte, key []byte, when int64) []byte {
 }
 
 func (db *DB) expEncodeMetaKey(dataType byte, key []byte) []byte {
-	buf := make([]byte, len(key)+3)
+	buf := make([]byte, len(key)+2+len(db.indexVarBuf))
 
-	buf[0] = db.index
-	buf[1] = ExpMetaType
-	buf[2] = dataType
-	pos := 3
+	pos := copy(buf, db.indexVarBuf)
+	buf[pos] = ExpMetaType
+	pos++
+	buf[pos] = dataType
+	pos++
 
 	copy(buf[pos:], key)
 
@@ -59,19 +61,29 @@ func (db *DB) expEncodeMetaKey(dataType byte, key []byte) []byte {
 }
 
 func (db *DB) expDecodeMetaKey(mk []byte) (byte, []byte, error) {
-	if len(mk) <= 3 || mk[0] != db.index || mk[1] != ExpMetaType {
+	pos, err := db.checkKeyIndex(mk)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if pos+2 > len(mk) || mk[pos] != ExpMetaType {
 		return 0, nil, errExpMetaKey
 	}
 
-	return mk[2], mk[3:], nil
+	return mk[pos+1], mk[pos+2:], nil
 }
 
 func (db *DB) expDecodeTimeKey(tk []byte) (byte, []byte, int64, error) {
-	if len(tk) < 11 || tk[0] != db.index || tk[1] != ExpTimeType {
+	pos, err := db.checkKeyIndex(tk)
+	if err != nil {
+		return 0, nil, 0, err
+	}
+
+	if pos+10 > len(tk) || tk[pos] != ExpTimeType {
 		return 0, nil, 0, errExpTimeKey
 	}
 
-	return tk[10], tk[11:], int64(binary.BigEndian.Uint64(tk[2:])), nil
+	return tk[pos+9], tk[pos+10:], int64(binary.BigEndian.Uint64(tk[pos+1:])), nil
 }
 
 func (db *DB) expire(t *batch, dataType byte, key []byte, duration int64) {
@@ -85,8 +97,7 @@ func (db *DB) expireAt(t *batch, dataType byte, key []byte, when int64) {
 	t.Put(tk, mk)
 	t.Put(mk, PutInt64(when))
 
-	tc := db.l.tcs[db.index]
-	tc.setNextCheckTime(when, false)
+	db.ttlChecker.setNextCheckTime(when, false)
 }
 
 func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
@@ -119,15 +130,6 @@ func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 		t.Delete(tk)
 		return 1, nil
 	}
-}
-
-func newTTLChecker(db *DB) *ttlChecker {
-	c := new(ttlChecker)
-	c.db = db
-	c.txs = make([]*batch, maxDataType)
-	c.cbs = make([]onExpired, maxDataType)
-	c.nc = 0
-	return c
 }
 
 func (c *ttlChecker) register(dataType byte, t *batch, f onExpired) {

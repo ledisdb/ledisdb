@@ -30,7 +30,7 @@ type App struct {
 
 	info *info
 
-	s *script
+	script *script
 
 	// handle slaves
 	slock        sync.Mutex

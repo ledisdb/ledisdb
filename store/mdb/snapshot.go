@@ -4,7 +4,7 @@ package mdb
 
 import (
 	"github.com/siddontang/ledisdb/store/driver"
-	mdb "github.com/szferi/gomdb"
+	mdb "github.com/siddontang/ledisdb/vendor/gomdb"
 )
 
 type Snapshot struct {

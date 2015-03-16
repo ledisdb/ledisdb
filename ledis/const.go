@@ -104,6 +104,8 @@ var (
 )
 
 const (
+	MaxDatabases int = 10240
+
 	//max key size
 	MaxKeySize int = 1024
 
@@ -127,11 +129,11 @@ var (
 	ErrRplNotSupport = errors.New("replication not support")
 )
 
-const (
-	DBAutoCommit    uint8 = 0x0
-	DBInTransaction uint8 = 0x1
-	DBInMulti       uint8 = 0x2
-)
+// const (
+// 	DBAutoCommit    uint8 = 0x0
+// 	DBInTransaction uint8 = 0x1
+// 	DBInMulti       uint8 = 0x2
+// )
 
 const (
 	BitAND = "and"

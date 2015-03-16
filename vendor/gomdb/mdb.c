@@ -1,3 +1,5 @@
+// +build lmdb
+
 /** @file mdb.c
  *	@brief Lightning memory-mapped database library
  *

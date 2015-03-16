@@ -178,11 +178,22 @@ func (db *DB) encodeScanKey(storeDataType byte, key []byte) ([]byte, error) {
 	}
 }
 
-func (db *DB) decodeScanKey(storeDataType byte, ek []byte) ([]byte, error) {
-	if len(ek) < 2 || ek[0] != db.index || ek[1] != storeDataType {
-		return nil, errMetaKey
+func (db *DB) decodeScanKey(storeDataType byte, ek []byte) (key []byte, err error) {
+	switch storeDataType {
+	case KVType:
+		key, err = db.decodeKVKey(ek)
+	case LMetaType:
+		key, err = db.lDecodeMetaKey(ek)
+	case HSizeType:
+		key, err = db.hDecodeSizeKey(ek)
+	case ZSizeType:
+		key, err = db.zDecodeSizeKey(ek)
+	case SSizeType:
+		key, err = db.sDecodeSizeKey(ek)
+	default:
+		err = errDataType
 	}
-	return ek[2:], nil
+	return
 }
 
 // for specail data scan

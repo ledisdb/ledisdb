@@ -1,3 +1,5 @@
+// +build lmdb
+
 package mdb
 
 /*

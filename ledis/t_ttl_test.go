@@ -437,3 +437,31 @@ func TestExpCompose(t *testing.T) {
 
 	return
 }
+
+func TestTTLCodec(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("key")
+	ek := db.expEncodeTimeKey(KVType, key, 10)
+
+	if tp, k, when, err := db.expDecodeTimeKey(ek); err != nil {
+		t.Fatal(err)
+	} else if tp != KVType {
+		t.Fatal(tp, KVType)
+	} else if string(k) != "key" {
+		t.Fatal(string(k))
+	} else if when != 10 {
+		t.Fatal(when)
+	}
+
+	ek = db.expEncodeMetaKey(KVType, key)
+
+	if tp, k, err := db.expDecodeMetaKey(ek); err != nil {
+		t.Fatal(err)
+	} else if tp != KVType {
+		t.Fatal(tp, KVType)
+	} else if string(k) != "key" {
+		t.Fatal(string(k))
+	}
+
+}
