@@ -64,23 +64,23 @@ func main() {
 		cfg.Databases = *databases
 	}
 
+	// check bool flag, use it.
+	for _, arg := range os.Args {
+		arg := strings.ToLower(arg)
+		switch arg {
+		case "-rpl", "-rpl=true", "-rpl=false":
+			cfg.UseReplication = *rpl
+		case "-readonly", "-readonly=true", "-readonly=false":
+			cfg.Readonly = *readonly
+		case "-rpl_sync", "-rpl_sync=true", "-rpl_sync=false":
+			cfg.Replication.Sync = *rplSync
+		}
+	}
+
 	if len(*slaveof) > 0 {
 		cfg.SlaveOf = *slaveof
 		cfg.Readonly = true
 		cfg.UseReplication = true
-	} else {
-		cfg.Readonly = *readonly
-
-		// if rpl in command flag, use it.
-		for _, arg := range os.Args {
-			arg := strings.ToLower(arg)
-			if arg == "-rpl" || arg == "-rpl=true" || arg == "-rpl=false" {
-				cfg.UseReplication = *rpl
-				break
-			}
-		}
-
-		cfg.Replication.Sync = *rplSync
 	}
 
 	if *ttlCheck > 0 {
