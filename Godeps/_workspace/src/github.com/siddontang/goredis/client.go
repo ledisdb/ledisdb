@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 type PoolConn struct {
@@ -30,6 +31,9 @@ type Client struct {
 	password        string
 
 	conns *list.List
+
+	quit chan struct{}
+	wg   sync.WaitGroup
 }
 
 func getProto(addr string) string {
@@ -50,6 +54,10 @@ func NewClient(addr string, password string) *Client {
 	c.password = password
 
 	c.conns = list.New()
+	c.quit = make(chan struct{})
+
+	c.wg.Add(1)
+	go c.onCheck()
 
 	return c
 }
@@ -105,6 +113,9 @@ func (c *Client) Close() {
 	c.Lock()
 	defer c.Unlock()
 
+	close(c.quit)
+	c.wg.Wait()
+
 	for c.conns.Len() > 0 {
 		e := c.conns.Front()
 		co := e.Value.(*Conn)
@@ -142,11 +153,62 @@ func (c *Client) get() (co *Conn, err error) {
 
 func (c *Client) put(conn *Conn) {
 	c.Lock()
-	if c.conns.Len() >= c.maxIdleConns {
-		c.Unlock()
-		conn.Close()
+	defer c.Unlock()
+
+	for c.conns.Len() >= c.maxIdleConns {
+		// remove back
+		e := c.conns.Back()
+		co := e.Value.(*Conn)
+		c.conns.Remove(e)
+
+		co.Close()
+	}
+
+	c.conns.PushFront(conn)
+}
+
+func (c *Client) getIdle() *Conn {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.conns.Len() == 0 {
+		return nil
 	} else {
-		c.conns.PushFront(conn)
-		c.Unlock()
+		e := c.conns.Back()
+		co := e.Value.(*Conn)
+		c.conns.Remove(e)
+		return co
+	}
+}
+
+func (c *Client) checkIdle() {
+	co := c.getIdle()
+	if co == nil {
+		return
+	}
+
+	_, err := co.Do("PING")
+	if err != nil {
+		co.Close()
+	} else {
+		c.put(co)
+	}
+}
+
+func (c *Client) onCheck() {
+	t := time.NewTicker(3 * time.Second)
+
+	defer func() {
+		t.Stop()
+		c.wg.Done()
+	}()
+
+	for {
+		select {
+		case <-t.C:
+			c.checkIdle()
+		case <-c.quit:
+			return
+		}
 	}
 }

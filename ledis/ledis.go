@@ -48,8 +48,8 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 	if cfg.Databases == 0 {
 		cfg.Databases = 16
-	} else if cfg.Databases > 16 {
-		cfg.Databases = 16
+	} else if cfg.Databases > MaxDatabases {
+		cfg.Databases = MaxDatabases
 	}
 
 	os.MkdirAll(cfg.DataDir, 0755)
@@ -112,8 +112,8 @@ func (l *Ledis) Close() {
 }
 
 func (l *Ledis) Select(index int) (*DB, error) {
-	if index < 0 || index >= MaxDatabases {
-		return nil, fmt.Errorf("invalid db index %d, must in [0, %d]", index, MaxDatabases-1)
+	if index < 0 || index >= l.cfg.Databases {
+		return nil, fmt.Errorf("invalid db index %d, must in [0, %d]", index, l.cfg.Databases-1)
 	}
 
 	l.dbLock.Lock()

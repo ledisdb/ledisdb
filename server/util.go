@@ -134,3 +134,14 @@ func lowerSlice(buf []byte) []byte {
 	}
 	return buf
 }
+
+func upperSlice(buf []byte) []byte {
+	for i, r := range buf {
+		if 'a' <= r && r <= 'z' {
+			r -= 'a' - 'A'
+		}
+
+		buf[i] = r
+	}
+	return buf
+}

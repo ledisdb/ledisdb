@@ -134,6 +134,11 @@ func (c *respClient) run() {
 		reqData, err := c.readRequest()
 		if err == nil {
 			err = c.handleRequest(reqData)
+
+			c.cmd = ""
+			c.args = nil
+
+			c.ar.Reset()
 		}
 
 		if err != nil {
@@ -154,6 +159,16 @@ func (c *respClient) handleRequest(reqData [][]byte) error {
 		c.cmd = hack.String(lowerSlice(reqData[0]))
 		c.args = reqData[1:]
 	}
+
+	if c.cmd == "xselect" {
+		err := c.handleXSelectCmd()
+		if err != nil {
+			c.resp.writeError(err)
+			c.resp.flush()
+			return nil
+		}
+	}
+
 	if c.cmd == "quit" {
 		c.activeQuit = true
 		c.resp.writeStatus(OK)
@@ -164,10 +179,35 @@ func (c *respClient) handleRequest(reqData [][]byte) error {
 
 	c.perform()
 
-	c.cmd = ""
-	c.args = nil
+	return nil
+}
 
-	c.ar.Reset()
+// XSELECT db THEN command
+func (c *respClient) handleXSelectCmd() error {
+	if len(c.args) <= 2 {
+		// invalid command format
+		return fmt.Errorf("invalid format for XSELECT, must XSELECT db THEN your command")
+	}
+
+	if hack.String(upperSlice(c.args[1])) != "THEN" {
+		// invalid command format, just resturn here
+		return fmt.Errorf("invalid format for XSELECT, must XSELECT db THEN your command")
+	}
+
+	index, err := strconv.Atoi(hack.String(c.args[0]))
+	if err != nil {
+		return fmt.Errorf("invalid db for XSELECT, err %v", err)
+	}
+
+	db, err := c.app.ldb.Select(index)
+	if err != nil {
+		return fmt.Errorf("invalid db for XSELECT, err %v", err)
+	}
+
+	c.db = db
+
+	c.cmd = hack.String(lowerSlice(c.args[2]))
+	c.args = c.args[3:]
 
 	return nil
 }

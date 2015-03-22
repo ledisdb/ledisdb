@@ -14,6 +14,7 @@ func getTestDB() *DB {
 	f := func() {
 		cfg := config.NewConfigDefault()
 		cfg.DataDir = "/tmp/test_ledis"
+		cfg.Databases = 10240
 
 		os.RemoveAll(cfg.DataDir)
 
