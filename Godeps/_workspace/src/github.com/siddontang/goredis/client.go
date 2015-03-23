@@ -21,6 +21,11 @@ func (c *PoolConn) Close() {
 	c.c.put(c.Conn)
 }
 
+// force close inner connection and not put it into pool
+func (c *PoolConn) Finalize() {
+	c.Conn.Close()
+}
+
 type Client struct {
 	sync.Mutex
 

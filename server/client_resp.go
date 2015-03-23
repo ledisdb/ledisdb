@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/arena"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
+	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
@@ -23,9 +23,8 @@ type respClient struct {
 	*client
 
 	conn net.Conn
-	rb   *bufio.Reader
 
-	ar *arena.Arena
+	respReader *goredis.RespReader
 
 	activeQuit bool
 }
@@ -76,13 +75,11 @@ func newClientRESP(conn net.Conn, app *App) {
 		tcpConn.SetWriteBuffer(app.cfg.ConnWriteBufferSize)
 	}
 
-	c.rb = bufio.NewReaderSize(conn, app.cfg.ConnReadBufferSize)
+	br := bufio.NewReaderSize(conn, app.cfg.ConnReadBufferSize)
+	c.respReader = goredis.NewRespReader(br)
 
 	c.resp = newWriterRESP(conn, app.cfg.ConnWriteBufferSize)
 	c.remoteAddr = conn.RemoteAddr().String()
-
-	//maybe another config?
-	c.ar = arena.NewArena(app.cfg.ConnReadBufferSize)
 
 	app.connWait.Add(1)
 
@@ -131,24 +128,18 @@ func (c *respClient) run() {
 			c.conn.SetReadDeadline(time.Now().Add(kc))
 		}
 
-		reqData, err := c.readRequest()
+		c.cmd = ""
+		c.args = nil
+
+		reqData, err := c.respReader.ParseRequest()
 		if err == nil {
 			err = c.handleRequest(reqData)
-
-			c.cmd = ""
-			c.args = nil
-
-			c.ar.Reset()
 		}
 
 		if err != nil {
 			return
 		}
 	}
-}
-
-func (c *respClient) readRequest() ([][]byte, error) {
-	return ReadRequest(c.rb, c.ar)
 }
 
 func (c *respClient) handleRequest(reqData [][]byte) error {
@@ -221,7 +212,7 @@ func newWriterRESP(conn net.Conn, size int) *respWriter {
 }
 
 func (w *respWriter) writeError(err error) {
-	w.buff.Write(hack.Slice("-ERR"))
+	w.buff.Write(hack.Slice("-"))
 	if err != nil {
 		w.buff.WriteByte(' ')
 		w.buff.Write(hack.Slice(err.Error()))

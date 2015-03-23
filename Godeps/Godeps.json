@@ -60,7 +60,7 @@
 		},
 		{
 			"ImportPath": "github.com/siddontang/goredis",
-			"Rev": "ca4c5d7500bcc6850c52824caf2c49a6015c8a03"
+			"Rev": "802ef3bdd5f642335f9ed132e024e5e2fd3d03ce"
 		},
 		{
 			"ImportPath": "github.com/siddontang/rdb",
