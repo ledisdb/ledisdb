@@ -23,10 +23,6 @@
 			"Rev": "6c75090c55983bef2e129e173681b20d24871ef8"
 		},
 		{
-			"ImportPath": "github.com/siddontang/go/arena",
-			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
-		},
-		{
 			"ImportPath": "github.com/siddontang/go/bson",
 			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
 		},
