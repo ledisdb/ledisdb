@@ -23,10 +23,6 @@
 			"Rev": "6c75090c55983bef2e129e173681b20d24871ef8"
 		},
 		{
-			"ImportPath": "github.com/siddontang/go/arena",
-			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
-		},
-		{
 			"ImportPath": "github.com/siddontang/go/bson",
 			"Rev": "c2b33271306fcb7c6532efceac33ec45ee2439e0"
 		},
@@ -60,7 +56,7 @@
 		},
 		{
 			"ImportPath": "github.com/siddontang/goredis",
-			"Rev": "ca4c5d7500bcc6850c52824caf2c49a6015c8a03"
+			"Rev": "802ef3bdd5f642335f9ed132e024e5e2fd3d03ce"
 		},
 		{
 			"ImportPath": "github.com/siddontang/rdb",
