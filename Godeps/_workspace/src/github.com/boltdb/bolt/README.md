@@ -16,7 +16,7 @@ and setting values. That's it.
 
 ## Project Status
 
-Bolt is stable and the API is fixed. Full unit test coverage and randomized 
+Bolt is stable and the API is fixed. Full unit test coverage and randomized
 black box testing are used to ensure database consistency and thread safety.
 Bolt is currently in high-load production environments serving databases as
 large as 1TB. Many companies such as Shopify and Heroku use Bolt-backed
@@ -120,10 +120,52 @@ err := db.View(func(tx *bolt.Tx) error {
 })
 ```
 
-You also get a consistent view of the database within this closure, however, 
+You also get a consistent view of the database within this closure, however,
 no mutating operations are allowed within a read-only transaction. You can only
 retrieve buckets, retrieve values, and copy the database within a read-only
 transaction.
+
+
+#### Batch read-write transactions
+
+Each `DB.Update()` waits for disk to commit the writes. This overhead
+can be minimized by combining multiple updates with the `DB.Batch()`
+function:
+
+```go
+err := db.Batch(func(tx *bolt.Tx) error {
+	...
+	return nil
+})
+```
+
+Concurrent Batch calls are opportunistically combined into larger
+transactions. Batch is only useful when there are multiple goroutines
+calling it.
+
+The trade-off is that `Batch` can call the given
+function multiple times, if parts of the transaction fail. The
+function must be idempotent and side effects must take effect only
+after a successful return from `DB.Batch()`.
+
+For example: don't display messages from inside the function, instead
+set variables in the enclosing scope:
+
+```go
+var id uint64
+err := db.Batch(func(tx *bolt.Tx) error {
+	// Find last key in bucket, decode as bigendian uint64, increment
+	// by one, encode back to []byte, and add new key.
+	...
+	id = newValue
+	return nil
+})
+if err != nil {
+	return ...
+}
+fmt.Println("Allocated ID %d", id)
+```
+
 
 #### Managing transactions manually
 
@@ -145,7 +187,7 @@ if err != nil {
 defer tx.Rollback()
 
 // Use the transaction...
-_, err := tx.CreateBucket([]byte("MyBucket")
+_, err := tx.CreateBucket([]byte("MyBucket"))
 if err != nil {
     return err
 }
@@ -215,6 +257,10 @@ will return `nil`. It's important to note that you can have a zero-length value
 set to a key which is different than the key not existing.
 
 Use the `Bucket.Delete()` function to delete a key from the bucket.
+
+Please note that values returned from `Get()` are only valid while the
+transaction is open. If you need to use a value outside of the transaction
+then you must use `copy()` to copy it to another byte slice.
 
 
 ### Iterating over keys
@@ -328,7 +374,7 @@ func (*Bucket) DeleteBucket(key []byte) error
 
 ### Database backups
 
-Bolt is a single file so it's easy to backup. You can use the `Tx.Copy()`
+Bolt is a single file so it's easy to backup. You can use the `Tx.WriteTo()`
 function to write a consistent view of the database to a writer. If you call
 this from a read-only transaction, it will perform a hot backup and not block
 your other database reads and writes. It will also use `O_DIRECT` when available
@@ -339,11 +385,12 @@ do database backups:
 
 ```go
 func BackupHandleFunc(w http.ResponseWriter, req *http.Request) {
-	err := db.View(func(tx bolt.Tx) error {
+	err := db.View(func(tx *bolt.Tx) error {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", `attachment; filename="my.db"`)
 		w.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
-		return tx.Copy(w)
+		_, err := tx.WriteTo(w)
+		return err
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -385,7 +432,7 @@ go func() {
 		// Grab the current stats and diff them.
 		stats := db.Stats()
 		diff := stats.Sub(&prev)
-		
+
 		// Encode stats to JSON and print to STDERR.
 		json.NewEncoder(os.Stderr).Encode(diff)
 
@@ -404,7 +451,7 @@ or to provide an HTTP endpoint that will perform a fixed-length sample.
 For more information on getting started with Bolt, check out the following articles:
 
 * [Intro to BoltDB: Painless Performant Persistence](http://npf.io/2014/07/intro-to-boltdb-painless-performant-persistence/) by [Nate Finch](https://github.com/natefinch).
-
+* [Bolt -- an embedded key/value database for Go](https://www.progville.com/go/bolt-embedded-db-golang/) by Progville
 
 
 ## Comparison with other databases
@@ -453,9 +500,9 @@ lock-free MVCC using a single writer and multiple readers.
 
 The two projects have somewhat diverged. LMDB heavily focuses on raw performance
 while Bolt has focused on simplicity and ease of use. For example, LMDB allows
-several unsafe actions such as direct writes and append writes for the sake of
-performance. Bolt opts to disallow actions which can leave the database in a 
-corrupted state. The only exception to this in Bolt is `DB.NoSync`.
+several unsafe actions such as direct writes for the sake of performance. Bolt
+opts to disallow actions which can leave the database in a corrupted state. The
+only exception to this in Bolt is `DB.NoSync`.
 
 There are also a few differences in API. LMDB requires a maximum mmap size when
 opening an `mdb_env` whereas Bolt will handle incremental mmap resizing
@@ -503,11 +550,23 @@ Here are a few things to note when evaluating and using Bolt:
   However, this is expected and the OS will release memory as needed. Bolt can
   handle databases much larger than the available physical RAM.
 
+* Because of the way pages are laid out on disk, Bolt cannot truncate data files
+  and return free pages back to the disk. Instead, Bolt maintains a free list
+  of unused pages within its data file. These free pages can be reused by later
+  transactions. This works well for many use cases as databases generally tend
+  to grow. However, it's important to note that deleting large chunks of data
+  will not allow you to reclaim that space on disk.
+
+  For more information on page allocation, [see this comment][page-allocation].
+
+[page-allocation]: https://github.com/boltdb/bolt/issues/308#issuecomment-74811638
+
 
 ## Other Projects Using Bolt
 
 Below is a list of public, open source projects that use Bolt:
 
+* [Operation Go: A Routine Mission](http://gocode.io) - An online programming game for Golang using Bolt for user accounts and a leaderboard.
 * [Bazil](https://github.com/bazillion/bazil) - A file system that lets your data reside where it is most convenient for it to reside.
 * [DVID](https://github.com/janelia-flyem/dvid) - Added Bolt as optional storage engine and testing it against Basho-tuned leveldb.
 * [Skybox Analytics](https://github.com/skybox/skybox) - A standalone funnel analysis tool for web analytics.
@@ -526,6 +585,6 @@ Below is a list of public, open source projects that use Bolt:
 * [bleve](http://www.blevesearch.com/) - A pure Go search engine similar to ElasticSearch that uses Bolt as the default storage backend.
 * [tentacool](https://github.com/optiflows/tentacool) - REST api server to manage system stuff (IP, DNS, Gateway...) on a linux server.
 * [SkyDB](https://github.com/skydb/sky) - Behavioral analytics database.
+* [Seaweed File System](https://github.com/chrislusf/weed-fs) - Highly scalable distributed key~file system with O(1) disk read.
 
 If you are using Bolt in a project please send a pull request to add it to the list.
-

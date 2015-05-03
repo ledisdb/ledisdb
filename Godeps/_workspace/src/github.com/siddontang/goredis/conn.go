@@ -2,6 +2,7 @@ package goredis
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"sync/atomic"
@@ -16,9 +17,7 @@ func (s *sizeWriter) Write(p []byte) (int, error) {
 }
 
 type Conn struct {
-	c  net.Conn
-	br *bufio.Reader
-	bw *bufio.Writer
+	c net.Conn
 
 	respReader *RespReader
 	respWriter *RespWriter
@@ -34,23 +33,33 @@ func Connect(addr string) (*Conn, error) {
 }
 
 func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
-	c := new(Conn)
-
-	var err error
-	c.c, err = net.Dial(getProto(addr), addr)
+	conn, err := net.Dial(getProto(addr), addr)
 	if err != nil {
 		return nil, err
 	}
 
-	c.br = bufio.NewReaderSize(io.TeeReader(c.c, &c.totalReadSize), readSize)
-	c.bw = bufio.NewWriterSize(io.MultiWriter(c.c, &c.totalWriteSize), writeSize)
+	return NewConnWithSize(conn, readSize, writeSize)
+}
 
-	c.respReader = NewRespReader(c.br)
-	c.respWriter = NewRespWriter(c.bw)
+func NewConn(conn net.Conn) (*Conn, error) {
+	return NewConnWithSize(conn, 1024, 1024)
+}
+
+func NewConnWithSize(conn net.Conn, readSize int, writeSize int) (*Conn, error) {
+	c := new(Conn)
+
+	c.c = conn
+
+	br := bufio.NewReaderSize(io.TeeReader(c.c, &c.totalReadSize), readSize)
+	bw := bufio.NewWriterSize(io.MultiWriter(c.c, &c.totalWriteSize), writeSize)
+
+	c.respReader = NewRespReader(br)
+	c.respWriter = NewRespWriter(bw)
 
 	atomic.StoreInt32(&c.closed, 0)
 
 	return c, nil
+
 }
 
 func (c *Conn) Close() {
@@ -75,14 +84,23 @@ func (c *Conn) GetTotalWriteSize() int64 {
 	return int64(c.totalWriteSize)
 }
 
-func (c *Conn) SetReadDeadline(t time.Time) {
-	c.c.SetReadDeadline(t)
+func (c *Conn) SetReadDeadline(t time.Time) error {
+	return c.c.SetReadDeadline(t)
 }
 
-func (c *Conn) SetWriteDeadline(t time.Time) {
-	c.c.SetWriteDeadline(t)
+func (c *Conn) SetWriteDeadline(t time.Time) error {
+	return c.c.SetWriteDeadline(t)
 }
 
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.c.RemoteAddr()
+}
+
+func (c *Conn) LocalAddr() net.Addr {
+	return c.c.LocalAddr()
+}
+
+// Send RESP command and receive the reply
 func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 	if err := c.Send(cmd, args...); err != nil {
 		return nil, err
@@ -91,6 +109,7 @@ func (c *Conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 	return c.Receive()
 }
 
+// Send RESP command
 func (c *Conn) Send(cmd string, args ...interface{}) error {
 	if err := c.respWriter.WriteCommand(cmd, args...); err != nil {
 		c.Close()
@@ -100,6 +119,7 @@ func (c *Conn) Send(cmd string, args ...interface{}) error {
 	return nil
 }
 
+// Receive RESP reply
 func (c *Conn) Receive() (interface{}, error) {
 	if reply, err := c.respReader.Parse(); err != nil {
 		c.Close()
@@ -113,6 +133,7 @@ func (c *Conn) Receive() (interface{}, error) {
 	}
 }
 
+// Receive RESP bulk string reply into writer w
 func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 	err := c.respReader.ParseBulkTo(w)
 	if err != nil {
@@ -121,6 +142,31 @@ func (c *Conn) ReceiveBulkTo(w io.Writer) error {
 		}
 	}
 	return err
+}
+
+// Receive RESP command request, must array of bulk stirng
+func (c *Conn) ReceiveRequest() ([][]byte, error) {
+	return c.respReader.ParseRequest()
+}
+
+// Send RESP value, must be string, int64, []byte, error, nil or []interface{}
+func (c *Conn) SendValue(v interface{}) error {
+	switch v := v.(type) {
+	case string:
+		return c.respWriter.FlushString(v)
+	case int64:
+		return c.respWriter.FlushInteger(v)
+	case []byte:
+		return c.respWriter.FlushBulk(v)
+	case []interface{}:
+		return c.respWriter.FlushArray(v)
+	case error:
+		return c.respWriter.FlushError(v)
+	case nil:
+		return c.respWriter.FlushBulk(nil)
+	default:
+		return fmt.Errorf("invalid type %T for send RESP value", v)
+	}
 }
 
 func (c *Client) newConn(addr string, pass string) (*Conn, error) {

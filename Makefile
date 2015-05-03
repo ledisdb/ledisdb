@@ -38,6 +38,7 @@ test_rpl:
 	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./rpl
 
 clean:
+	rm -rf Godeps/_workspace/pkg/
 	$(GO) clean -i ./...
 
 fmt:

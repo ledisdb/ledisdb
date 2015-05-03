@@ -13,6 +13,7 @@ import (
 	"net"
 	"runtime"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -165,6 +166,13 @@ func (c *respClient) handleRequest(reqData [][]byte) error {
 		c.resp.writeStatus(OK)
 		c.resp.flush()
 		c.conn.Close()
+		return errClientQuit
+	} else if c.cmd == "shutdown" {
+		c.conn.Close()
+
+		// send kill signal
+		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+
 		return errClientQuit
 	}
 
