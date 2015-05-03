@@ -1,6 +1,7 @@
 package bolt_test
 
 import (
+	"encoding/binary"
 	"errors"
 	"flag"
 	"fmt"
@@ -107,6 +108,56 @@ func TestOpen_Size(t *testing.T) {
 	sz := fileSize(path)
 	if sz == 0 {
 		t.Fatalf("unexpected new file size: %d", sz)
+	}
+
+	// Reopen database, update, and check size again.
+	db0, err := bolt.Open(path, 0666, nil)
+	ok(t, err)
+	ok(t, db0.Update(func(tx *bolt.Tx) error { return tx.Bucket([]byte("data")).Put([]byte{0}, []byte{0}) }))
+	ok(t, db0.Close())
+	newSz := fileSize(path)
+	if newSz == 0 {
+		t.Fatalf("unexpected new file size: %d", newSz)
+	}
+
+	// Compare the original size with the new size.
+	if sz != newSz {
+		t.Fatalf("unexpected file growth: %d => %d", sz, newSz)
+	}
+}
+
+// Ensure that opening a database beyond the max step size does not increase its size.
+// https://github.com/boltdb/bolt/issues/303
+func TestOpen_Size_Large(t *testing.T) {
+	if testing.Short() {
+		t.Skip("short mode")
+	}
+
+	// Open a data file.
+	db := NewTestDB()
+	path := db.Path()
+	defer db.Close()
+
+	// Insert until we get above the minimum 4MB size.
+	var index uint64
+	for i := 0; i < 10000; i++ {
+		ok(t, db.Update(func(tx *bolt.Tx) error {
+			b, _ := tx.CreateBucketIfNotExists([]byte("data"))
+			for j := 0; j < 1000; j++ {
+				ok(t, b.Put(u64tob(index), make([]byte, 50)))
+				index++
+			}
+			return nil
+		}))
+	}
+
+	// Close database and grab the size.
+	db.DB.Close()
+	sz := fileSize(path)
+	if sz == 0 {
+		t.Fatalf("unexpected new file size: %d", sz)
+	} else if sz < (1 << 30) {
+		t.Fatalf("expected larger initial size: %d", sz)
 	}
 
 	// Reopen database, update, and check size again.
@@ -567,6 +618,34 @@ func NewTestDB() *TestDB {
 	return &TestDB{db}
 }
 
+// MustView executes a read-only function. Panic on error.
+func (db *TestDB) MustView(fn func(tx *bolt.Tx) error) {
+	if err := db.DB.View(func(tx *bolt.Tx) error {
+		return fn(tx)
+	}); err != nil {
+		panic(err.Error())
+	}
+}
+
+// MustUpdate executes a read-write function. Panic on error.
+func (db *TestDB) MustUpdate(fn func(tx *bolt.Tx) error) {
+	if err := db.DB.View(func(tx *bolt.Tx) error {
+		return fn(tx)
+	}); err != nil {
+		panic(err.Error())
+	}
+}
+
+// MustCreateBucket creates a new bucket. Panic on error.
+func (db *TestDB) MustCreateBucket(name []byte) {
+	if err := db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket([]byte(name))
+		return err
+	}); err != nil {
+		panic(err.Error())
+	}
+}
+
 // Close closes the database and deletes the underlying file.
 func (db *TestDB) Close() {
 	// Log statistics.
@@ -699,3 +778,13 @@ func fileSize(path string) int64 {
 
 func warn(v ...interface{})              { fmt.Fprintln(os.Stderr, v...) }
 func warnf(msg string, v ...interface{}) { fmt.Fprintf(os.Stderr, msg+"\n", v...) }
+
+// u64tob converts a uint64 into an 8-byte slice.
+func u64tob(v uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, v)
+	return b
+}
+
+// btou64 converts an 8-byte slice into an uint64.
+func btou64(b []byte) uint64 { return binary.BigEndian.Uint64(b) }
