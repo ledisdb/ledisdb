@@ -230,3 +230,10 @@ func (l *Ledis) checkTTL() {
 func (l *Ledis) StoreStat() *store.Stat {
 	return l.ldb.Stat()
 }
+
+func (l *Ledis) CompactStore() error {
+	l.wLock.Lock()
+	defer l.wLock.Unlock()
+
+	return l.ldb.Compact()
+}
