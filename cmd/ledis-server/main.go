@@ -113,5 +113,7 @@ func main() {
 
 	<-sc
 
+	println("ledis-server is closing")
 	app.Close()
+	println("ledis-server is closed")
 }
