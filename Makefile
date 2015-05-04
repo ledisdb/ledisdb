@@ -42,4 +42,5 @@ clean:
 	$(GO) clean -i ./...
 
 fmt:
-	go fmt ./...
+	gofmt -w=true cmd config ledis rpl server store vendor
+	goimports -w=true cmd config ledis rpl server store vendor
