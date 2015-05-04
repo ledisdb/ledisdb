@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
-	"strconv"
-	"strings"
 )
 
 func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, desc bool, err error) {

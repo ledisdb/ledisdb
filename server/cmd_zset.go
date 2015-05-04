@@ -2,13 +2,14 @@ package server
 
 import (
 	"errors"
+	"math"
+	"strconv"
+	"strings"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/store"
-	"math"
-	"strconv"
-	"strings"
 )
 
 //for simple implementation, we only support int64 score

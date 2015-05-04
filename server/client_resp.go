@@ -4,17 +4,18 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/hack"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"net"
 	"runtime"
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 var errReadRequest = errors.New("invalid request protocol")

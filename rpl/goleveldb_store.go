@@ -3,12 +3,13 @@ package rpl
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store"
 )
 
 type GoLevelDBStore struct {

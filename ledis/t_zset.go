@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"time"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
-	"time"
 )
 
 const (

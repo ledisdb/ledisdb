@@ -1,8 +1,9 @@
 package server
 
 import (
-	"github.com/siddontang/goredis"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func TestXSelect(t *testing.T) {

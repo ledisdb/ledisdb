@@ -1,10 +1,11 @@
 package ledis
 
 import (
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
 )
 
 var testLedis *Ledis

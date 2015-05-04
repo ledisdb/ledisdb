@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/goredis"
 	"math/rand"
 	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/siddontang/goredis"
 )
 
 var ip = flag.String("ip", "127.0.0.1", "redis/ledis/ssdb server ip")

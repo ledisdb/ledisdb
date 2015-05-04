@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/server"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -13,6 +11,9 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/server"
 )
 
 var configFile = flag.String("config", "", "ledisdb config file")

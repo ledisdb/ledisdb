@@ -2,10 +2,11 @@ package ledis
 
 import (
 	"bytes"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store"
 )
 
 func TestDump(t *testing.T) {

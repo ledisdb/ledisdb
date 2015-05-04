@@ -2,16 +2,17 @@ package ledis
 
 import (
 	"fmt"
-	"github.com/siddontang/go/filelock"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/rpl"
-	"github.com/siddontang/ledisdb/store"
 	"io"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/filelock"
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/rpl"
+	"github.com/siddontang/ledisdb/store"
 )
 
 type Ledis struct {

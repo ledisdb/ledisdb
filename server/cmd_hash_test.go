@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"strconv"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func TestHash(t *testing.T) {

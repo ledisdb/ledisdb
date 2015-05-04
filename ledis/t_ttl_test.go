@@ -2,10 +2,11 @@ package ledis
 
 import (
 	"fmt"
-	"github.com/siddontang/go/hack"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/siddontang/go/hack"
 )
 
 var m sync.Mutex

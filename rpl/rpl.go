@@ -2,13 +2,14 @@ package rpl
 
 import (
 	"encoding/binary"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/go/snappy"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/snappy"
+	"github.com/siddontang/ledisdb/config"
 )
 
 type Stat struct {

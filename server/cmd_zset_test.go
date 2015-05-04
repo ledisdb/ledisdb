@@ -2,10 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func TestZSet(t *testing.T) {

@@ -4,10 +4,11 @@ import (
 	"container/list"
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/go/hack"
-	"github.com/siddontang/ledisdb/store"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/hack"
+	"github.com/siddontang/ledisdb/store"
 )
 
 const (

@@ -3,12 +3,13 @@ package ledis
 import (
 	"bytes"
 	"errors"
+	"io"
+	"time"
+
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/snappy"
 	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
-	"io"
-	"time"
 )
 
 const (

@@ -1,10 +1,11 @@
 package store
 
 import (
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store/driver"
 	"sync"
 	"time"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store/driver"
 )
 
 type DB struct {

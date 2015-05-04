@@ -1,8 +1,9 @@
 package store
 
 import (
-	"github.com/siddontang/ledisdb/store/driver"
 	"testing"
+
+	"github.com/siddontang/ledisdb/store/driver"
 )
 
 func TestTx(t *testing.T) {

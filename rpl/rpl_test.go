@@ -1,10 +1,11 @@
 package rpl
 
 import (
-	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
 )
 
 func TestReplication(t *testing.T) {

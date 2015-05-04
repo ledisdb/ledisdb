@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/go/sync2"
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/rpl"
 	"net"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/go/sync2"
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/ledis"
+	"github.com/siddontang/ledisdb/rpl"
 )
 
 var (

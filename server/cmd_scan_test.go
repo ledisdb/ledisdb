@@ -2,10 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
+
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/config"
 )
 
 func TestScan(t *testing.T) {

@@ -11,11 +11,12 @@ package leveldb
 import "C"
 
 import (
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"runtime"
 	"unsafe"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store/driver"
 )
 
 const defaultFilterBits int = 10

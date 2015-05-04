@@ -3,9 +3,10 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/ledisdb/store"
 	"sync"
 	"time"
+
+	"github.com/siddontang/ledisdb/store"
 )
 
 var (

@@ -1,7 +1,5 @@
 package server
 
-import ()
-
 func lowerSlice(buf []byte) []byte {
 	for i, r := range buf {
 		if 'A' <= r && r <= 'Z' {

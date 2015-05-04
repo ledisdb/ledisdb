@@ -3,11 +3,12 @@ package store
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store/driver"
 )
 
 func TestStore(t *testing.T) {

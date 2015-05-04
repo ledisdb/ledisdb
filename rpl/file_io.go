@@ -2,10 +2,11 @@ package rpl
 
 import (
 	"fmt"
-	"github.com/edsrzf/mmap-go"
-	"github.com/siddontang/go/log"
 	"io"
 	"os"
+
+	"github.com/edsrzf/mmap-go"
+	"github.com/siddontang/go/log"
 )
 
 //like leveldb or rocksdb file interface, haha!

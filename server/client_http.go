@@ -3,15 +3,16 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/siddontang/go/bson"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/ugorji/go/codec"
-	"io"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 var allowedContentTypes = map[string]struct{}{

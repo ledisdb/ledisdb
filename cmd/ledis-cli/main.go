@@ -5,10 +5,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/goredis"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/siddontang/goredis"
 )
 
 var ip = flag.String("h", "127.0.0.1", "ledisdb server ip (default 127.0.0.1)")

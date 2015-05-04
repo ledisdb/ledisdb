@@ -5,12 +5,13 @@ package server
 import (
 	"encoding/hex"
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/siddontang/ledisdb/vendor/lua"
-	"io"
-	"sync"
 )
 
 //ledis <-> lua type conversion, same as http://redis.io/commands/eval

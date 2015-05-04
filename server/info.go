@@ -3,13 +3,14 @@ package server
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/go/sync2"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/sync2"
 )
 
 type info struct {

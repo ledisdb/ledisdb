@@ -3,10 +3,11 @@ package ledis
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
 	"os"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store"
 )
 
 func checkLedisEqual(master *Ledis, slave *Ledis) error {

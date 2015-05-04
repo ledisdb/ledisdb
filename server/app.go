@@ -1,14 +1,15 @@
 package server
 
 import (
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"net/http"
 	"path"
 	"strings"
 	"sync"
+
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 type App struct {

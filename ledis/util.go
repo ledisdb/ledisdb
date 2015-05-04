@@ -3,8 +3,9 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/siddontang/go/hack"
 	"strconv"
+
+	"github.com/siddontang/go/hack"
 )
 
 var errIntNumber = errors.New("invalid integer")

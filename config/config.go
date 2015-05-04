@@ -3,11 +3,12 @@ package config
 import (
 	"bytes"
 	"errors"
-	"github.com/BurntSushi/toml"
-	"github.com/siddontang/go/ioutil2"
 	"io"
 	"io/ioutil"
 	"sync"
+
+	"github.com/BurntSushi/toml"
+	"github.com/siddontang/go/ioutil2"
 )
 
 var (

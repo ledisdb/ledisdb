@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/config"
 )
 
 func checkDataEqual(master *App, slave *App) error {

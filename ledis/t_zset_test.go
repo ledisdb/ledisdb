@@ -2,9 +2,10 @@ package ledis
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/store"
 	"reflect"
 	"testing"
+
+	"github.com/siddontang/ledisdb/store"
 )
 
 const (
