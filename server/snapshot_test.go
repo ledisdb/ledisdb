@@ -1,12 +1,13 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/config"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
 )
 
 type testSnapshotDumper struct {

@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/siddontang/ledisdb/store"
 	"sync"
+
+	"github.com/siddontang/ledisdb/store"
 )
 
 type ibucket interface {

@@ -3,10 +3,11 @@
 package mdb
 
 import (
+	"os"
+
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 	mdb "github.com/siddontang/ledisdb/vendor/gomdb"
-	"os"
 )
 
 type Store struct {

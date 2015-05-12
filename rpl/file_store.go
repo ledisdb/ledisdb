@@ -2,14 +2,15 @@ package rpl
 
 import (
 	"fmt"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/config"
 	"io/ioutil"
 	"os"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/config"
 )
 
 const (

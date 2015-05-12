@@ -2,8 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/ledisdb/config"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,6 +9,9 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/ledisdb/config"
 )
 
 const (

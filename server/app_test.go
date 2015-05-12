@@ -1,11 +1,12 @@
 package server
 
 import (
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/config"
 )
 
 var testAppOnce sync.Once

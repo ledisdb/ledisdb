@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+
 	"github.com/siddontang/ledisdb/store/driver"
 )
 

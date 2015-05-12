@@ -4,10 +4,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/store"
 	"strings"
 	"time"
+
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/store"
 )
 
 type KVPair struct {

@@ -8,8 +8,9 @@ package leveldb
 import "C"
 
 import (
-	"github.com/syndtr/goleveldb/leveldb"
 	"unsafe"
+
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type WriteBatch struct {

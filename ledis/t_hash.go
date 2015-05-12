@@ -3,9 +3,10 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"time"
+
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
-	"time"
 )
 
 type FVPair struct {

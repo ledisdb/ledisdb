@@ -1,12 +1,13 @@
 package rpl
 
 import (
-	"github.com/siddontang/go/log"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
+
+	"github.com/siddontang/go/log"
 )
 
 func TestFileTable(t *testing.T) {

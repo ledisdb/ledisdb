@@ -2,6 +2,7 @@ package driver
 
 import (
 	"fmt"
+
 	"github.com/siddontang/ledisdb/config"
 )
 

@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"strconv"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func testListIndex(key []byte, index int64, v int) error {

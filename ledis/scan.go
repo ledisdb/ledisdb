@@ -2,8 +2,9 @@ package ledis
 
 import (
 	"errors"
-	"github.com/siddontang/ledisdb/store"
 	"regexp"
+
+	"github.com/siddontang/ledisdb/store"
 )
 
 var errDataType = errors.New("error data type")

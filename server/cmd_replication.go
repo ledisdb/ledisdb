@@ -3,13 +3,14 @@ package server
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/siddontang/go/hack"
-	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/ledis"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/num"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 func slaveofCommand(c *client) error {

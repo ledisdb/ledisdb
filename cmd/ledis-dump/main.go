@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/goredis"
 	"os"
+
+	"github.com/siddontang/goredis"
 )
 
 var host = flag.String("host", "127.0.0.1", "ledis server host")

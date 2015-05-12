@@ -3,9 +3,10 @@ package ledis
 import (
 	"encoding/binary"
 	"errors"
+	"time"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
-	"time"
 )
 
 var errSetKey = errors.New("invalid set key")

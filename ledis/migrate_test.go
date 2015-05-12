@@ -1,9 +1,10 @@
 package ledis
 
 import (
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
+
+	"github.com/siddontang/ledisdb/config"
 )
 
 func TestMigrate(t *testing.T) {

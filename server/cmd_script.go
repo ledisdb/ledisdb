@@ -6,11 +6,13 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+
 	"github.com/siddontang/go/hack"
 
-	"github.com/siddontang/ledisdb/vendor/lua"
 	"strconv"
 	"strings"
+
+	"github.com/siddontang/ledisdb/vendor/lua"
 )
 
 func parseEvalArgs(l *lua.State, c *client) error {

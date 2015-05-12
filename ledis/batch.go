@@ -1,10 +1,11 @@
 package ledis
 
 import (
+	"sync"
+
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/rpl"
 	"github.com/siddontang/ledisdb/store"
-	"sync"
 )
 
 type batch struct {

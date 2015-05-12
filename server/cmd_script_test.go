@@ -4,9 +4,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"reflect"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func TestCmdEval(t *testing.T) {

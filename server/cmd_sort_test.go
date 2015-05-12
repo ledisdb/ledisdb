@@ -2,8 +2,9 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"testing"
+
+	"github.com/siddontang/goredis"
 )
 
 func checkTestSortRes(ay interface{}, checks []string) error {

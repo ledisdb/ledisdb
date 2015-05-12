@@ -3,10 +3,11 @@ package server
 import (
 	"bytes"
 	//	"fmt"
-	"github.com/siddontang/go/sync2"
-	"github.com/siddontang/ledisdb/ledis"
 	"io"
 	"time"
+
+	"github.com/siddontang/go/sync2"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 // var txUnsupportedCmds = map[string]struct{}{

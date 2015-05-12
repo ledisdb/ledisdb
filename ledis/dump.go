@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"github.com/siddontang/go/snappy"
-	"github.com/siddontang/ledisdb/store"
 	"io"
 	"os"
+
+	"github.com/siddontang/go/snappy"
+	"github.com/siddontang/ledisdb/store"
 )
 
 type DumpHead struct {

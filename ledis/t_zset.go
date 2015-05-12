@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"time"
+
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/store"
-	"time"
 )
 
 const (
@@ -582,9 +583,10 @@ func (db *DB) zRange(key []byte, min int64, max int64, offset int, count int, re
 		return []ScorePair{}, nil
 	}
 
-	nv := 64
-	if count > 0 {
-		nv = count
+	nv := count
+	// count may be very large, so we must limit it for below mem make.
+	if nv <= 0 || nv > 1024 {
+		nv = 64
 	}
 
 	v := make([]ScorePair, 0, nv)

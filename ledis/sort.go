@@ -3,9 +3,10 @@ package ledis
 import (
 	"bytes"
 	"fmt"
-	"github.com/siddontang/ledisdb/store"
 	"sort"
 	"strconv"
+
+	"github.com/siddontang/ledisdb/store"
 )
 
 type Limit struct {

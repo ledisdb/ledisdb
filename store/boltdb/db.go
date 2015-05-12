@@ -1,11 +1,12 @@
 package boltdb
 
 import (
+	"os"
+	"path"
+
 	"github.com/boltdb/bolt"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
-	"os"
-	"path"
 )
 
 var bucketName = []byte("ledisdb")

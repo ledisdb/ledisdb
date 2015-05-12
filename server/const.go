@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+
 	"github.com/siddontang/ledisdb/ledis"
 )
 

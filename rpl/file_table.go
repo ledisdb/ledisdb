@@ -5,12 +5,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/log"
-	"github.com/siddontang/go/sync2"
 	"io"
 	"path"
 	"sync"
 	"time"
+
+	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/sync2"
 )
 
 var (

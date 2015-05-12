@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
 	"testing"
 	"time"
+
+	"github.com/siddontang/goredis"
 )
 
 func now() int64 {

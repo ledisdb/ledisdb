@@ -2,10 +2,11 @@ package store
 
 import (
 	"fmt"
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store/driver"
 	"os"
 	"path"
+
+	"github.com/siddontang/ledisdb/config"
+	"github.com/siddontang/ledisdb/store/driver"
 
 	_ "github.com/siddontang/ledisdb/store/boltdb"
 	_ "github.com/siddontang/ledisdb/store/goleveldb"

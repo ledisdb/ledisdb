@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/siddontang/goredis"
+	"github.com/siddontang/ledisdb/config"
 )
 
 func TestDumpRestore(t *testing.T) {

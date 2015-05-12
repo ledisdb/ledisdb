@@ -3,8 +3,9 @@ package ledis
 import (
 	"errors"
 	"fmt"
-	"github.com/siddontang/go/hack"
 	"strconv"
+
+	"github.com/siddontang/go/hack"
 )
 
 var errInvalidEvent = errors.New("invalid event")

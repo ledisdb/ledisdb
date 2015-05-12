@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/siddontang/go/hack"
-	"github.com/siddontang/ledisdb/ledis"
 	"strconv"
 	"time"
+
+	"github.com/siddontang/go/hack"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 func lpushCommand(c *client) error {
