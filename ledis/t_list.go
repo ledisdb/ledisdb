@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/siddontang/go/hack"
+	"github.com/siddontang/go/log"
 	"github.com/siddontang/ledisdb/store"
 )
 
@@ -174,12 +175,15 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 
 	var headSeq int32
 	var tailSeq int32
+	var size int32
 	var err error
 
 	metaKey := db.lEncodeMetaKey(key)
-	headSeq, tailSeq, _, err = db.lGetMeta(nil, metaKey)
+	headSeq, tailSeq, size, err = db.lGetMeta(nil, metaKey)
 	if err != nil {
 		return nil, err
+	} else if size == 0 {
+		return nil, nil
 	}
 
 	var value []byte
@@ -202,9 +206,9 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	}
 
 	t.Delete(itemKey)
-	size := db.lSetMeta(metaKey, headSeq, tailSeq)
+	size = db.lSetMeta(metaKey, headSeq, tailSeq)
 	if size == 0 {
-		db.rmExpire(t, HashType, key)
+		db.rmExpire(t, ListType, key)
 	}
 
 	err = t.Commit()
@@ -271,6 +275,7 @@ func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
 	var size int32 = tailSeq - headSeq + 1
 	if size < 0 {
 		//	todo : log error + panic
+		log.Fatalf("invalid meta sequence range [%d, %d]", headSeq, tailSeq)
 	} else if size == 0 {
 		t.Delete(ek)
 	} else {
