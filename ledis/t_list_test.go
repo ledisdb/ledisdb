@@ -179,3 +179,54 @@ func TestLKeyExists(t *testing.T) {
 		t.Fatal("invalid value ", n)
 	}
 }
+
+func TestListPop(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("lpop_test")
+
+	if v, err := db.LPop(key); err != nil {
+		t.Fatal(err)
+	} else if v != nil {
+		t.Fatal(v)
+	}
+
+	if s, err := db.LLen(key); err != nil {
+		t.Fatal(err)
+	} else if s != 0 {
+		t.Fatal(s)
+	}
+
+	for i := 0; i < 10; i++ {
+		if n, err := db.LPush(key, []byte("a")); err != nil {
+			t.Fatal(err)
+		} else if n != 1+int64(i) {
+			t.Fatal(n)
+		}
+	}
+
+	if s, err := db.LLen(key); err != nil {
+		t.Fatal(err)
+	} else if s != 10 {
+		t.Fatal(s)
+	}
+
+	for i := 0; i < 10; i++ {
+		if _, err := db.LPop(key); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if s, err := db.LLen(key); err != nil {
+		t.Fatal(err)
+	} else if s != 0 {
+		t.Fatal(s)
+	}
+
+	if v, err := db.LPop(key); err != nil {
+		t.Fatal(err)
+	} else if v != nil {
+		t.Fatal(v)
+	}
+
+}
