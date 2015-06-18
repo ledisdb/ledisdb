@@ -169,5 +169,5 @@ func (db *DB) Compact() error {
 }
 
 func init() {
-	driver.Register(Store{})
+	//driver.Register(Store{})
 }
