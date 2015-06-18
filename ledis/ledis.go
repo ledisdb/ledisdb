@@ -27,11 +27,11 @@ type Ledis struct {
 	wg   sync.WaitGroup
 
 	//for replication
-	r      *rpl.Replication
-	rc     chan struct{}
-	rbatch *store.WriteBatch
-	rwg    sync.WaitGroup
-	rhs    []NewLogEventHandler
+	r       *rpl.Replication
+	rc      chan struct{}
+	rbatch  *store.WriteBatch
+	rDoneCh chan struct{}
+	rhs     []NewLogEventHandler
 
 	wLock      sync.RWMutex //allow one write at same time
 	commitLock sync.Mutex   //allow one write commit at same time
@@ -77,6 +77,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 
 		l.rc = make(chan struct{}, 1)
 		l.rbatch = l.ldb.NewWriteBatch()
+		l.rDoneCh = make(chan struct{}, 1)
 
 		l.wg.Add(1)
 		go l.onReplication()
