@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -172,7 +173,11 @@ func (c *respClient) handleRequest(reqData [][]byte) error {
 		c.conn.Close()
 
 		// send kill signal
-		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+
+		p, _ := os.FindProcess(os.Getpid())
+
+		p.Signal(syscall.SIGTERM)
+		p.Signal(os.Interrupt)
 
 		return errClientQuit
 	}
