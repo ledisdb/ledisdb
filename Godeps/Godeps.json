@@ -1,18 +1,19 @@
 {
 	"ImportPath": "github.com/siddontang/ledisdb",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.1.0",
 			"Rev": "2ceedfee35ad3848e49308ab0c9a4f640cfb5fb2"
 		},
 		{
 			"ImportPath": "github.com/boltdb/bolt",
-			"Comment": "v1.0-62-gee95430",
-			"Rev": "ee954308d64186f0fc9b7022b6178977848c17a3"
+			"Comment": "v1.0-111-g04a3e85",
+			"Rev": "04a3e85793043e76d41164037d0d7f9d53eecae3"
 		},
 		{
 			"ImportPath": "github.com/cupcake/rdb",
@@ -21,6 +22,10 @@
 		{
 			"ImportPath": "github.com/edsrzf/mmap-go",
 			"Rev": "6c75090c55983bef2e129e173681b20d24871ef8"
+		},
+		{
+			"ImportPath": "github.com/google/go-snappy/snappy",
+			"Rev": "eaa750b9bf4dcb7cb20454be850613b66cda3273"
 		},
 		{
 			"ImportPath": "github.com/siddontang/go/bson",
@@ -64,11 +69,7 @@
 		},
 		{
 			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
-			"Rev": "4875955338b0a434238a31165cb87255ab6e9e4a"
-		},
-		{
-			"ImportPath": "github.com/syndtr/gosnappy/snappy",
-			"Rev": "156a073208e131d7d2e212cb749feae7c339e846"
+			"Rev": "a06509502ca32565bdf74afc1e573050023f261c"
 		},
 		{
 			"ImportPath": "github.com/ugorji/go/codec",
