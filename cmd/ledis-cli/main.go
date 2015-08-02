@@ -1,14 +1,14 @@
-// +build linenoise
-
 package main
 
 import (
 	"flag"
 	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/peterh/liner"
 	"github.com/siddontang/goredis"
 )
 
@@ -17,8 +17,23 @@ var port = flag.Int("p", 6380, "ledisdb server port (default 6380)")
 var socket = flag.String("s", "", "ledisdb server socket, overwrite ip and port")
 var dbn = flag.Int("n", 0, "ledisdb database number(default 0)")
 
+var (
+	line        *liner.State
+	historyPath = "/tmp/ledis-cli"
+)
+
 func main() {
 	flag.Parse()
+
+	line = liner.NewLiner()
+	defer line.Close()
+
+	line.SetCtrlCAborts(true)
+
+	setCompletionHandler()
+	loadHisotry()
+
+	defer saveHisotry()
 
 	var addr string
 	if len(*socket) > 0 {
@@ -31,21 +46,18 @@ func main() {
 	c.SetMaxIdleConns(1)
 	sendSelect(c, *dbn)
 
-	SetCompletionHandler(completionHandler)
-	setHistoryCapacity(100)
-
 	reg, _ := regexp.Compile(`'.*?'|".*?"|\S+`)
 
 	prompt := ""
 
 	for {
 		if *dbn > 0 && *dbn < 16 {
-			prompt = fmt.Sprintf("%s[%d]>", addr, *dbn)
+			prompt = fmt.Sprintf("%s[%d]> ", addr, *dbn)
 		} else {
-			prompt = fmt.Sprintf("%s>", addr)
+			prompt = fmt.Sprintf("%s> ", addr)
 		}
 
-		cmd, err := line(prompt)
+		cmd, err := line.Prompt(prompt)
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 			return
@@ -55,7 +67,7 @@ func main() {
 		if len(cmds) == 0 {
 			continue
 		} else {
-			addHistory(cmd)
+			line.AppendHistory(cmd)
 
 			args := make([]interface{}, len(cmds[1:]))
 
@@ -167,12 +179,29 @@ func sendSelect(client *goredis.Client, index int) {
 	}
 }
 
-func completionHandler(in string) []string {
-	var keyWords []string
-	for _, i := range helpCommands {
-		if strings.HasPrefix(i[0], strings.ToUpper(in)) {
-			keyWords = append(keyWords, i[0])
+func setCompletionHandler() {
+	line.SetCompleter(func(line string) (c []string) {
+		for _, i := range helpCommands {
+			if strings.HasPrefix(i[0], strings.ToLower(line)) {
+				c = append(c, i[0])
+			}
 		}
+		return
+	})
+}
+
+func loadHisotry() {
+	if f, err := os.Open(historyPath); err == nil {
+		line.ReadHistory(f)
+		f.Close()
 	}
-	return keyWords
+}
+
+func saveHisotry() {
+	if f, err := os.Create(historyPath); err != nil {
+		fmt.Printf("Error writing history file: ", err)
+	} else {
+		line.WriteHistory(f)
+		f.Close()
+	}
 }
