@@ -28,6 +28,10 @@
 			"Rev": "eaa750b9bf4dcb7cb20454be850613b66cda3273"
 		},
 		{
+			"ImportPath": "github.com/peterh/liner",
+			"Rev": "1bb0d1c1a25ed393d8feb09bab039b2b1b1fbced"
+		},
+		{
 			"ImportPath": "github.com/siddontang/go/bson",
 			"Rev": "530a23162549a31baa14dfa3b647a9eccee8878f"
 		},
