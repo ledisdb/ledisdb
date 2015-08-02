@@ -10,14 +10,4 @@ fi
 
 echo "Please use [godep](https://github.com/tools/godep) to build LedisDB, :-)"
 
-go get -u github.com/szferi/gomdb
-go get -u github.com/boltdb/bolt
-go get -u github.com/ugorji/go/codec
-go get -u github.com/BurntSushi/toml
-go get -u github.com/edsrzf/mmap-go
-go get -u github.com/syndtr/goleveldb/leveldb
-go get -u github.com/cupcake/rdb
-
-go get -u github.com/siddontang/go
-go get -u github.com/siddontang/goredis
-go get -u github.com/siddontang/rdb
+go get -d ./...
