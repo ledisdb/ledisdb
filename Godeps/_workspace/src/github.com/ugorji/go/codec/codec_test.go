@@ -1,5 +1,5 @@
-// Copyright (c) 2012, 2013 Ugorji Nwoke. All rights reserved.
-// Use of this source code is governed by a BSD-style license found in the LICENSE file.
+// Copyright (c) 2012-2015 Ugorji Nwoke. All rights reserved.
+// Use of this source code is governed by a MIT license found in the LICENSE file.
 
 package codec
 
@@ -15,6 +15,11 @@ package codec
 // writes those files back out and compares the byte streams.
 //
 // Taken together, the tests are pretty extensive.
+//
+// The following manual tests must be done:
+//   - TestCodecUnderlyingType
+//   - Set fastpathEnabled to false and run tests (to ensure that regular reflection works).
+//     We don't want to use a variable there so that code is ellided.
 
 import (
 	"bytes"
@@ -36,6 +41,11 @@ import (
 	"time"
 )
 
+func init() {
+	testInitFlags()
+	testPreInitFns = append(testPreInitFns, testInit)
+}
+
 type testVerifyArg int
 
 const (
@@ -46,87 +56,48 @@ const (
 	testVerifyForPython
 )
 
+const testSkipRPCTests = false
+
 var (
+	testVerbose        bool
 	testInitDebug      bool
 	testUseIoEncDec    bool
 	testStructToArray  bool
+	testCanonical      bool
 	testWriteNoSymbols bool
+	testSkipIntf       bool
 
-	_                         = fmt.Printf
 	skipVerifyVal interface{} = &(struct{}{})
+
+	testMapStrIntfTyp = reflect.TypeOf(map[string]interface{}(nil))
 
 	// For Go Time, do not use a descriptive timezone.
 	// It's unnecessary, and makes it harder to do a reflect.DeepEqual.
 	// The Offset already tells what the offset should be, if not on UTC and unknown zone name.
 	timeLoc        = time.FixedZone("", -8*60*60) // UTC-08:00 //time.UTC-8
-	timeToCompare1 = time.Date(2012, 2, 2, 2, 2, 2, 2000, timeLoc)
-	timeToCompare2 = time.Date(1900, 2, 2, 2, 2, 2, 2000, timeLoc)
-	timeToCompare3 = time.Unix(0, 0).UTC()
-	timeToCompare4 = time.Time{}.UTC()
+	timeToCompare1 = time.Date(2012, 2, 2, 2, 2, 2, 2000, timeLoc).UTC()
+	timeToCompare2 = time.Date(1900, 2, 2, 2, 2, 2, 2000, timeLoc).UTC()
+	timeToCompare3 = time.Unix(0, 270).UTC() // use value that must be encoded as uint64 for nanoseconds (for cbor/msgpack comparison)
+	//timeToCompare4 = time.Time{}.UTC() // does not work well with simple cbor time encoding (overflow)
+	timeToCompare4 = time.Unix(-2013855848, 4223).UTC()
 
 	table              []interface{} // main items we encode
 	tableVerify        []interface{} // we verify encoded things against this after decode
 	tableTestNilVerify []interface{} // for nil interface, use this to verify (rules are different)
 	tablePythonVerify  []interface{} // for verifying for python, since Python sometimes
 	// will encode a float32 as float64, or large int as uint
-	testRpcInt   = new(TestRpcInt)
-	testMsgpackH = &MsgpackHandle{}
-	testBincH    = &BincHandle{}
-	testSimpleH  = &SimpleHandle{}
+	testRpcInt = new(TestRpcInt)
 )
 
 func testInitFlags() {
 	// delete(testDecOpts.ExtFuncs, timeTyp)
-	flag.BoolVar(&testInitDebug, "tg", false, "Test Debug")
+	flag.BoolVar(&testVerbose, "tv", false, "Test Verbose")
+	flag.BoolVar(&testInitDebug, "tg", false, "Test Init Debug")
 	flag.BoolVar(&testUseIoEncDec, "ti", false, "Use IO Reader/Writer for Marshal/Unmarshal")
 	flag.BoolVar(&testStructToArray, "ts", false, "Set StructToArray option")
 	flag.BoolVar(&testWriteNoSymbols, "tn", false, "Set NoSymbols option")
-}
-
-type AnonInTestStruc struct {
-	AS        string
-	AI64      int64
-	AI16      int16
-	AUi64     uint64
-	ASslice   []string
-	AI64slice []int64
-}
-
-type TestStruc struct {
-	S    string
-	I64  int64
-	I16  int16
-	Ui64 uint64
-	Ui8  uint8
-	B    bool
-	By   byte
-
-	Sslice    []string
-	I64slice  []int64
-	I16slice  []int16
-	Ui64slice []uint64
-	Ui8slice  []uint8
-	Bslice    []bool
-	Byslice   []byte
-
-	Islice    []interface{}
-	Iptrslice []*int64
-
-	AnonInTestStruc
-
-	//M map[interface{}]interface{}  `json:"-",bson:"-"`
-	Ms    map[string]interface{}
-	Msi64 map[string]int64
-
-	Nintf      interface{} //don't set this, so we can test for nil
-	T          time.Time
-	Nmap       map[string]bool //don't set this, so we can test for nil
-	Nslice     []byte          //don't set this, so we can test for nil
-	Nint64     *int64          //don't set this, so we can test for nil
-	Mtsptr     map[string]*TestStruc
-	Mts        map[string]TestStruc
-	Its        []*TestStruc
-	Nteststruc *TestStruc
+	flag.BoolVar(&testCanonical, "tc", false, "Set Canonical option")
+	flag.BoolVar(&testSkipIntf, "tf", false, "Skip Interfaces")
 }
 
 type TestABC struct {
@@ -149,31 +120,61 @@ func (r *TestRpcInt) Echo123(args []string, res *string) error {
 	return nil
 }
 
+type testUnixNanoTimeExt struct{}
+
+func (x testUnixNanoTimeExt) WriteExt(interface{}) []byte { panic("unsupported") }
+func (x testUnixNanoTimeExt) ReadExt(interface{}, []byte) { panic("unsupported") }
+func (x testUnixNanoTimeExt) ConvertExt(v interface{}) interface{} {
+	switch v2 := v.(type) {
+	case time.Time:
+		return v2.UTC().UnixNano()
+	case *time.Time:
+		return v2.UTC().UnixNano()
+	default:
+		panic(fmt.Sprintf("unsupported format for time conversion: expecting time.Time; got %T", v))
+	}
+}
+func (x testUnixNanoTimeExt) UpdateExt(dest interface{}, v interface{}) {
+	// fmt.Printf("testUnixNanoTimeExt.UpdateExt: v: %v\n", v)
+	tt := dest.(*time.Time)
+	switch v2 := v.(type) {
+	case int64:
+		*tt = time.Unix(0, v2).UTC()
+	case uint64:
+		*tt = time.Unix(0, int64(v2)).UTC()
+	//case float64:
+	//case string:
+	default:
+		panic(fmt.Sprintf("unsupported format for time conversion: expecting int64/uint64; got %T", v))
+	}
+	// fmt.Printf("testUnixNanoTimeExt.UpdateExt: v: %v, tt: %#v\n", v, tt)
+}
+
 func testVerifyVal(v interface{}, arg testVerifyArg) (v2 interface{}) {
 	//for python msgpack,
 	//  - all positive integers are unsigned 64-bit ints
 	//  - all floats are float64
 	switch iv := v.(type) {
 	case int8:
-		if iv > 0 {
+		if iv >= 0 {
 			v2 = uint64(iv)
 		} else {
 			v2 = int64(iv)
 		}
 	case int16:
-		if iv > 0 {
+		if iv >= 0 {
 			v2 = uint64(iv)
 		} else {
 			v2 = int64(iv)
 		}
 	case int32:
-		if iv > 0 {
+		if iv >= 0 {
 			v2 = uint64(iv)
 		} else {
 			v2 = int64(iv)
 		}
 	case int64:
-		if iv > 0 {
+		if iv >= 0 {
 			v2 = uint64(iv)
 		} else {
 			v2 = int64(iv)
@@ -247,7 +248,7 @@ func testVerifyVal(v interface{}, arg testVerifyArg) (v2 interface{}) {
 	case time.Time:
 		switch arg {
 		case testVerifyForPython:
-			if iv2 := iv.UnixNano(); iv2 > 0 {
+			if iv2 := iv.UnixNano(); iv2 >= 0 {
 				v2 = uint64(iv2)
 			} else {
 				v2 = int64(iv2)
@@ -264,34 +265,56 @@ func testVerifyVal(v interface{}, arg testVerifyArg) (v2 interface{}) {
 func testInit() {
 	gob.Register(new(TestStruc))
 	if testInitDebug {
-		ts0 := newTestStruc(2, false)
+		ts0 := newTestStruc(2, false, !testSkipIntf, false)
 		fmt.Printf("====> depth: %v, ts: %#v\n", 2, ts0)
 	}
 
+	testJsonH.Canonical = testCanonical
+	testCborH.Canonical = testCanonical
+	testSimpleH.Canonical = testCanonical
+	testBincH.Canonical = testCanonical
+	testMsgpackH.Canonical = testCanonical
+
+	testJsonH.StructToArray = testStructToArray
+	testCborH.StructToArray = testStructToArray
+	testSimpleH.StructToArray = testStructToArray
 	testBincH.StructToArray = testStructToArray
+	testMsgpackH.StructToArray = testStructToArray
+
+	testMsgpackH.RawToString = true
+
 	if testWriteNoSymbols {
 		testBincH.AsSymbols = AsSymbolNone
 	} else {
 		testBincH.AsSymbols = AsSymbolAll
 	}
-	testMsgpackH.StructToArray = testStructToArray
-	testMsgpackH.RawToString = true
+
 	// testMsgpackH.AddExt(byteSliceTyp, 0, testMsgpackH.BinaryEncodeExt, testMsgpackH.BinaryDecodeExt)
 	// testMsgpackH.AddExt(timeTyp, 1, testMsgpackH.TimeEncodeExt, testMsgpackH.TimeDecodeExt)
-	timeEncExt := func(rv reflect.Value) ([]byte, error) {
-		return encodeTime(rv.Interface().(time.Time)), nil
+	timeEncExt := func(rv reflect.Value) (bs []byte, err error) {
+		switch v2 := rv.Interface().(type) {
+		case time.Time:
+			bs = encodeTime(v2)
+		case *time.Time:
+			bs = encodeTime(*v2)
+		default:
+			err = fmt.Errorf("unsupported format for time conversion: expecting time.Time; got %T", v2)
+		}
+		return
 	}
-	timeDecExt := func(rv reflect.Value, bs []byte) error {
+	timeDecExt := func(rv reflect.Value, bs []byte) (err error) {
 		tt, err := decodeTime(bs)
 		if err == nil {
-			rv.Set(reflect.ValueOf(tt))
+			*(rv.Interface().(*time.Time)) = tt
 		}
-		return err
+		return
 	}
 
 	// add extensions for msgpack, simple for time.Time, so we can encode/decode same way.
 	testMsgpackH.AddExt(timeTyp, 1, timeEncExt, timeDecExt)
 	testSimpleH.AddExt(timeTyp, 1, timeEncExt, timeDecExt)
+	testCborH.SetExt(timeTyp, 1, &testUnixNanoTimeExt{})
+	testJsonH.SetExt(timeTyp, 1, &testUnixNanoTimeExt{})
 
 	primitives := []interface{}{
 		int8(-8),
@@ -352,7 +375,7 @@ func testInit() {
 			uint8(138): false,
 			"false":    uint8(200),
 		},
-		newTestStruc(0, false),
+		newTestStruc(0, false, !testSkipIntf, false),
 	}
 
 	table = []interface{}{}
@@ -405,21 +428,23 @@ func testInit() {
 	tablePythonVerify = tablePythonVerify[:24]
 }
 
-func testUnmarshal(v interface{}, data []byte, h Handle) error {
+func testUnmarshal(v interface{}, data []byte, h Handle) (err error) {
 	if testUseIoEncDec {
-		return NewDecoder(bytes.NewBuffer(data), h).Decode(v)
+		NewDecoder(bytes.NewBuffer(data), h).MustDecode(v)
+	} else {
+		NewDecoderBytes(data, h).MustDecode(v)
 	}
-	return NewDecoderBytes(data, h).Decode(v)
+	return
 }
 
 func testMarshal(v interface{}, h Handle) (bs []byte, err error) {
 	if testUseIoEncDec {
 		var buf bytes.Buffer
-		err = NewEncoder(&buf, h).Encode(v)
+		NewEncoder(&buf, h).MustEncode(v)
 		bs = buf.Bytes()
 		return
 	}
-	err = NewEncoderBytes(&bs, h).Encode(v)
+	NewEncoderBytes(&bs, h).MustEncode(v)
 	return
 }
 
@@ -439,72 +464,6 @@ func testUnmarshalErr(v interface{}, data []byte, h Handle, t *testing.T, name s
 	return
 }
 
-func newTestStruc(depth int, bench bool) (ts *TestStruc) {
-	var i64a, i64b, i64c, i64d int64 = 64, 6464, 646464, 64646464
-
-	ts = &TestStruc{
-		S:    "some string",
-		I64:  math.MaxInt64 * 2 / 3, // 64,
-		I16:  16,
-		Ui64: uint64(int64(math.MaxInt64 * 2 / 3)), // 64, //don't use MaxUint64, as bson can't write it
-		Ui8:  160,
-		B:    true,
-		By:   5,
-
-		Sslice:    []string{"one", "two", "three"},
-		I64slice:  []int64{1, 2, 3},
-		I16slice:  []int16{4, 5, 6},
-		Ui64slice: []uint64{137, 138, 139},
-		Ui8slice:  []uint8{210, 211, 212},
-		Bslice:    []bool{true, false, true, false},
-		Byslice:   []byte{13, 14, 15},
-
-		Islice: []interface{}{"true", true, "no", false, uint64(288), float64(0.4)},
-
-		Ms: map[string]interface{}{
-			"true":     "true",
-			"int64(9)": false,
-		},
-		Msi64: map[string]int64{
-			"one": 1,
-			"two": 2,
-		},
-		T: timeToCompare1,
-		AnonInTestStruc: AnonInTestStruc{
-			AS:        "A-String",
-			AI64:      64,
-			AI16:      16,
-			AUi64:     64,
-			ASslice:   []string{"Aone", "Atwo", "Athree"},
-			AI64slice: []int64{1, 2, 3},
-		},
-	}
-	//For benchmarks, some things will not work.
-	if !bench {
-		//json and bson require string keys in maps
-		//ts.M = map[interface{}]interface{}{
-		//	true: "true",
-		//	int8(9): false,
-		//}
-		//gob cannot encode nil in element in array (encodeArray: nil element)
-		ts.Iptrslice = []*int64{nil, &i64a, nil, &i64b, nil, &i64c, nil, &i64d, nil}
-		// ts.Iptrslice = nil
-	}
-	if depth > 0 {
-		depth--
-		if ts.Mtsptr == nil {
-			ts.Mtsptr = make(map[string]*TestStruc)
-		}
-		if ts.Mts == nil {
-			ts.Mts = make(map[string]TestStruc)
-		}
-		ts.Mtsptr["0"] = newTestStruc(depth, bench)
-		ts.Mts["0"] = *(ts.Mtsptr["0"])
-		ts.Its = append(ts.Its, ts.Mtsptr["0"])
-	}
-	return
-}
-
 // doTestCodecTableOne allows us test for different variations based on arguments passed.
 func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 	vs []interface{}, vsVerify []interface{}) {
@@ -518,8 +477,12 @@ func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 		if err != nil {
 			continue
 		}
-		logT(t, "         Encoded bytes: len: %v, %v\n", len(b0), b0)
-
+		if h.isBinary() {
+			logT(t, "         Encoded bytes: len: %v, %v\n", len(b0), b0)
+		} else {
+			logT(t, "         Encoded string: len: %v, %v\n", len(string(b0)), string(b0))
+			// println("########### encoded string: " + string(b0))
+		}
 		var v1 interface{}
 
 		if testNil {
@@ -554,17 +517,23 @@ func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 		if err = deepEqual(v0check, v1); err == nil {
 			logT(t, "++++++++ Before and After marshal matched\n")
 		} else {
-			logT(t, "-------- Before and After marshal do not match: Error: %v"+
-				" ====> GOLDEN: (%T) %#v, DECODED: (%T) %#v\n", err, v0check, v0check, v1, v1)
+			// logT(t, "-------- Before and After marshal do not match: Error: %v"+
+			// 	" ====> GOLDEN: (%T) %#v, DECODED: (%T) %#v\n", err, v0check, v0check, v1, v1)
+			logT(t, "-------- Before and After marshal do not match: Error: %v", err)
+			logT(t, "    ....... GOLDEN:  (%T) %#v", v0check, v0check)
+			logT(t, "    ....... DECODED: (%T) %#v", v1, v1)
 			failT(t)
 		}
 	}
 }
 
 func testCodecTableOne(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
 	// func TestMsgpackAllExperimental(t *testing.T) {
 	// dopts := testDecOpts(nil, nil, false, true, true),
 
+	idxTime, numPrim, numMap := 19, 23, 4
+	//println("#################")
 	switch v := h.(type) {
 	case *MsgpackHandle:
 		var oldWriteExt, oldRawToString bool
@@ -572,19 +541,24 @@ func testCodecTableOne(t *testing.T, h Handle) {
 		oldRawToString, v.RawToString = v.RawToString, true
 		doTestCodecTableOne(t, false, h, table, tableVerify)
 		v.WriteExt, v.RawToString = oldWriteExt, oldRawToString
+	case *JsonHandle:
+		//skip []interface{} containing time.Time, as it encodes as a number, but cannot decode back to time.Time.
+		//As there is no real support for extension tags in json, this must be skipped.
+		doTestCodecTableOne(t, false, h, table[:numPrim], tableVerify[:numPrim])
+		doTestCodecTableOne(t, false, h, table[numPrim+1:], tableVerify[numPrim+1:])
 	default:
 		doTestCodecTableOne(t, false, h, table, tableVerify)
 	}
 	// func TestMsgpackAll(t *testing.T) {
-	idxTime, numPrim, numMap := 19, 23, 4
 
-	//skip []interface{} containing time.Time
-	doTestCodecTableOne(t, false, h, table[:numPrim], tableVerify[:numPrim])
-	doTestCodecTableOne(t, false, h, table[numPrim+1:], tableVerify[numPrim+1:])
+	// //skip []interface{} containing time.Time
+	// doTestCodecTableOne(t, false, h, table[:numPrim], tableVerify[:numPrim])
+	// doTestCodecTableOne(t, false, h, table[numPrim+1:], tableVerify[numPrim+1:])
 	// func TestMsgpackNilStringMap(t *testing.T) {
 	var oldMapType reflect.Type
 	v := h.getBasicHandle()
-	oldMapType, v.MapType = v.MapType, mapStrIntfTyp
+
+	oldMapType, v.MapType = v.MapType, testMapStrIntfTyp
 
 	//skip time.Time, []interface{} containing time.Time, last map, and newStruc
 	doTestCodecTableOne(t, true, h, table[:idxTime], tableTestNilVerify[:idxTime])
@@ -601,6 +575,7 @@ func testCodecTableOne(t *testing.T, h Handle) {
 }
 
 func testCodecMiscOne(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
 	b, err := testMarshalErr(32, h, t, "32")
 	// Cannot do this nil one, because faster type assertion decoding will panic
 	// var i *int32
@@ -616,13 +591,17 @@ func testCodecMiscOne(t *testing.T, h Handle) {
 	}
 
 	// func TestMsgpackDecodePtr(t *testing.T) {
-	ts := newTestStruc(0, false)
+	ts := newTestStruc(0, false, !testSkipIntf, false)
 	b, err = testMarshalErr(ts, h, t, "pointer-to-struct")
 	if len(b) < 40 {
 		logT(t, "------- Size must be > 40. Size: %d", len(b))
 		t.FailNow()
 	}
-	logT(t, "------- b: %v", b)
+	if h.isBinary() {
+		logT(t, "------- b: %v", b)
+	} else {
+		logT(t, "------- b: %s", b)
+	}
 	ts2 := new(TestStruc)
 	err = testUnmarshalErr(ts2, b, h, t, "pointer-to-struct")
 	if ts2.I64 != math.MaxInt64*2/3 {
@@ -701,6 +680,7 @@ func testCodecMiscOne(t *testing.T, h Handle) {
 }
 
 func testCodecEmbeddedPointer(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
 	type Z int
 	type A struct {
 		AnInt int
@@ -720,8 +700,71 @@ func testCodecEmbeddedPointer(t *testing.T, h Handle) {
 	_ = err
 }
 
-func doTestRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs time.Duration,
+func testCodecUnderlyingType(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
+	// Manual Test.
+	// Run by hand, with accompanying print statements in fast-path.go
+	// to ensure that the fast functions are called.
+	type T1 map[string]string
+	v := T1{"1": "1s", "2": "2s"}
+	var bs []byte
+	var err error
+	NewEncoderBytes(&bs, h).MustEncode(v)
+	if err != nil {
+		logT(t, "Error during encode: %v", err)
+		failT(t)
+	}
+	var v2 T1
+	NewDecoderBytes(bs, h).MustDecode(&v2)
+	if err != nil {
+		logT(t, "Error during decode: %v", err)
+		failT(t)
+	}
+}
+
+func testCodecChan(t *testing.T, h Handle) {
+	// - send a slice []*int64 (sl1) into an chan (ch1) with cap > len(s1)
+	// - encode ch1 as a stream array
+	// - decode a chan (ch2), with cap > len(s1) from the stream array
+	// - receive from ch2 into slice sl2
+	// - compare sl1 and sl2
+	// - do this for codecs: json, cbor (covers all types)
+	sl1 := make([]*int64, 4)
+	for i := range sl1 {
+		var j int64 = int64(i)
+		sl1[i] = &j
+	}
+	ch1 := make(chan *int64, 4)
+	for _, j := range sl1 {
+		ch1 <- j
+	}
+	var bs []byte
+	NewEncoderBytes(&bs, h).MustEncode(ch1)
+	// if !h.isBinary() {
+	// 	fmt.Printf("before: len(ch1): %v, bs: %s\n", len(ch1), bs)
+	// }
+	// var ch2 chan *int64 // this will block if json, etc.
+	ch2 := make(chan *int64, 8)
+	NewDecoderBytes(bs, h).MustDecode(&ch2)
+	// logT(t, "Len(ch2): %v", len(ch2))
+	// fmt.Printf("after:  len(ch2): %v, ch2: %v\n", len(ch2), ch2)
+	close(ch2)
+	var sl2 []*int64
+	for j := range ch2 {
+		sl2 = append(sl2, j)
+	}
+	if err := deepEqual(sl1, sl2); err != nil {
+		logT(t, "Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
+		failT(t)
+	}
+}
+
+func testCodecRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs time.Duration,
 ) (port int) {
+	testOnce.Do(testInitAll)
+	if testSkipRPCTests {
+		return
+	}
 	// rpc needs EOF, which is sent via a panic, and so must be recovered.
 	if !recoverPanicToErr {
 		logT(t, "EXPECTED. set recoverPanicToErr=true, since rpc needs EOF")
@@ -761,6 +804,7 @@ func doTestRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs ti
 	clientFn := func(cc rpc.ClientCodec) {
 		cl := rpc.NewClientWithCodec(cc)
 		defer cl.Close()
+		//	defer func() { println("##### client closing"); cl.Close() }()
 		var up, sq, mult int
 		var rstr string
 		// log("Calling client")
@@ -816,32 +860,37 @@ func doTestRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs ti
 	return
 }
 
-// Comprehensive testing that generates data encoded from python msgpack,
+// Comprehensive testing that generates data encoded from python handle (cbor, msgpack),
 // and validates that our code can read and write it out accordingly.
 // We keep this unexported here, and put actual test in ext_dep_test.go.
 // This way, it can be excluded by excluding file completely.
-func doTestMsgpackPythonGenStreams(t *testing.T) {
-	logT(t, "TestPythonGenStreams")
-	tmpdir, err := ioutil.TempDir("", "golang-msgpack-test")
+func doTestPythonGenStreams(t *testing.T, name string, h Handle) {
+	logT(t, "TestPythonGenStreams-%v", name)
+	tmpdir, err := ioutil.TempDir("", "golang-"+name+"-test")
 	if err != nil {
 		logT(t, "-------- Unable to create temp directory\n")
 		t.FailNow()
 	}
 	defer os.RemoveAll(tmpdir)
 	logT(t, "tmpdir: %v", tmpdir)
-	cmd := exec.Command("python", "msgpack_test.py", "testdata", tmpdir)
+	cmd := exec.Command("python", "test.py", "testdata", tmpdir)
 	//cmd.Stdin = strings.NewReader("some input")
 	//cmd.Stdout = &out
 	var cmdout []byte
 	if cmdout, err = cmd.CombinedOutput(); err != nil {
-		logT(t, "-------- Error running msgpack_test.py testdata. Err: %v", err)
+		logT(t, "-------- Error running test.py testdata. Err: %v", err)
 		logT(t, "         %v", string(cmdout))
 		t.FailNow()
 	}
 
-	oldMapType := testMsgpackH.MapType
+	bh := h.getBasicHandle()
+
+	oldMapType := bh.MapType
 	for i, v := range tablePythonVerify {
-		testMsgpackH.MapType = oldMapType
+		// if v == uint64(0) && h == testMsgpackH {
+		// 	v = int64(0)
+		// }
+		bh.MapType = oldMapType
 		//load up the golden file based on number
 		//decode it
 		//compare to in-mem object
@@ -850,16 +899,16 @@ func doTestMsgpackPythonGenStreams(t *testing.T) {
 		logT(t, "..............................................")
 		logT(t, "         Testing: #%d: %T, %#v\n", i, v, v)
 		var bss []byte
-		bss, err = ioutil.ReadFile(filepath.Join(tmpdir, strconv.Itoa(i)+".golden"))
+		bss, err = ioutil.ReadFile(filepath.Join(tmpdir, strconv.Itoa(i)+"."+name+".golden"))
 		if err != nil {
 			logT(t, "-------- Error reading golden file: %d. Err: %v", i, err)
 			failT(t)
 			continue
 		}
-		testMsgpackH.MapType = mapStrIntfTyp
+		bh.MapType = testMapStrIntfTyp
 
 		var v1 interface{}
-		if err = testUnmarshal(&v1, bss, testMsgpackH); err != nil {
+		if err = testUnmarshal(&v1, bss, h); err != nil {
 			logT(t, "-------- Error decoding stream: %d: Err: %v", i, err)
 			failT(t)
 			continue
@@ -870,14 +919,15 @@ func doTestMsgpackPythonGenStreams(t *testing.T) {
 		//no need to indirect, because we pass a nil ptr, so we already have the value
 		//if v1 != nil { v1 = reflect.Indirect(reflect.ValueOf(v1)).Interface() }
 		if err = deepEqual(v, v1); err == nil {
-			logT(t, "++++++++ Objects match")
+			logT(t, "++++++++ Objects match: %T, %v", v, v)
 		} else {
 			logT(t, "-------- Objects do not match: %v. Source: %T. Decoded: %T", err, v, v1)
-			logT(t, "--------   AGAINST: %#v", v)
+			logT(t, "--------   GOLDEN: %#v", v)
+			// logT(t, "--------   DECODED: %#v <====> %#v", v1, reflect.Indirect(reflect.ValueOf(v1)).Interface())
 			logT(t, "--------   DECODED: %#v <====> %#v", v1, reflect.Indirect(reflect.ValueOf(v1)).Interface())
 			failT(t)
 		}
-		bsb, err := testMarshal(v1, testMsgpackH)
+		bsb, err := testMarshal(v1, h)
 		if err != nil {
 			logT(t, "Error encoding to stream: %d: Err: %v", i, err)
 			failT(t)
@@ -899,7 +949,7 @@ func doTestMsgpackPythonGenStreams(t *testing.T) {
 			logT(t, "%s     ENCODED: %4d] %v", xs, len(bsb), bsb)
 		}
 	}
-	testMsgpackH.MapType = oldMapType
+	bh.MapType = oldMapType
 }
 
 // To test MsgpackSpecRpc, we test 3 scenarios:
@@ -912,8 +962,11 @@ func doTestMsgpackPythonGenStreams(t *testing.T) {
 //    - Python Service allows multiple arguments
 
 func doTestMsgpackRpcSpecGoClientToPythonSvc(t *testing.T) {
+	if testSkipRPCTests {
+		return
+	}
 	openPort := "6789"
-	cmd := exec.Command("python", "msgpack_test.py", "rpc-server", openPort, "2")
+	cmd := exec.Command("python", "test.py", "rpc-server", openPort, "2")
 	checkErrT(t, cmd.Start())
 	time.Sleep(100 * time.Millisecond) // time for python rpc server to start
 	bs, err2 := net.Dial("tcp", ":"+openPort)
@@ -930,13 +983,16 @@ func doTestMsgpackRpcSpecGoClientToPythonSvc(t *testing.T) {
 }
 
 func doTestMsgpackRpcSpecPythonClientToGoSvc(t *testing.T) {
-	port := doTestRpcOne(t, MsgpackSpecRpc, testMsgpackH, false, 1*time.Second)
+	if testSkipRPCTests {
+		return
+	}
+	port := testCodecRpcOne(t, MsgpackSpecRpc, testMsgpackH, false, 1*time.Second)
 	//time.Sleep(1000 * time.Millisecond)
-	cmd := exec.Command("python", "msgpack_test.py", "rpc-client-go-service", strconv.Itoa(port))
+	cmd := exec.Command("python", "test.py", "rpc-client-go-service", strconv.Itoa(port))
 	var cmdout []byte
 	var err error
 	if cmdout, err = cmd.CombinedOutput(); err != nil {
-		logT(t, "-------- Error running msgpack_test.py rpc-client-go-service. Err: %v", err)
+		logT(t, "-------- Error running test.py rpc-client-go-service. Err: %v", err)
 		logT(t, "         %v", string(cmdout))
 		t.FailNow()
 	}
@@ -980,23 +1036,82 @@ func TestMsgpackCodecsEmbeddedPointer(t *testing.T) {
 	testCodecEmbeddedPointer(t, testMsgpackH)
 }
 
-func TestBincRpcGo(t *testing.T) {
-	doTestRpcOne(t, GoRpc, testBincH, true, 0)
+func TestCborCodecsTable(t *testing.T) {
+	testCodecTableOne(t, testCborH)
 }
 
-func _TestSimpleRpcGo(t *testing.T) {
-	doTestRpcOne(t, GoRpc, testSimpleH, true, 0)
+func TestCborCodecsMisc(t *testing.T) {
+	testCodecMiscOne(t, testCborH)
+}
+
+func TestCborCodecsEmbeddedPointer(t *testing.T) {
+	testCodecEmbeddedPointer(t, testCborH)
+}
+
+func TestJsonCodecsTable(t *testing.T) {
+	testCodecTableOne(t, testJsonH)
+}
+
+func TestJsonCodecsMisc(t *testing.T) {
+	testCodecMiscOne(t, testJsonH)
+}
+
+func TestJsonCodecsEmbeddedPointer(t *testing.T) {
+	testCodecEmbeddedPointer(t, testJsonH)
+}
+
+func TestJsonCodecChan(t *testing.T) {
+	testCodecChan(t, testJsonH)
+}
+
+func TestCborCodecChan(t *testing.T) {
+	testCodecChan(t, testCborH)
+}
+
+// ----- RPC -----
+
+func TestBincRpcGo(t *testing.T) {
+	testCodecRpcOne(t, GoRpc, testBincH, true, 0)
+}
+
+func TestSimpleRpcGo(t *testing.T) {
+	testCodecRpcOne(t, GoRpc, testSimpleH, true, 0)
 }
 
 func TestMsgpackRpcGo(t *testing.T) {
-	doTestRpcOne(t, GoRpc, testMsgpackH, true, 0)
+	testCodecRpcOne(t, GoRpc, testMsgpackH, true, 0)
+}
+
+func TestCborRpcGo(t *testing.T) {
+	testCodecRpcOne(t, GoRpc, testCborH, true, 0)
+}
+
+func TestJsonRpcGo(t *testing.T) {
+	testCodecRpcOne(t, GoRpc, testJsonH, true, 0)
 }
 
 func TestMsgpackRpcSpec(t *testing.T) {
-	doTestRpcOne(t, MsgpackSpecRpc, testMsgpackH, true, 0)
+	testCodecRpcOne(t, MsgpackSpecRpc, testMsgpackH, true, 0)
+}
+
+func TestBincUnderlyingType(t *testing.T) {
+	testCodecUnderlyingType(t, testBincH)
 }
 
 // TODO:
 //   Add Tests for:
 //   - decoding empty list/map in stream into a nil slice/map
-//   - binary(M|Unm)arsher support for time.Time
+//   - binary(M|Unm)arsher support for time.Time (e.g. cbor encoding)
+//   - text(M|Unm)arshaler support for time.Time (e.g. json encoding)
+//   - non fast-path scenarios e.g. map[string]uint16, []customStruct.
+//     Expand cbor to include indefinite length stuff for this non-fast-path types.
+//     This may not be necessary, since we have the manual tests (fastpathEnabled=false) to test/validate with.
+//   - CodecSelfer
+//     Ensure it is called when (en|de)coding interface{} or reflect.Value (2 different codepaths).
+//   - interfaces: textMarshaler, binaryMarshaler, codecSelfer
+//   - struct tags:
+//     on anonymous fields, _struct (all fields), etc
+//   - codecgen of struct containing channels.
+//
+//   Cleanup tests:
+//   - The are brittle in their handling of validation and skipping

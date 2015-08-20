@@ -4,7 +4,11 @@
 # A Test calls this internally to create the golden files
 # So it can process them (so we don't have to checkin the files).
 
-import msgpack, msgpackrpc, sys, os, threading
+# Ensure msgpack-python and cbor are installed first, using:
+#   pip install --user msgpack-python
+#   pip install --user cbor
+
+import cbor, msgpack, msgpackrpc, sys, os, threading
 
 def get_test_data_list():
     # get list with all primitive types, and a combo type
@@ -25,13 +29,14 @@ def get_test_data_list():
          False,
          True,
          None,
-         "someday",
-         "",
-         "bytestring",
+         u"someday",
+         u"",
+         u"bytestring",
          1328176922000002000,
          -2206187877999998000,
-         0,
-         -6795364578871345152
+         270,
+        -2013855847999995777,
+         #-6795364578871345152,
          ]
     l1 = [
         { "true": True,
@@ -55,9 +60,13 @@ def get_test_data_list():
 def build_test_data(destdir):
     l = get_test_data_list()
     for i in range(len(l)):
-        packer = msgpack.Packer()
-        serialized = packer.pack(l[i])
-        f = open(os.path.join(destdir, str(i) + '.golden'), 'wb')
+        # packer = msgpack.Packer()
+        serialized = msgpack.dumps(l[i])
+        f = open(os.path.join(destdir, str(i) + '.msgpack.golden'), 'wb')
+        f.write(serialized)
+        f.close()
+        serialized = cbor.dumps(l[i])
+        f = open(os.path.join(destdir, str(i) + '.cbor.golden'), 'wb')
         f.write(serialized)
         f.close()
 
@@ -102,7 +111,7 @@ def doMain(args):
     elif len(args) == 2 and args[0] == "rpc-client-go-service":
         doRpcClientToGoSvc(int(args[1]))
     else:
-        print("Usage: msgpack_test.py " + 
+        print("Usage: test.py " + 
               "[testdata|rpc-server|rpc-client-python-service|rpc-client-go-service] ...")
     
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-// Copyright (c) 2012, 2013 Ugorji Nwoke. All rights reserved.
-// Use of this source code is governed by a BSD-style license found in the LICENSE file.
+// Copyright (c) 2012-2015 Ugorji Nwoke. All rights reserved.
+// Use of this source code is governed by a MIT license found in the LICENSE file.
 
 package codec
 
@@ -9,6 +9,14 @@ import (
 	"net/rpc"
 	"sync"
 )
+
+// rpcEncodeTerminator allows a handler specify a []byte terminator to send after each Encode.
+//
+// Some codecs like json need to put a space after each encoded value, to serve as a
+// delimiter for things like numbers (else json codec will continue reading till EOF).
+type rpcEncodeTerminator interface {
+	rpcEncodeTerminate() []byte
+}
 
 // Rpc provides a rpc Server or Client Codec for rpc communication.
 type Rpc interface {
@@ -35,7 +43,10 @@ type rpcCodec struct {
 	bw  *bufio.Writer
 	br  *bufio.Reader
 	mu  sync.Mutex
-	cls bool
+	h   Handle
+
+	cls   bool
+	clsmu sync.RWMutex
 }
 
 func newRPCCodec(conn io.ReadWriteCloser, h Handle) rpcCodec {
@@ -47,6 +58,7 @@ func newRPCCodec(conn io.ReadWriteCloser, h Handle) rpcCodec {
 		br:  br,
 		enc: NewEncoder(bw, h),
 		dec: NewDecoder(br, h),
+		h:   h,
 	}
 }
 
@@ -59,25 +71,32 @@ func (c *rpcCodec) BufferedWriter() *bufio.Writer {
 }
 
 func (c *rpcCodec) write(obj1, obj2 interface{}, writeObj2, doFlush bool) (err error) {
-	if c.cls {
+	if c.isClosed() {
 		return io.EOF
 	}
 	if err = c.enc.Encode(obj1); err != nil {
 		return
 	}
+	t, tOk := c.h.(rpcEncodeTerminator)
+	if tOk {
+		c.bw.Write(t.rpcEncodeTerminate())
+	}
 	if writeObj2 {
 		if err = c.enc.Encode(obj2); err != nil {
 			return
 		}
+		if tOk {
+			c.bw.Write(t.rpcEncodeTerminate())
+		}
 	}
-	if doFlush && c.bw != nil {
+	if doFlush {
 		return c.bw.Flush()
 	}
 	return
 }
 
 func (c *rpcCodec) read(obj interface{}) (err error) {
-	if c.cls {
+	if c.isClosed() {
 		return io.EOF
 	}
 	//If nil is passed in, we should still attempt to read content to nowhere.
@@ -88,11 +107,20 @@ func (c *rpcCodec) read(obj interface{}) (err error) {
 	return c.dec.Decode(obj)
 }
 
+func (c *rpcCodec) isClosed() bool {
+	c.clsmu.RLock()
+	x := c.cls
+	c.clsmu.RUnlock()
+	return x
+}
+
 func (c *rpcCodec) Close() error {
-	if c.cls {
+	if c.isClosed() {
 		return io.EOF
 	}
+	c.clsmu.Lock()
 	c.cls = true
+	c.clsmu.Unlock()
 	return c.rwc.Close()
 }
 
