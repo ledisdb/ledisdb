@@ -88,7 +88,7 @@ func newClient(app *App) *client {
 
 	c.app = app
 	c.ldb = app.ldb
-	c.isAuthed = false || c.authEnabled()
+	c.isAuthed = false
 	c.db, _ = app.ldb.Select(0) //use default db
 
 	return c
