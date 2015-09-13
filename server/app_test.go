@@ -37,11 +37,7 @@ func startTestAppAuth(password string) {
 
 		cfg.Addr = "127.0.0.1:20000"
 		cfg.HttpAddr = "127.0.0.1:20001"
-
-		if password != "" {
-			cfg.AuthPassword = password
-			cfg.AuthEnabled = true
-		}
+		cfg.AuthPassword = password
 
 		os.RemoveAll(cfg.DataDir)
 
