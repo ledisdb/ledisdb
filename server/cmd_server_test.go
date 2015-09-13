@@ -25,6 +25,12 @@ func TestAuth(t *testing.T) {
 	c2 := getTestConnAuth("password")
 	defer c2.Close()
 
+	// Should fail doing a command as we've not authed
+	_, err = c2.Do("GET", "tmp_select_key")
+	if err.Error() != " not authenticated" {
+		t.Fatal("Expected authentication error:", err)
+	}
+
 	// Login
 	_, err = c2.Do("AUTH", "password")
 	if err != nil {
