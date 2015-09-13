@@ -22,6 +22,7 @@ LedisDB now supports multiple different databases as backends.
 + Replication to guarantee data safety.
 + Supplies tools to load, dump, and repair database. 
 + Supports cluster, use [xcodis](https://github.com/siddontang/xcodis)
++ Authentication (though, not via http)
 
 ## Build and Install
 

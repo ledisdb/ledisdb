@@ -91,6 +91,8 @@ type SnapshotConfig struct {
 type Config struct {
 	m sync.RWMutex `toml:"-"`
 
+	AuthPassword string `toml:"auth_password"`
+
 	FileName string `toml:"-"`
 
 	Addr string `toml:"addr"`
@@ -167,6 +169,9 @@ func NewConfigDefault() *Config {
 
 	cfg.SlaveOf = ""
 	cfg.Readonly = false
+
+	// Disable Auth by default, by setting password to blank
+	cfg.AuthPassword = ""
 
 	// default databases number
 	cfg.Databases = 16
