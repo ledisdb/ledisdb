@@ -20,11 +20,11 @@ func authCommand(c *client) error {
 	}
 
 	if c.app.cfg.AuthPassword == string(c.args[0]) {
-		c.is_authed = true
+		c.isAuthed = true
 		c.resp.writeStatus(OK)
 		return nil
 	} else {
-		c.is_authed = false
+		c.isAuthed = false
 		return ErrAuthenticationFailure
 	}
 }

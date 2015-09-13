@@ -64,7 +64,7 @@ type client struct {
 	cmd        string
 	args       [][]byte
 
-	is_authed bool
+	isAuthed bool
 
 	resp responseWriter
 
@@ -88,7 +88,7 @@ func newClient(app *App) *client {
 
 	c.app = app
 	c.ldb = app.ldb
-	c.is_authed = false || c.authEnabled()
+	c.isAuthed = false || c.authEnabled()
 	c.db, _ = app.ldb.Select(0) //use default db
 
 	return c
@@ -111,7 +111,7 @@ func (c *client) perform() {
 		err = ErrEmptyCommand
 	} else if exeCmd, ok := regCmds[c.cmd]; !ok {
 		err = ErrNotFound
-	} else if c.authEnabled() && !c.is_authed && c.cmd != "auth" {
+	} else if c.authEnabled() && !c.isAuthed && c.cmd != "auth" {
 		err = ErrNotAuthenticated
 	} else {
 		// if c.db.IsTransaction() {
