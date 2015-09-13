@@ -6,6 +6,50 @@ import (
 	"github.com/siddontang/goredis"
 )
 
+func TestAuth(t *testing.T) {
+	c1 := getTestConn()
+	defer c1.Close()
+
+	// Should error, no params
+	_, err := c1.Do("AUTH")
+	if err == nil {
+		t.Fatal(err)
+	}
+
+	// Should error, invalid pass
+	_, err = c1.Do("AUTH", "password")
+	if err.Error() != " authentication failure" {
+		t.Fatal("Expected authentication error:", err)
+	}
+
+	c2 := getTestConnAuth("password")
+	defer c2.Close()
+
+	// Login
+	_, err = c2.Do("AUTH", "password")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Should be ok doing a command
+	_, err = c2.Do("GET", "tmp_select_key")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Log out by sending wrong pass
+	_, err = c2.Do("AUTH", "wrong password")
+	if err.Error() != " authentication failure" {
+		t.Fatal("Expected authentication error:", err)
+	}
+
+	// Should fail doing a command as we're logged out
+	_, err = c2.Do("GET", "tmp_select_key")
+	if err.Error() != " not authenticated" {
+		t.Fatal("Expected authentication error:", err)
+	}
+}
+
 func TestXSelect(t *testing.T) {
 	c1 := getTestConn()
 	defer c1.Close()

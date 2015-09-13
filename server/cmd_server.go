@@ -14,6 +14,21 @@ func pingCommand(c *client) error {
 	return nil
 }
 
+func authCommand(c *client) error {
+	if len(c.args) != 1 {
+		return ErrCmdParams
+	}
+
+	if c.app.cfg.AuthPassword == string(c.args[0]) {
+		c.is_authed = true
+		c.resp.writeStatus(OK)
+		return nil
+	} else {
+		c.is_authed = false
+		return ErrAuthenticationFailure
+	}
+}
+
 func echoCommand(c *client) error {
 	if len(c.args) != 1 {
 		return ErrCmdParams
@@ -156,6 +171,7 @@ func configCommand(c *client) error {
 }
 
 func init() {
+	register("auth", authCommand)
 	register("ping", pingCommand)
 	register("echo", echoCommand)
 	register("select", selectCommand)
