@@ -10,10 +10,18 @@ fi
 
 #default snappy and leveldb install path
 #you may change yourself
-SNAPPY_DIR=/usr/local/snappy
-LEVELDB_DIR=/usr/local/leveldb
-ROCKSDB_DIR=/usr/local/rocksdb
-LUA_DIR=/usr/local/lua
+HOMEBREW_PREFIX=$(brew --prefix 2>/dev/null)
+if [[ ! -z "$HOMEBREW_PREFIX" ]]; then
+  SNAPPY_DIR=$HOMEBREW_PREFIX/opt/snappy
+  LEVELDB_DIR=$HOMEBREW_PREFIX/opt/leveldb
+  ROCKSDB_DIR=$HOMEBREW_PREFIX/opt/rocksdb
+  LUA_DIR=$HOMEBREW_PREFIX/opt/lua51
+else
+  SNAPPY_DIR=/usr/local/snappy
+  LEVELDB_DIR=/usr/local/leveldb
+  ROCKSDB_DIR=/usr/local/rocksdb
+  LUA_DIR=/usr/local/lua
+fi
 
 function add_path()
 {
@@ -69,6 +77,12 @@ fi
 if [ -f $LUA_DIR/include/lua.h ]; then
     CGO_CFLAGS="$CGO_CFLAGS -I$LUA_DIR/include"
     CGO_LDFLAGS="$CGO_LDFLAGS -L$LUA_DIR/lib -llua"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LUA_DIR/lib)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LUA_DIR/lib)
+    GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
+elif [ -f $LUA_DIR/include/lua-5.1/lua.h ]; then
+    CGO_CFLAGS="$CGO_CFLAGS -I$LUA_DIR/include/lua-5.1"
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$LUA_DIR/lib -llua5.1"
     LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $LUA_DIR/lib)
     DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $LUA_DIR/lib)
     GO_BUILD_TAGS="$GO_BUILD_TAGS lua"
