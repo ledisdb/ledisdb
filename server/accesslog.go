@@ -34,8 +34,8 @@ func (l *accessLog) Log(remoteAddr string, usedTime int64, request []byte, err e
 	format := `%s %q %d [%s]`
 
 	if err == nil {
-		l.l.Info(format, remoteAddr, request, usedTime, "OK")
+		l.l.Infof(format, remoteAddr, request, usedTime, "OK")
 	} else {
-		l.l.Info(format, remoteAddr, request, usedTime, err.Error())
+		l.l.Infof(format, remoteAddr, request, usedTime, err.Error())
 	}
 }
