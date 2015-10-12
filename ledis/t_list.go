@@ -9,6 +9,7 @@ import (
 
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
+	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
 )
 
@@ -215,6 +216,61 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	return value, err
 }
 
+func (db *DB) ltrim(key []byte, trimSize, whereSeq int32) (int32, error) {
+	if err := checkKeySize(key); err != nil {
+		return 0, err
+	}
+
+	if trimSize == 0 {
+		return 0, nil
+	}
+
+	t := db.listBatch
+	t.Lock()
+	defer t.Unlock()
+
+	var headSeq int32
+	var tailSeq int32
+	var size int32
+	var err error
+
+	metaKey := db.lEncodeMetaKey(key)
+	headSeq, tailSeq, size, err = db.lGetMeta(nil, metaKey)
+	if err != nil {
+		return 0, err
+	} else if size == 0 {
+		return 0, nil
+	}
+
+	var (
+		trimStartSeq int32
+		trimEndSeq   int32
+	)
+
+	if whereSeq == listHeadSeq {
+		trimStartSeq = headSeq
+		trimEndSeq = num.MinInt32(trimStartSeq+trimSize-1, tailSeq)
+		headSeq = trimEndSeq + 1
+	} else {
+		trimEndSeq = tailSeq
+		trimStartSeq = num.MaxInt32(trimEndSeq-trimSize+1, headSeq)
+		tailSeq = trimStartSeq - 1
+	}
+
+	for trimSeq := trimStartSeq; trimSeq <= trimEndSeq; trimSeq++ {
+		itemKey := db.lEncodeListKey(key, trimSeq)
+		t.Delete(itemKey)
+	}
+
+	size = db.lSetMeta(metaKey, headSeq, tailSeq)
+	if size == 0 {
+		db.rmExpire(t, ListType, key)
+	}
+
+	err = t.Commit()
+	return trimEndSeq - trimStartSeq + 1, err
+}
+
 //	ps : here just focus on deleting the list data,
 //		 any other likes expire is ignore.
 func (db *DB) lDelete(t *batch, key []byte) int64 {
@@ -350,6 +406,14 @@ func (db *DB) LLen(key []byte) (int64, error) {
 
 func (db *DB) LPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listHeadSeq)
+}
+
+func (db *DB) LTrimFront(key []byte, trimSize int32) (int32, error) {
+	return db.ltrim(key, trimSize, listHeadSeq)
+}
+
+func (db *DB) LTrimBack(key []byte, trimSize int32) (int32, error) {
+	return db.ltrim(key, trimSize, listTailSeq)
 }
 
 func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {

@@ -292,6 +292,52 @@ func lkeyexistsCommand(c *client) error {
 	return nil
 }
 
+func lTrimFrontCommand(c *client) error {
+	args := c.args
+	if len(args) != 2 {
+		return ErrCmdParams
+	}
+
+	var trimSize int32
+	var err error
+
+	trimSize, err = ledis.StrInt32(args[1], nil)
+	if err != nil || trimSize < 0 {
+		return ErrValue
+	}
+
+	if n, err := c.db.LTrimFront(args[0], trimSize); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(int64(n))
+	}
+
+	return nil
+}
+
+func lTrimBackCommand(c *client) error {
+	args := c.args
+	if len(args) != 2 {
+		return ErrCmdParams
+	}
+
+	var trimSize int32
+	var err error
+
+	trimSize, err = ledis.StrInt32(args[1], nil)
+	if err != nil || trimSize < 0 {
+		return ErrValue
+	}
+
+	if n, err := c.db.LTrimBack(args[0], trimSize); err != nil {
+		return err
+	} else {
+		c.resp.writeInteger(int64(n))
+	}
+
+	return nil
+}
+
 func init() {
 	register("blpop", blpopCommand)
 	register("brpop", brpopCommand)
@@ -312,4 +358,7 @@ func init() {
 	register("lttl", lttlCommand)
 	register("lpersist", lpersistCommand)
 	register("lkeyexists", lkeyexistsCommand)
+
+	register("ltrim_front", lTrimFrontCommand)
+	register("ltrim_back", lTrimBackCommand)
 }
