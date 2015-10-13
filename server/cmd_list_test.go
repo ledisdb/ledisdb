@@ -297,6 +297,72 @@ func TestPop(t *testing.T) {
 
 }
 
+func TestTrim(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	key := []byte("d")
+	if n, err := goredis.Int(c.Do("rpush", key, 1, 2, 3, 4, 5, 6)); err != nil {
+		t.Fatal(err)
+	} else if n != 6 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("ltrim_front", key, 2)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("llen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 4 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("ltrim_back", key, 2)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("llen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("ltrim_front", key, 5)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("llen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("rpush", key, 1, 2)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("ltrim_front", key, 2)); err != nil {
+		t.Fatal(err)
+	} else if n != 2 {
+		t.Fatal(n)
+	}
+
+	if n, err := goredis.Int(c.Do("llen", key)); err != nil {
+		t.Fatal(err)
+	} else if n != 0 {
+		t.Fatal(n)
+	}
+}
+
 func TestListErrorParams(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
@@ -353,4 +419,11 @@ func TestListErrorParams(t *testing.T) {
 		t.Fatal("invalid err of %v", err)
 	}
 
+	if _, err := c.Do("ltrim_front", "test_ltrimfront", "-1"); err == nil {
+		t.Fatal("invalid err of %v", err)
+	}
+
+	if _, err := c.Do("ltrim_back", "test_ltrimback", "a"); err == nil {
+		t.Fatal("invalid err of %v", err)
+	}
 }
