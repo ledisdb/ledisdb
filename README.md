@@ -133,7 +133,13 @@ If you don't use a configuration, LedisDB will use the default for you.
 
 ## Package Example
     
-    import "github.com/siddontang/ledisdb/ledis"
+    import (
+      lediscfg "github.com/siddontang/ledisdb/config"
+      "github.com/siddontang/ledisdb/ledis"
+    )
+
+    # Use Ledis's default config
+    cfg := lediscfg.NewConfigDefault()
     l, _ := ledis.Open(cfg)
     db, _ := l.Select(0)
 
