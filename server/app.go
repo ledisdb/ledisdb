@@ -99,7 +99,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		if perm, err = strconv.ParseInt(cfg.AddrUnixSocketPerm, 8, 32); err != nil {
 			return nil, err
 		}
-		if err = os.Chmod(cfg.Addr, os.FileMode(uint32(perm))); err != nil {
+		if err = os.Chmod(cfg.Addr, os.FileMode(perm)); err != nil {
 			return nil, err
 		}
 	}
