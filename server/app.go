@@ -3,7 +3,9 @@ package server
 import (
 	"net"
 	"net/http"
+	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -86,8 +88,20 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	if app.listener, err = net.Listen(netType(cfg.Addr), cfg.Addr); err != nil {
+	addrNetType := netType(cfg.Addr)
+
+	if app.listener, err = net.Listen(addrNetType, cfg.Addr); err != nil {
 		return nil, err
+	}
+
+	if addrNetType == "unix" && len(cfg.AddrUnixSocketPerm) > 0 {
+		var perm int64
+		if perm, err = strconv.ParseInt(cfg.AddrUnixSocketPerm, 8, 32); err != nil {
+			return nil, err
+		}
+		if err = os.Chmod(cfg.Addr, os.FileMode(uint32(perm))); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(cfg.HttpAddr) > 0 {

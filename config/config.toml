@@ -3,6 +3,10 @@
 # Server listen address
 addr = "127.0.0.1:6380"
 
+# Unix socket permissions, 755 by default.
+# Ignored for tcp socket.
+addr_unixsocketperm = "0770"
+
 # Server http listen address, set empty to disable
 http_addr = "127.0.0.1:11181"
 
