@@ -97,6 +97,8 @@ type Config struct {
 
 	Addr string `toml:"addr"`
 
+	AddrUnixSocketPerm string `toml:"addr_unixsocketperm"`
+
 	HttpAddr string `toml:"http_addr"`
 
 	SlaveOf string `toml:"slaveof"`
