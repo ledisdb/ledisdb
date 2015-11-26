@@ -292,6 +292,34 @@ func lkeyexistsCommand(c *client) error {
 	return nil
 }
 
+func lTrimCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	var start int32
+	var stop int32
+	var err error
+
+	start, err = ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return ErrValue
+	}
+	stop, err = ledis.StrInt64(args[2], nil)
+	if err != nil {
+		return ErrValue
+	}
+
+	if err := c.db.LTrim(args[0], start, stop); err != nil {
+		return err
+	} else {
+		c.resp.writeStatus(OK)
+	}
+
+	return nil
+}
+
 func lTrimFrontCommand(c *client) error {
 	args := c.args
 	if len(args) != 2 {
@@ -361,4 +389,5 @@ func init() {
 
 	register("ltrim_front", lTrimFrontCommand)
 	register("ltrim_back", lTrimBackCommand)
+	register("ltrim", lTrimCommand)
 }

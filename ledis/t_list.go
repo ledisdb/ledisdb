@@ -216,6 +216,60 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	return value, err
 }
 
+func (db *DB) ltrim2(key []byte, startP, stopP int64) (err error) {
+	if err := checkKeySize(key); err != nil {
+		return err
+	}
+
+	t := db.listBatch
+	t.Lock()
+	defer t.Unlock()
+
+	var headSeq int32
+	var llen int32
+	start := int32(startP)
+	stop := int32(stopP)
+
+	ek := db.lEncodeMetaKey(key)
+	if headSeq, _, llen, err = db.lGetMeta(nil, ek); err != nil {
+		return err
+	} else {
+		if start < 0 {
+			start = llen + start
+		}
+		if stop < 0 {
+			stop = llen + stop
+		}
+		if start >= llen || start > stop {
+			db.lDelete(t, key)
+			db.rmExpire(t, ListType, key)
+			return t.Commit()
+		}
+
+		if start < 0 {
+			start = 0
+		}
+		if stop >= llen {
+			stop = llen - 1
+		}
+	}
+
+	if start > 0 {
+		for i := int32(0); i < start; i++ {
+			t.Delete(db.lEncodeListKey(key, headSeq+i))
+		}
+	}
+	if stop < int32(llen-1) {
+		for i := int32(stop + 1); i < llen; i++ {
+			t.Delete(db.lEncodeListKey(key, headSeq+i))
+		}
+	}
+
+	db.lSetMeta(ek, headSeq+start, headSeq+stop)
+
+	return t.Commit()
+}
+
 func (db *DB) ltrim(key []byte, trimSize, whereSeq int32) (int32, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -406,6 +460,10 @@ func (db *DB) LLen(key []byte) (int64, error) {
 
 func (db *DB) LPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listHeadSeq)
+}
+
+func (db *DB) LTrim(key []byte, start, stop int64) error {
+	return db.ltrim2(key, start, stop)
 }
 
 func (db *DB) LTrimFront(key []byte, trimSize int32) (int32, error) {
