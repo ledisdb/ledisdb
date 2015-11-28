@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -26,6 +27,93 @@ func TestListCodec(t *testing.T) {
 		t.Fatal(string(k))
 	} else if seq != 1024 {
 		t.Fatal(seq)
+	}
+}
+
+func TestListTrim(t *testing.T) {
+	db := getTestDB()
+
+	key := []byte("test_list_trim")
+
+	init := func() {
+		db.LClear(key)
+		for i := 0; i < 100; i++ {
+			n, err := db.RPush(key, []byte(strconv.Itoa(i)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if n != int64(i+1) {
+				t.Fatal("length wrong")
+			}
+		}
+	}
+
+	init()
+
+	err := db.LTrim(key, 0, 99)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := db.LLen(key); l != int64(100) {
+		t.Fatal("wrong len:", l)
+	}
+
+	err = db.LTrim(key, 0, 50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := db.LLen(key); l != int64(51) {
+		t.Fatal("wrong len:", l)
+	}
+	for i := int32(0); i < 51; i++ {
+		v, err := db.LIndex(key, i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(v) != strconv.Itoa(int(i)) {
+			t.Fatal("wrong value")
+		}
+	}
+
+	err = db.LTrim(key, 11, 30)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := db.LLen(key); l != int64(30-11+1) {
+		t.Fatal("wrong len:", l)
+	}
+	for i := int32(11); i < 31; i++ {
+		v, err := db.LIndex(key, i-11)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(v) != strconv.Itoa(int(i)) {
+			t.Fatal("wrong value")
+		}
+	}
+
+	err = db.LTrim(key, 0, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := db.LLen(key); l != int64(30-11+1) {
+		t.Fatal("wrong len:", l)
+	}
+
+	init()
+	err = db.LTrim(key, -3, -3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := db.LLen(key); l != int64(1) {
+		t.Fatal("wrong len:", l)
+	}
+	v, err := db.LIndex(key, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(v) != "97" {
+		t.Fatal("wrong value", string(v))
 	}
 }
 
