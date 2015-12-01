@@ -477,6 +477,37 @@ func (db *DB) LTrimBack(key []byte, trimSize int32) (int32, error) {
 func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {
 	return db.lpush(key, listHeadSeq, args...)
 }
+func (db *DB) LSet(key []byte, index int32, value []byte) error {
+	if err := checkKeySize(key); err != nil {
+		return err
+	}
+
+	var seq int32
+	var headSeq int32
+	var tailSeq int32
+	//var size int32
+	var err error
+	t := db.listBatch
+	t.Lock()
+	defer t.Unlock()
+	metaKey := db.lEncodeMetaKey(key)
+
+	headSeq, tailSeq, _, err = db.lGetMeta(nil, metaKey)
+	if err != nil {
+		return err
+	}
+
+	if index >= 0 {
+		seq = headSeq + index
+	} else {
+		seq = tailSeq + index + 1
+	}
+
+	sk := db.lEncodeListKey(key, seq)
+	t.Put(sk, value)
+	err = t.Commit()
+	return err
+}
 
 func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
