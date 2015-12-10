@@ -101,6 +101,7 @@ var (
 	errSetMemberSize  = errors.New("invalid set member size")
 	errZSetMemberSize = errors.New("invalid zset member size")
 	errExpireValue    = errors.New("invalid expire value")
+	errListIndex      = errors.New("invalid list index")
 )
 
 const (
