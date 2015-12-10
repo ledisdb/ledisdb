@@ -346,7 +346,9 @@ func (db *DB) LSet(key []byte, index int32, value []byte) error {
 	} else {
 		seq = tailSeq + index + 1
 	}
-
+	if seq < headSeq || seq > tailSeq {
+		return errListIndex
+	}
 	sk := db.lEncodeListKey(key, seq)
 	t.Put(sk, value)
 	err = t.Commit()
