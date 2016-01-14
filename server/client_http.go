@@ -157,28 +157,40 @@ func (w *httpWriter) writeInteger(n int64) {
 	w.genericWrite(n)
 }
 
-func (w *httpWriter) writeBulk(b []byte) {
+func convertBytesToString(b []byte) interface{} {
 	if b == nil {
-		w.genericWrite(nil)
+		return nil
 	} else {
-		w.genericWrite(hack.String(b))
+		return hack.String(b)
 	}
+}
+
+func (w *httpWriter) writeBulk(b []byte) {
+	w.genericWrite(convertBytesToString(b))
 }
 
 func (w *httpWriter) writeArray(lst []interface{}) {
+	for i, elem := range lst {
+		switch elem.(type) {
+		case []byte:
+			lst[i] = convertBytesToString(elem.([]byte))
+		case [][]byte:
+			lst[i] = convertBytesSliceToString(elem.([][]byte))
+		}
+	}
 	w.genericWrite(lst)
 }
 
-func (w *httpWriter) writeSliceArray(lst [][]byte) {
+func convertBytesSliceToString(lst [][]byte) []interface{} {
 	arr := make([]interface{}, len(lst))
 	for i, elem := range lst {
-		if elem == nil {
-			arr[i] = nil
-		} else {
-			arr[i] = hack.String(elem)
-		}
+		arr[i] = convertBytesToString(elem)
 	}
-	w.genericWrite(arr)
+	return arr
+}
+
+func (w *httpWriter) writeSliceArray(lst [][]byte) {
+	w.genericWrite(convertBytesSliceToString(lst))
 }
 
 func (w *httpWriter) writeFVPairArray(lst []ledis.FVPair) {
