@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -66,6 +67,9 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	var err error
 
 	db, cmd, argsStr, contentType := c.parseReqPath(r)
+	for _, header := range app.cfg.HTTP.ResponseHeaders {
+		w.Header().Set(header.Key, header.Value)
+	}
 
 	c.db, err = app.ldb.Select(db)
 	if err != nil {
@@ -87,9 +91,13 @@ func (c *httpClient) makeRequest(app *App, r *http.Request, w http.ResponseWrite
 	if _, ok := httpUnsupportedCommands[c.cmd]; ok {
 		return fmt.Errorf("unsupported command: '%s'", cmd)
 	}
+	for _, command := range app.cfg.HTTP.ForbidCommands {
+		if c.cmd == command {
+			return fmt.Errorf("forbid command: '%s'", cmd)
+		}
+	}
 
 	c.args = args
-
 	c.remoteAddr = c.addr(r)
 	c.resp = &httpWriter{contentType, cmd, w}
 	return nil
@@ -113,6 +121,18 @@ func (c *httpClient) parseReqPath(r *http.Request) (db int, cmd string, args []s
 	} else {
 		cmd = substrings[1]
 		args = substrings[2:]
+	}
+
+	if r.Body != nil {
+		// try use body as last argument
+		// when "Content-Type: text/plain"
+		ct := r.Header.Get("Content-Type")
+		if strings.HasPrefix(ct, "text") {
+			body, err := ioutil.ReadAll(r.Body)
+			if err == nil && len(body) > 0 {
+				args = append(args, string(body))
+			}
+		}
 	}
 
 	return
