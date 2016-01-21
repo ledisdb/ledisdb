@@ -280,6 +280,10 @@ func (w *respWriter) writeArray(lst []interface{}) {
 				w.writeBulk(nil)
 			case int64:
 				w.writeInteger(v)
+			case string:
+				w.writeStatus(v)
+			case error:
+				w.writeError(v)
 			default:
 				panic(fmt.Sprintf("invalid array type %T %v", lst[i], v))
 			}
