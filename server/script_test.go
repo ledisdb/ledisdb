@@ -101,6 +101,10 @@ var testScript4 = `
     ledis.call("set", 2, "b")
 `
 
+var testScript5 = `
+    return ledis.call("PING")
+`
+
 func TestLuaCall(t *testing.T) {
 	cfg := config.NewConfigDefault()
 	cfg.Addr = ":11188"
@@ -171,6 +175,16 @@ func TestLuaCall(t *testing.T) {
 		t.Fatal(err)
 	} else if string(v) != "b" {
 		t.Fatal(string(v))
+	}
+
+	err = app.script.l.DoString(testScript5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v = luaReplyToLedisReply(l)
+	if vv := v.(string); vv != "PONG" {
+		t.Fatal(fmt.Sprintf("%v %T", v, v))
 	}
 
 	luaClient.db = nil
