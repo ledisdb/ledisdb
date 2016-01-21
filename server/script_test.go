@@ -105,6 +105,15 @@ var testScript5 = `
     return ledis.call("PING")
 `
 
+var testScript6 = `
+	ledis.call('hmset', 'zzz', 1, 2, 5, 42)
+	local a = ledis.call('hmget', 'zzz', 1, 2, 5, 42)
+	for i = 1, 5 do
+		a[i] = type(a[i])
+	end
+	return a
+`
+
 func TestLuaCall(t *testing.T) {
 	cfg := config.NewConfigDefault()
 	cfg.Addr = ":11188"
@@ -185,6 +194,30 @@ func TestLuaCall(t *testing.T) {
 	v = luaReplyToLedisReply(l)
 	if vv := v.(string); vv != "PONG" {
 		t.Fatal(fmt.Sprintf("%v %T", v, v))
+	}
+
+	err = app.script.l.DoString(testScript6)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v = luaReplyToLedisReply(l)
+	vv := v.([]interface{})
+	expected := []string{
+		"string",
+		"boolean",
+		"string",
+		"boolean",
+		"nil",
+	}
+	if len(expected) != len(vv) {
+		t.Fatalf("length different: %d, %d", len(expected), len(vv))
+	}
+	for i, r := range vv {
+		s := string(r.([]byte))
+		if s != expected[i] {
+			t.Errorf("reply[%d] expected: %s, actual: %s", i, expected[i], s)
+		}
 	}
 
 	luaClient.db = nil
