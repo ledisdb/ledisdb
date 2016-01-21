@@ -4,6 +4,7 @@ import (
 	"bytes"
 	//	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/siddontang/go/sync2"
@@ -106,6 +107,8 @@ func (c *client) perform() {
 	var err error
 
 	start := time.Now()
+
+	c.cmd = strings.ToLower(c.cmd)
 
 	if len(c.cmd) == 0 {
 		err = ErrEmptyCommand
