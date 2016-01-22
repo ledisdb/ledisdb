@@ -86,23 +86,10 @@ func (w *luaWriter) writeSliceArray(lst [][]byte) {
 	for i, v := range lst {
 		if v == nil {
 			w.l.PushBoolean(false)
-			//TNL: not sure what is "expected" behaviour here.
-			//Redis returns "false", but may be "nil" is more appropriate?
-			//For me both variants seems better, then empty string.
-			//
-			//w.l.PushNil()
 		} else {
 			w.l.PushString(hack.String(v))
 		}
 		w.l.RawSeti(-2, i+1)
-
-		/*
-			//TNL: and instead of push nil we can just skip it
-			if v != nil {
-				w.l.PushString(hack.String(v))
-				w.l.RawSeti(-2, i+1)
-			}
-		*/
 	}
 }
 
