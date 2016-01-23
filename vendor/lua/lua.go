@@ -8,7 +8,6 @@
 package lua
 
 /*
-#cgo pkg-config: lua5.1
 #cgo CFLAGS: -Ilua
 #cgo llua LDFLAGS: -llua
 #cgo luaa LDFLAGS: -llua -lm -ldl
