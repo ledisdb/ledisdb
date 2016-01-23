@@ -84,7 +84,11 @@ func (w *luaWriter) writeSliceArray(lst [][]byte) {
 
 	w.l.CreateTable(len(lst), 0)
 	for i, v := range lst {
-		w.l.PushString(hack.String(v))
+		if v == nil {
+			w.l.PushBoolean(false)
+		} else {
+			w.l.PushString(hack.String(v))
+		}
 		w.l.RawSeti(-2, i+1)
 	}
 }
