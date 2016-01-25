@@ -132,6 +132,7 @@ func (c *httpClient) parseReqPath(r *http.Request) (db int, cmd string, args []s
 			if err == nil && len(body) > 0 {
 				args = append(args, string(body))
 			}
+			r.Body.Close()
 		}
 	}
 
@@ -191,11 +192,11 @@ func (w *httpWriter) writeBulk(b []byte) {
 
 func (w *httpWriter) writeArray(lst []interface{}) {
 	for i, elem := range lst {
-		switch elem.(type) {
+		switch t := elem.(type) {
 		case []byte:
-			lst[i] = convertBytesToString(elem.([]byte))
+			lst[i] = convertBytesToString(t)
 		case [][]byte:
-			lst[i] = convertBytesSliceToString(elem.([][]byte))
+			lst[i] = convertBytesSliceToString(t)
 		}
 	}
 	w.genericWrite(lst)
