@@ -13,6 +13,8 @@ export GO_BUILD_TAGS
 
 GO=GO15VENDOREXPERIMENT="1" go
 
+PKGS=$(shell $(GO) list ./... | grep -v "cmd")
+
 all: build  
 
 build:
@@ -27,10 +29,9 @@ build_all: build
 	
 test:
 	# use vendor for test
-	rm -rf vendor && ln -s cmd/vendor vendor
-	$(GO) test --race -tags '$(GO_BUILD_TAGS)' ./... 2>&1 | grep -vE 'vendor'
-	rm -rf vendor
-
+	@rm -rf vendor && ln -s cmd/vendor vendor
+	@$(GO) test --race -tags '$(GO_BUILD_TAGS)' $(PKGS)
+	@rm -rf vendor
 
 clean:
 	$(GO) clean -i ./...
@@ -47,3 +48,7 @@ deps:
 	rm -rf cmd/Godeps
 	rm vendor
 	mv Godeps cmd/
+
+travis:
+	@rm -rf vendor && ln -s cmd/vendor vendor
+	@$(GO) test --race -tags '$(GO_BUILD_TAGS)' $(PKGS)

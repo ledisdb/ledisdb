@@ -2,8 +2,6 @@ language: go
 go: 
   - 1.5
   - 1.6
-before_install:
-  - go get code.google.com/p/go.tools/cmd/cover
-  - go install -race std
+
 script:
-  - ln -s cmd/vendor vendor && GO15VENDOREXPERIMENT="1" go test --race ./...
+  - make travis
