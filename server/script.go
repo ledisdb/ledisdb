@@ -10,8 +10,8 @@ import (
 
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
+	lua "github.com/siddontang/golua"
 	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/vendor/lua"
 )
 
 //ledis <-> lua type conversion, same as http://redis.io/commands/eval
@@ -54,7 +54,7 @@ func (w *luaWriter) writeArray(lst []interface{}) {
 	w.l.CreateTable(len(lst), 0)
 	top := w.l.GetTop()
 
-	for i, _ := range lst {
+	for i := range lst {
 		w.l.PushInteger(int64(i) + 1)
 
 		switch v := lst[i].(type) {

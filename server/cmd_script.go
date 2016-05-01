@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/siddontang/ledisdb/vendor/lua"
+	lua "github.com/siddontang/golua"
 )
 
 func parseEvalArgs(l *lua.State, c *client) error {
@@ -202,7 +202,7 @@ func scriptFlushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	for n, _ := range s.chunks {
+	for n := range s.chunks {
 		l.PushNil()
 		l.SetGlobal(n)
 	}

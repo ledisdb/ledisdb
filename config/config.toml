@@ -34,8 +34,6 @@ readonly = false
 #   leveldb
 #   rocksdb
 #   goleveldb
-#   lmdb
-#   boltdb
 #   memory
 #   
 db_name = "leveldb"

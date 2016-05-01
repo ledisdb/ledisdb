@@ -16,18 +16,18 @@ import (
 )
 
 var allowedContentTypes = map[string]struct{}{
-	"json":    struct{}{},
-	"bson":    struct{}{},
-	"msgpack": struct{}{},
+	"json":    {},
+	"bson":    {},
+	"msgpack": {},
 }
 var httpUnsupportedCommands = map[string]struct{}{
-	"slaveof":  struct{}{},
-	"fullsync": struct{}{},
-	"sync":     struct{}{},
-	"quit":     struct{}{},
-	"begin":    struct{}{},
-	"commit":   struct{}{},
-	"rollback": struct{}{},
+	"slaveof":  {},
+	"fullsync": {},
+	"sync":     {},
+	"quit":     {},
+	"begin":    {},
+	"commit":   {},
+	"rollback": {},
 }
 
 type httpClient struct {

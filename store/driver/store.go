@@ -25,7 +25,7 @@ func Register(s Store) {
 
 func ListStores() []string {
 	s := []string{}
-	for k, _ := range dbs {
+	for k := range dbs {
 		s = append(s, k)
 	}
 

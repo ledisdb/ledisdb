@@ -13,7 +13,7 @@ LedisDB now supports multiple different databases as backends.
 
 + Rich data structure: KV, List, Hash, ZSet, Set.
 + Data storage is not limited by RAM.
-+ Various backends supported: LevelDB, goleveldb, LMDB, RocksDB, BoltDB, RAM.
++ Various backends supported: LevelDB, goleveldb, RocksDB, RAM.
 + Supports Lua scripting.
 + Supports expiration and TTL.
 + Can be managed via redis-cli.
@@ -42,13 +42,6 @@ Create a workspace and checkout ledisdb source
 
     make
     make test
-
-## Godep support
-
-LedisDB now prefers using [godep](https://github.com/tools/godep) to build, godep can manage the go dependences easily.
-
-If you don't want to use godep, you can first run `sh bootstrap.sh` to download the depencenecs and then `make`, 
-but I will not guarantee the dependence compatibility.
 
 ## LevelDB support
 
@@ -82,7 +75,7 @@ If the RocksDB API changes, LedisDB may not build successfully. LedisDB currentl
 
 ## Choose store database
 
-LedisDB now supports goleveldb, lmdb, leveldb, rocksdb, boltdb, and RAM. It will use goleveldb by default. 
+LedisDB now supports goleveldb, leveldb, rocksdb, and RAM. It will use goleveldb by default. 
 
 Choosing a store database to use is very simple.
 
@@ -113,10 +106,10 @@ If you don't use a configuration, LedisDB will use the default for you.
     //set run environment if not
     source dev.sh
 
-    ledis-server -config=/etc/ledis.conf
+    ./bin/ledis-server -config=/etc/ledis.conf
 
     //another shell
-    ledis-cli -p 6380
+    ./bin/ledis-cli -p 6380
     
     ledis 127.0.0.1:6380> set a 1
     OK
@@ -187,9 +180,8 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 ## Requirement
 
-+ Go version >= 1.3
++ Go version >= 1.5
 
 ## Feedback
 
 + Gmail: siddontang@gmail.com
-+ Skype: live:siddontang_1

@@ -1,9 +1,9 @@
 language: go
-go: 1.3.3
+go: 
+  - 1.5
+  - 1.6
 before_install:
-  - go get github.com/tools/godep
   - go get code.google.com/p/go.tools/cmd/cover
   - go install -race std
 script:
-  - godep go test -cover ./...
-  - godep go test -race ./...
+  - ln -s cmd/vendor vendor && GO15VENDOREXPERIMENT="1" go test --race ./...
