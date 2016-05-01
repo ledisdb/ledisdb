@@ -8,10 +8,8 @@ import (
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/store/driver"
 
-	_ "github.com/siddontang/ledisdb/store/boltdb"
 	_ "github.com/siddontang/ledisdb/store/goleveldb"
 	_ "github.com/siddontang/ledisdb/store/leveldb"
-	_ "github.com/siddontang/ledisdb/store/mdb"
 	_ "github.com/siddontang/ledisdb/store/rocksdb"
 )
 

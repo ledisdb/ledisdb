@@ -17,7 +17,7 @@ func checkTestSortRes(ay interface{}, checks []string) error {
 		return fmt.Errorf("invalid res number %d != %d", len(values), len(checks))
 	}
 
-	for i, _ := range values {
+	for i := range values {
 		if string(values[i].([]byte)) != checks[i] {
 			return fmt.Errorf("invalid res at %d, %s != %s", i, values[i], checks[i])
 		}
