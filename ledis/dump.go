@@ -60,6 +60,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 		l.wLock.Unlock()
 		return err
 	}
+	defer snap.Close()
 
 	l.wLock.Unlock()
 
@@ -72,6 +73,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 	}
 
 	it := snap.NewIterator()
+	defer it.Close()
 	it.SeekToFirst()
 
 	compressBuf := make([]byte, 4096)
