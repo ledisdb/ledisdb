@@ -549,7 +549,7 @@ func (db *DB) BitOP(op string, destKey []byte, srcKeys ...[]byte) (int64, error)
 
 	if op == BitNot {
 		for i := 0; i < len(value); i++ {
-			value[i] ^= value[i]
+			value[i] = ^value[i]
 		}
 	} else {
 		for j := 1; j < len(srcKeys); j++ {
