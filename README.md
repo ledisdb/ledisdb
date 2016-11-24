@@ -182,6 +182,10 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 + Go version >= 1.5
 
+## Related Repos
+
++ [pika](https://github.com/Qihoo360/pika)
+
 ## Feedback
 
 + Gmail: siddontang@gmail.com
