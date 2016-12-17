@@ -932,14 +932,25 @@ func (db *DB) ZInterStore(destKey []byte, srcKeys [][]byte, weights []int64, agg
 	}
 
 	for i, key := range srcKeys[1:] {
+		var members [][]byte;
 		scorePairs, err := db.ZRange(key, 0, -1)
 		if err != nil {
 			return 0, err
+		}
+		if len(scorePairs) == 0 {
+			if members, err = db.SMembers(key); err != nil {
+				return 0, err
+			}
 		}
 		tmpMap := map[string]int64{}
 		for _, pair := range scorePairs {
 			if score, ok := destMap[hack.String(pair.Member)]; ok {
 				tmpMap[hack.String(pair.Member)] = aggregateFunc(score, pair.Score*weights[i+1])
+			}
+		}
+		for _, member := range members {
+			if score, ok := destMap[hack.String(member)]; ok {
+				tmpMap[hack.String(member)] = aggregateFunc(score, 1*weights[i+1])
 			}
 		}
 		destMap = tmpMap
