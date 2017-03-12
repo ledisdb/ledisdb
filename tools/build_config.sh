@@ -13,14 +13,6 @@ touch $OUTPUT
 
 source ./dev.sh
 
-# Test godep install
-godep path > /dev/null 2>&1
-if [ "$?" = 0 ]; then
-    echo "GO=godep go" >> $OUTPUT
-else
-    echo "GO=go" >> $OUTPUT
-fi
-
 echo "CGO_CFLAGS=$CGO_CFLAGS" >> $OUTPUT
 echo "CGO_CXXFLAGS=$CGO_CXXFLAGS" >> $OUTPUT
 echo "CGO_LDFLAGS=$CGO_LDFLAGS" >> $OUTPUT

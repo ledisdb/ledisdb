@@ -34,9 +34,6 @@ Create a workspace and checkout ledisdb source
 
     cd src/github.com/siddontang/ledisdb
 
-    #install godep and be sure godep command can be found in $PATH
-    go get github.com/tools/godep
-
     #set build and run environment 
     source dev.sh
 
@@ -180,7 +177,7 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 
 ## Requirement
 
-+ Go version >= 1.5
++ Go version >= 1.6
 
 ## Related Repos
 
