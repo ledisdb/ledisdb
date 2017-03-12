@@ -75,9 +75,12 @@ func (w *WriteBatch) commit(wb *WriteOptions) error {
 	return nil
 }
 
+const batchDataHeadLen = 12
+
 func (w *WriteBatch) Data() []byte {
 	var vallen C.size_t
 	value := C.rocksdb_writebatch_data(w.wbatch, &vallen)
 
-	return slice(unsafe.Pointer(value), int(vallen))
+	buf := slice(unsafe.Pointer(value), int(vallen))
+	return buf[batchDataHeadLen:]
 }

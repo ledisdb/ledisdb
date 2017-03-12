@@ -57,9 +57,9 @@ Create a workspace and checkout ledisdb source
 + Set `LEVELDB_DIR` and `SNAPPY_DIR` to the actual install path in dev.sh.
 + `make clean && make` 
 
-## RocksDB support
+## RocksDB support 
 
-+ [Install rocksdb](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)(`make shared_lib`) and snappy first.
++ [Install rocksdb(5.1+)](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)(`make shared_lib`) and snappy first.
 
     LedisDB has not yet supplied a simple script to install.
 
