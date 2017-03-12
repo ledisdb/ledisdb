@@ -18,6 +18,7 @@ func TestStore(t *testing.T) {
 
 	ns := driver.ListStores()
 	for _, s := range ns {
+		t.Logf("store %s", s)
 		cfg.DBName = s
 
 		os.RemoveAll(getStorePath(cfg))
@@ -361,33 +362,9 @@ func testBatchData(db *DB, t *testing.T) {
 		t.Fatal(len(kvs))
 	} else if !reflect.DeepEqual(kvs[0], BatchItem{[]byte("a"), []byte("1")}) {
 		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[1], BatchItem{[]byte("b"), []byte{}}) {
-		t.Fatal("must equal")
+	} else if !reflect.DeepEqual(kvs[1], BatchItem{[]byte("b"), []byte(nil)}) {
+		t.Fatalf("must equal")
 	} else if !reflect.DeepEqual(kvs[2], BatchItem{[]byte("c"), nil}) {
-		t.Fatal("must equal")
-	}
-
-	if err := d.Append(d); err != nil {
-		t.Fatal(err)
-	} else if d.Len() != 6 {
-		t.Fatal(d.Len())
-	}
-
-	if kvs, err := d.Items(); err != nil {
-		t.Fatal(err)
-	} else if len(kvs) != 6 {
-		t.Fatal(len(kvs))
-	} else if !reflect.DeepEqual(kvs[0], BatchItem{[]byte("a"), []byte("1")}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[1], BatchItem{[]byte("b"), []byte{}}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[2], BatchItem{[]byte("c"), nil}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[3], BatchItem{[]byte("a"), []byte("1")}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[4], BatchItem{[]byte("b"), []byte{}}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[5], BatchItem{[]byte("c"), nil}) {
 		t.Fatal("must equal")
 	}
 }

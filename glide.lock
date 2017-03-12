@@ -1,0 +1,53 @@
+hash: b1848c39932685b6791ef2b3eaf9840bfe4591706f0a53cc83b52833be63d545
+updated: 2017-03-12T16:13:15.751664496+08:00
+imports:
+- name: github.com/BurntSushi/toml
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+- name: github.com/cupcake/rdb
+  version: 43ba34106c765f2111c0dc7b74cdf8ee437411e0
+  subpackages:
+  - crc64
+  - nopdecoder
+- name: github.com/edsrzf/mmap-go
+  version: 935e0e8a636ca4ba70b713f3e38a19e1b77739e8
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/peterh/liner
+  version: bf27d3ba8e1d9899d45a457ffac16c953eb2d647
+- name: github.com/siddontang/go
+  version: 354e14e6c093c661abb29fd28403b3c19cff5514
+  subpackages:
+  - bson
+  - filelock
+  - hack
+  - ioutil2
+  - log
+  - num
+  - snappy
+  - sync2
+- name: github.com/siddontang/golua
+  version: f73e23294ebf29412e1e96bb6163be152700d250
+- name: github.com/siddontang/goredis
+  version: 760763f78400635ed7b9b115511b8ed06035e908
+- name: github.com/siddontang/rdb
+  version: fc89ed2e418d27e3ea76e708e54276d2b44ae9cf
+- name: github.com/syndtr/goleveldb
+  version: 3c5717caf1475fd25964109a0fc640bd150fce43
+  subpackages:
+  - leveldb
+  - leveldb/cache
+  - leveldb/comparer
+  - leveldb/errors
+  - leveldb/filter
+  - leveldb/iterator
+  - leveldb/journal
+  - leveldb/memdb
+  - leveldb/opt
+  - leveldb/storage
+  - leveldb/table
+  - leveldb/util
+- name: github.com/ugorji/go
+  version: b94837a2404ab90efe9289e77a70694c355739cb
+  subpackages:
+  - codec
+testImports: []

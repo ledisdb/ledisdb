@@ -1,7 +1,6 @@
 package store
 
 import (
-	"encoding/binary"
 	"time"
 
 	"github.com/siddontang/ledisdb/store/driver"
@@ -94,18 +93,6 @@ func NewBatchData(data []byte) (*BatchData, error) {
 	}
 
 	return b, nil
-}
-
-func (d *BatchData) Append(do *BatchData) error {
-	d1 := d.Dump()
-	d2 := do.Dump()
-
-	n := d.Len() + do.Len()
-
-	d1 = append(d1, d2[BatchDataHeadLen:]...)
-	binary.LittleEndian.PutUint32(d1[8:], uint32(n))
-
-	return d.Load(d1)
 }
 
 func (d *BatchData) Data() []byte {
