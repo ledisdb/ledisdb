@@ -356,15 +356,15 @@ func testBatchData(db *DB, t *testing.T) {
 
 	d := w.BatchData()
 
+	expected := []BatchItem{
+		{[]byte("a"), []byte("1")},
+		{[]byte("b"), []byte(nil)},
+		{[]byte("c"), nil},
+	}
+
 	if kvs, err := d.Items(); err != nil {
 		t.Fatal(err)
-	} else if len(kvs) != 3 {
-		t.Fatal(len(kvs))
-	} else if !reflect.DeepEqual(kvs[0], BatchItem{[]byte("a"), []byte("1")}) {
-		t.Fatal("must equal")
-	} else if !reflect.DeepEqual(kvs[1], BatchItem{[]byte("b"), []byte(nil)}) {
-		t.Fatalf("must equal")
-	} else if !reflect.DeepEqual(kvs[2], BatchItem{[]byte("c"), nil}) {
-		t.Fatal("must equal")
+	} else if !reflect.DeepEqual(kvs, expected) {
+		t.Fatalf("%v != %v", kvs, expected)
 	}
 }

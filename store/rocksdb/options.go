@@ -139,7 +139,7 @@ func (o *Options) SetMaxBytesForLevelBase(n int) {
 }
 
 func (o *Options) SetMaxBytesForLevelMultiplier(n int) {
-	C.rocksdb_options_set_max_bytes_for_level_multiplier(o.Opt, C.int(n))
+	C.rocksdb_options_set_max_bytes_for_level_multiplier(o.Opt, C.double(n))
 }
 
 func (o *Options) SetBlockBasedTableFactory(opt *BlockBasedTableOptions) {
@@ -150,20 +150,12 @@ func (o *Options) SetMinWriteBufferNumberToMerge(n int) {
 	C.rocksdb_options_set_min_write_buffer_number_to_merge(o.Opt, C.int(n))
 }
 
-func (o *Options) DisableDataSync(b bool) {
-	C.rocksdb_options_set_disable_data_sync(o.Opt, boolToInt(b))
-}
-
 func (o *Options) DisableAutoCompactions(b bool) {
 	C.rocksdb_options_set_disable_auto_compactions(o.Opt, boolToInt(b))
 }
 
 func (o *Options) UseFsync(b bool) {
 	C.rocksdb_options_set_use_fsync(o.Opt, boolToInt(b))
-}
-
-func (o *Options) AllowOsBuffer(b bool) {
-	C.rocksdb_options_set_allow_os_buffer(o.Opt, boolToUchar(b))
 }
 
 func (o *Options) EnableStatistics(b bool) {

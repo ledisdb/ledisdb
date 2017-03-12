@@ -52,11 +52,9 @@ type RocksDBConfig struct {
 	MaxBytesForLevelBase           int  `toml:"max_bytes_for_level_base"`
 	MaxBytesForLevelMultiplier     int  `toml:"max_bytes_for_level_multiplier"`
 	DisableAutoCompactions         bool `toml:"disable_auto_compactions"`
-	DisableDataSync                bool `toml:"disable_data_sync"`
 	UseFsync                       bool `toml:"use_fsync"`
 	MaxBackgroundCompactions       int  `toml:"max_background_compactions"`
 	MaxBackgroundFlushes           int  `toml:"max_background_flushes"`
-	AllowOsBuffer                  bool `toml:"allow_os_buffer"`
 	EnableStatistics               bool `toml:"enable_statistics"`
 	StatsDumpPeriodSec             int  `toml:"stats_dump_period_sec"`
 	BackgroundThreads              int  `toml:"background_theads"`
@@ -192,11 +190,9 @@ func NewConfigDefault() *Config {
 	cfg.Replication.UseMmap = true
 	cfg.Snapshot.MaxNum = 1
 
-	cfg.RocksDB.AllowOsBuffer = true
 	cfg.RocksDB.EnableStatistics = false
 	cfg.RocksDB.UseFsync = false
 	cfg.RocksDB.DisableAutoCompactions = false
-	cfg.RocksDB.AllowOsBuffer = true
 	cfg.RocksDB.DisableWAL = false
 
 	cfg.adjust()

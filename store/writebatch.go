@@ -75,8 +75,6 @@ func (wb *WriteBatch) Data() []byte {
 	return b.Data()
 }
 
-const BatchDataHeadLen = 12
-
 /*
 	see leveldb batch data format for more information
 */
