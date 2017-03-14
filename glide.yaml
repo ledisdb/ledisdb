@@ -24,7 +24,7 @@ import:
 - package: github.com/siddontang/rdb
   version: fc89ed2e418d27e3ea76e708e54276d2b44ae9cf
 - package: github.com/syndtr/goleveldb
-  version: 3c5717caf1475fd25964109a0fc640bd150fce43
+  version: cfa635847112c5dc4782e128fa7e0d05fdbfb394
   subpackages:
   - leveldb
   - leveldb/cache

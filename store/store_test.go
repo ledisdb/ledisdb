@@ -358,7 +358,7 @@ func testBatchData(db *DB, t *testing.T) {
 
 	expected := []BatchItem{
 		{[]byte("a"), []byte("1")},
-		{[]byte("b"), []byte(nil)},
+		{[]byte("b"), []byte{}},
 		{[]byte("c"), nil},
 	}
 
