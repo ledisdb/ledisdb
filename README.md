@@ -67,7 +67,7 @@ Create a workspace and checkout ledisdb source
 + `make clean && make` 
 
 
-If the RocksDB API changes, LedisDB may not build successfully. LedisDB currently supports RocksDB version 3.5 or later.
+If the RocksDB API changes, LedisDB may not build successfully. LedisDB currently supports RocksDB version 5.1 or later.
     
 
 ## Choose store database
@@ -182,6 +182,15 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 ## Related Repos
 
 + [pika](https://github.com/Qihoo360/pika)
+
+
+## Donate
+
+If you like the project and want to buy me a cola, you can through: 
+
+|PayPal|微信|
+|------|---|
+|[![](https://www.paypalobjects.com/webstatic/paypalme/images/pp_logo_small.png)](https://paypal.me/siddontang)|[![](https://github.com/siddontang/blog/blob/master/donate/weixin.png)|
 
 ## Feedback
 
