@@ -124,17 +124,6 @@ func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, off
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-func (db *DB) Begin() (*Tx, error) {
-	tx, err := db.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
-	db.st.TxNum.Add(1)
-
-	return &Tx{tx, db.st}, nil
-}
-
 func (db *DB) Stat() *Stat {
 	return db.st
 }

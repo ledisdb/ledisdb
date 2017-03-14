@@ -1,13 +1,5 @@
 package driver
 
-import (
-	"errors"
-)
-
-var (
-	ErrTxSupport = errors.New("transaction is not supported")
-)
-
 type IDB interface {
 	Close() error
 
@@ -24,8 +16,6 @@ type IDB interface {
 	NewWriteBatch() IWriteBatch
 
 	NewSnapshot() (ISnapshot, error)
-
-	Begin() (Tx, error)
 
 	Compact() error
 }
@@ -60,18 +50,6 @@ type IWriteBatch interface {
 	Rollback() error
 	Data() []byte
 	Close()
-}
-
-type Tx interface {
-	Get(key []byte) ([]byte, error)
-	Put(key []byte, value []byte) error
-	Delete(key []byte) error
-
-	NewIterator() IIterator
-	NewWriteBatch() IWriteBatch
-
-	Commit() error
-	Rollback() error
 }
 
 type ISliceGeter interface {

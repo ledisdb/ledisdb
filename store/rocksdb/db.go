@@ -327,10 +327,6 @@ func (db *DB) delete(wo *WriteOptions, key []byte) error {
 	return nil
 }
 
-func (db *DB) Begin() (driver.Tx, error) {
-	return nil, driver.ErrTxSupport
-}
-
 func (db *DB) Compact() error {
 	C.rocksdb_compact_range(db.db, nil, 0, nil, 0)
 	return nil

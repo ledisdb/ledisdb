@@ -180,10 +180,6 @@ func (db *DB) NewIterator() driver.IIterator {
 	return it
 }
 
-func (db *DB) Begin() (driver.Tx, error) {
-	return nil, driver.ErrTxSupport
-}
-
 func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
 	snapshot, err := db.db.GetSnapshot()
 	if err != nil {

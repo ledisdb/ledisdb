@@ -30,7 +30,6 @@ func TestStore(t *testing.T) {
 
 		testStore(db, t)
 		testClear(db, t)
-		testTx(db, t)
 
 		db.Close()
 	}

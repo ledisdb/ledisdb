@@ -11,32 +11,6 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-// var txUnsupportedCmds = map[string]struct{}{
-// 	"select":     struct{}{},
-// 	"slaveof":    struct{}{},
-// 	"fullsync":   struct{}{},
-// 	"sync":       struct{}{},
-// 	"begin":      struct{}{},
-// 	"flushall":   struct{}{},
-// 	"flushdb":    struct{}{},
-// 	"eval":       struct{}{},
-// 	"xmigrate":   struct{}{},
-// 	"xmigratedb": struct{}{},
-// }
-
-// var scriptUnsupportedCmds = map[string]struct{}{
-// 	"slaveof":    struct{}{},
-// 	"fullsync":   struct{}{},
-// 	"sync":       struct{}{},
-// 	"begin":      struct{}{},
-// 	"commit":     struct{}{},
-// 	"rollback":   struct{}{},
-// 	"flushall":   struct{}{},
-// 	"flushdb":    struct{}{},
-// 	"xmigrate":   struct{}{},
-// 	"xmigratedb": struct{}{},
-// }
-
 type responseWriter interface {
 	writeError(error)
 	writeStatus(string)
@@ -77,10 +51,6 @@ type client struct {
 
 	buf bytes.Buffer
 
-	// tx *ledis.Tx
-
-	// script *ledis.Multi
-
 	slaveListeningAddr string
 }
 
@@ -117,20 +87,6 @@ func (c *client) perform() {
 	} else if c.authEnabled() && !c.isAuthed && c.cmd != "auth" {
 		err = ErrNotAuthenticated
 	} else {
-		// if c.db.IsTransaction() {
-		// 	if _, ok := txUnsupportedCmds[c.cmd]; ok {
-		// 		err = fmt.Errorf("%s not supported in transaction", c.cmd)
-		// 	}
-		// } else if c.db.IsInMulti() {
-		// 	if _, ok := scriptUnsupportedCmds[c.cmd]; ok {
-		// 		err = fmt.Errorf("%s not supported in multi", c.cmd)
-		// 	}
-		// }
-
-		// if err == nil {
-		// 	err = exeCmd(c)
-		// }
-
 		err = exeCmd(c)
 	}
 
