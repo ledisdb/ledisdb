@@ -15,6 +15,8 @@ all: build
 
 build:
 	rm -rf vendor && ln -s _vendor/vendor vendor
+	go build -o bin/ledis-server -tags '$(GO_BUILD_TAGS)' cmd/ledis-server/*
+	go build -o bin/ledis-cli -tags '$(GO_BUILD_TAGS)' cmd/ledis-cli/*
 	go build -o bin/ledis-benchmark -tags '$(GO_BUILD_TAGS)' cmd/ledis-benchmark/*
 	go build -o bin/ledis-dump -tags '$(GO_BUILD_TAGS)' cmd/ledis-dump/*
 	go build -o bin/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*
