@@ -74,6 +74,8 @@ func NewReplication(cfg *config.Config) (*Replication, error) {
 		return nil, err
 	}
 
+	log.Infof("staring replication with commit ID %d", r.commitID)
+
 	r.wg.Add(1)
 	go r.run()
 
@@ -87,6 +89,8 @@ func (r *Replication) Close() error {
 
 	r.m.Lock()
 	defer r.m.Unlock()
+
+	log.Infof("closing replication with commit ID %d", r.commitID)
 
 	if r.s != nil {
 		r.s.Close()
