@@ -16,15 +16,12 @@ import (
 type WriteBatch struct {
 	db     *DB
 	wbatch *C.leveldb_writebatch_t
-
-	gbatch *leveldb.Batch
 }
 
 func newWriteBatch(db *DB) *WriteBatch {
 	w := new(WriteBatch)
 	w.db = db
 	w.wbatch = C.leveldb_writebatch_create()
-	w.gbatch = new(leveldb.Batch)
 
 	return w
 }
@@ -34,8 +31,6 @@ func (w *WriteBatch) Close() {
 		C.leveldb_writebatch_destroy(w.wbatch)
 		w.wbatch = nil
 	}
-
-	w.gbatch = nil
 }
 
 func (w *WriteBatch) Put(key, value []byte) {
@@ -97,9 +92,8 @@ func leveldb_writebatch_iterate_delete(p unsafe.Pointer, k *C.char, klen C.size_
 }
 
 func (w *WriteBatch) Data() []byte {
-	w.gbatch.Reset()
+	gbatch := leveldb.Batch{}
 	C.leveldb_writebatch_iterate_ext(w.wbatch,
-		unsafe.Pointer(w.gbatch))
-	b := w.gbatch.Dump()
-	return b
+		unsafe.Pointer(&gbatch))
+	return gbatch.Dump()
 }
