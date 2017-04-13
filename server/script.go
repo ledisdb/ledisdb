@@ -182,6 +182,22 @@ func (app *App) openScript() {
 	w.l = l
 	s.c.resp = w
 
+	setGlobalDBScriptVar(l, "ledis")
+	setGlobalDBScriptVar(l, "redis")
+
+	setMapState(l, s)
+}
+
+func (app *App) closeScript() {
+	app.script.l.Close()
+	delMapState(app.script.l)
+	app.script = nil
+}
+
+var mapState = map[*lua.State]*script{}
+var stateLock sync.Mutex
+
+func setGlobalDBScriptVar(l *lua.State, name string) {
 	l.NewTable()
 	l.PushString("call")
 	l.PushGoFunction(luaCall)
@@ -203,19 +219,8 @@ func (app *App) openScript() {
 	l.PushGoFunction(luaStatusReply)
 	l.SetTable(-3)
 
-	l.SetGlobal("ledis")
-
-	setMapState(l, s)
+	l.SetGlobal(name)
 }
-
-func (app *App) closeScript() {
-	app.script.l.Close()
-	delMapState(app.script.l)
-	app.script = nil
-}
-
-var mapState = map[*lua.State]*script{}
-var stateLock sync.Mutex
 
 func setMapState(l *lua.State, s *script) {
 	stateLock.Lock()
