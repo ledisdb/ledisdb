@@ -1,24 +1,22 @@
-// +build lua
-
 package server
 
 import (
 	"fmt"
 
-	lua "github.com/siddontang/golua"
 	"github.com/siddontang/ledisdb/config"
+	"github.com/yuin/gopher-lua"
 
 	"testing"
 )
 
 var testLuaWriter = &luaWriter{}
 
-func testLuaWriteError(l *lua.State) int {
+func testLuaWriteError(l *lua.LState) int {
 	testLuaWriter.writeError(fmt.Errorf("test error"))
 	return 1
 }
 
-func testLuaWriteArray(l *lua.State) int {
+func testLuaWriteArray(l *lua.LState) int {
 	ay := make([]interface{}, 2)
 	ay[0] = []byte("1")
 	b := make([]interface{}, 2)
@@ -33,9 +31,23 @@ func testLuaWriteArray(l *lua.State) int {
 }
 
 func TestLuaWriter(t *testing.T) {
-	l := lua.NewState()
-
-	l.OpenBase()
+	l := lua.NewState(lua.Options{SkipOpenLibs: true})
+	defer l.Close()
+	for _, pair := range []struct {
+		n string
+		f lua.LGFunction
+	}{
+		{lua.LoadLibName, lua.OpenPackage}, // Must be first
+		{lua.BaseLibName, lua.OpenBase},
+	} {
+		if err := l.CallByParam(lua.P{
+			Fn:      l.NewFunction(pair.f),
+			NRet:    0,
+			Protect: true,
+		}, lua.LString(pair.n)); err != nil {
+			panic(err)
+		}
+	}
 
 	testLuaWriter.l = l
 
@@ -114,6 +126,23 @@ var testScript6 = `
 	return a
 `
 
+var testScript7 = `
+	redis.call('HSET', 'carlos', 1, 1)
+	redis.call('HSET', 'carlos', 2, 2)
+	redis.call('HSET', 'carlos', 3, 3)
+	redis.call('HSET', 'carlos', 9, 36)
+
+	local sum = 0
+	local matches = redis.call('HKEYS', 'carlos')
+
+	for _,key in ipairs(matches) do
+		local val = redis.call('HGET', 'carlos', key)
+		sum = sum + tonumber(val)
+	end
+
+	return sum
+`
+
 func TestLuaCall(t *testing.T) {
 	cfg := config.NewConfigDefault()
 	cfg.Addr = ":11188"
@@ -155,7 +184,7 @@ func TestLuaCall(t *testing.T) {
 	}
 
 	v = luaReplyToLedisReply(l)
-	if vv := v.(string); vv != "PONG" {
+	if vv, ok := v.(string); !ok || vv != "PONG" {
 		t.Fatal(fmt.Sprintf("%v %T", v, v))
 	}
 
@@ -214,10 +243,23 @@ func TestLuaCall(t *testing.T) {
 		t.Fatalf("length different: %d, %d", len(expected), len(vv))
 	}
 	for i, r := range vv {
-		s := string(r.([]byte))
-		if s != expected[i] {
-			t.Errorf("reply[%d] expected: %s, actual: %s", i, expected[i], s)
+		s, ok := r.([]byte)
+		if !ok {
+			t.Errorf("reply[%d] expected: %s (%T), actual: %v (%T)",
+				i, expected[i], expected[i], r, r)
+		} else if string(s) != expected[i] {
+			t.Errorf("reply[%d] expected: %s, actual: %v", i, expected[i], string(s))
 		}
+	}
+
+	err = app.script.l.DoString(testScript7)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v = luaReplyToLedisReply(l)
+	if vv := v.(int64); vv != 42 {
+		t.Fatal(fmt.Sprintf("%v %T", v, v))
 	}
 
 	luaClient.db = nil

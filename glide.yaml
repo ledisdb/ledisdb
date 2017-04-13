@@ -17,8 +17,6 @@ import:
   - num
   - snappy
   - sync2
-- package: github.com/siddontang/golua
-  version: f73e23294ebf29412e1e96bb6163be152700d250
 - package: github.com/siddontang/goredis
   version: 760763f78400635ed7b9b115511b8ed06035e908
 - package: github.com/siddontang/rdb
@@ -37,3 +35,5 @@ import:
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
   - codec
+- package: github.com/yuin/gopher-lua
+  version: b402f3114ec730d8bddb074a6c137309f561aa78

@@ -2614,13 +2614,18 @@ LedisDB's script is refer to Redis, you can see more [http://redis.io/commands/e
 
 You must notice that executing lua will block any other write operations.
 
-Use global object name "ledis" instead of "redis" to call commands in the Lua script:
+Both "ledis" and "redis" can be used call commands in the Lua script:
 
 - ledis.call()
+- redis.call()
 - ledis.pcall()
+- redis.pcall()
 - ledis.sha1hex()
+- redis.sha1hex()
 - ledis.status_reply()
+- redis.status_reply()
 - ledis.error_reply()
+- redis.error_reply()
  
 EVALSHA command returns error message without "NOSCRIPT " prefix, so redigo users should preload script explicitly.
 

@@ -1,5 +1,3 @@
-// +build lua
-
 package server
 
 import (
@@ -12,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	lua "github.com/siddontang/golua"
+	"github.com/yuin/gopher-lua"
 )
 
-func parseEvalArgs(l *lua.State, c *client) error {
+func parseEvalArgs(l *lua.LState, c *client) error {
 	args := c.args
 	if len(args) < 2 {
 		return ErrCmdParams
@@ -38,17 +36,14 @@ func parseEvalArgs(l *lua.State, c *client) error {
 	return nil
 }
 
-func evalGenericCommand(c *client, evalSha1 bool) error {
+func evalGenericCommand(c *client, evalSha1 bool) (err error) {
 	s := c.app.script
 	luaClient := s.c
 	l := s.l
 
 	s.Lock()
 
-	base := l.GetTop()
-
 	defer func() {
-		l.SetTop(base)
 		luaClient.db = nil
 		// luaClient.script = nil
 
@@ -71,39 +66,41 @@ func evalGenericCommand(c *client, evalSha1 bool) error {
 		key = strings.ToLower(hack.String(c.args[0]))
 	}
 
-	l.GetGlobal(key)
+	global := l.GetGlobal(key)
 
-	if l.IsNil(-1) {
-		l.Pop(1)
-
+	if global.Type() == lua.LTNil {
 		if evalSha1 {
 			return fmt.Errorf("missing %s script", key)
 		}
 
-		if r := l.LoadString(hack.String(c.args[0])); r != 0 {
-			err := fmt.Errorf("%s", l.ToString(-1))
-			l.Pop(1)
+		val, err := l.LoadString(hack.String(c.args[0]))
+		if err != nil {
 			return err
-		} else {
-			l.PushValue(-1)
-			l.SetGlobal(key)
-
-			s.chunks[key] = struct{}{}
-		}
-	}
-
-	if err := l.Call(0, lua.LUA_MULTRET); err != nil {
-		return err
-	} else {
-		r := luaReplyToLedisReply(l)
-
-		if v, ok := r.(error); ok {
-			return v
 		}
 
-		writeValue(c.resp, r)
+		l.SetGlobal(key, val)
+		s.chunks[key] = struct{}{}
+		global = val
 	}
 
+	l.Push(global)
+
+	// catch any uncaught panic
+	// this happens for example when the user,
+	// makes a mistake using `ledis.call`
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic: %v", r)
+		}
+	}()
+	l.Call(0, lua.MultRet)
+
+	r := luaReplyToLedisReply(l)
+	if v, ok := r.(error); ok {
+		return v
+	}
+
+	writeValue(c.resp, r)
 	return nil
 }
 
@@ -144,8 +141,6 @@ func scriptCommand(c *client) error {
 	default:
 		return fmt.Errorf("invalid script %s", args[0])
 	}
-
-	return nil
 }
 
 func scriptLoadCommand(c *client) error {
@@ -159,16 +154,14 @@ func scriptLoadCommand(c *client) error {
 	h := sha1.Sum(c.args[1])
 	key := hex.EncodeToString(h[0:20])
 
-	if r := l.LoadString(hack.String(c.args[1])); r != 0 {
-		err := fmt.Errorf("%s", l.ToString(-1))
-		l.Pop(1)
+	val, err := l.LoadString(hack.String(c.args[1]))
+	if err != nil {
 		return err
-	} else {
-		l.PushValue(-1)
-		l.SetGlobal(key)
-
-		s.chunks[key] = struct{}{}
 	}
+	l.Push(val)
+
+	l.SetGlobal(key, val)
+	s.chunks[key] = struct{}{}
 
 	c.resp.writeBulk(hack.Slice(key))
 	return nil
@@ -203,8 +196,7 @@ func scriptFlushCommand(c *client) error {
 	}
 
 	for n := range s.chunks {
-		l.PushNil()
-		l.SetGlobal(n)
+		l.SetGlobal(n, lua.LNil)
 	}
 
 	s.chunks = map[string]struct{}{}

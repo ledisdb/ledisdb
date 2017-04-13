@@ -1,5 +1,5 @@
-hash: bb587732cf0325595c4805c0351a47c2410c86e3aa279c4cc7c8959d2221631c
-updated: 2017-03-14T21:51:57.391664488+08:00
+hash: 168092cf452b1e6216033485699d71a8d5cb23097eca9ab3c8987e2254c92a0f
+updated: 2017-04-13T15:34:40.116528639-05:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -25,8 +25,6 @@ imports:
   - num
   - snappy
   - sync2
-- name: github.com/siddontang/golua
-  version: f73e23294ebf29412e1e96bb6163be152700d250
 - name: github.com/siddontang/goredis
   version: 760763f78400635ed7b9b115511b8ed06035e908
 - name: github.com/siddontang/rdb
@@ -50,4 +48,14 @@ imports:
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
   - codec
+- name: github.com/yuin/gopher-lua
+  version: b402f3114ec730d8bddb074a6c137309f561aa78
+  subpackages:
+  - ast
+  - parse
+  - pm
+- name: golang.org/x/net
+  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  subpackages:
+  - context
 testImports: []
