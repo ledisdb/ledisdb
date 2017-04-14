@@ -93,6 +93,7 @@ type Config struct {
 
 	FileName string `toml:"-"`
 
+	// Addr can be empty to assign a local address dynamically
 	Addr string `toml:"addr"`
 
 	AddrUnixSocketPerm string `toml:"addr_unixsocketperm"`
@@ -136,12 +137,13 @@ func NewConfigWithFile(fileName string) (*Config, error) {
 		return nil, err
 	}
 
-	if cfg, err := NewConfigWithData(data); err != nil {
+	cfg, err := NewConfigWithData(data)
+	if err != nil {
 		return nil, err
-	} else {
-		cfg.FileName = fileName
-		return cfg, nil
 	}
+
+	cfg.FileName = fileName
+	return cfg, nil
 }
 
 func NewConfigWithData(data []byte) (*Config, error) {
@@ -203,9 +205,9 @@ func NewConfigDefault() *Config {
 func getDefault(d int, s int) int {
 	if s <= 0 {
 		return d
-	} else {
-		return s
 	}
+
+	return s
 }
 
 func (cfg *Config) adjust() {
