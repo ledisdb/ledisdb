@@ -12,6 +12,8 @@ import (
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/ledis"
 	"github.com/yuin/gopher-lua"
+
+	luajson "github.com/glendc/gopher-json"
 )
 
 //ledis <-> lua type conversion, same as http://redis.io/commands/eval
@@ -184,9 +186,9 @@ func (app *App) openScript() {
 		{lua.MathLibName, lua.OpenMath},
 		{lua.StringLibName, lua.OpenString},
 		{lua.TabLibName, lua.OpenTable},
+		{luajson.CJsonLibName, luajson.OpenCJSON},
 		// TODO (gopher-lua): support libs:
 		// + CMsgpackLib?! (which funcs?)
-		// + CJsonLib?! (which funcs?)
 		// + StructLib?! (which funcs?)
 	} {
 		l.Push(l.NewFunction(pair.f))

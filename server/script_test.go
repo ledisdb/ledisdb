@@ -143,6 +143,31 @@ var testScript7 = `
 	return sum
 `
 
+var testScript8 = `
+	local raw = cjson.encode({a=9, b=11, c=20, d=2})
+	local obj = cjson.decode(raw)
+	local sum = 0
+
+	for _,val in pairs(obj) do
+		sum = sum + val
+	end
+
+	if cjson.decode("True") then
+		sum = sum / 2
+	end
+
+	if cjson.encode(cjson.encode("foo")) == "foo" then
+		sum = sum - 2
+	end
+
+	local arr = cjson.decode("[1,2,5,5,10]")
+	for _,val in ipairs(obj) do
+		sum = sum + val
+	end
+
+	return sum
+`
+
 func TestLuaCall(t *testing.T) {
 	cfg := config.NewConfigDefault()
 	cfg.Addr = ":11188"
@@ -253,6 +278,16 @@ func TestLuaCall(t *testing.T) {
 	}
 
 	err = app.script.l.DoString(testScript7)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v = luaReplyToLedisReply(l)
+	if vv := v.(int64); vv != 42 {
+		t.Fatal(fmt.Sprintf("%v %T", v, v))
+	}
+
+	err = app.script.l.DoString(testScript8)
 	if err != nil {
 		t.Fatal(err)
 	}
