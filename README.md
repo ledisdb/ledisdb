@@ -88,9 +88,7 @@ Choosing a store database to use is very simple.
 
 ## Lua support
 
-+ Compile and install Lua
-+ Set `LUA_DIR` to the actual path in `dev.sh`
-+ `make clean && make` 
+Lua is supported using [gopher-lua](https://github.com/yuin/gopher-lua), a Lua VM, completely written in Go.
 
 ## Configuration
 
@@ -172,8 +170,6 @@ See [Clients](https://github.com/siddontang/ledisdb/wiki/Clients) to find or con
 ## Caveat
 
 + Changing the backend database at runtime is very dangerous. Data validation is not guaranteed if this is done.
-+ `pcall` and `xpcall` are not supported in Lua. See the README in [golua](https://github.com/aarzilli/golua).
-
 
 ## Requirement
 

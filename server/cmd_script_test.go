@@ -1,5 +1,3 @@
-// +build lua
-
 package server
 
 import (
@@ -23,6 +21,12 @@ func TestCmdEval(t *testing.T) {
 	if v, err := goredis.Strings(c.Do("eval", "return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}", 2, "key1", "key2", "first", "second")); err != nil {
 		t.Fatal(err)
 	} else if !reflect.DeepEqual(v, []string{"key1", "key2", "first", "second"}) {
+		t.Fatal(fmt.Sprintf("%v", v))
+	}
+
+	if v, err := goredis.String(c.Do("eval", `return "Hello, " .. ARGV[1]`, 0, "Lua")); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(v, "Hello, Lua") {
 		t.Fatal(fmt.Sprintf("%v", v))
 	}
 

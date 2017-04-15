@@ -1,5 +1,5 @@
-hash: bb587732cf0325595c4805c0351a47c2410c86e3aa279c4cc7c8959d2221631c
-updated: 2017-03-14T21:51:57.391664488+08:00
+hash: 2375ebb56a7d505734bcecabb6a3ab5f4eaaf885d120ba2fb75c2c18c5fef39e
+updated: 2017-04-14T17:19:55.748440844-05:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
@@ -10,6 +10,8 @@ imports:
   - nopdecoder
 - name: github.com/edsrzf/mmap-go
   version: 935e0e8a636ca4ba70b713f3e38a19e1b77739e8
+- name: github.com/glendc/gopher-json
+  version: dc4743023d0c166c1b844da8fc688e57ec65fe0b
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/peterh/liner
@@ -25,8 +27,6 @@ imports:
   - num
   - snappy
   - sync2
-- name: github.com/siddontang/golua
-  version: f73e23294ebf29412e1e96bb6163be152700d250
 - name: github.com/siddontang/goredis
   version: 760763f78400635ed7b9b115511b8ed06035e908
 - name: github.com/siddontang/rdb
@@ -50,4 +50,14 @@ imports:
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
   - codec
+- name: github.com/yuin/gopher-lua
+  version: b402f3114ec730d8bddb074a6c137309f561aa78
+  subpackages:
+  - ast
+  - parse
+  - pm
+- name: golang.org/x/net
+  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  subpackages:
+  - context
 testImports: []
