@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -55,9 +56,9 @@ type App struct {
 func netType(s string) string {
 	if strings.Contains(s, "/") {
 		return "unix"
-	} else {
-		return "tcp"
 	}
+
+	return "tcp"
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -88,19 +89,28 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	addrNetType := netType(cfg.Addr)
+	if cfg.Addr != "" {
+		addrNetType := netType(cfg.Addr)
 
-	if app.listener, err = net.Listen(addrNetType, cfg.Addr); err != nil {
-		return nil, err
-	}
-
-	if addrNetType == "unix" && len(cfg.AddrUnixSocketPerm) > 0 {
-		var perm int64
-		if perm, err = strconv.ParseInt(cfg.AddrUnixSocketPerm, 8, 32); err != nil {
+		if app.listener, err = net.Listen(addrNetType, cfg.Addr); err != nil {
 			return nil, err
 		}
-		if err = os.Chmod(cfg.Addr, os.FileMode(perm)); err != nil {
-			return nil, err
+
+		if addrNetType == "unix" && len(cfg.AddrUnixSocketPerm) > 0 {
+			var perm int64
+			if perm, err = strconv.ParseInt(cfg.AddrUnixSocketPerm, 8, 32); err != nil {
+				return nil, err
+			}
+			if err = os.Chmod(cfg.Addr, os.FileMode(perm)); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		app.listener, err = net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			if app.listener, err = net.Listen("tcp6", "[::1]:0"); err != nil {
+				return nil, fmt.Errorf("app: failed to listen on a port: %v", err)
+			}
 		}
 	}
 
@@ -226,4 +236,8 @@ func (app *App) httpServe() {
 
 func (app *App) Ledis() *ledis.Ledis {
 	return app.ldb
+}
+
+func (app *App) Address() string {
+	return app.listener.Addr().String()
 }
