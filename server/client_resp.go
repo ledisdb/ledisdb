@@ -228,7 +228,6 @@ func newWriterRESP(conn net.Conn, size int) *respWriter {
 func (w *respWriter) writeError(err error) {
 	w.buff.Write(hack.Slice("-"))
 	if err != nil {
-		w.buff.WriteByte(' ')
 		w.buff.Write(hack.Slice(err.Error()))
 	}
 	w.buff.Write(Delims)
