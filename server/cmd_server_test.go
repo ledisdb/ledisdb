@@ -18,7 +18,7 @@ func TestAuth(t *testing.T) {
 
 	// Should error, invalid pass
 	_, err = c1.Do("AUTH", "password")
-	if err.Error() != " authentication failure" {
+	if err.Error() != "authentication failure" {
 		t.Fatal("Expected authentication error:", err)
 	}
 
@@ -27,7 +27,7 @@ func TestAuth(t *testing.T) {
 
 	// Should fail doing a command as we've not authed
 	_, err = c2.Do("GET", "tmp_select_key")
-	if err.Error() != " not authenticated" {
+	if err.Error() != "not authenticated" {
 		t.Fatal("Expected authentication error:", err)
 	}
 
@@ -45,13 +45,13 @@ func TestAuth(t *testing.T) {
 
 	// Log out by sending wrong pass
 	_, err = c2.Do("AUTH", "wrong password")
-	if err.Error() != " authentication failure" {
+	if err.Error() != "authentication failure" {
 		t.Fatal("Expected authentication error:", err)
 	}
 
 	// Should fail doing a command as we're logged out
 	_, err = c2.Do("GET", "tmp_select_key")
-	if err.Error() != " not authenticated" {
+	if err.Error() != "not authenticated" {
 		t.Fatal("Expected authentication error:", err)
 	}
 }

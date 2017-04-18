@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/siddontang/go/hack"
@@ -70,7 +71,7 @@ func evalGenericCommand(c *client, evalSha1 bool) (err error) {
 
 	if global.Type() == lua.LTNil {
 		if evalSha1 {
-			return fmt.Errorf("missing %s script", key)
+			return errors.New("NOSCRIPT no matching script, please use EVAL")
 		}
 
 		val, err := l.LoadString(hack.String(c.args[0]))

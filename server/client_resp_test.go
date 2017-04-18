@@ -14,8 +14,7 @@ func TestRespWriter(t *testing.T) {
 	}{
 		{
 			v: errors.New("Some error"),
-			//e: "-Some error\r\n", // as described at http://redis.io/topics/protocol
-			e: "- Some error\r\n", // actual
+			e: "-Some error\r\n", // as described at http://redis.io/topics/protocol
 		},
 		{
 			v: "Some status",
@@ -43,8 +42,7 @@ func TestRespWriter(t *testing.T) {
 		},
 		{
 			v: []interface{}{[]interface{}{int64(1), int64(2), int64(3)}, []interface{}{"Foo", errors.New("Bar")}},
-			//e: "*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Foo\r\n-Bar\r\n",
-			e: "*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Foo\r\n- Bar\r\n",
+			e: "*2\r\n*3\r\n:1\r\n:2\r\n:3\r\n*2\r\n+Foo\r\n-Bar\r\n",
 		},
 	} {
 		w := new(respWriter)
@@ -68,7 +66,7 @@ func TestRespWriter(t *testing.T) {
 		}
 		w.flush()
 		if b.String() != fixture.e {
-			t.Errorf("respWriter, actual: %v, expected: %v", []byte(b.String()), []byte(fixture.e))
+			t.Errorf("respWriter, actual: %q, expected: %q", b.String(), fixture.e)
 		}
 	}
 
