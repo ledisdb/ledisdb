@@ -61,12 +61,14 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
 - [List](#list)
   - [BLPOP key [key ...] timeout](#blpop-key-key--timeout)
   - [BRPOP key [key ...] timeout](#brpop-key-key--timeout)
+  - [BRPOPLPUSH source destination timeout](#brpoplpush-source-destination-timeout)
   - [LINDEX key index](#lindex-key-index)
   - [LLEN key](#llen-key)
   - [LPOP key](#lpop-key)
   - [LRANGE key start stop](#lrange-key-start-stop)
   - [LPUSH key value [value ...]](#lpush-key-value-value-)
   - [RPOP key](#rpop-key)
+  - [RPOPLPUSH source destination](#rpoplpush-source-destination)
   - [RPUSH key value [value ...]](#rpush-key-value-value-)
   - [LCLEAR key](#lclear-key)
   - [LMCLEAR key [key ...]](#lmclear-key-key-)
@@ -950,6 +952,12 @@ ledis> BLPOP list1 list2 0
 
 See [BLPOP key [key ...] timeout](#blpop-key-key--timeout) for more information.
 
+### BRPOPLPUSH source destination timeout
+BRPOPLPUSH is the blocking variant of [RPOPLPUSH](#rpoplpush-source-destination).
+When source contains elements, this command behaves exactly like RPOPLPUSH.
+Redis will block the connection until another client pushes to it or until timeout is reached.
+A timeout of zero can be used to block indefinitely.
+
 ### LINDEX key index
 Returns the element at index index in the list stored at key. The index is zero-based, so 0 means the first element, 1 the second element and so on. Negative indices can be used to designate elements starting at the tail of the list. Here, `-1` means the last element, `-2` means the penultimate and so forth.
 When the value at key is not a list, an error is returned.
@@ -1080,6 +1088,14 @@ ledis> LRANGE a 0 3
 1) "1"
 2) "2"
 ```
+
+### RPOPLPUSH source destination
+Atomically returns and removes the last element (tail) of the list stored at source, and pushes the element at the first element (head) of the list stored at destination.
+
+For example: consider source holding the list a,b,c, and destination holding the list x,y,z. Executing RPOPLPUSH results in source holding a,b and destination holding c,x,y,z.
+
+If source does not exist, the value nil is returned and no operation is performed.
+If source and destination are the same, the operation is equivalent to removing the last element from the list and pushing it as first element of the list, so it can be considered as a list rotation command.
 
 ### RPUSH key value [value ...]
 Insert all the specified values at the tail of the list stored at key. If key does not exist, it is created as empty list before performing the push operation. When key holds a value that is not a list, an error is returned.
