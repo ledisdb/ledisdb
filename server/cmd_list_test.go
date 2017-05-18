@@ -297,6 +297,72 @@ func TestPop(t *testing.T) {
 
 }
 
+func TestRPopLPush(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	src := []byte("sr")
+	des := []byte("de")
+
+	if _, err := goredis.Int(c.Do("rpoplpush", src, des)); err != goredis.ErrNil {
+		t.Fatal(err)
+	}
+
+	if v, err := goredis.Int(c.Do("llen", des)); err != nil {
+		t.Fatal(err)
+	} else if v != 0 {
+		t.Fatal(v)
+	}
+
+	if n, err := goredis.Int(c.Do("rpush", src, 1, 2, 3, 4, 5, 6)); err != nil {
+		t.Fatal(err)
+	} else if n != 6 {
+		t.Fatal(n)
+	}
+
+	if v, err := goredis.Int(c.Do("rpoplpush", src, src)); err != nil {
+		t.Fatal(err)
+	} else if v != 6 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("llen", src)); err != nil {
+		t.Fatal(err)
+	} else if v != 6 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("rpoplpush", src, des)); err != nil {
+		t.Fatal(err)
+	} else if v != 5 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("llen", src)); err != nil {
+		t.Fatal(err)
+	} else if v != 5 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("llen", des)); err != nil {
+		t.Fatal(err)
+	} else if v != 1 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("lpop", des)); err != nil {
+		t.Fatal(err)
+	} else if v != 5 {
+		t.Fatal(v)
+	}
+
+	if v, err := goredis.Int(c.Do("lpop", src)); err != nil {
+		t.Fatal(err)
+	} else if v != 6 {
+		t.Fatal(v)
+	}
+}
+
 func TestTrim(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
