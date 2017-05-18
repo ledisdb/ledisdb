@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"strings"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -86,6 +87,16 @@ type SnapshotConfig struct {
 	MaxNum int    `toml:"max_num"`
 }
 
+type ResponseHeader struct {
+	Key   string
+	Value string
+}
+
+type HTTPConfig struct {
+	ForbidCommands  []string         `toml:"forbid_commands"`
+	ResponseHeaders []ResponseHeader `toml:"response_header"`
+}
+
 type Config struct {
 	m sync.RWMutex `toml:"-"`
 
@@ -123,6 +134,7 @@ type Config struct {
 	Replication    ReplicationConfig `toml:"replication"`
 
 	Snapshot SnapshotConfig `toml:"snapshot"`
+	HTTP     HTTPConfig     `toml:"http"`
 
 	ConnReadBufferSize    int `toml:"conn_read_buffer_size"`
 	ConnWriteBufferSize   int `toml:"conn_write_buffer_size"`
@@ -212,8 +224,8 @@ func getDefault(d int, s int) int {
 
 func (cfg *Config) adjust() {
 	cfg.LevelDB.adjust()
-
 	cfg.RocksDB.adjust()
+	cfg.HTTP.adjust()
 
 	cfg.Replication.ExpiredLogDays = getDefault(7, cfg.Replication.ExpiredLogDays)
 	cfg.Replication.MaxLogFileNum = getDefault(50, cfg.Replication.MaxLogFileNum)
@@ -250,6 +262,12 @@ func (cfg *RocksDBConfig) adjust() {
 	cfg.StatsDumpPeriodSec = getDefault(3600, cfg.StatsDumpPeriodSec)
 	cfg.BackgroundThreads = getDefault(2, cfg.BackgroundThreads)
 	cfg.HighPriorityBackgroundThreads = getDefault(1, cfg.HighPriorityBackgroundThreads)
+}
+
+func (cfg *HTTPConfig) adjust() {
+	for index, command := range cfg.ForbidCommands {
+		cfg.ForbidCommands[index] = strings.ToLower(command)
+	}
 }
 
 func (cfg *Config) Dump(w io.Writer) error {
