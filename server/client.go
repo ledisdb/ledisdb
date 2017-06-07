@@ -70,7 +70,7 @@ func (c *client) close() {
 }
 
 func (c *client) authEnabled() bool {
-	return len(c.app.cfg.AuthPassword) > 0
+	return len(c.app.cfg.AuthPassword) > 0 || c.app.cfg.AuthMethod != nil
 }
 
 func (c *client) perform() {

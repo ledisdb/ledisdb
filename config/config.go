@@ -86,10 +86,15 @@ type SnapshotConfig struct {
 	MaxNum int    `toml:"max_num"`
 }
 
+type AuthMethod func(c *Config, password string) bool
+
 type Config struct {
 	m sync.RWMutex `toml:"-"`
 
 	AuthPassword string `toml:"auth_password"`
+
+	//AuthMethod custom authentication method
+	AuthMethod AuthMethod `toml:"-"`
 
 	FileName string `toml:"-"`
 

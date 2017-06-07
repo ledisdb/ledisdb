@@ -4,6 +4,7 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 
+	"github.com/siddontang/ledisdb/config"
 	"strconv"
 	"strings"
 	"time"
@@ -14,12 +15,21 @@ func pingCommand(c *client) error {
 	return nil
 }
 
+func defaultAuth(c *config.Config, password string) bool {
+	return c.AuthPassword == password
+}
+
 func authCommand(c *client) error {
 	if len(c.args) != 1 {
 		return ErrCmdParams
 	}
 
-	if c.app.cfg.AuthPassword == string(c.args[0]) {
+	method := defaultAuth
+	if c.app.cfg.AuthMethod != nil {
+		method = c.app.cfg.AuthMethod
+	}
+
+	if method(c.app.cfg, string(c.args[0])) {
 		c.isAuthed = true
 		c.resp.writeStatus(OK)
 		return nil
