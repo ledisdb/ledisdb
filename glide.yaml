@@ -1,7 +1,7 @@
 package: github.com/siddontang/ledisdb
 import:
-- package: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+- package: github.com/pelletier/go-toml
+  version: fe7536c3dee2596cdd23ee9976a17c22bdaae286
 - package: github.com/edsrzf/mmap-go
   version: 935e0e8a636ca4ba70b713f3e38a19e1b77739e8
 - package: github.com/peterh/liner

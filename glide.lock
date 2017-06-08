@@ -1,8 +1,6 @@
-hash: 2375ebb56a7d505734bcecabb6a3ab5f4eaaf885d120ba2fb75c2c18c5fef39e
-updated: 2017-04-14T17:19:55.748440844-05:00
+hash: 83229e7ecea008add55b2547fb28a23d247a4740fc30b4659f58bf5d495e3584
+updated: 2017-06-08T13:54:52.259026852+02:00
 imports:
-- name: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/cupcake/rdb
   version: 43ba34106c765f2111c0dc7b74cdf8ee437411e0
   subpackages:
@@ -14,6 +12,10 @@ imports:
   version: dc4743023d0c166c1b844da8fc688e57ec65fe0b
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
+- name: github.com/pelletier/go-buffruneio
+  version: c37440a7cf42ac63b919c752ca73a85067e05992
+- name: github.com/pelletier/go-toml
+  version: fe7536c3dee2596cdd23ee9976a17c22bdaae286
 - name: github.com/peterh/liner
   version: bf27d3ba8e1d9899d45a457ffac16c953eb2d647
 - name: github.com/siddontang/go
@@ -57,7 +59,7 @@ imports:
   - parse
   - pm
 - name: golang.org/x/net
-  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  version: 59a0b19b5533c7977ddeb86b017bf507ed407b12
   subpackages:
   - context
 testImports: []

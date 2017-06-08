@@ -7,7 +7,8 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/BurntSushi/toml"
+	"fmt"
+	"github.com/pelletier/go-toml"
 	"github.com/siddontang/go/ioutil2"
 )
 
@@ -86,10 +87,15 @@ type SnapshotConfig struct {
 	MaxNum int    `toml:"max_num"`
 }
 
+type AuthMethod func(c *Config, password string) bool
+
 type Config struct {
 	m sync.RWMutex `toml:"-"`
 
 	AuthPassword string `toml:"auth_password"`
+
+	//AuthMethod custom authentication method
+	AuthMethod AuthMethod `toml:"-"`
 
 	FileName string `toml:"-"`
 
@@ -149,9 +155,8 @@ func NewConfigWithFile(fileName string) (*Config, error) {
 func NewConfigWithData(data []byte) (*Config, error) {
 	cfg := NewConfigDefault()
 
-	_, err := toml.Decode(string(data), cfg)
-	if err != nil {
-		return nil, err
+	if err := toml.Unmarshal(data, cfg); err != nil {
+		return nil, fmt.Errorf("newConfigwithData: unmarashal: %s", err)
 	}
 
 	cfg.adjust()
@@ -253,9 +258,15 @@ func (cfg *RocksDBConfig) adjust() {
 }
 
 func (cfg *Config) Dump(w io.Writer) error {
-	e := toml.NewEncoder(w)
-	e.Indent = ""
-	return e.Encode(cfg)
+	data, err := toml.Marshal(*cfg)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(data); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (cfg *Config) DumpFile(fileName string) error {
