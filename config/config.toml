@@ -161,3 +161,8 @@ path = ""
 
 # Reserve newest max_num snapshot dump files
 max_num = 1
+
+[tls]
+enabled = true
+certificate = "test.crt"
+key = "test.key"

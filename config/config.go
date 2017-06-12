@@ -87,6 +87,12 @@ type SnapshotConfig struct {
 	MaxNum int    `toml:"max_num"`
 }
 
+type TLS struct {
+	Enabled     bool   `toml:"enabled"`
+	Certificate string `toml:"certificate"`
+	Key         string `toml:"key"`
+}
+
 type AuthMethod func(c *Config, password string) bool
 
 type Config struct {
@@ -135,6 +141,9 @@ type Config struct {
 	ConnKeepaliveInterval int `toml:"conn_keepalive_interval"`
 
 	TTLCheckInterval int `toml:"ttl_check_interval"`
+
+	//tls config
+	TLS TLS `toml:"tls"`
 }
 
 func NewConfigWithFile(fileName string) (*Config, error) {

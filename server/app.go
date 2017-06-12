@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"crypto/tls"
 	"github.com/siddontang/goredis"
 	"github.com/siddontang/ledisdb/config"
 	"github.com/siddontang/ledisdb/ledis"
@@ -61,6 +62,27 @@ func netType(s string) string {
 	return "tcp"
 }
 
+func tlsConfig(c *config.TLS) (*tls.Config, error) {
+	crt, err := tls.LoadX509KeyPair(c.Certificate, c.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{
+			crt,
+		},
+	}, nil
+}
+
+func listen(netType, laddr string, tlsCfg *tls.Config) (net.Listener, error) {
+	if tlsCfg != nil {
+		return tls.Listen(netType, laddr, tlsCfg)
+	}
+
+	return net.Listen(netType, laddr)
+}
+
 func NewApp(cfg *config.Config) (*App, error) {
 	if len(cfg.DataDir) == 0 {
 		println("use default datadir %s", config.DefaultDataDir)
@@ -89,10 +111,18 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	var tlsCfg *tls.Config
+	if cfg.TLS.Enabled {
+		tlsCfg, err = tlsConfig(&cfg.TLS)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if cfg.Addr != "" {
 		addrNetType := netType(cfg.Addr)
 
-		if app.listener, err = net.Listen(addrNetType, cfg.Addr); err != nil {
+		if app.listener, err = listen(addrNetType, cfg.Addr, tlsCfg); err != nil {
 			return nil, err
 		}
 
@@ -115,7 +145,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}
 
 	if len(cfg.HttpAddr) > 0 {
-		if app.httpListener, err = net.Listen(netType(cfg.HttpAddr), cfg.HttpAddr); err != nil {
+		if app.httpListener, err = listen(netType(cfg.HttpAddr), cfg.HttpAddr, tlsCfg); err != nil {
 			return nil, err
 		}
 	}
