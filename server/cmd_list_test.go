@@ -304,6 +304,9 @@ func TestRPopLPush(t *testing.T) {
 	src := []byte("sr")
 	des := []byte("de")
 
+	c.Do("lclear", src)
+	c.Do("lclear", des)
+
 	if _, err := goredis.Int(c.Do("rpoplpush", src, des)); err != goredis.ErrNil {
 		t.Fatal(err)
 	}
@@ -360,6 +363,36 @@ func TestRPopLPush(t *testing.T) {
 		t.Fatal(err)
 	} else if v != 6 {
 		t.Fatal(v)
+	}
+}
+
+func TestRPopLPushSingleElement(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	src := []byte("sr")
+
+	c.Do("lclear", src)
+	if n, err := goredis.Int(c.Do("rpush", src, 1)); err != nil {
+		t.Fatal(err)
+	} else if n != 1 {
+		t.Fatal(n)
+	}
+	ttl := 300
+	if _, err := c.Do("lexpire", src, ttl); err != nil {
+		t.Fatal(err)
+	}
+
+	if v, err := goredis.Int(c.Do("rpoplpush", src, src)); err != nil {
+		t.Fatal(err)
+	} else if v != 1 {
+		t.Fatal(v)
+	}
+
+	if tl, err := goredis.Int(c.Do("lttl", src)); err != nil {
+		t.Fatal(err)
+	} else if tl == -1 || tl > ttl {
+		t.Fatal(tl)
 	}
 }
 
