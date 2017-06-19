@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"bytes"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/ledisdb/ledis"
 )
@@ -285,6 +286,15 @@ func brpoplpushCommand(c *client) error {
 		return err
 	}
 
+	var ttl int64 = -1
+	if bytes.Compare(source, dest) == 0 {
+		var err error
+		ttl, err = c.db.LTTL(source)
+		if err != nil {
+			return err
+		}
+	}
+
 	ay, err := c.db.BRPop([][]byte{source}, timeout)
 	if err != nil {
 		return err
@@ -303,6 +313,11 @@ func brpoplpushCommand(c *client) error {
 	if _, err := c.db.LPush(dest, data); err != nil {
 		c.db.RPush(source, data) //revert pop
 		return err
+	}
+
+	//reset ttl
+	if ttl != -1 {
+		c.db.LExpire(source, ttl)
 	}
 
 	c.resp.writeBulk(data)
@@ -336,6 +351,15 @@ func rpoplpushCommand(c *client) error {
 	}
 	source, dest := args[0], args[1]
 
+	var ttl int64 = -1
+	if bytes.Compare(source, dest) == 0 {
+		var err error
+		ttl, err = c.db.LTTL(source)
+		if err != nil {
+			return err
+		}
+	}
+
 	data, err := c.db.RPop(source)
 	if err != nil {
 		return err
@@ -349,6 +373,11 @@ func rpoplpushCommand(c *client) error {
 	if _, err := c.db.LPush(dest, data); err != nil {
 		c.db.RPush(source, data) //revert pop
 		return err
+	}
+
+	//reset ttl
+	if ttl != -1 {
+		c.db.LExpire(source, ttl)
 	}
 
 	c.resp.writeBulk(data)
