@@ -168,6 +168,10 @@ func (o *Options) SetStatsDumpPeriodSec(n int) {
 	C.rocksdb_options_set_stats_dump_period_sec(o.Opt, C.uint(n))
 }
 
+func (o *Options) SetMaxManifestFileSize(n int) {
+	C.rocksdb_options_set_max_manifest_file_size(o.Opt, C.size_t(n))
+}
+
 func (o *BlockBasedTableOptions) Close() {
 	C.rocksdb_block_based_options_destroy(o.Opt)
 }

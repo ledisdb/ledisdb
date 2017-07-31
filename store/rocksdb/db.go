@@ -145,6 +145,7 @@ func (db *DB) initOptions(cfg *config.RocksDBConfig) {
 	opts.EnableStatistics(cfg.EnableStatistics)
 	opts.UseFsync(cfg.UseFsync)
 	opts.SetStatsDumpPeriodSec(cfg.StatsDumpPeriodSec)
+	opts.SetMaxManifestFileSize(cfg.MaxManifestFileSize)
 
 	db.opts = opts
 	db.blockOpts = blockOpts
