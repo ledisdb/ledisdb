@@ -106,6 +106,7 @@ stats_dump_period_sec = 3600
 # you can set true if replication opened, we may recover from replication log,
 # but it is still not a easy work.
 disable_wal = false
+max_manifest_file_size = 20971520
 
 [lmdb]
 map_size = 524288000

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"fmt"
+
 	"github.com/pelletier/go-toml"
 	"github.com/siddontang/go/ioutil2"
 )
@@ -61,6 +62,7 @@ type RocksDBConfig struct {
 	BackgroundThreads              int  `toml:"background_theads"`
 	HighPriorityBackgroundThreads  int  `toml:"high_priority_background_threads"`
 	DisableWAL                     bool `toml:"disable_wal"`
+	MaxManifestFileSize            int  `toml:"max_manifest_file_size"`
 }
 
 type LMDBConfig struct {
@@ -264,6 +266,7 @@ func (cfg *RocksDBConfig) adjust() {
 	cfg.StatsDumpPeriodSec = getDefault(3600, cfg.StatsDumpPeriodSec)
 	cfg.BackgroundThreads = getDefault(2, cfg.BackgroundThreads)
 	cfg.HighPriorityBackgroundThreads = getDefault(1, cfg.HighPriorityBackgroundThreads)
+	cfg.MaxManifestFileSize = getDefault(20*MB, cfg.MaxManifestFileSize)
 }
 
 func (cfg *Config) Dump(w io.Writer) error {
