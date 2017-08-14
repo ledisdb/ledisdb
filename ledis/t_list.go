@@ -692,7 +692,7 @@ func (db *DB) LKeyExists(key []byte) (int64, error) {
 }
 
 func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
-	ch := make(chan []byte)
+	ch := make(chan []byte, len(keys))
 
 	bkeys := [][]byte{}
 	for _, key := range keys {
