@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
+	"golang.org/x/net/context"
 )
 
 const (

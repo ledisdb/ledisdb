@@ -1,5 +1,5 @@
 hash: 83229e7ecea008add55b2547fb28a23d247a4740fc30b4659f58bf5d495e3584
-updated: 2017-06-08T13:54:52.259026852+02:00
+updated: 2017-08-16T11:06:05.978126639+02:00
 imports:
 - name: github.com/cupcake/rdb
   version: 43ba34106c765f2111c0dc7b74cdf8ee437411e0
@@ -59,7 +59,7 @@ imports:
   - parse
   - pm
 - name: golang.org/x/net
-  version: 59a0b19b5533c7977ddeb86b017bf507ed407b12
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
   - context
 testImports: []
