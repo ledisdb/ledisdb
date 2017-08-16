@@ -215,11 +215,25 @@ func TestLBlock(t *testing.T) {
 	go f(1)
 	go f(2)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1 * time.Millisecond)
 
 	db.LPush(key1, []byte("value"))
 	db.LPush(key2, []byte("value"))
 	wg.Wait()
+}
+
+func TestLBlockTimeout(t *testing.T) {
+	db := getTestDB()
+
+	key1 := []byte("test_lblock_key1")
+	key2 := []byte("test_lblock_key2")
+
+	ay, err := db.BLPop([][]byte{key1, key2}, 10*time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 0 {
+		t.Fatal(len(ay))
+	}
 }
 
 func TestLFlush(t *testing.T) {

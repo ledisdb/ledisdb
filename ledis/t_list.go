@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"context"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
@@ -692,64 +693,39 @@ func (db *DB) LKeyExists(key []byte) (int64, error) {
 }
 
 func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
-	ch := make(chan []byte, len(keys))
-
-	bkeys := [][]byte{}
-	for _, key := range keys {
-		v, err := db.lpop(key, whereSeq)
-		if err != nil {
-			return nil, err
-		} else if v != nil {
-			return []interface{}{key, v}, nil
-		} else {
-			db.lbkeys.wait(key, ch)
-			bkeys = append(bkeys, key)
-		}
-	}
-	if len(bkeys) == 0 {
-		return nil, nil
-	}
-
-	defer func() {
-		for _, key := range bkeys {
-			db.lbkeys.unwait(key, ch)
-		}
-	}()
-
-	deadT := time.Now().Add(timeout)
-
 	for {
-		if timeout == 0 {
-			key := <-ch
-			if v, err := db.lpop(key, whereSeq); err != nil {
+		var ctx context.Context
+		var cancel context.CancelFunc
+		if timeout > 0 {
+			ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		} else {
+			ctx, cancel = context.WithCancel(context.Background())
+		}
+
+		for _, key := range keys {
+			v, err := db.lbkeys.popOrWait(db, key, whereSeq, cancel)
+
+			if err != nil {
 				return nil, err
-			} else if v == nil {
-				continue
-			} else {
+			} else if v != nil {
 				return []interface{}{key, v}, nil
 			}
-		} else {
-			d := deadT.Sub(time.Now())
-			if d < 0 {
-				return nil, nil
-			}
-
-			select {
-			case key := <-ch:
-				if v, err := db.lpop(key, whereSeq); err != nil {
-					return nil, err
-				} else if v == nil {
-					db.lbkeys.wait(key, ch)
-					continue
-				} else {
-					return []interface{}{key, v}, nil
-				}
-			case <-time.After(d):
-				return nil, nil
-			}
 		}
 
+		err := func() error {
+			defer cancel()
+
+			<-ctx.Done()
+			return ctx.Err()
+		}()
+
+		//if ctx.Err() is a deadline exceeded (timeout) we return
+		//otherwise we try to pop one of the keys again.
+		if err == context.DeadlineExceeded {
+			return nil, nil
+		}
 	}
+
 }
 
 func (db *DB) lSignalAsReady(key []byte, num int) {
@@ -776,7 +752,7 @@ func (l *lBlockKeys) signal(key []byte, num int) {
 	defer l.Unlock()
 
 	s := hack.String(key)
-	chs, ok := l.keys[s]
+	fns, ok := l.keys[s]
 	if !ok {
 		return
 	}
@@ -784,27 +760,29 @@ func (l *lBlockKeys) signal(key []byte, num int) {
 	var n *list.Element
 
 	i := 0
-	for e := chs.Front(); e != nil && i < num; e = n {
-		ch := e.Value.(lbKeyCh)
+	for e := fns.Front(); e != nil && i < num; e = n {
+		fn := e.Value.(context.CancelFunc)
 		n = e.Next()
-		select {
-		case ch <- key:
-			chs.Remove(e)
-			i++
-		default:
-			//waiter unwait
-			chs.Remove(e)
-		}
+
+		fn()
+		fns.Remove(e)
 	}
 
-	if chs.Len() == 0 {
+	if fns.Len() == 0 {
 		delete(l.keys, s)
 	}
 }
 
-func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
+func (l *lBlockKeys) popOrWait(db *DB, key []byte, whereSeq int32, fn context.CancelFunc) ([]interface{}, error) {
 	l.Lock()
 	defer l.Unlock()
+
+	v, err := db.lpop(key, whereSeq)
+	if err != nil {
+		return nil, err
+	} else if v != nil {
+		return []interface{}{key, v}, nil
+	}
 
 	s := hack.String(key)
 	chs, ok := l.keys[s]
@@ -813,29 +791,6 @@ func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
 		l.keys[s] = chs
 	}
 
-	chs.PushBack(ch)
-}
-
-func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
-	l.Lock()
-	defer l.Unlock()
-
-	s := hack.String(key)
-	chs, ok := l.keys[s]
-	if !ok {
-		return
-	} else {
-		var n *list.Element
-		for e := chs.Front(); e != nil; e = n {
-			c := e.Value.(lbKeyCh)
-			n = e.Next()
-			if c == ch {
-				chs.Remove(e)
-			}
-		}
-
-		if chs.Len() == 0 {
-			delete(l.keys, s)
-		}
-	}
+	chs.PushBack(fn)
+	return nil, nil
 }
