@@ -712,20 +712,15 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([
 			}
 		}
 
-		err := func() error {
-			defer cancel()
-
-			<-ctx.Done()
-			return ctx.Err()
-		}()
+		//blocking wait
+		<-ctx.Done()
 
 		//if ctx.Err() is a deadline exceeded (timeout) we return
 		//otherwise we try to pop one of the keys again.
-		if err == context.DeadlineExceeded {
+		if ctx.Err() == context.DeadlineExceeded {
 			return nil, nil
 		}
 	}
-
 }
 
 func (db *DB) lSignalAsReady(key []byte, num int) {
