@@ -706,8 +706,10 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([
 			v, err := db.lbkeys.popOrWait(db, key, whereSeq, cancel)
 
 			if err != nil {
+				cancel()
 				return nil, err
 			} else if v != nil {
+				cancel()
 				return []interface{}{key, v}, nil
 			}
 		}
