@@ -160,7 +160,7 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	err = t.Commit()
 
 	if err == nil {
-		db.lSignalAsReady(key, pushCnt)
+		db.lSignalAsReady(key)
 	}
 
 	return int64(size) + int64(pushCnt), err
@@ -725,11 +725,9 @@ func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([
 	}
 }
 
-func (db *DB) lSignalAsReady(key []byte, num int) {
-	db.lbkeys.signal(key, num)
+func (db *DB) lSignalAsReady(key []byte) {
+	db.lbkeys.signal(key)
 }
-
-type lbKeyCh chan<- []byte
 
 type lBlockKeys struct {
 	sync.Mutex
@@ -744,7 +742,7 @@ func newLBlockKeys() *lBlockKeys {
 	return l
 }
 
-func (l *lBlockKeys) signal(key []byte, num int) {
+func (l *lBlockKeys) signal(key []byte) {
 	l.Lock()
 	defer l.Unlock()
 
@@ -753,21 +751,12 @@ func (l *lBlockKeys) signal(key []byte, num int) {
 	if !ok {
 		return
 	}
-
-	var n *list.Element
-
-	i := 0
-	for e := fns.Front(); e != nil && i < num; e = n {
+	for e := fns.Front(); e != nil; e = e.Next() {
 		fn := e.Value.(context.CancelFunc)
-		n = e.Next()
-
 		fn()
-		fns.Remove(e)
 	}
 
-	if fns.Len() == 0 {
-		delete(l.keys, s)
-	}
+	delete(l.keys, s)
 }
 
 func (l *lBlockKeys) popOrWait(db *DB, key []byte, whereSeq int32, fn context.CancelFunc) ([]interface{}, error) {
