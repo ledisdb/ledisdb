@@ -761,15 +761,14 @@ func (l *lBlockKeys) signal(key []byte) {
 }
 
 func (l *lBlockKeys) popOrWait(db *DB, key []byte, whereSeq int32, fn context.CancelFunc) ([]interface{}, error) {
-	l.Lock()
-	defer l.Unlock()
-
 	v, err := db.lpop(key, whereSeq)
 	if err != nil {
 		return nil, err
 	} else if v != nil {
 		return []interface{}{key, v}, nil
 	}
+
+	l.Lock()
 
 	s := hack.String(key)
 	chs, ok := l.keys[s]
@@ -779,5 +778,6 @@ func (l *lBlockKeys) popOrWait(db *DB, key []byte, whereSeq int32, fn context.Ca
 	}
 
 	chs.PushBack(fn)
+	l.Unlock()
 	return nil, nil
 }
