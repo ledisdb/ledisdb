@@ -2,6 +2,7 @@ package ledis
 
 import (
 	"container/list"
+	"context"
 	"encoding/binary"
 	"errors"
 	"sync"
@@ -11,7 +12,6 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
-	"golang.org/x/net/context"
 )
 
 const (
