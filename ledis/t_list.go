@@ -11,6 +11,7 @@ import (
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/ledisdb/store"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -159,7 +160,7 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 	err = t.Commit()
 
 	if err == nil {
-		db.lSignalAsReady(key, pushCnt)
+		db.lSignalAsReady(key)
 	}
 
 	return int64(size) + int64(pushCnt), err
@@ -692,71 +693,42 @@ func (db *DB) LKeyExists(key []byte) (int64, error) {
 }
 
 func (db *DB) lblockPop(keys [][]byte, whereSeq int32, timeout time.Duration) ([]interface{}, error) {
-	ch := make(chan []byte)
-
-	bkeys := [][]byte{}
-	for _, key := range keys {
-		v, err := db.lpop(key, whereSeq)
-		if err != nil {
-			return nil, err
-		} else if v != nil {
-			return []interface{}{key, v}, nil
-		} else {
-			db.lbkeys.wait(key, ch)
-			bkeys = append(bkeys, key)
-		}
-	}
-	if len(bkeys) == 0 {
-		return nil, nil
-	}
-
-	defer func() {
-		for _, key := range bkeys {
-			db.lbkeys.unwait(key, ch)
-		}
-	}()
-
-	deadT := time.Now().Add(timeout)
-
 	for {
-		if timeout == 0 {
-			key := <-ch
-			if v, err := db.lpop(key, whereSeq); err != nil {
+		var ctx context.Context
+		var cancel context.CancelFunc
+		if timeout > 0 {
+			ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		} else {
+			ctx, cancel = context.WithCancel(context.Background())
+		}
+
+		for _, key := range keys {
+			v, err := db.lbkeys.popOrWait(db, key, whereSeq, cancel)
+
+			if err != nil {
+				cancel()
 				return nil, err
-			} else if v == nil {
-				continue
-			} else {
+			} else if v != nil {
+				cancel()
 				return []interface{}{key, v}, nil
 			}
-		} else {
-			d := deadT.Sub(time.Now())
-			if d < 0 {
-				return nil, nil
-			}
-
-			select {
-			case key := <-ch:
-				if v, err := db.lpop(key, whereSeq); err != nil {
-					return nil, err
-				} else if v == nil {
-					db.lbkeys.wait(key, ch)
-					continue
-				} else {
-					return []interface{}{key, v}, nil
-				}
-			case <-time.After(d):
-				return nil, nil
-			}
 		}
 
+		//blocking wait
+		<-ctx.Done()
+		cancel()
+
+		//if ctx.Err() is a deadline exceeded (timeout) we return
+		//otherwise we try to pop one of the keys again.
+		if ctx.Err() == context.DeadlineExceeded {
+			return nil, nil
+		}
 	}
 }
 
-func (db *DB) lSignalAsReady(key []byte, num int) {
-	db.lbkeys.signal(key, num)
+func (db *DB) lSignalAsReady(key []byte) {
+	db.lbkeys.signal(key)
 }
-
-type lbKeyCh chan<- []byte
 
 type lBlockKeys struct {
 	sync.Mutex
@@ -771,40 +743,32 @@ func newLBlockKeys() *lBlockKeys {
 	return l
 }
 
-func (l *lBlockKeys) signal(key []byte, num int) {
+func (l *lBlockKeys) signal(key []byte) {
 	l.Lock()
 	defer l.Unlock()
 
 	s := hack.String(key)
-	chs, ok := l.keys[s]
+	fns, ok := l.keys[s]
 	if !ok {
 		return
 	}
-
-	var n *list.Element
-
-	i := 0
-	for e := chs.Front(); e != nil && i < num; e = n {
-		ch := e.Value.(lbKeyCh)
-		n = e.Next()
-		select {
-		case ch <- key:
-			chs.Remove(e)
-			i++
-		default:
-			//waiter unwait
-			chs.Remove(e)
-		}
+	for e := fns.Front(); e != nil; e = e.Next() {
+		fn := e.Value.(context.CancelFunc)
+		fn()
 	}
 
-	if chs.Len() == 0 {
-		delete(l.keys, s)
-	}
+	delete(l.keys, s)
 }
 
-func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
+func (l *lBlockKeys) popOrWait(db *DB, key []byte, whereSeq int32, fn context.CancelFunc) ([]interface{}, error) {
+	v, err := db.lpop(key, whereSeq)
+	if err != nil {
+		return nil, err
+	} else if v != nil {
+		return []interface{}{key, v}, nil
+	}
+
 	l.Lock()
-	defer l.Unlock()
 
 	s := hack.String(key)
 	chs, ok := l.keys[s]
@@ -813,29 +777,7 @@ func (l *lBlockKeys) wait(key []byte, ch lbKeyCh) {
 		l.keys[s] = chs
 	}
 
-	chs.PushBack(ch)
-}
-
-func (l *lBlockKeys) unwait(key []byte, ch lbKeyCh) {
-	l.Lock()
-	defer l.Unlock()
-
-	s := hack.String(key)
-	chs, ok := l.keys[s]
-	if !ok {
-		return
-	} else {
-		var n *list.Element
-		for e := chs.Front(); e != nil; e = n {
-			c := e.Value.(lbKeyCh)
-			n = e.Next()
-			if c == ch {
-				chs.Remove(e)
-			}
-		}
-
-		if chs.Len() == 0 {
-			delete(l.keys, s)
-		}
-	}
+	chs.PushBack(fn)
+	l.Unlock()
+	return nil, nil
 }
