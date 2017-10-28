@@ -48,6 +48,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [HLEN key](#hlen-key)
   - [HMGET key field [field ...]](#hmget-key-field-field-)
   - [HMSET key field value [field value ...]](#hmset-key-field-value-field-value-)
+  - [HSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#hscan-key-cursor-match-match-count-count-asc|desc)
   - [HSET key field value](#hset-key-field-value)
   - [HVALS key](#hvals-key)
   - [HCLEAR key](#hclear-key)
@@ -88,6 +89,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [SISMEMBER  key member](#sismember--key-member)
   - [SMEMBERS key](#smembers-key)
   - [SREM  key member [member ...]](#srem--key-member-member-)
+  - [SSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#sscan-key-cursor-match-match-count-count-asc|desc)
   - [SUNION key [key ...]](#sunion-key-key-)
   - [SUNIONSTORE destination key [key]](#sunionstore-destination-key-key)
   - [SCLEAR key](#sclear-key)
@@ -112,6 +114,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [ZREVRANGE key start stop [WITHSCORES]](#zrevrange-key-start-stop-withscores)
   - [ZREVRANGEBYSCORE  key max min [WITHSCORES] [LIMIT offset count]](#zrevrangebyscore--key-max-min-withscores-limit-offset-count)
   - [ZREVRANK key member](#zrevrank-key-member)
+  - [ZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]](#zscan-key-cursor-match-match-count-count-asc|desc)
   - [ZSCORE key member](#zscore-key-member)
   - [ZCLEAR key](#zclear-key)
   - [ZMCLEAR key [key ...]](#zmclear-key-key-)
@@ -729,6 +732,12 @@ ledis> HMGET myhash field1 field2
 1) "hello"
 2) "world"
 ```
+
+### HSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
+
+Same like XHSCAN, but made redis compatible.
+Meaning that the initial cursor has to be `"0"`,
+and the final cursor will be `"0"` as well.
 
 ### HSET key field value
 
@@ -1489,6 +1498,12 @@ ledis> SMEMBERS myset
 2) "two"
 ```
 
+### SSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
+
+Same like XSSCAN, but made redis compatible.
+Meaning that the initial cursor has to be `"0"`,
+and the final cursor will be `"0"` as well.
+
 ### SUNION key [key ...]
 
 Returns the members of the set resulting from the union of all the given sets.
@@ -2088,6 +2103,12 @@ ledis> ZADD myzset 1 'one'
 ledis> ZSCORE myzset 'one'
 1
 ```
+
+### ZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
+
+Same like XZSCAN, but made redis compatible.
+Meaning that the initial cursor has to be `"0"`,
+and the final cursor will be `"0"` as well.
 
 ### ZCLEAR key
 Delete the specified  key

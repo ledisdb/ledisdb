@@ -115,6 +115,11 @@
         "group": "Hash",
         "readonly": false
     },
+    "HSCAN": {
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
+        "group": "Hash",
+        "readonly": true
+    },
     "HPERSIST": {
         "arguments": "key",
         "group": "Hash",
@@ -310,6 +315,11 @@
         "group": "Set",
         "readonly": true
     },
+    "SSCAN": {
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
+        "group": "Set",
+        "readonly": true
+    },
     "SREM": {
         "arguments": "key member [member ...]",
         "group": "Set",
@@ -447,6 +457,11 @@
     },
     "ZREVRANK": {
         "arguments": "key member",
+        "group": "ZSet",
+        "readonly": true
+    },
+    "ZSCAN": {
+        "arguments": "key cursor [MATCH match] [COUNT count] [ASC|DESC]",
         "group": "ZSet",
         "readonly": true
     },
