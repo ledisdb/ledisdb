@@ -32,7 +32,6 @@ func TestScan(t *testing.T) {
 	testListKeyScan(t, c)
 	testZSetKeyScan(t, c)
 	testSetKeyScan(t, c)
-
 }
 
 func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
@@ -47,7 +46,7 @@ func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
 
 	for i, v := range a {
 		if string(v) != fmt.Sprintf("%v", values[i]) {
-			t.Fatal(fmt.Sprintf("%d %s != %v", string(v), values[i]))
+			t.Fatal(fmt.Sprintf("%d %s != %v", i, string(v), values[i]))
 		}
 	}
 }
@@ -72,7 +71,6 @@ func checkScan(t *testing.T, c *goredis.Client, tp string) {
 	} else {
 		checkScanValues(t, ay[1], 5, 6, 7, 8, 9)
 	}
-
 }
 
 func testKVScan(t *testing.T, c *goredis.Client) {
@@ -171,7 +169,6 @@ func TestXSetScan(t *testing.T) {
 	} else {
 		checkScanValues(t, ay[1], "a", "b")
 	}
-
 }
 
 func TestSetScan(t *testing.T) {
@@ -188,7 +185,6 @@ func TestSetScan(t *testing.T) {
 	} else {
 		checkScanValues(t, ay[1], "a", "b")
 	}
-
 }
 
 func TestXZSetScan(t *testing.T) {
@@ -205,7 +201,6 @@ func TestXZSetScan(t *testing.T) {
 	} else {
 		checkScanValues(t, ay[1], "a", 1, "b", 2)
 	}
-
 }
 
 func TestZSetScan(t *testing.T) {
