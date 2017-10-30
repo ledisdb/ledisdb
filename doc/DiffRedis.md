@@ -32,13 +32,10 @@ ZSet only support int64 score, not double in Redis.
 
 ## Scan
 
-LedisDB supplies `xscan`, `xhscan`, `xsscan`, `xzscan` to fetch data iteratively and reverse iteratively.
+LedisDB supplies `xscan` instead of `scan` to fetch keys iteratively and reverse iteratively.
 
 ```
 XSCAN type cursor [MATCH match] [COUNT count]
-XHSCAN key cursor [MATCH match] [COUNT count]
-XSSCAN key cursor [MATCH match] [COUNT count]
-XZSCAN key cursor [MATCH match] [COUNT count]
 ```
 
 ## DUMP

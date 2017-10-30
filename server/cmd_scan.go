@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/siddontang/ledisdb/ledis"
 )
 
-func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, desc bool, err error) {
+func parseXScanArgs(args [][]byte) (cursor []byte, match string, count int, desc bool, err error) {
 	cursor = args[0]
 
 	args = args[1:]
@@ -56,8 +57,21 @@ func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, desc 
 	return
 }
 
+func parseScanArgs(args [][]byte) (cursor []byte, match string, count int, desc bool, err error) {
+	cursor, match, count, desc, err = parseXScanArgs(args)
+	if bytes.Compare(cursor, nilCursorRedis) == 0 {
+		cursor = nilCursorLedis
+	}
+	return
+}
+
+type scanCommandGroup struct {
+	lastCursor []byte
+	parseArgs  func(args [][]byte) (cursor []byte, match string, count int, desc bool, err error)
+}
+
 // XSCAN type cursor [MATCH match] [COUNT count] [ASC|DESC]
-func xscanCommand(c *client) error {
+func (scg scanCommandGroup) xscanCommand(c *client) error {
 	args := c.args
 
 	if len(args) < 2 {
@@ -80,7 +94,7 @@ func xscanCommand(c *client) error {
 		return fmt.Errorf("invalid key type %s", args[0])
 	}
 
-	cursor, match, count, desc, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := scg.parseArgs(args[1:])
 
 	if err != nil {
 		return err
@@ -100,7 +114,7 @@ func xscanCommand(c *client) error {
 
 	data := make([]interface{}, 2)
 	if len(ay) < count {
-		data[0] = []byte("")
+		data[0] = scg.lastCursor
 	} else {
 		data[0] = ay[len(ay)-1]
 	}
@@ -110,7 +124,7 @@ func xscanCommand(c *client) error {
 }
 
 // XHSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
-func xhscanCommand(c *client) error {
+func (scg scanCommandGroup) xhscanCommand(c *client) error {
 	args := c.args
 
 	if len(args) < 2 {
@@ -119,7 +133,7 @@ func xhscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, desc, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := scg.parseArgs(args[1:])
 
 	if err != nil {
 		return err
@@ -139,7 +153,7 @@ func xhscanCommand(c *client) error {
 
 	data := make([]interface{}, 2)
 	if len(ay) < count {
-		data[0] = []byte("")
+		data[0] = scg.lastCursor
 	} else {
 		data[0] = ay[len(ay)-1].Field
 	}
@@ -157,7 +171,7 @@ func xhscanCommand(c *client) error {
 }
 
 // XSSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
-func xsscanCommand(c *client) error {
+func (scg scanCommandGroup) xsscanCommand(c *client) error {
 	args := c.args
 
 	if len(args) < 2 {
@@ -166,7 +180,7 @@ func xsscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, desc, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := scg.parseArgs(args[1:])
 
 	if err != nil {
 		return err
@@ -186,7 +200,7 @@ func xsscanCommand(c *client) error {
 
 	data := make([]interface{}, 2)
 	if len(ay) < count {
-		data[0] = []byte("")
+		data[0] = scg.lastCursor
 	} else {
 		data[0] = ay[len(ay)-1]
 	}
@@ -198,7 +212,7 @@ func xsscanCommand(c *client) error {
 }
 
 // XZSCAN key cursor [MATCH match] [COUNT count] [ASC|DESC]
-func xzscanCommand(c *client) error {
+func (scg scanCommandGroup) xzscanCommand(c *client) error {
 	args := c.args
 
 	if len(args) < 2 {
@@ -207,7 +221,7 @@ func xzscanCommand(c *client) error {
 
 	key := args[0]
 
-	cursor, match, count, desc, err := parseScanArgs(args[1:])
+	cursor, match, count, desc, err := scg.parseArgs(args[1:])
 
 	if err != nil {
 		return err
@@ -227,7 +241,7 @@ func xzscanCommand(c *client) error {
 
 	data := make([]interface{}, 2)
 	if len(ay) < count {
-		data[0] = []byte("")
+		data[0] = scg.lastCursor
 	} else {
 		data[0] = ay[len(ay)-1].Member
 	}
@@ -244,9 +258,23 @@ func xzscanCommand(c *client) error {
 	return nil
 }
 
+var (
+	xScanGroup = scanCommandGroup{nilCursorLedis, parseXScanArgs}
+	scanGroup  = scanCommandGroup{nilCursorRedis, parseScanArgs}
+)
+
+var (
+	nilCursorLedis = []byte("")
+	nilCursorRedis = []byte("0")
+)
+
 func init() {
-	register("xscan", xscanCommand)
-	register("xhscan", xhscanCommand)
-	register("xsscan", xsscanCommand)
-	register("xzscan", xzscanCommand)
+	register("hscan", scanGroup.xhscanCommand)
+	register("sscan", scanGroup.xsscanCommand)
+	register("zscan", scanGroup.xzscanCommand)
+
+	register("xscan", xScanGroup.xscanCommand)
+	register("xhscan", xScanGroup.xhscanCommand)
+	register("xsscan", xScanGroup.xsscanCommand)
+	register("xzscan", xScanGroup.xzscanCommand)
 }

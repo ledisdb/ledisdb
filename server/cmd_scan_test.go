@@ -32,7 +32,6 @@ func TestScan(t *testing.T) {
 	testListKeyScan(t, c)
 	testZSetKeyScan(t, c)
 	testSetKeyScan(t, c)
-
 }
 
 func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
@@ -47,7 +46,7 @@ func checkScanValues(t *testing.T, ay interface{}, values ...interface{}) {
 
 	for i, v := range a {
 		if string(v) != fmt.Sprintf("%v", values[i]) {
-			t.Fatal(fmt.Sprintf("%d %s != %v", string(v), values[i]))
+			t.Fatal(fmt.Sprintf("%d %s != %v", i, string(v), values[i]))
 		}
 	}
 }
@@ -72,7 +71,6 @@ func checkScan(t *testing.T, c *goredis.Client, tp string) {
 	} else {
 		checkScanValues(t, ay[1], 5, 6, 7, 8, 9)
 	}
-
 }
 
 func testKVScan(t *testing.T, c *goredis.Client) {
@@ -125,7 +123,7 @@ func testSetKeyScan(t *testing.T, c *goredis.Client) {
 	checkScan(t, c, "SET")
 }
 
-func TestHashScan(t *testing.T) {
+func TestXHashScan(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
@@ -141,7 +139,23 @@ func TestHashScan(t *testing.T) {
 	}
 }
 
-func TestSetScan(t *testing.T) {
+func TestHashScan(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	key := "scan_hash"
+	c.Do("HMSET", key, "a", 1, "b", 2)
+
+	if ay, err := goredis.Values(c.Do("HSCAN", key, "0")); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 2 {
+		t.Fatal(len(ay))
+	} else {
+		checkScanValues(t, ay[1], "a", 1, "b", 2)
+	}
+}
+
+func TestXSetScan(t *testing.T) {
 	c := getTestConn()
 	defer c.Close()
 
@@ -155,7 +169,38 @@ func TestSetScan(t *testing.T) {
 	} else {
 		checkScanValues(t, ay[1], "a", "b")
 	}
+}
 
+func TestSetScan(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	key := "scan_set"
+	c.Do("SADD", key, "a", "b")
+
+	if ay, err := goredis.Values(c.Do("SSCAN", key, "0")); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 2 {
+		t.Fatal(len(ay))
+	} else {
+		checkScanValues(t, ay[1], "a", "b")
+	}
+}
+
+func TestXZSetScan(t *testing.T) {
+	c := getTestConn()
+	defer c.Close()
+
+	key := "scan_zset"
+	c.Do("ZADD", key, 1, "a", 2, "b")
+
+	if ay, err := goredis.Values(c.Do("XZSCAN", key, "")); err != nil {
+		t.Fatal(err)
+	} else if len(ay) != 2 {
+		t.Fatal(len(ay))
+	} else {
+		checkScanValues(t, ay[1], "a", 1, "b", 2)
+	}
 }
 
 func TestZSetScan(t *testing.T) {
@@ -165,7 +210,7 @@ func TestZSetScan(t *testing.T) {
 	key := "scan_zset"
 	c.Do("ZADD", key, 1, "a", 2, "b")
 
-	if ay, err := goredis.Values(c.Do("XZSCAN", key, "")); err != nil {
+	if ay, err := goredis.Values(c.Do("XZSCAN", key, "0")); err != nil {
 		t.Fatal(err)
 	} else if len(ay) != 2 {
 		t.Fatal(len(ay))
