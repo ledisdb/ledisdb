@@ -22,7 +22,7 @@ build:
 	go build -o bin/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*
 
 test:
-	go test --race -tags '$(GO_BUILD_TAGS)' -timeout 2m ./...
+	go test --race -tags '$(GO_BUILD_TAGS)' -timeout 2m $$(go list ./... | grep -v -e /vendor/)
 
 
 clean:
