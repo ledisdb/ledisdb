@@ -31,6 +31,10 @@ clean:
 fmt:
 	gofmt -w -s  . 2>&1 | grep -vE 'vendor' | awk '{print} END{if(NR>0) {exit 1}}'
 
+sync_vendor:
+	@which dep >/dev/null || go get -u github.com/golang/dep/cmd/dep
+	dep ensure && dep prune
+
 update_vendor:
 	@which dep >/dev/null || go get -u github.com/golang/dep/cmd/dep
 	dep ensure -update && dep prune

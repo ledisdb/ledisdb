@@ -44,6 +44,7 @@
 
 [[constraint]]
   name = "github.com/syndtr/goleveldb"
+  revision = "cfa635847112c5dc4782e128fa7e0d05fdbfb394"
 
 [[constraint]]
   name = "github.com/ugorji/go"
