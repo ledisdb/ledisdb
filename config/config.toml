@@ -25,7 +25,7 @@ access_log = ""
 # Any write operations except flushall and replication will be disabled in slave mode.
 slaveof = ""
 
-# Readonly mode, slave server is always readonly even readonly = false  
+# Readonly mode, slave server is always readonly even readonly = false
 # for readonly mode, only replication and flushall can write
 readonly = false
 
@@ -35,16 +35,16 @@ readonly = false
 #   rocksdb
 #   goleveldb
 #   memory
-#   
+#
 db_name = "leveldb"
 
 # If not set, use data_dir/"db_name"_data
 db_path = ""
 
 # Sync commit to disk if possible
-#  0: no sync 
-#  1: sync every second 
-#  2: sync every commit 
+#  0: no sync
+#  1: sync every second
+#  2: sync every commit
 db_sync_commit = 0
 
 # enable replication or not
@@ -55,8 +55,8 @@ use_replication = false
 conn_read_buffer_size = 10240
 conn_write_buffer_size = 10240
 
-# if connection receives no data after n seconds, it may be dead, close 
-# 0 to disable and not check 
+# if connection receives no data after n seconds, it may be dead, close
+# 0 to disable and not check
 conn_keepalive_interval = 0
 
 # checking TTL (time to live) data every n seconds
@@ -70,13 +70,14 @@ block_size = 32768
 write_buffer_size = 67108864
 cache_size = 524288000
 max_open_files = 1024
+max_file_size = 33554432
 
 [rocksdb]
-# rocksdb has many many configurations, 
+# rocksdb has many many configurations,
 # we only list little now, but may add more later.
 # good luck!
 
-# 0:no, 1:snappy, 2:zlib, 3:bz2, 4:lz4, 5:lz4hc 
+# 0:no, 1:snappy, 2:zlib, 3:bz2, 4:lz4, 5:lz4hc
 compression = 0
 block_size = 65536
 write_buffer_size = 134217728
@@ -92,9 +93,9 @@ target_file_size_base = 67108864
 target_file_size_multiplier = 1
 max_bytes_for_level_base = 536870912
 max_bytes_for_level_multiplier = 8
-disable_auto_compactions = false 
-disable_data_sync = false 
-use_fsync = false 
+disable_auto_compactions = false
+disable_data_sync = false
+use_fsync = false
 background_theads = 16
 high_priority_background_threads = 1
 max_background_compactions = 15
@@ -114,11 +115,11 @@ nosync = true
 
 [replication]
 # Path to store replication information(write ahead log, commit log, etc.)
-# if not set, use data_dir/rpl 
+# if not set, use data_dir/rpl
 path = ""
 
-# If sync is true, the new log must be sent to some slaves, and then commit. 
-# It will reduce performance but have better high availability. 
+# If sync is true, the new log must be sent to some slaves, and then commit.
+# It will reduce performance but have better high availability.
 sync = false
 
 # If sync is true, wait at last wait_sync_time milliseconds for slave syncing this log
@@ -146,9 +147,9 @@ max_log_file_num = 0
 use_mmap = true
 
 # Sync log to disk if possible
-#  0: no sync 
-#  1: sync every second 
-#  2: sync every commit 
+#  0: no sync
+#  1: sync every second
+#  2: sync every commit
 sync_log = 0
 
 # Compress the log or not

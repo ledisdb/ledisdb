@@ -69,6 +69,10 @@ func (o *Options) SetMaxOpenFiles(n int) {
 	C.leveldb_options_set_max_open_files(o.Opt, C.int(n))
 }
 
+func (o *Options) SetMaxFileSize(n int) {
+	C.leveldb_options_set_max_file_size(o.Opt, C.size_t(n))
+}
+
 func (o *Options) SetBlockSize(s int) {
 	C.leveldb_options_set_block_size(o.Opt, C.size_t(s))
 }
