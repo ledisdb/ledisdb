@@ -35,6 +35,7 @@ type LevelDBConfig struct {
 	WriteBufferSize int  `toml:"write_buffer_size"`
 	CacheSize       int  `toml:"cache_size"`
 	MaxOpenFiles    int  `toml:"max_open_files"`
+	MaxFileSize     int  `toml:"max_file_size"`
 }
 
 type RocksDBConfig struct {
@@ -244,6 +245,7 @@ func (cfg *LevelDBConfig) adjust() {
 	cfg.BlockSize = getDefault(4*KB, cfg.BlockSize)
 	cfg.WriteBufferSize = getDefault(4*MB, cfg.WriteBufferSize)
 	cfg.MaxOpenFiles = getDefault(1024, cfg.MaxOpenFiles)
+	cfg.MaxFileSize = getDefault(32*MB, cfg.MaxFileSize)
 }
 
 func (cfg *RocksDBConfig) adjust() {

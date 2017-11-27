@@ -128,6 +128,8 @@ func (db *DB) initOptions(cfg *config.LevelDBConfig) {
 
 	opts.SetMaxOpenFiles(cfg.MaxOpenFiles)
 
+	opts.SetMaxFileSize(cfg.MaxFileSize)
+
 	db.opts = opts
 
 	db.readOpts = NewReadOptions()

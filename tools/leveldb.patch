@@ -1,0 +1,28 @@
+diff -Naur ./db/dbformat.h ../leveldb/db/dbformat.h
+--- ./db/dbformat.h	2017-11-03 18:04:26.000000000 -0400
++++ ../leveldb/db/dbformat.h	2017-11-23 13:11:30.167396736 -0500
+@@ -25,10 +25,10 @@
+ static const int kL0_CompactionTrigger = 4;
+
+ // Soft limit on number of level-0 files.  We slow down writes at this point.
+-static const int kL0_SlowdownWritesTrigger = 8;
++static const int kL0_SlowdownWritesTrigger = 16;
+
+ // Maximum number of level-0 files.  We stop writes at this point.
+-static const int kL0_StopWritesTrigger = 12;
++static const int kL0_StopWritesTrigger = 64;
+
+ // Maximum level to which a new compacted memtable is pushed if it
+ // does not create overlap.  We try to push to level 2 to avoid the
+diff -Naur ./db/version_set.cc ../leveldb/db/version_set.cc
+--- ./db/version_set.cc	2017-11-03 18:04:26.000000000 -0400
++++ ../leveldb/db/version_set.cc	2017-11-23 13:12:12.700870777 -0500
+@@ -27,7 +27,7 @@
+ // Maximum bytes of overlaps in grandparent (i.e., level+2) before we
+ // stop building a single file in a level->level+1 compaction.
+ static int64_t MaxGrandParentOverlapBytes(const Options* options) {
+-  return 10 * TargetFileSize(options);
++  return 20 * TargetFileSize(options);
+ }
+
+ // Maximum number of bytes in all compacted files.  We avoid expanding
