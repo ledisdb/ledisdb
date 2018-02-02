@@ -1,7 +1,7 @@
 # use builder image to compile ledisdb (without GCO)
 FROM golang:1.9-stretch as builder
 
-ENV LEDISDB_VERSION v0.6
+ENV LEDISDB_VERSION 0.6
 
 ENV LEVELDB_VERSION 47cb9e2a211e1d7157078ba7bab536beb29e56dc
 ENV ROCKSDB_VERSION 5.8.6
@@ -23,7 +23,7 @@ RUN apt-get update && \
     libgflags-dev
 
 # get LedisDB
-RUN wget -O ledisdb-src.tar.gz "https://github.com/siddontang/ledisdb/archive/$LEDISDB_VERSION.tar.gz" && \
+RUN wget -O ledisdb-src.tar.gz "https://github.com/siddontang/ledisdb/archive/v$LEDISDB_VERSION.tar.gz" && \
     tar -zxf ledisdb-src.tar.gz && \
     mkdir -p /go/src/github.com/siddontang/ && \
     mv ledisdb-$LEDISDB_VERSION /go/src/github.com/siddontang/ledisdb
@@ -33,6 +33,7 @@ RUN wget -O leveldb-src.tar.gz "https://github.com/google/leveldb/archive/$LEVEL
     tar -zxf leveldb-src.tar.gz && \
     cd leveldb-$LEVELDB_VERSION && \
     patch -p0 < /go/src/github.com/siddontang/ledisdb/tools/leveldb.patch && \
+    mkdir -p out-shared/db && \
     make -j "$(nproc)" && \
     mkdir /build/lib && \
     mkdir -p /build/include/leveldb && \
