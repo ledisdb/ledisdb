@@ -110,12 +110,35 @@ func (m *master) checkConn() error {
 	var err error
 	if m.conn == nil {
 		m.conn, err = goredis.Connect(m.addr)
-	} else {
-		if _, err = m.conn.Do("PING"); err != nil {
-			m.conn.Close()
-			m.conn = nil
+
+		if err != nil {
+			return err
 		}
 	}
+
+	// already connected  and has master password
+	if len(m.app.cfg.Replication.MasterPassword) != 0 {
+		var res string
+
+		res, err = goredis.String(m.conn.Do("auth", m.app.cfg.Replication.MasterPassword))
+
+		if err != nil || strings.ToUpper(res) != "OK" {
+			m.conn.Close()
+			m.conn = nil
+
+			if err == nil {
+				err = fmt.Errorf("master auth fail , res=%s , password=%s", res, m.app.cfg.Replication.MasterPassword)
+			}
+
+			return err
+		}
+	}
+
+	if _, err = m.conn.Do("PING"); err != nil {
+		m.conn.Close()
+		m.conn = nil
+	}
+
 	return err
 }
 
