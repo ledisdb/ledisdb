@@ -83,6 +83,7 @@ type ReplicationConfig struct {
 	SyncLog          int    `toml:"sync_log"`
 	Compression      bool   `toml:"compression"`
 	UseMmap          bool   `toml:"use_mmap"`
+	MasterPassword   string `toml:"master_password"`
 }
 
 type SnapshotConfig struct {
