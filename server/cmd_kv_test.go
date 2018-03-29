@@ -248,43 +248,43 @@ func TestKVErrorParams(t *testing.T) {
 	}
 
 	if _, err := c.Do("del"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("mset"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("mset", "a", "b", "c"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("mget"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("expire"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("expire", "a", "b"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("expireat"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("expireat", "a", "b"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("ttl"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("persist"); err == nil {
-		t.Fatal("invalid err of %v", err)
+		t.Fatalf("invalid err of %v", err)
 	}
 
 	if _, err := c.Do("setex", "a", "blah", "hello world"); err == nil {

@@ -55,19 +55,19 @@ func listAdaptor(db *DB) *adaptor {
 			eles = append(eles, e)
 		}
 
-		if n, err := db.LPush(k, eles...); err != nil {
+		n, err := db.LPush(k, eles...)
+		if err != nil {
 			return 0, err
-		} else {
-			return n, nil
 		}
+
+		return n, nil
 	}
 
 	adp.exists = func(k []byte) (int64, error) {
 		if llen, err := db.LLen(k); err != nil || llen <= 0 {
 			return 0, err
-		} else {
-			return 1, nil
 		}
+		return 1, nil
 	}
 
 	adp.del = db.LClear
@@ -97,17 +97,15 @@ func hashAdaptor(db *DB) *adaptor {
 
 		if err := db.HMset(k, datas...); err != nil {
 			return 0, err
-		} else {
-			return int64(len(datas)), nil
 		}
+		return int64(len(datas)), nil
 	}
 
 	adp.exists = func(k []byte) (int64, error) {
 		if hlen, err := db.HLen(k); err != nil || hlen <= 0 {
 			return 0, err
-		} else {
-			return 1, nil
 		}
+		return 1, nil
 	}
 
 	adp.del = db.HClear
@@ -135,19 +133,18 @@ func zsetAdaptor(db *DB) *adaptor {
 			datas = append(datas, pair)
 		}
 
-		if n, err := db.ZAdd(k, datas...); err != nil {
+		n, err := db.ZAdd(k, datas...)
+		if err != nil {
 			return 0, err
-		} else {
-			return n, nil
 		}
+		return n, nil
 	}
 
 	adp.exists = func(k []byte) (int64, error) {
 		if cnt, err := db.ZCard(k); err != nil || cnt <= 0 {
 			return 0, err
-		} else {
-			return 1, nil
 		}
+		return 1, nil
 	}
 
 	adp.del = db.ZClear
@@ -171,20 +168,19 @@ func setAdaptor(db *DB) *adaptor {
 			eles = append(eles, e)
 		}
 
-		if n, err := db.SAdd(k, eles...); err != nil {
+		n, err := db.SAdd(k, eles...)
+		if err != nil {
 			return 0, err
-		} else {
-			return n, nil
 		}
-
+		return n, nil
 	}
 
 	adp.exists = func(k []byte) (int64, error) {
 		if slen, err := db.SCard(k); err != nil || slen <= 0 {
 			return 0, err
-		} else {
-			return 1, nil
 		}
+
+		return 1, nil
 	}
 
 	adp.del = db.SClear

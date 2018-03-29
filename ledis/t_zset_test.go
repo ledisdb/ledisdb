@@ -155,7 +155,7 @@ func TestZSetOrder(t *testing.T) {
 	} else {
 		for i := 0; i < membCnt; i++ {
 			if string(qMembs[i].Member) != membs[i] {
-				t.Fatal(fmt.Sprintf("[%s] vs [%s]", qMembs[i], membs[i]))
+				t.Fatalf("[%v] vs [%v]", qMembs[i], membs[i])
 			}
 		}
 	}

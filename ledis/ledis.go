@@ -15,6 +15,7 @@ import (
 	"github.com/siddontang/ledisdb/store"
 )
 
+// Ledis is the core structure to handle the database.
 type Ledis struct {
 	cfg *config.Config
 
@@ -42,6 +43,7 @@ type Ledis struct {
 	ttlCheckerCh chan *ttlChecker
 }
 
+// Open opens the Ledis with a config.
 func Open(cfg *config.Config) (*Ledis, error) {
 	if len(cfg.DataDir) == 0 {
 		cfg.DataDir = config.DefaultDataDir
@@ -96,6 +98,7 @@ func Open(cfg *config.Config) (*Ledis, error) {
 	return l, nil
 }
 
+// Close closes the Ledis.
 func (l *Ledis) Close() {
 	close(l.quit)
 	l.wg.Wait()
@@ -113,6 +116,7 @@ func (l *Ledis) Close() {
 	}
 }
 
+// Select chooses a database.
 func (l *Ledis) Select(index int) (*DB, error) {
 	if index < 0 || index >= l.cfg.Databases {
 		return nil, fmt.Errorf("invalid db index %d, must in [0, %d]", index, l.cfg.Databases-1)
@@ -136,7 +140,7 @@ func (l *Ledis) Select(index int) (*DB, error) {
 	return db, nil
 }
 
-// Flush All will clear all data and replication logs
+// FlushAll will clear all data and replication logs
 func (l *Ledis) FlushAll() error {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()
@@ -181,6 +185,7 @@ func (l *Ledis) flushAll() error {
 	return nil
 }
 
+// IsReadOnly returns whether Ledis is read only or not.
 func (l *Ledis) IsReadOnly() bool {
 	if l.cfg.GetReadonly() {
 		return true
@@ -229,10 +234,12 @@ func (l *Ledis) checkTTL() {
 
 }
 
+// StoreStat returns the statistics.
 func (l *Ledis) StoreStat() *store.Stat {
 	return l.ldb.Stat()
 }
 
+// CompactStore compacts the backend storage.
 func (l *Ledis) CompactStore() error {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()

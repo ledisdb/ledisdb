@@ -9,6 +9,7 @@ import (
 	"github.com/siddontang/ledisdb/store"
 )
 
+// FVPair is the pair of field and value.
 type FVPair struct {
 	Field []byte
 	Value []byte
@@ -154,7 +155,7 @@ func (db *DB) hDelete(t *batch, key []byte) int64 {
 	start := db.hEncodeStartKey(key)
 	stop := db.hEncodeStopKey(key)
 
-	var num int64 = 0
+	var num int64
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.Key())
@@ -173,15 +174,17 @@ func (db *DB) hExpireAt(key []byte, when int64) (int64, error) {
 
 	if hlen, err := db.HLen(key); err != nil || hlen == 0 {
 		return 0, err
-	} else {
-		db.expireAt(t, HashType, key, when)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		}
 	}
+
+	db.expireAt(t, HashType, key, when)
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
 	return 1, nil
 }
 
+// HLen returns the lengh of hash.
 func (db *DB) HLen(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -190,6 +193,7 @@ func (db *DB) HLen(key []byte) (int64, error) {
 	return Int64(db.bucket.Get(db.hEncodeSizeKey(key)))
 }
 
+// HSet sets the field with value of key.
 func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 	if err := checkHashKFSize(key, field); err != nil {
 		return 0, err
@@ -210,6 +214,7 @@ func (db *DB) HSet(key []byte, field []byte, value []byte) (int64, error) {
 	return n, err
 }
 
+// HGet gets the value of the field.
 func (db *DB) HGet(key []byte, field []byte) ([]byte, error) {
 	if err := checkHashKFSize(key, field); err != nil {
 		return nil, err
@@ -218,6 +223,7 @@ func (db *DB) HGet(key []byte, field []byte) ([]byte, error) {
 	return db.bucket.Get(db.hEncodeHashKey(key, field))
 }
 
+// HMset sets multi field-values.
 func (db *DB) HMset(key []byte, args ...FVPair) error {
 	t := db.hashBatch
 	t.Lock()
@@ -225,7 +231,7 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 
 	var err error
 	var ek []byte
-	var num int64 = 0
+	var num int64
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i].Field); err != nil {
 			return err
@@ -253,6 +259,7 @@ func (db *DB) HMset(key []byte, args ...FVPair) error {
 	return err
 }
 
+// HMget gets multi values of fields
 func (db *DB) HMget(key []byte, args ...[]byte) ([][]byte, error) {
 	var ek []byte
 
@@ -273,6 +280,7 @@ func (db *DB) HMget(key []byte, args ...[]byte) ([][]byte, error) {
 	return r, nil
 }
 
+// HDel deletes the fields.
 func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 	t := db.hashBatch
 
@@ -286,7 +294,7 @@ func (db *DB) HDel(key []byte, args ...[]byte) (int64, error) {
 	it := db.bucket.NewIterator()
 	defer it.Close()
 
-	var num int64 = 0
+	var num int64
 	for i := 0; i < len(args); i++ {
 		if err := checkHashKFSize(key, args[i]); err != nil {
 			return 0, err
@@ -317,23 +325,24 @@ func (db *DB) hIncrSize(key []byte, delta int64) (int64, error) {
 	sk := db.hEncodeSizeKey(key)
 
 	var err error
-	var size int64 = 0
+	var size int64
 	if size, err = Int64(db.bucket.Get(sk)); err != nil {
 		return 0, err
+	}
+
+	size += delta
+	if size <= 0 {
+		size = 0
+		t.Delete(sk)
+		db.rmExpire(t, HashType, key)
 	} else {
-		size += delta
-		if size <= 0 {
-			size = 0
-			t.Delete(sk)
-			db.rmExpire(t, HashType, key)
-		} else {
-			t.Put(sk, PutInt64(size))
-		}
+		t.Put(sk, PutInt64(size))
 	}
 
 	return size, nil
 }
 
+// HIncrBy increases the value of field by delta.
 func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 	if err := checkHashKFSize(key, field); err != nil {
 		return 0, err
@@ -348,7 +357,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 
 	ek = db.hEncodeHashKey(key, field)
 
-	var n int64 = 0
+	var n int64
 	if n, err = StrInt64(db.bucket.Get(ek)); err != nil {
 		return 0, err
 	}
@@ -365,6 +374,7 @@ func (db *DB) HIncrBy(key []byte, field []byte, delta int64) (int64, error) {
 	return n, err
 }
 
+// HGetAll returns all field-values.
 func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -390,6 +400,7 @@ func (db *DB) HGetAll(key []byte) ([]FVPair, error) {
 	return v, nil
 }
 
+// HKeys returns the all fields.
 func (db *DB) HKeys(key []byte) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -414,6 +425,7 @@ func (db *DB) HKeys(key []byte) ([][]byte, error) {
 	return v, nil
 }
 
+// HValues returns all values
 func (db *DB) HValues(key []byte) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -439,6 +451,7 @@ func (db *DB) HValues(key []byte) ([][]byte, error) {
 	return v, nil
 }
 
+// HClear clears the data.
 func (db *DB) HClear(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -455,6 +468,7 @@ func (db *DB) HClear(key []byte) (int64, error) {
 	return num, err
 }
 
+// HMclear cleans multi data.
 func (db *DB) HMclear(keys ...[]byte) (int64, error) {
 	t := db.hashBatch
 	t.Lock()
@@ -482,6 +496,7 @@ func (db *DB) hFlush() (drop int64, err error) {
 	return db.flushType(t, HashType)
 }
 
+// HExpire expires the data with duration.
 func (db *DB) HExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue
@@ -490,6 +505,7 @@ func (db *DB) HExpire(key []byte, duration int64) (int64, error) {
 	return db.hExpireAt(key, time.Now().Unix()+duration)
 }
 
+// HExpireAt expires the data at time when.
 func (db *DB) HExpireAt(key []byte, when int64) (int64, error) {
 	if when <= time.Now().Unix() {
 		return 0, errExpireValue
@@ -498,6 +514,7 @@ func (db *DB) HExpireAt(key []byte, when int64) (int64, error) {
 	return db.hExpireAt(key, when)
 }
 
+// HTTL gets the TTL of data.
 func (db *DB) HTTL(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return -1, err
@@ -506,6 +523,7 @@ func (db *DB) HTTL(key []byte) (int64, error) {
 	return db.ttl(HashType, key)
 }
 
+// HPersist removes the TTL of data.
 func (db *DB) HPersist(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -524,6 +542,7 @@ func (db *DB) HPersist(key []byte) (int64, error) {
 	return n, err
 }
 
+// HKeyExists checks whether data exists or not.
 func (db *DB) HKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
