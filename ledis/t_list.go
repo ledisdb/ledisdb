@@ -121,12 +121,12 @@ func (db *DB) lpush(key []byte, whereSeq int32, args ...[]byte) (int64, error) {
 		return 0, err
 	}
 
-	var pushCnt int = len(args)
+	pushCnt := len(args)
 	if pushCnt == 0 {
 		return int64(size), nil
 	}
 
-	var seq int32 = headSeq
+	seq := headSeq
 	var delta int32 = -1
 	if whereSeq == listTailSeq {
 		seq = tailSeq
@@ -190,7 +190,7 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 
 	var value []byte
 
-	var seq int32 = headSeq
+	seq := headSeq
 	if whereSeq == listTailSeq {
 		seq = tailSeq
 	}
@@ -202,9 +202,9 @@ func (db *DB) lpop(key []byte, whereSeq int32) ([]byte, error) {
 	}
 
 	if whereSeq == listHeadSeq {
-		headSeq += 1
+		headSeq++
 	} else {
-		tailSeq -= 1
+		tailSeq--
 	}
 
 	t.Delete(itemKey)
@@ -234,25 +234,25 @@ func (db *DB) ltrim2(key []byte, startP, stopP int64) (err error) {
 	ek := db.lEncodeMetaKey(key)
 	if headSeq, _, llen, err = db.lGetMeta(nil, ek); err != nil {
 		return err
-	} else {
-		if start < 0 {
-			start = llen + start
-		}
-		if stop < 0 {
-			stop = llen + stop
-		}
-		if start >= llen || start > stop {
-			db.lDelete(t, key)
-			db.rmExpire(t, ListType, key)
-			return t.Commit()
-		}
+	}
 
-		if start < 0 {
-			start = 0
-		}
-		if stop >= llen {
-			stop = llen - 1
-		}
+	if start < 0 {
+		start = llen + start
+	}
+	if stop < 0 {
+		stop = llen + stop
+	}
+	if start >= llen || start > stop {
+		db.lDelete(t, key)
+		db.rmExpire(t, ListType, key)
+		return t.Commit()
+	}
+
+	if start < 0 {
+		start = 0
+	}
+	if stop >= llen {
+		stop = llen - 1
 	}
 
 	if start > 0 {
@@ -343,11 +343,14 @@ func (db *DB) lDelete(t *batch, key []byte) int64 {
 		return 0
 	}
 
-	var num int64 = 0
+	var num int64
 	startKey := db.lEncodeListKey(key, headSeq)
 	stopKey := db.lEncodeListKey(key, tailSeq)
 
-	rit := store.NewRangeIterator(it, &store.Range{startKey, stopKey, store.RangeClose})
+	rit := store.NewRangeIterator(it, &store.Range{
+		Min:  startKey,
+		Max:  stopKey,
+		Type: store.RangeClose})
 	for ; rit.Valid(); rit.Next() {
 		t.Delete(rit.RawKey())
 		num++
@@ -383,7 +386,7 @@ func (db *DB) lGetMeta(it *store.Iterator, ek []byte) (headSeq int32, tailSeq in
 func (db *DB) lSetMeta(ek []byte, headSeq int32, tailSeq int32) int32 {
 	t := db.listBatch
 
-	var size int32 = tailSeq - headSeq + 1
+	size := tailSeq - headSeq + 1
 	if size < 0 {
 		//	todo : log error + panic
 		log.Fatalf("invalid meta sequence range [%d, %d]", headSeq, tailSeq)
@@ -408,15 +411,17 @@ func (db *DB) lExpireAt(key []byte, when int64) (int64, error) {
 
 	if llen, err := db.LLen(key); err != nil || llen == 0 {
 		return 0, err
-	} else {
-		db.expireAt(t, ListType, key, when)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		}
 	}
+
+	db.expireAt(t, ListType, key, when)
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
 	return 1, nil
 }
 
+// LIndex returns the value at index.
 func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -449,6 +454,7 @@ func (db *DB) LIndex(key []byte, index int32) ([]byte, error) {
 	return v, nil
 }
 
+// LLen gets the length of the list.
 func (db *DB) LLen(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -459,25 +465,32 @@ func (db *DB) LLen(key []byte) (int64, error) {
 	return int64(size), err
 }
 
+// LPop pops the value.
 func (db *DB) LPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listHeadSeq)
 }
 
+// LTrim trims the value from start to stop.
 func (db *DB) LTrim(key []byte, start, stop int64) error {
 	return db.ltrim2(key, start, stop)
 }
 
+// LTrimFront trims the value from top.
 func (db *DB) LTrimFront(key []byte, trimSize int32) (int32, error) {
 	return db.ltrim(key, trimSize, listHeadSeq)
 }
 
+// LTrimBack trims the value from back.
 func (db *DB) LTrimBack(key []byte, trimSize int32) (int32, error) {
 	return db.ltrim(key, trimSize, listTailSeq)
 }
 
+// LPush push the value to the list.
 func (db *DB) LPush(key []byte, args ...[]byte) (int64, error) {
 	return db.lpush(key, listHeadSeq, args...)
 }
+
+// LSet sets the value at index.
 func (db *DB) LSet(key []byte, index int32, value []byte) error {
 	if err := checkKeySize(key); err != nil {
 		return err
@@ -512,6 +525,7 @@ func (db *DB) LSet(key []byte, index int32, value []byte) error {
 	return err
 }
 
+// LRange gets the value of list at range.
 func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -570,14 +584,17 @@ func (db *DB) LRange(key []byte, start int32, stop int32) ([][]byte, error) {
 	return v, nil
 }
 
+// RPop rpops the value.
 func (db *DB) RPop(key []byte) ([]byte, error) {
 	return db.lpop(key, listTailSeq)
 }
 
+// RPush rpushs the value .
 func (db *DB) RPush(key []byte, args ...[]byte) (int64, error) {
 	return db.lpush(key, listTailSeq, args...)
 }
 
+// LClear clears the list.
 func (db *DB) LClear(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -594,6 +611,7 @@ func (db *DB) LClear(key []byte) (int64, error) {
 	return num, err
 }
 
+// LMclear clears multi lists.
 func (db *DB) LMclear(keys ...[]byte) (int64, error) {
 	t := db.listBatch
 	t.Lock()
@@ -620,6 +638,7 @@ func (db *DB) lFlush() (drop int64, err error) {
 	return db.flushType(t, ListType)
 }
 
+// LExpire expires the list.
 func (db *DB) LExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue
@@ -628,6 +647,7 @@ func (db *DB) LExpire(key []byte, duration int64) (int64, error) {
 	return db.lExpireAt(key, time.Now().Unix()+duration)
 }
 
+// LExpireAt expires the list at when.
 func (db *DB) LExpireAt(key []byte, when int64) (int64, error) {
 	if when <= time.Now().Unix() {
 		return 0, errExpireValue
@@ -636,6 +656,7 @@ func (db *DB) LExpireAt(key []byte, when int64) (int64, error) {
 	return db.lExpireAt(key, when)
 }
 
+// LTTL gets the TTL of list.
 func (db *DB) LTTL(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return -1, err
@@ -644,6 +665,7 @@ func (db *DB) LTTL(key []byte) (int64, error) {
 	return db.ttl(ListType, key)
 }
 
+// LPersist removes the TTL of list.
 func (db *DB) LPersist(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -672,14 +694,17 @@ func (db *DB) lEncodeMaxKey() []byte {
 	return ek
 }
 
+// BLPop pops the list with block way.
 func (db *DB) BLPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
 	return db.lblockPop(keys, listHeadSeq, timeout)
 }
 
+// BRPop bpops the list with block way.
 func (db *DB) BRPop(keys [][]byte, timeout time.Duration) ([]interface{}, error) {
 	return db.lblockPop(keys, listTailSeq, timeout)
 }
 
+// LKeyExists check list existed or not.
 func (db *DB) LKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err

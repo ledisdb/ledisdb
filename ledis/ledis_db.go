@@ -26,6 +26,7 @@ type ibucket interface {
 	RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *store.RangeLimitIterator
 }
 
+// DB is the database.
 type DB struct {
 	l *Ledis
 
@@ -130,6 +131,7 @@ func (db *DB) newBatch() *batch {
 	return db.l.newBatch(db.bucket.NewWriteBatch(), &dbBatchLocker{l: &sync.Mutex{}, wrLock: &db.l.wLock})
 }
 
+// Index gets the index of database.
 func (db *DB) Index() int {
 	return int(db.index)
 }
@@ -138,6 +140,7 @@ func (db *DB) Index() int {
 // 	return db.status == DBAutoCommit
 // }
 
+// FlushAll flushes the data.
 func (db *DB) FlushAll() (drop int64, err error) {
 	all := [...](func() (int64, error)){
 		db.flush,
@@ -147,12 +150,13 @@ func (db *DB) FlushAll() (drop int64, err error) {
 		db.sFlush}
 
 	for _, flush := range all {
-		if n, e := flush(); e != nil {
+		n, e := flush()
+		if e != nil {
 			err = e
 			return
-		} else {
-			drop += n
 		}
+
+		drop += n
 	}
 
 	return
@@ -195,9 +199,9 @@ func (db *DB) flushType(t *batch, dataType byte) (drop int64, err error) {
 
 		if err = t.Commit(); err != nil {
 			return
-		} else {
-			drop += int64(len(keys))
 		}
+
+		drop += int64(len(keys))
 		keys, err = db.scanGeneric(metaDataType, nil, 1024, false, "", false)
 	}
 	return

@@ -4,8 +4,10 @@ import (
 	"errors"
 )
 
+// Version is for version
 const Version = "0.5"
 
+// DataType is defined for the different types
 type DataType byte
 
 // for out use
@@ -34,6 +36,7 @@ func (d DataType) String() string {
 	}
 }
 
+// For different type name
 const (
 	KVName   = "KV"
 	ListName = "LIST"
@@ -71,24 +74,23 @@ const (
 	MetaType byte = 201
 )
 
-var (
-	TypeName = map[byte]string{
-		KVType:     "kv",
-		HashType:   "hash",
-		HSizeType:  "hsize",
-		ListType:   "list",
-		LMetaType:  "lmeta",
-		ZSetType:   "zset",
-		ZSizeType:  "zsize",
-		ZScoreType: "zscore",
-		// BitType:     "bit",
-		// BitMetaType: "bitmeta",
-		SetType:     "set",
-		SSizeType:   "ssize",
-		ExpTimeType: "exptime",
-		ExpMetaType: "expmeta",
-	}
-)
+// TypeName is the map of type -> name
+var TypeName = map[byte]string{
+	KVType:     "kv",
+	HashType:   "hash",
+	HSizeType:  "hsize",
+	ListType:   "list",
+	LMetaType:  "lmeta",
+	ZSetType:   "zset",
+	ZSizeType:  "zsize",
+	ZScoreType: "zscore",
+	// BitType:     "bit",
+	// BitMetaType: "bitmeta",
+	SetType:     "set",
+	SSizeType:   "ssize",
+	ExpTimeType: "exptime",
+	ExpMetaType: "expmeta",
+}
 
 const (
 	defaultScanCount int = 10
@@ -104,25 +106,28 @@ var (
 	errListIndex      = errors.New("invalid list index")
 )
 
+// For different const size configuration
 const (
+	// max allowed databases
 	MaxDatabases int = 10240
 
-	//max key size
+	// max key size
 	MaxKeySize int = 1024
 
-	//max hash field size
+	// max hash field size
 	MaxHashFieldSize int = 1024
 
-	//max zset member size
+	// max zset member size
 	MaxZSetMemberSize int = 1024
 
-	//max set member size
+	// max set member size
 	MaxSetMemberSize int = 1024
 
-	//max value size
+	// max value size
 	MaxValueSize int = 1024 * 1024 * 1024
 )
 
+// For different common errors
 var (
 	ErrScoreMiss     = errors.New("zset score miss")
 	ErrWriteInROnly  = errors.New("write not support in readonly mode")
@@ -136,6 +141,7 @@ var (
 // 	DBInMulti       uint8 = 0x2
 // )
 
+// For bit operation
 const (
 	BitAND = "and"
 	BitOR  = "or"

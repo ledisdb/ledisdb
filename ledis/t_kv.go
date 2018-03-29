@@ -11,6 +11,7 @@ import (
 	"github.com/siddontang/ledisdb/store"
 )
 
+// KVPair is the pair of key-value.
 type KVPair struct {
 	Key   []byte
 	Value []byte
@@ -109,23 +110,27 @@ func (db *DB) setExpireAt(key []byte, when int64) (int64, error) {
 
 	if exist, err := db.Exists(key); err != nil || exist == 0 {
 		return 0, err
-	} else {
-		db.expireAt(t, KVType, key, when)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		}
 	}
+
+	db.expireAt(t, KVType, key, when)
+	if err := t.Commit(); err != nil {
+		return 0, err
+	}
+
 	return 1, nil
 }
 
+// Decr decreases the data.
 func (db *DB) Decr(key []byte) (int64, error) {
 	return db.incr(key, -1)
 }
 
+// DecrBy decreases the data by decrement.
 func (db *DB) DecrBy(key []byte, decrement int64) (int64, error) {
 	return db.incr(key, -decrement)
 }
 
+// Del deletes the data.
 func (db *DB) Del(keys ...[]byte) (int64, error) {
 	if len(keys) == 0 {
 		return 0, nil
@@ -149,6 +154,7 @@ func (db *DB) Del(keys ...[]byte) (int64, error) {
 	return int64(len(keys)), err
 }
 
+// Exists check data exists or not.
 func (db *DB) Exists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -166,6 +172,7 @@ func (db *DB) Exists(key []byte) (int64, error) {
 	return 0, err
 }
 
+// Get gets the value.
 func (db *DB) Get(key []byte) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -176,6 +183,7 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	return db.bucket.Get(key)
 }
 
+// GetSlice gets the slice of the data.
 func (db *DB) GetSlice(key []byte) (store.Slice, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -186,6 +194,7 @@ func (db *DB) GetSlice(key []byte) (store.Slice, error) {
 	return db.bucket.GetSlice(key)
 }
 
+// GetSet gets the value and sets new value.
 func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -212,14 +221,17 @@ func (db *DB) GetSet(key []byte, value []byte) ([]byte, error) {
 	return oldValue, err
 }
 
+// Incr increases the data.
 func (db *DB) Incr(key []byte) (int64, error) {
 	return db.incr(key, 1)
 }
 
+// IncrBy increases the data by increment.
 func (db *DB) IncrBy(key []byte, increment int64) (int64, error) {
 	return db.incr(key, increment)
 }
 
+// MGet gets multi data.
 func (db *DB) MGet(keys ...[]byte) ([][]byte, error) {
 	values := make([][]byte, len(keys))
 
@@ -237,6 +249,7 @@ func (db *DB) MGet(keys ...[]byte) ([][]byte, error) {
 	return values, nil
 }
 
+// MSet sets multi data.
 func (db *DB) MSet(args ...KVPair) error {
 	if len(args) == 0 {
 		return nil
@@ -270,6 +283,7 @@ func (db *DB) MSet(args ...KVPair) error {
 	return err
 }
 
+// Set sets the data.
 func (db *DB) Set(key []byte, value []byte) error {
 	if err := checkKeySize(key); err != nil {
 		return err
@@ -292,6 +306,7 @@ func (db *DB) Set(key []byte, value []byte) error {
 	return err
 }
 
+// SetNX sets the data if not existed.
 func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -322,6 +337,7 @@ func (db *DB) SetNX(key []byte, value []byte) (int64, error) {
 	return n, err
 }
 
+// SetEX sets the data with a TTL.
 func (db *DB) SetEX(key []byte, duration int64, value []byte) error {
 	if err := checkKeySize(key); err != nil {
 		return err
@@ -341,11 +357,7 @@ func (db *DB) SetEX(key []byte, duration int64, value []byte) error {
 	t.Put(ek, value)
 	db.expireAt(t, KVType, key, time.Now().Unix()+duration)
 
-	if err := t.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return t.Commit()
 }
 
 func (db *DB) flush() (drop int64, err error) {
@@ -355,6 +367,7 @@ func (db *DB) flush() (drop int64, err error) {
 	return db.flushType(t, KVType)
 }
 
+// Expire expires the data.
 func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue
@@ -363,6 +376,7 @@ func (db *DB) Expire(key []byte, duration int64) (int64, error) {
 	return db.setExpireAt(key, time.Now().Unix()+duration)
 }
 
+// ExpireAt expires the data at when.
 func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
 	if when <= time.Now().Unix() {
 		return 0, errExpireValue
@@ -371,6 +385,7 @@ func (db *DB) ExpireAt(key []byte, when int64) (int64, error) {
 	return db.setExpireAt(key, when)
 }
 
+// TTL returns the TTL of the data.
 func (db *DB) TTL(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return -1, err
@@ -379,6 +394,7 @@ func (db *DB) TTL(key []byte) (int64, error) {
 	return db.ttl(KVType, key)
 }
 
+// Persist removes the TTL of the data.
 func (db *DB) Persist(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -396,6 +412,7 @@ func (db *DB) Persist(key []byte) (int64, error) {
 	return n, err
 }
 
+// SetRange sets the data with new value from offset.
 func (db *DB) SetRange(key []byte, offset int, value []byte) (int64, error) {
 	if len(value) == 0 {
 		return 0, nil
@@ -458,6 +475,7 @@ func getRange(start int, end int, valLen int) (int, int) {
 	return start, end
 }
 
+// GetRange gets the range of the data.
 func (db *DB) GetRange(key []byte, start int, end int) ([]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -480,6 +498,7 @@ func (db *DB) GetRange(key []byte, start int, end int) ([]byte, error) {
 	return value[start : end+1], nil
 }
 
+// StrLen returns the length of the data.
 func (db *DB) StrLen(key []byte) (int64, error) {
 	s, err := db.GetSlice(key)
 	if err != nil {
@@ -491,6 +510,7 @@ func (db *DB) StrLen(key []byte) (int64, error) {
 	return int64(n), nil
 }
 
+// Append appends the value to the data.
 func (db *DB) Append(key []byte, value []byte) (int64, error) {
 	if len(value) == 0 {
 		return 0, nil
@@ -526,6 +546,7 @@ func (db *DB) Append(key []byte, value []byte) (int64, error) {
 	return int64(len(oldValue)), nil
 }
 
+// BitOP does the bit operations in data.
 func (db *DB) BitOP(op string, destKey []byte, srcKeys ...[]byte) (int64, error) {
 	if err := checkKeySize(destKey); err != nil {
 		return 0, err
@@ -628,6 +649,7 @@ func numberBitCount(i uint32) uint32 {
 	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
 }
 
+// BitCount returns the bit count of data.
 func (db *DB) BitCount(key []byte, start int, end int) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -642,7 +664,7 @@ func (db *DB) BitCount(key []byte, start int, end int) (int64, error) {
 	start, end = getRange(start, end, len(value))
 	value = value[start : end+1]
 
-	var n int64 = 0
+	var n int64
 
 	pos := 0
 	for ; pos+4 <= len(value); pos = pos + 4 {
@@ -656,6 +678,7 @@ func (db *DB) BitCount(key []byte, start int, end int) (int64, error) {
 	return n, nil
 }
 
+// BitPos returns the pos of the data.
 func (db *DB) BitPos(key []byte, on int, start int, end int) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -665,7 +688,7 @@ func (db *DB) BitPos(key []byte, on int, start int, end int) (int64, error) {
 		return 0, fmt.Errorf("bit must be 0 or 1, not %d", on)
 	}
 
-	var skipValue uint8 = 0
+	var skipValue uint8
 	if on == 0 {
 		skipValue = 0xFF
 	}
@@ -694,6 +717,7 @@ func (db *DB) BitPos(key []byte, on int, start int, end int) (int64, error) {
 	return -1, nil
 }
 
+// SetBit sets the bit to the data.
 func (db *DB) SetBit(key []byte, offset int, on int) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -736,11 +760,12 @@ func (db *DB) SetBit(key []byte, offset int, on int) (int64, error) {
 
 	if bitVal > 0 {
 		return 1, nil
-	} else {
-		return 0, nil
 	}
+
+	return 0, nil
 }
 
+// GetBit gets the bit of data at offset.
 func (db *DB) GetBit(key []byte, offset int) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -763,7 +788,7 @@ func (db *DB) GetBit(key []byte, offset int) (int64, error) {
 	bitVal := value[byteOffset] & (1 << bit)
 	if bitVal > 0 {
 		return 1, nil
-	} else {
-		return 0, nil
 	}
+
+	return 0, nil
 }

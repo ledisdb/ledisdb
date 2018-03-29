@@ -12,6 +12,7 @@ import (
 var errSetKey = errors.New("invalid set key")
 var errSSizeKey = errors.New("invalid ssize key")
 
+// For set operation type.
 const (
 	setStartSep byte = ':'
 	setStopSep  byte = setStartSep + 1
@@ -137,7 +138,7 @@ func (db *DB) sDelete(t *batch, key []byte) int64 {
 	start := db.sEncodeStartKey(key)
 	stop := db.sEncodeStopKey(key)
 
-	var num int64 = 0
+	var num int64
 	it := db.bucket.RangeLimitIterator(start, stop, store.RangeROpen, 0, -1)
 	for ; it.Valid(); it.Next() {
 		t.Delete(it.RawKey())
@@ -155,18 +156,18 @@ func (db *DB) sIncrSize(key []byte, delta int64) (int64, error) {
 	sk := db.sEncodeSizeKey(key)
 
 	var err error
-	var size int64 = 0
+	var size int64
 	if size, err = Int64(db.bucket.Get(sk)); err != nil {
 		return 0, err
+	}
+
+	size += delta
+	if size <= 0 {
+		size = 0
+		t.Delete(sk)
+		db.rmExpire(t, SetType, key)
 	} else {
-		size += delta
-		if size <= 0 {
-			size = 0
-			t.Delete(sk)
-			db.rmExpire(t, SetType, key)
-		} else {
-			t.Put(sk, PutInt64(size))
-		}
+		t.Put(sk, PutInt64(size))
 	}
 
 	return size, nil
@@ -179,12 +180,10 @@ func (db *DB) sExpireAt(key []byte, when int64) (int64, error) {
 
 	if scnt, err := db.SCard(key); err != nil || scnt == 0 {
 		return 0, err
-	} else {
-		db.expireAt(t, SetType, key, when)
-		if err := t.Commit(); err != nil {
-			return 0, err
-		}
-
+	}
+	db.expireAt(t, SetType, key, when)
+	if err := t.Commit(); err != nil {
+		return 0, err
 	}
 
 	return 1, nil
@@ -207,6 +206,7 @@ func (db *DB) sSetItem(key []byte, member []byte) (int64, error) {
 	return n, nil
 }
 
+// SAdd adds the value to the set.
 func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
 	t := db.setBatch
 	t.Lock()
@@ -214,7 +214,7 @@ func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
 
 	var err error
 	var ek []byte
-	var num int64 = 0
+	var num int64
 	for i := 0; i < len(args); i++ {
 		if err := checkSetKMSize(key, args[i]); err != nil {
 			return 0, err
@@ -240,6 +240,7 @@ func (db *DB) SAdd(key []byte, args ...[]byte) (int64, error) {
 
 }
 
+// SCard gets the size of set.
 func (db *DB) SCard(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -294,16 +295,19 @@ func (db *DB) sDiffGeneric(keys ...[]byte) ([][]byte, error) {
 	return slice, nil
 }
 
+// SDiff gets the different of sets.
 func (db *DB) SDiff(keys ...[]byte) ([][]byte, error) {
 	v, err := db.sDiffGeneric(keys...)
 	return v, err
 }
 
+// SDiffStore gets the different of sets and stores to dest set.
 func (db *DB) SDiffStore(dstKey []byte, keys ...[]byte) (int64, error) {
 	n, err := db.sStoreGeneric(dstKey, DiffType, keys...)
 	return n, err
 }
 
+// SKeyExists checks whether set existed or not.
 func (db *DB) SKeyExists(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -370,17 +374,20 @@ func (db *DB) sInterGeneric(keys ...[]byte) ([][]byte, error) {
 
 }
 
+// SInter intersects the sets.
 func (db *DB) SInter(keys ...[]byte) ([][]byte, error) {
 	v, err := db.sInterGeneric(keys...)
 	return v, err
 
 }
 
+// SInterStore intersects the sets and stores to dest set.
 func (db *DB) SInterStore(dstKey []byte, keys ...[]byte) (int64, error) {
 	n, err := db.sStoreGeneric(dstKey, InterType, keys...)
 	return n, err
 }
 
+// SIsMember checks member in set.
 func (db *DB) SIsMember(key []byte, member []byte) (int64, error) {
 	ek := db.sEncodeSetKey(key, member)
 
@@ -393,6 +400,7 @@ func (db *DB) SIsMember(key []byte, member []byte) (int64, error) {
 	return n, nil
 }
 
+// SMembers gets members of set.
 func (db *DB) SMembers(key []byte) ([][]byte, error) {
 	if err := checkKeySize(key); err != nil {
 		return nil, err
@@ -418,6 +426,7 @@ func (db *DB) SMembers(key []byte) ([][]byte, error) {
 	return v, nil
 }
 
+// SRem removes the members of set.
 func (db *DB) SRem(key []byte, args ...[]byte) (int64, error) {
 	t := db.setBatch
 	t.Lock()
@@ -430,7 +439,7 @@ func (db *DB) SRem(key []byte, args ...[]byte) (int64, error) {
 	it := db.bucket.NewIterator()
 	defer it.Close()
 
-	var num int64 = 0
+	var num int64
 	for i := 0; i < len(args); i++ {
 		if err := checkSetKMSize(key, args[i]); err != nil {
 			return 0, err
@@ -487,11 +496,13 @@ func (db *DB) sUnionGeneric(keys ...[]byte) ([][]byte, error) {
 	return slice, nil
 }
 
+// SUnion unions the sets.
 func (db *DB) SUnion(keys ...[]byte) ([][]byte, error) {
 	v, err := db.sUnionGeneric(keys...)
 	return v, err
 }
 
+// SUnionStore unions the sets and stores to the dest set.
 func (db *DB) SUnionStore(dstKey []byte, keys ...[]byte) (int64, error) {
 	n, err := db.sStoreGeneric(dstKey, UnionType, keys...)
 	return n, err
@@ -549,6 +560,7 @@ func (db *DB) sStoreGeneric(dstKey []byte, optType byte, keys ...[]byte) (int64,
 	return n, nil
 }
 
+// SClear clears the set.
 func (db *DB) SClear(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err
@@ -565,6 +577,7 @@ func (db *DB) SClear(key []byte) (int64, error) {
 	return num, err
 }
 
+// SMclear clears multi sets.
 func (db *DB) SMclear(keys ...[]byte) (int64, error) {
 	t := db.setBatch
 	t.Lock()
@@ -583,6 +596,7 @@ func (db *DB) SMclear(keys ...[]byte) (int64, error) {
 	return int64(len(keys)), err
 }
 
+// SExpire expries the set.
 func (db *DB) SExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue
@@ -592,6 +606,7 @@ func (db *DB) SExpire(key []byte, duration int64) (int64, error) {
 
 }
 
+// SExpireAt expires the set at when.
 func (db *DB) SExpireAt(key []byte, when int64) (int64, error) {
 	if when <= time.Now().Unix() {
 		return 0, errExpireValue
@@ -601,6 +616,7 @@ func (db *DB) SExpireAt(key []byte, when int64) (int64, error) {
 
 }
 
+// STTL gets the TTL of set.
 func (db *DB) STTL(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return -1, err
@@ -609,6 +625,7 @@ func (db *DB) STTL(key []byte) (int64, error) {
 	return db.ttl(SetType, key)
 }
 
+// SPersist removes the TTL of set.
 func (db *DB) SPersist(key []byte) (int64, error) {
 	if err := checkKeySize(key); err != nil {
 		return 0, err

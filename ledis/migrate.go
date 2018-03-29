@@ -14,6 +14,7 @@ import (
    Only support rdb version 6.
 */
 
+// Dump dumps the KV value of key
 func (db *DB) Dump(key []byte) ([]byte, error) {
 	v, err := db.Get(key)
 	if err != nil {
@@ -25,6 +26,7 @@ func (db *DB) Dump(key []byte) ([]byte, error) {
 	return rdb.Dump(rdb.String(v))
 }
 
+// LDump dumps the list value of key
 func (db *DB) LDump(key []byte) ([]byte, error) {
 	v, err := db.LRange(key, 0, -1)
 	if err != nil {
@@ -36,6 +38,7 @@ func (db *DB) LDump(key []byte) ([]byte, error) {
 	return rdb.Dump(rdb.List(v))
 }
 
+// HDump dumps the hash value of key
 func (db *DB) HDump(key []byte) ([]byte, error) {
 	v, err := db.HGetAll(key)
 	if err != nil {
@@ -53,6 +56,7 @@ func (db *DB) HDump(key []byte) ([]byte, error) {
 	return rdb.Dump(o)
 }
 
+// SDump dumps the set value of key
 func (db *DB) SDump(key []byte) ([]byte, error) {
 	v, err := db.SMembers(key)
 	if err != nil {
@@ -64,6 +68,7 @@ func (db *DB) SDump(key []byte) ([]byte, error) {
 	return rdb.Dump(rdb.Set(v))
 }
 
+// ZDump dumps the zset value of key
 func (db *DB) ZDump(key []byte) ([]byte, error) {
 	v, err := db.ZRangeByScore(key, MinScore, MaxScore, 0, -1)
 	if err != nil {
@@ -81,6 +86,7 @@ func (db *DB) ZDump(key []byte) ([]byte, error) {
 	return rdb.Dump(o)
 }
 
+// Restore restores a key into database.
 func (db *DB) Restore(key []byte, ttl int64, data []byte) error {
 	d, err := rdb.DecodeDump(data)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 var errDataType = errors.New("error data type")
 var errMetaKey = errors.New("error meta key")
 
-//fif inclusive is true, scan range [cursor, inf) else (cursor, inf)
+//Scan scans the data. If inclusive is true, scan range [cursor, inf) else (cursor, inf)
 func (db *DB) Scan(dataType DataType, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	storeDataType, err := getDataStoreType(dataType)
 	if err != nil {
@@ -20,7 +20,7 @@ func (db *DB) Scan(dataType DataType, cursor []byte, count int, inclusive bool, 
 	return db.scanGeneric(storeDataType, cursor, count, inclusive, match, false)
 }
 
-//if inclusive is true, revscan range (-inf, cursor] else (inf, cursor)
+// RevScan scans the data reversed. if inclusive is true, revscan range (-inf, cursor] else (inf, cursor)
 func (db *DB) RevScan(dataType DataType, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	storeDataType, err := getDataStoreType(dataType)
 	if err != nil {
@@ -51,7 +51,7 @@ func getDataStoreType(dataType DataType) (byte, error) {
 
 func buildMatchRegexp(match string) (*regexp.Regexp, error) {
 	var err error
-	var r *regexp.Regexp = nil
+	var r *regexp.Regexp
 
 	if len(match) > 0 {
 		if r, err = regexp.Compile(match); err != nil {
@@ -300,10 +300,12 @@ func (db *DB) hScanGeneric(key []byte, cursor []byte, count int, inclusive bool,
 	return v, nil
 }
 
+// HScan scans data for hash.
 func (db *DB) HScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]FVPair, error) {
 	return db.hScanGeneric(key, cursor, count, inclusive, match, false)
 }
 
+// HRevScan reversed scans data for hash.
 func (db *DB) HRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]FVPair, error) {
 	return db.hScanGeneric(key, cursor, count, inclusive, match, true)
 }
@@ -341,10 +343,12 @@ func (db *DB) sScanGeneric(key []byte, cursor []byte, count int, inclusive bool,
 	return v, nil
 }
 
+// SScan scans data for set.
 func (db *DB) SScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	return db.sScanGeneric(key, cursor, count, inclusive, match, false)
 }
 
+// SRevScan scans data reversed for set.
 func (db *DB) SRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([][]byte, error) {
 	return db.sScanGeneric(key, cursor, count, inclusive, match, true)
 }
@@ -387,10 +391,12 @@ func (db *DB) zScanGeneric(key []byte, cursor []byte, count int, inclusive bool,
 	return v, nil
 }
 
+// ZScan scans data for zset.
 func (db *DB) ZScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]ScorePair, error) {
 	return db.zScanGeneric(key, cursor, count, inclusive, match, false)
 }
 
+// ZRevScan scans data reversed for zset.
 func (db *DB) ZRevScan(key []byte, cursor []byte, count int, inclusive bool, match string) ([]ScorePair, error) {
 	return db.zScanGeneric(key, cursor, count, inclusive, match, true)
 }

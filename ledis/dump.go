@@ -11,26 +11,22 @@ import (
 	"github.com/siddontang/ledisdb/store"
 )
 
+// DumpHead is the head of a dump.
 type DumpHead struct {
 	CommitID uint64
 }
 
+// Read reads meta from the Reader.
 func (h *DumpHead) Read(r io.Reader) error {
-	if err := binary.Read(r, binary.BigEndian, &h.CommitID); err != nil {
-		return err
-	}
-
-	return nil
+	return binary.Read(r, binary.BigEndian, &h.CommitID)
 }
 
+// Write writes meta to the Writer
 func (h *DumpHead) Write(w io.Writer) error {
-	if err := binary.Write(w, binary.BigEndian, h.CommitID); err != nil {
-		return err
-	}
-
-	return nil
+	return binary.Write(w, binary.BigEndian, h.CommitID)
 }
 
+// DumpFile dumps data to the file
 func (l *Ledis) DumpFile(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -41,6 +37,7 @@ func (l *Ledis) DumpFile(path string) error {
 	return l.Dump(f)
 }
 
+// Dump dumps data to the Writer.
 func (l *Ledis) Dump(w io.Writer) error {
 	var err error
 
@@ -118,7 +115,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 	return nil
 }
 
-// clear all data and load dump file to db
+// LoadDumpFile clears all data and loads dump file to db
 func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -129,7 +126,7 @@ func (l *Ledis) LoadDumpFile(path string) (*DumpHead, error) {
 	return l.LoadDump(f)
 }
 
-// clear all data and load dump file to db
+// LoadDump clears all data and loads dump file to db
 func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 	l.wLock.Lock()
 	defer l.wLock.Unlock()

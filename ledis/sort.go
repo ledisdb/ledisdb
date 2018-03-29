@@ -9,6 +9,7 @@ import (
 	"github.com/siddontang/ledisdb/store"
 )
 
+// Limit is for sort.
 type Limit struct {
 	Offset int
 	Size   int
@@ -52,7 +53,7 @@ func (db *DB) lookupKeyByPattern(pattern []byte, subKey []byte) []byte {
 	}
 
 	key := pattern
-	var field []byte = nil
+	var field []byte
 
 	// Find out if we're dealing with a hash dereference
 	if n := bytes.Index(pattern, hashPattern); n > 0 && n+3 < len(pattern) {
@@ -109,17 +110,15 @@ func (s *sortItemSlice) Less(i, j int) bool {
 			if s1.cmpValue == nil || s2.cmpValue == nil {
 				if s1.cmpValue == nil {
 					return true
-				} else {
-					return false
 				}
-			} else {
-				// Unlike redis, we only use bytes compare
-				return bytes.Compare(s1.cmpValue, s2.cmpValue) < 0
+				return false
 			}
-		} else {
 			// Unlike redis, we only use bytes compare
-			return bytes.Compare(s1.value, s2.value) < 0
+			return bytes.Compare(s1.cmpValue, s2.cmpValue) < 0
 		}
+
+		// Unlike redis, we only use bytes compare
+		return bytes.Compare(s1.value, s2.value) < 0
 	}
 }
 
@@ -184,7 +183,7 @@ func (db *DB) xsort(values [][]byte, offset int, size int, alpha bool, desc bool
 		}
 	}
 
-	var resLen int = end - start + 1
+	resLen := end - start + 1
 	if len(sortGet) > 0 {
 		resLen = len(sortGet) * (end - start + 1)
 	}
@@ -204,6 +203,7 @@ func (db *DB) xsort(values [][]byte, offset int, size int, alpha bool, desc bool
 	return res, nil
 }
 
+// XLSort sorts list.
 func (db *DB) XLSort(key []byte, offset int, size int, alpha bool, desc bool, sortBy []byte, sortGet [][]byte) ([][]byte, error) {
 	values, err := db.LRange(key, 0, -1)
 
@@ -214,6 +214,7 @@ func (db *DB) XLSort(key []byte, offset int, size int, alpha bool, desc bool, so
 	return db.xsort(values, offset, size, alpha, desc, sortBy, sortGet)
 }
 
+// XSSort sorts set.
 func (db *DB) XSSort(key []byte, offset int, size int, alpha bool, desc bool, sortBy []byte, sortGet [][]byte) ([][]byte, error) {
 	values, err := db.SMembers(key)
 	if err != nil {
@@ -223,6 +224,7 @@ func (db *DB) XSSort(key []byte, offset int, size int, alpha bool, desc bool, so
 	return db.xsort(values, offset, size, alpha, desc, sortBy, sortGet)
 }
 
+// XZSort sorts zset.
 func (db *DB) XZSort(key []byte, offset int, size int, alpha bool, desc bool, sortBy []byte, sortGet [][]byte) ([][]byte, error) {
 	values, err := db.ZRangeByLex(key, nil, nil, store.RangeClose, 0, -1)
 	if err != nil {

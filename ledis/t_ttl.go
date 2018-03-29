@@ -119,18 +119,22 @@ func (db *DB) ttl(dataType byte, key []byte) (t int64, err error) {
 
 func (db *DB) rmExpire(t *batch, dataType byte, key []byte) (int64, error) {
 	mk := db.expEncodeMetaKey(dataType, key)
-	if v, err := db.bucket.Get(mk); err != nil {
+	v, err := db.bucket.Get(mk)
+	if err != nil {
 		return 0, err
 	} else if v == nil {
 		return 0, nil
-	} else if when, err2 := Int64(v, nil); err2 != nil {
-		return 0, err2
-	} else {
-		tk := db.expEncodeTimeKey(dataType, key, when)
-		t.Delete(mk)
-		t.Delete(tk)
-		return 1, nil
 	}
+
+	when, err2 := Int64(v, nil)
+	if err2 != nil {
+		return 0, err2
+	}
+
+	tk := db.expEncodeTimeKey(dataType, key, when)
+	t.Delete(mk)
+	t.Delete(tk)
+	return 1, nil
 }
 
 func (c *ttlChecker) register(dataType byte, t *batch, f onExpired) {
