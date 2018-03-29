@@ -33,8 +33,8 @@ fmt:
 
 sync_vendor:
 	@which dep >/dev/null || go get -u github.com/golang/dep/cmd/dep
-	dep ensure && dep prune
+	dep ensure 
 
 update_vendor:
 	@which dep >/dev/null || go get -u github.com/golang/dep/cmd/dep
-	dep ensure -update && dep prune
+	dep ensure -update 
