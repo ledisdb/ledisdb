@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/siddontang/go/sync2"
+	"github.com/siddontang/ledisdb/ledis"
 )
 
 type info struct {
@@ -109,6 +110,7 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 		infoPair{"goroutine_num", runtime.NumGoroutine()},
 		infoPair{"cgo_call_num", runtime.NumCgoCall()},
 		infoPair{"resp_client_num", i.app.respClientNum()},
+		infoPair{"ledisdb_version", ledis.Version},
 	)
 }
 
