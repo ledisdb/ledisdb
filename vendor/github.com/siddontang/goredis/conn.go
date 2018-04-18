@@ -33,7 +33,7 @@ func Connect(addr string) (*Conn, error) {
 }
 
 func ConnectWithSize(addr string, readSize int, writeSize int) (*Conn, error) {
-	conn, err := net.Dial(getProto(addr), addr)
+	conn, err := net.DialTimeout(getProto(addr), addr, time.Second*5)
 	if err != nil {
 		return nil, err
 	}
