@@ -38,7 +38,7 @@ func (l *Ledis) handleReplication() error {
 	for {
 		if err = l.r.NextNeedCommitLog(rl); err != nil {
 			if err != rpl.ErrNoBehindLog {
-				log.Errorf("get next commit log err, %s", err.Error)
+				log.Errorf("get next commit log err, %s", err.Error())
 				return err
 			}
 
