@@ -41,7 +41,7 @@ CGO_LDFLAGS=
 
 # check dependent libray, now we only check simply, maybe later add proper checking way.
 
-# check snappy 
+# check snappy
 if [ -f $SNAPPY_DIR/include/snappy.h ]; then
     CGO_CFLAGS="$CGO_CFLAGS -I$SNAPPY_DIR/include"
     CGO_CXXFLAGS="$CGO_CXXFLAGS -I$SNAPPY_DIR/include"
@@ -64,9 +64,9 @@ fi
 if [ -f $ROCKSDB_DIR/include/rocksdb/c.h ]; then
     CGO_CFLAGS="$CGO_CFLAGS -I$ROCKSDB_DIR/include"
     CGO_CXXFLAGS="$CGO_CXXFLAGS -I$ROCKSDB_DIR/include"
-    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR/lib -lrocksdb"
-    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $ROCKSDB_DIR/lib)
-    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $ROCKSDB_DIR/lib)
+    CGO_LDFLAGS="$CGO_LDFLAGS -L$ROCKSDB_DIR -lrocksdb"
+    LD_LIBRARY_PATH=$(add_path $LD_LIBRARY_PATH $ROCKSDB_DIR)
+    DYLD_LIBRARY_PATH=$(add_path $DYLD_LIBRARY_PATH $ROCKSDB_DIR)
     GO_BUILD_TAGS="$GO_BUILD_TAGS rocksdb"
 fi
 
