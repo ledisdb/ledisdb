@@ -118,7 +118,7 @@ type Config struct {
 
 	SlaveOf string `toml:"slaveof"`
 
-	Readonly bool `toml:readonly`
+	Readonly bool `toml:"readonly"`
 
 	DataDir string `toml:"data_dir"`
 
