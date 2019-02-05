@@ -556,7 +556,7 @@ func (db *DB) BitOP(op string, destKey []byte, srcKeys ...[]byte) (int64, error)
 	if len(srcKeys) == 0 {
 		return 0, nil
 	} else if op == BitNot && len(srcKeys) > 1 {
-		return 0, fmt.Errorf("BITOP NOT has only one srckey")
+		return 0, fmt.Errorf("bITOP NOT has only one srckey")
 	} else if len(srcKeys) < 2 {
 		return 0, nil
 	}
