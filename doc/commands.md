@@ -75,6 +75,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [LMCLEAR key [key ...]](#lmclear-key-key-)
   - [LEXPIRE key seconds](#lexpire-key-seconds)
   - [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
+  - [LTRIM key start stop](#ltrim-key-start-stop)
   - [LTTL key](#lttl-key)
   - [LPERSIST key](#lpersist-key)
   - [LDUMP key](#ldump-key)
@@ -1213,6 +1214,26 @@ ledis> LPERSIST a
 ledis> LTTL a
 (integer) -1
 ledis>
+```
+
+### LTRIM key start stop
+Trims the list stored at key. Only the elements in the specified range [start, stop] remain.
+
+**Return value**
+
+Simple string reply: OK or error msg.
+
+**Examples**
+
+```
+ledis> RPUSH a 1 2 3 4 5
+(integer) 1
+ledis> LTRIM a 2 -1
+OK
+ledis> LRANGE a 0 -1
+1)  "3"
+2)  "4"
+3)  "5"
 ```
 
 ### LTTL key

@@ -200,6 +200,11 @@
         "group": "List",
         "readonly": true
     },
+    "LTRIM": {
+        "arguments": "key start stop",
+        "group": "List",
+        "readonly": false
+    },
     "LTTL": {
         "arguments": "key",
         "group": "List",
