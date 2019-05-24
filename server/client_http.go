@@ -165,8 +165,31 @@ func (w *httpWriter) writeBulk(b []byte) {
 	}
 }
 
+func (w *httpWriter) convertArray(lst []interface{}) []interface{} {
+	for i, v := range lst {
+		switch t := v.(type) {
+		case []interface{}:
+			w.convertArray(v.([]interface{}))
+		case [][]byte:
+			lst[i] = make([]string, len(v.([][]byte)))
+			for j, w := range v.([][]byte) {
+				lst[i].([]string)[j] = string(w)
+			}
+		case []byte:
+			lst[i] = string(v.([]byte))
+		case nil:
+		case int64:
+		case string:
+		case error:
+		default:
+			panic(fmt.Sprintf("invalid array type %T %v", v, t))
+		}
+	}
+	return lst
+}
+
 func (w *httpWriter) writeArray(lst []interface{}) {
-	w.genericWrite(lst)
+	w.genericWrite(w.convertArray(lst))
 }
 
 func (w *httpWriter) writeSliceArray(lst [][]byte) {
