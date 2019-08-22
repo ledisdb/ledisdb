@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	snapshotTimeFormat = "2006-01-02T15:04:05.999999999"
+	snapshotTimeFormat = "2006-01-02T15-04-05.999999999"
 )
 
 type snapshotStore struct {
