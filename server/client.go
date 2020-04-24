@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/siddontang/go/sync2"
-	"github.com/siddontang/ledisdb/ledis"
 )
 
 type responseWriter interface {

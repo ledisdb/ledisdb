@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/hack"
-	"github.com/siddontang/ledisdb/store"
 )
 
 var errSetKey = errors.New("invalid set key")

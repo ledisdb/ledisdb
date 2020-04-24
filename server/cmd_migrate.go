@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/ledis"
 )
 
 func dumpCommand(c *client) error {

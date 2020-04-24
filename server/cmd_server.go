@@ -4,10 +4,11 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
 
-	"github.com/siddontang/ledisdb/config"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ledisdb/ledisdb/config"
 )
 
 func pingCommand(c *client) error {

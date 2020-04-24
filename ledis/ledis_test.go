@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/siddontang/ledisdb/config"
+	"github.com/ledisdb/ledisdb/config"
 )
 
 var testLedis *Ledis

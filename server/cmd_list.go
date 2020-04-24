@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"bytes"
+
+	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/siddontang/go/hack"
-	"github.com/siddontang/ledisdb/ledis"
 )
 
 func lpushCommand(c *client) error {
