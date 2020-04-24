@@ -26,7 +26,7 @@ vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
 
 test:
-	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -timeout 2m $$(go list ./... | grep -v -e /vendor/)
+	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 2m $$(go list ./... | grep -v -e /vendor/)
 
 clean:
 	go clean -i ./...
