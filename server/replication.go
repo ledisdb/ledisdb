@@ -241,8 +241,6 @@ func (m *master) runReplication(restart bool) {
 			}
 		}
 	}
-
-	return
 }
 
 func (m *master) replConf() error {

@@ -195,7 +195,10 @@ func (db *DB) NewSnapshot() (driver.ISnapshot, error) {
 }
 
 func (db *DB) Compact() error {
-	return db.db.CompactRange(util.Range{nil, nil})
+	return db.db.CompactRange(util.Range{
+		Start: nil,
+		Limit: nil,
+	})
 }
 
 func init() {

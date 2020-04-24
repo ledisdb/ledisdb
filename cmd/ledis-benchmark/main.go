@@ -258,12 +258,10 @@ func main() {
 
 	if *number <= 0 {
 		panic("invalid number")
-		return
 	}
 
 	if *clients <= 0 || *number < *clients {
 		panic("invalid client number")
-		return
 	}
 
 	loop = *number / *clients
