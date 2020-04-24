@@ -147,6 +147,10 @@ Set slaveof in config or dynamiclly
 
 LedisDB uses a proxy named [xcodis](https://github.com/siddontang/xcodis) to support cluster.
 
+## CONTRIBUTING
+
+See [CONTRIBUTING.md] .
+
 ## Benchmark
 
 See [benchmark](https://github.com/ledisdb/ledisdb/wiki/Benchmark) for more.
@@ -171,7 +175,7 @@ See [Clients](https://github.com/ledisdb/ledisdb/wiki/Clients) to find or contri
 
 ## Requirement
 
-+ Go version >= 1.6
++ Go version >= 1.11
 
 ## Related Repos
 
