@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/hack"
-	"github.com/siddontang/ledisdb/store"
 )
 
 // For zset const.

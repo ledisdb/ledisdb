@@ -3,7 +3,7 @@ package store
 import (
 	"time"
 
-	"github.com/siddontang/ledisdb/store/driver"
+	"github.com/ledisdb/ledisdb/store/driver"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

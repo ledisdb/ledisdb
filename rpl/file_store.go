@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ledisdb/ledisdb/config"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/config"
 )
 
 const (
@@ -38,7 +38,7 @@ const (
 	meta: log1 offset | log2 offset
 	log offset: bigendian uint32 | bigendian uint32
 
-	//sha1 of github.com/siddontang/ledisdb 20 bytes
+	//sha1 of github.com/ledisdb/ledisdb 20 bytes
 	magic data = "\x1c\x1d\xb8\x88\xff\x9e\x45\x55\x40\xf0\x4c\xda\xe0\xce\x47\xde\x65\x48\x71\x17"
 
 	we must guarantee that the log id is monotonic increment strictly.

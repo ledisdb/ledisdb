@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ledisdb/ledisdb/config"
 	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 )
 
 func TestScan(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/siddontang/ledisdb/store"
+	"github.com/ledisdb/ledisdb/store"
 )
 
 // Limit is for sort.
