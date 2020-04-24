@@ -6,3 +6,4 @@ build_config.mk
 var*
 *.log
 bin
+coverage.out
