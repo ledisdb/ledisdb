@@ -4,5 +4,6 @@ go:
   - 1.12.x
 
 script:
+  - make vet
   - make test
   - bash <(curl -s https://codecov.io/bash)

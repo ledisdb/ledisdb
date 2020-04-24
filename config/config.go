@@ -100,7 +100,7 @@ type TLS struct {
 type AuthMethod func(c *Config, password string) bool
 
 type Config struct {
-	m sync.RWMutex `toml:"-"`
+	m *sync.RWMutex `toml:"-"`
 
 	AuthPassword string `toml:"auth_password"`
 
@@ -179,6 +179,7 @@ func NewConfigWithData(data []byte) (*Config, error) {
 
 func NewConfigDefault() *Config {
 	cfg := new(Config)
+	cfg.m = new(sync.RWMutex)
 
 	cfg.Addr = DefaultAddr
 	cfg.HttpAddr = ""

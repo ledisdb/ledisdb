@@ -22,6 +22,9 @@ build:
 	go build -mod=vendor -o bin/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*
 	go build -mod=vendor -o bin/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*
 
+vet:
+	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
+
 test:
 	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 2m $$(go list ./... | grep -v -e /vendor/)
 
