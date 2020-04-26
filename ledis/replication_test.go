@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/siddontang/ledisdb/config"
-	"github.com/siddontang/ledisdb/store"
+	"github.com/ledisdb/ledisdb/config"
+	"github.com/ledisdb/ledisdb/store"
 )
 
 func checkLedisEqual(master *Ledis, slave *Ledis) error {

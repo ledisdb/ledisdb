@@ -1,4 +1,4 @@
-module github.com/siddontang/ledisdb
+module github.com/ledisdb/ledisdb
 
 go 1.12
 

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ledisdb/ledisdb/ledis"
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/store"
 )
 
 //for simple implementation, we only support int64 score

@@ -6,10 +6,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/ledisdb/ledisdb/rpl"
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/snappy"
-	"github.com/siddontang/ledisdb/rpl"
-	"github.com/siddontang/ledisdb/store"
 )
 
 const (

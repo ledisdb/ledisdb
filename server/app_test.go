@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/ledisdb/ledisdb/config"
 	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/config"
 )
 
 var testAppOnce sync.Once

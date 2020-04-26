@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ledisdb/ledisdb/ledis"
 	"github.com/siddontang/go/hack"
 	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/ledis"
 )
 
 func slaveofCommand(c *client) error {

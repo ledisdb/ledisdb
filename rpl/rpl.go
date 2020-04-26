@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ledisdb/ledisdb/config"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/snappy"
-	"github.com/siddontang/ledisdb/config"
 )
 
 type Stat struct {

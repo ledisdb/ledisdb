@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/snappy"
-	"github.com/siddontang/ledisdb/store"
 )
 
 // DumpHead is the head of a dump.
