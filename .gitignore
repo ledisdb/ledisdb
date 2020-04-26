@@ -7,3 +7,4 @@ var*
 *.log
 bin
 coverage.out
+.vscode

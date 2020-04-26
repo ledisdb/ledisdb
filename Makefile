@@ -12,6 +12,9 @@ export DYLD_LIBRARY_PATH
 export GO_BUILD_TAGS
 export GO111MODULE=on
 
+
+PACKAGES ?= $(shell GO111MODULE=on go list -mod=vendor ./... | grep -v /vendor/)
+
 all: build
 
 build:
@@ -26,7 +29,7 @@ vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
 
 test:
-	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 2m $$(go list ./... | grep -v -e /vendor/)
+	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 10m $(PACKAGES)
 
 clean:
 	go clean -i ./...
