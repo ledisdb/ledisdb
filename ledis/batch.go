@@ -3,9 +3,9 @@ package ledis
 import (
 	"sync"
 
+	"github.com/ledisdb/ledisdb/rpl"
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/log"
-	"github.com/siddontang/ledisdb/rpl"
-	"github.com/siddontang/ledisdb/store"
 )
 
 type batch struct {

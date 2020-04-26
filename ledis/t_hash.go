@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ledisdb/ledisdb/store"
 	"github.com/siddontang/go/num"
-	"github.com/siddontang/ledisdb/store"
 )
 
 // FVPair is the pair of field and value.

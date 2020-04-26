@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/siddontang/ledisdb/ledis"
+	"github.com/ledisdb/ledisdb/ledis"
 )
 
 func saddCommand(c *client) error {

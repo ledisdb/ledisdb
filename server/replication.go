@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ledisdb/ledisdb/ledis"
+	"github.com/ledisdb/ledisdb/rpl"
 	"github.com/siddontang/go/log"
 	"github.com/siddontang/go/num"
 	"github.com/siddontang/go/sync2"
 	"github.com/siddontang/goredis"
-	"github.com/siddontang/ledisdb/ledis"
-	"github.com/siddontang/ledisdb/rpl"
 )
 
 var (
@@ -241,8 +241,6 @@ func (m *master) runReplication(restart bool) {
 			}
 		}
 	}
-
-	return
 }
 
 func (m *master) replConf() error {
