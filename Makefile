@@ -29,7 +29,7 @@ vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
 
 test:
-	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 2m $(PACKAGES)
+	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 10m $(PACKAGES)
 
 clean:
 	go clean -i ./...
