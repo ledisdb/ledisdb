@@ -8,17 +8,16 @@ import (
 	"github.com/ledisdb/ledisdb/config"
 	"github.com/ledisdb/ledisdb/store/driver"
 
-	_ "github.com/ledisdb/ledisdb/store/goleveldb"
-	_ "github.com/ledisdb/ledisdb/store/leveldb"
-	_ "github.com/ledisdb/ledisdb/store/rocksdb"
+	_ "github.com/ledisdb/ledisdb/store/goleveldb" // register goleveldb
+	_ "github.com/ledisdb/ledisdb/store/leveldb"   // register leveldb
+	_ "github.com/ledisdb/ledisdb/store/rocksdb"   // register rocksdb
 )
 
 func getStorePath(cfg *config.Config) string {
 	if len(cfg.DBPath) > 0 {
 		return cfg.DBPath
-	} else {
-		return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
 	}
+	return path.Join(cfg.DataDir, fmt.Sprintf("%s_data", cfg.DBName))
 }
 
 func Open(cfg *config.Config) (*DB, error) {
@@ -56,7 +55,4 @@ func Repair(cfg *config.Config) error {
 	path := getStorePath(cfg)
 
 	return s.Repair(path, cfg)
-}
-
-func init() {
 }

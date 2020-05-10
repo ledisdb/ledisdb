@@ -34,10 +34,9 @@ func authCommand(c *client) error {
 		c.isAuthed = true
 		c.resp.writeStatus(OK)
 		return nil
-	} else {
-		c.isAuthed = false
-		return ErrAuthenticationFailure
 	}
+	c.isAuthed = false
+	return ErrAuthenticationFailure
 }
 
 func echoCommand(c *client) error {
@@ -54,31 +53,30 @@ func selectCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if index, err := strconv.Atoi(hack.String(c.args[0])); err != nil {
+	index, err := strconv.Atoi(hack.String(c.args[0]))
+	if err != nil {
 		return err
-	} else {
-		// if c.db.IsInMulti() {
-		// 	if err := c.script.Select(index); err != nil {
-		// 		return err
-		// 	} else {
-		// 		c.db = c.script.DB
-		// 	}
-		// } else {
-		// 	if db, err := c.ldb.Select(index); err != nil {
-		// 		return err
-		// 	} else {
-		// 		c.db = db
-		// 	}
-		// }
-
-		if db, err := c.ldb.Select(index); err != nil {
-			return err
-		} else {
-			c.db = db
-		}
-
-		c.resp.writeStatus(OK)
 	}
+	// if c.db.IsInMulti() {
+	// 	if err := c.script.Select(index); err != nil {
+	// 		return err
+	// 	} else {
+	// 		c.db = c.script.DB
+	// 	}
+	// } else {
+	// 	if db, err := c.ldb.Select(index); err != nil {
+	// 		return err
+	// 	} else {
+	// 		c.db = db
+	// 	}
+	// }
+
+	db, err := c.ldb.Select(index)
+	if err != nil {
+		return err
+	}
+	c.db = db
+	c.resp.writeStatus(OK)
 
 	return nil
 }
@@ -170,10 +168,9 @@ func configCommand(c *client) error {
 	case "rewrite":
 		if err := c.app.cfg.Rewrite(); err != nil {
 			return err
-		} else {
-			c.resp.writeStatus(OK)
-			return nil
 		}
+		c.resp.writeStatus(OK)
+		return nil
 	case "get":
 		return configGetCommand(c)
 	default:

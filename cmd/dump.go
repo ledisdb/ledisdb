@@ -8,7 +8,7 @@ import (
 	"github.com/siddontang/goredis"
 )
 
-func CmdDump() {
+func Dump() {
 	var host = flag.String("host", "127.0.0.1", "ledis server host")
 	var dumpPort = flag.Int("port", 6380, "ledis server port")
 	var sock = flag.String("sock", "", "ledis unix socket domain")

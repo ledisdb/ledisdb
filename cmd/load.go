@@ -7,7 +7,7 @@ import (
 	"github.com/ledisdb/ledisdb/ledis"
 )
 
-func CmdLoad() {
+func Load() {
 	var configPath = flag.String("config", "", "ledisdb config file")
 	var dumpPath = flag.String("dump_file", "", "ledisdb dump file")
 

@@ -102,11 +102,11 @@ func handleXSort(c *client, tp string) error {
 			return err
 		}
 
-		if n, err := c.db.RPush(storeKey, ay...); err != nil {
+		n, err := c.db.RPush(storeKey, ay...)
+		if err != nil {
 			return err
-		} else {
-			c.resp.writeInteger(n)
 		}
+		c.resp.writeInteger(n)
 	}
 	return nil
 }

@@ -211,8 +211,8 @@ func (t *tableReader) repair() error {
 	meta, err = newWriteFile(false, fmtTableMetaName(t.base, t.index), int64(defaultLogNumInFile*4))
 
 	var l Log
-	var pos int64 = 0
-	var nextPos int64 = 0
+	var pos int64
+	var nextPos int64
 	b := make([]byte, 4)
 
 	t.first = 0

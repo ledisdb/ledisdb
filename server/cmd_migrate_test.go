@@ -52,15 +52,15 @@ func testDumpRestore(c *goredis.PoolConn, dump string, key string, t *testing.T)
 }
 
 func TestMigrate(t *testing.T) {
-	data_dir := "/tmp/test_migrate"
-	os.RemoveAll(data_dir)
+	dataDir := "/tmp/test_migrate"
+	os.RemoveAll(dataDir)
 
 	s1Cfg := config.NewConfigDefault()
-	s1Cfg.DataDir = fmt.Sprintf("%s/s1", data_dir)
+	s1Cfg.DataDir = fmt.Sprintf("%s/s1", dataDir)
 	s1Cfg.Addr = "127.0.0.1:11185"
 
 	s2Cfg := config.NewConfigDefault()
-	s2Cfg.DataDir = fmt.Sprintf("%s/s2", data_dir)
+	s2Cfg.DataDir = fmt.Sprintf("%s/s2", dataDir)
 	s2Cfg.Addr = "127.0.0.1:11186"
 
 	s1, err := NewApp(s1Cfg)

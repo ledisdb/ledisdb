@@ -10,12 +10,11 @@ func hsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HSet(args[0], args[1], args[2]); err != nil {
+	n, err := c.db.HSet(args[0], args[1], args[2])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -25,12 +24,11 @@ func hgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HGet(args[0], args[1]); err != nil {
+	v, err := c.db.HGet(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 }
 
@@ -41,15 +39,15 @@ func hexistsCommand(c *client) error {
 	}
 
 	var n int64 = 1
-	if v, err := c.db.HGet(args[0], args[1]); err != nil {
+	v, err := c.db.HGet(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		if v == nil {
-			n = 0
-		}
-
-		c.resp.writeInteger(n)
 	}
+	if v == nil {
+		n = 0
+	}
+
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -59,12 +57,11 @@ func hdelCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HDel(args[0], args[1:]...); err != nil {
+	n, err := c.db.HDel(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -74,12 +71,11 @@ func hlenCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HLen(args[0]); err != nil {
+	n, err := c.db.HLen(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -94,12 +90,11 @@ func hincrbyCommand(c *client) error {
 		return ErrValue
 	}
 
-	var n int64
-	if n, err = c.db.HIncrBy(args[0], args[1], delta); err != nil {
+	n, err := c.db.HIncrBy(args[0], args[1], delta)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -125,10 +120,8 @@ func hmsetCommand(c *client) error {
 
 	if err := c.db.HMset(key, kvs...); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -138,12 +131,11 @@ func hmgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HMget(args[0], args[1:]...); err != nil {
+	v, err := c.db.HMget(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 }
 
@@ -153,12 +145,11 @@ func hgetallCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HGetAll(args[0]); err != nil {
+	v, err := c.db.HGetAll(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeFVPairArray(v)
 	}
-
+	c.resp.writeFVPairArray(v)
 	return nil
 }
 
@@ -168,12 +159,11 @@ func hkeysCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HKeys(args[0]); err != nil {
+	v, err := c.db.HKeys(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 }
 
@@ -183,12 +173,11 @@ func hvalsCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HValues(args[0]); err != nil {
+	v, err := c.db.HValues(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 }
 
@@ -198,12 +187,11 @@ func hclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HClear(args[0]); err != nil {
+	n, err := c.db.HClear(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -213,12 +201,11 @@ func hmclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HMclear(args...); err != nil {
+	n, err := c.db.HMclear(args...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -233,12 +220,11 @@ func hexpireCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.HExpire(args[0], duration); err != nil {
+	v, err := c.db.HExpire(args[0], duration)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -253,12 +239,11 @@ func hexpireAtCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.HExpireAt(args[0], when); err != nil {
+	v, err := c.db.HExpireAt(args[0], when)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -268,12 +253,11 @@ func httlCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.HTTL(args[0]); err != nil {
+	v, err := c.db.HTTL(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -283,12 +267,11 @@ func hpersistCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.HPersist(args[0]); err != nil {
+	n, err := c.db.HPersist(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -297,11 +280,11 @@ func hkeyexistsCommand(c *client) error {
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.HKeyExists(args[0]); err != nil {
+	n, err := c.db.HKeyExists(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 

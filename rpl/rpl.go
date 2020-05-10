@@ -126,10 +126,10 @@ func (r *Replication) Log(data []byte) (*Log, error) {
 		return nil, err
 	}
 
-	commitId := r.commitID
-	if lastID < commitId {
-		lastID = commitId
-	} else if lastID > commitId {
+	commitID := r.commitID
+	if lastID < commitID {
+		lastID = commitID
+	} else if lastID > commitID {
 		r.m.Unlock()
 		return nil, ErrCommitIDBehind
 	}

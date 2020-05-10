@@ -19,12 +19,11 @@ func dumpCommand(c *client) error {
 	}
 
 	key := c.args[0]
-	if data, err := c.db.Dump(key); err != nil {
+	data, err := c.db.Dump(key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
-
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -34,12 +33,11 @@ func ldumpCommand(c *client) error {
 	}
 
 	key := c.args[0]
-	if data, err := c.db.LDump(key); err != nil {
+	data, err := c.db.LDump(key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
-
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -49,12 +47,11 @@ func hdumpCommand(c *client) error {
 	}
 
 	key := c.args[0]
-	if data, err := c.db.HDump(key); err != nil {
+	data, err := c.db.HDump(key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
-
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -64,12 +61,11 @@ func sdumpCommand(c *client) error {
 	}
 
 	key := c.args[0]
-	if data, err := c.db.SDump(key); err != nil {
+	data, err := c.db.SDump(key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
-
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -79,12 +75,11 @@ func zdumpCommand(c *client) error {
 	}
 
 	key := c.args[0]
-	if data, err := c.db.ZDump(key); err != nil {
+	data, err := c.db.ZDump(key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
-
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -104,10 +99,8 @@ func restoreCommand(c *client) error {
 
 	if err = c.db.Restore(key, ttl, data); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -128,12 +121,11 @@ func xrestoreCommand(c *client) error {
 
 	if err = c.db.Restore(key, ttl, data); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
+
 func xdump(db *ledis.DB, tp string, key []byte) ([]byte, error) {
 	var err error
 	var data []byte
@@ -216,11 +208,11 @@ func xdumpCommand(c *client) error {
 	tp := strings.ToUpper(string(args[0]))
 	key := args[1]
 
-	if data, err := xdump(c.db, tp, key); err != nil {
+	data, err := xdump(c.db, tp, key)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(data)
 	}
+	c.resp.writeBulk(data)
 	return nil
 }
 
@@ -272,18 +264,18 @@ func newMigrateKeyLocker() *migrateKeyLocker {
 	return m
 }
 
-func (a *App) newMigrateKeyLockers() {
-	a.migrateKeyLockers = make(map[string]*migrateKeyLocker)
+func (app *App) newMigrateKeyLockers() {
+	app.migrateKeyLockers = make(map[string]*migrateKeyLocker)
 
-	a.migrateKeyLockers[KVName] = newMigrateKeyLocker()
-	a.migrateKeyLockers[HashName] = newMigrateKeyLocker()
-	a.migrateKeyLockers[ListName] = newMigrateKeyLocker()
-	a.migrateKeyLockers[SetName] = newMigrateKeyLocker()
-	a.migrateKeyLockers[ZSetName] = newMigrateKeyLocker()
+	app.migrateKeyLockers[KVName] = newMigrateKeyLocker()
+	app.migrateKeyLockers[HashName] = newMigrateKeyLocker()
+	app.migrateKeyLockers[ListName] = newMigrateKeyLocker()
+	app.migrateKeyLockers[SetName] = newMigrateKeyLocker()
+	app.migrateKeyLockers[ZSetName] = newMigrateKeyLocker()
 }
 
-func (a *App) migrateKeyLock(tp string, key []byte) bool {
-	l, ok := a.migrateKeyLockers[strings.ToUpper(tp)]
+func (app *App) migrateKeyLock(tp string, key []byte) bool {
+	l, ok := app.migrateKeyLockers[strings.ToUpper(tp)]
 	if !ok {
 		return false
 	}
@@ -291,8 +283,8 @@ func (a *App) migrateKeyLock(tp string, key []byte) bool {
 	return l.Lock(key)
 }
 
-func (a *App) migrateKeyUnlock(tp string, key []byte) {
-	l, ok := a.migrateKeyLockers[strings.ToUpper(tp)]
+func (app *App) migrateKeyUnlock(tp string, key []byte) {
+	l, ok := app.migrateKeyLockers[strings.ToUpper(tp)]
 	if !ok {
 		return
 	}
@@ -438,9 +430,8 @@ func xmigrateCommand(c *client) error {
 		if err == errNoKey {
 			c.resp.writeStatus(NOKEY)
 			return nil
-		} else {
-			return err
 		}
+		return err
 	}
 
 	c.resp.writeStatus(OK)
