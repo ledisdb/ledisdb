@@ -55,12 +55,11 @@ func zcardCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.ZCard(args[0]); err != nil {
+	n, err := c.db.ZCard(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -206,12 +205,11 @@ func zcountCommand(c *client) error {
 		return nil
 	}
 
-	if n, err := c.db.ZCount(args[0], min, max); err != nil {
+	n, err := c.db.ZCount(args[0], min, max)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -263,7 +261,6 @@ func zremrangebyrankCommand(c *client) error {
 	}
 
 	n, err := c.db.ZRemRangeByRank(key, start, stop)
-
 	if err == nil {
 		c.resp.writeInteger(n)
 	}
@@ -331,11 +328,11 @@ func zrangeGeneric(c *client, reverse bool) error {
 		}
 	}
 
-	if datas, err := c.db.ZRangeGeneric(key, start, stop, reverse); err != nil {
+	datas, err := c.db.ZRangeGeneric(key, start, stop, reverse)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeScorePairArray(datas, withScores)
 	}
+	c.resp.writeScorePairArray(datas, withScores)
 	return nil
 }
 
@@ -408,12 +405,11 @@ func zrangebyscoreGeneric(c *client, reverse bool) error {
 		return nil
 	}
 
-	if datas, err := c.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse); err != nil {
+	datas, err := c.db.ZRangeByScoreGeneric(key, min, max, offset, count, reverse)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeScorePairArray(datas, withScores)
 	}
-
+	c.resp.writeScorePairArray(datas, withScores)
 	return nil
 }
 
@@ -501,12 +497,11 @@ func zttlCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.ZTTL(args[0]); err != nil {
+	v, err := c.db.ZTTL(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -713,12 +708,11 @@ func zrangebylexCommand(c *client) error {
 	}
 
 	key := args[0]
-	if ay, err := c.db.ZRangeByLex(key, min, max, rangeType, offset, count); err != nil {
+	ay, err := c.db.ZRangeByLex(key, min, max, rangeType, offset, count)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(ay)
 	}
-
+	c.resp.writeSliceArray(ay)
 	return nil
 }
 
@@ -734,12 +728,11 @@ func zremrangebylexCommand(c *client) error {
 	}
 
 	key := args[0]
-	if n, err := c.db.ZRemRangeByLex(key, min, max, rangeType); err != nil {
+	n, err := c.db.ZRemRangeByLex(key, min, max, rangeType)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -755,12 +748,11 @@ func zlexcountCommand(c *client) error {
 	}
 
 	key := args[0]
-	if n, err := c.db.ZLexCount(key, min, max, rangeType); err != nil {
+	n, err := c.db.ZLexCount(key, min, max, rangeType)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -769,11 +761,11 @@ func zkeyexistsCommand(c *client) error {
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.ZKeyExists(args[0]); err != nil {
+	n, err := c.db.ZKeyExists(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 

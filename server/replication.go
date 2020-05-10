@@ -298,9 +298,8 @@ func (m *master) nextSyncLogID() (uint64, error) {
 
 	if s.LastID > s.CommitID {
 		return s.LastID + 1, nil
-	} else {
-		return s.CommitID + 1, nil
 	}
+	return s.CommitID + 1, nil
 }
 
 func (m *master) sync() error {
@@ -321,9 +320,8 @@ func (m *master) sync() error {
 	if err = m.conn.ReceiveBulkTo(&m.syncBuf); err != nil {
 		if strings.Contains(err.Error(), ledis.ErrLogMissed.Error()) {
 			return m.fullSync()
-		} else {
-			return err
 		}
+		return err
 	}
 
 	m.state.Set(replConnectedState)
@@ -393,9 +391,8 @@ func (app *App) tryReSlaveof() error {
 
 	if len(app.cfg.SlaveOf) == 0 {
 		return nil
-	} else {
-		return app.m.startReplication(app.cfg.SlaveOf, true)
 	}
+	return app.m.startReplication(app.cfg.SlaveOf, true)
 }
 
 func (app *App) addSlave(c *client) {
@@ -459,14 +456,14 @@ func (app *App) publishNewLog(l *rpl.Log) {
 	}
 
 	n := 0
-	logId := l.ID
+	logID := l.ID
 	for _, s := range app.slaves {
 		lastLogID := s.lastLogID.Get()
-		if lastLogID == logId {
+		if lastLogID == logID {
 			//slave has already owned this log
 			n++
-		} else if lastLogID > logId {
-			log.Errorf("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, lastLogID, logId)
+		} else if lastLogID > logID {
+			log.Errorf("invalid slave %s, lastlogid %d > %d", s.slaveListeningAddr, lastLogID, logID)
 		}
 	}
 
@@ -483,8 +480,8 @@ func (app *App) publishNewLog(l *rpl.Log) {
 		n := 0
 		for i := 0; i < slaveNum; i++ {
 			id := <-app.slaveSyncAck
-			if id < logId {
-				log.Infof("some slave may close with last logid %d < %d", id, logId)
+			if id < logID {
+				log.Infof("some slave may close with last logid %d < %d", id, logID)
 			} else {
 				n++
 				if n >= total {

@@ -250,7 +250,7 @@ var round = flag.Int("r", 1, "benchmark round number")
 var valueSize = flag.Int("vsize", 100, "kv value size")
 var tests = flag.String("t", "set,get,randget,del,lpush,lrange,lpop,hset,hget,hdel,zadd,zincr,zrange,zrevrange,zdel", "only run the comma separated list of tests")
 
-func CmdBenchmark() {
+func Benchmark() {
 	benchIP = flag.String("ip", "127.0.0.1", "redis/ledis/ssdb server ip")
 	number = flag.Int("n", 1000, "request number")
 	benchPort = flag.Int("port", 6380, "redis/ledis/ssdb server port")

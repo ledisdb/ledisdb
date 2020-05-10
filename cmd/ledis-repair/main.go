@@ -18,5 +18,5 @@ func main() {
 	}
 	fmt.Println()
 
-	cmd.CmdRepair()
+	cmd.Repair()
 }

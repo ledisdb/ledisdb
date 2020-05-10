@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	_ "net/http/pprof"
+
 	"github.com/ledisdb/ledisdb/cmd"
 )
 
@@ -18,5 +20,5 @@ func main() {
 	}
 	fmt.Println()
 
-	cmd.CmdServer()
+	cmd.Server()
 }

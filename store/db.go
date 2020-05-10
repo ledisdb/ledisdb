@@ -52,11 +52,8 @@ func (db *DB) Put(key []byte, value []byte) error {
 
 	if db.needSyncCommit() {
 		return db.db.SyncPut(key, value)
-
-	} else {
-		return db.db.Put(key, value)
-
 	}
+	return db.db.Put(key, value)
 }
 
 func (db *DB) Delete(key []byte) error {
@@ -64,9 +61,8 @@ func (db *DB) Delete(key []byte) error {
 
 	if db.needSyncCommit() {
 		return db.db.SyncDelete(key)
-	} else {
-		return db.db.Delete(key)
 	}
+	return db.db.Delete(key)
 }
 
 func (db *DB) NewWriteBatch() *WriteBatch {
@@ -110,14 +106,14 @@ func (db *DB) RevRangeIterator(min []byte, max []byte, rangeType uint8) *RangeLi
 	return NewRevRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{0, -1})
 }
 
-//count < 0, unlimit.
+//RangeLimitIterator count < 0, unlimit.
 //
 //offset must >= 0, if < 0, will get nothing.
 func (db *DB) RangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
 	return NewRangeLimitIterator(db.NewIterator(), &Range{min, max, rangeType}, &Limit{offset, count})
 }
 
-//count < 0, unlimit.
+//RevRangeLimitIterator count < 0, unlimit.
 //
 //offset must >= 0, if < 0, will get nothing.
 func (db *DB) RevRangeLimitIterator(min []byte, max []byte, rangeType uint8, offset int, count int) *RangeLimitIterator {
@@ -133,20 +129,19 @@ func (db *DB) needSyncCommit() bool {
 		return false
 	} else if db.cfg.DBSyncCommit == 2 {
 		return true
-	} else {
-		n := time.Now()
-		need := false
-		db.m.Lock()
-
-		if n.Sub(db.lastCommit) > time.Second {
-			need = true
-		}
-		db.lastCommit = n
-
-		db.m.Unlock()
-		return need
 	}
 
+	n := time.Now()
+	need := false
+	db.m.Lock()
+
+	if n.Sub(db.lastCommit) > time.Second {
+		need = true
+	}
+	db.lastCommit = n
+
+	db.m.Unlock()
+	return need
 }
 
 func (db *DB) GetSlice(key []byte) (Slice, error) {
@@ -156,14 +151,12 @@ func (db *DB) GetSlice(key []byte) (Slice, error) {
 		db.st.statGet(v, err)
 		db.st.GetTotalTime.Add(time.Now().Sub(t))
 		return v, err
-	} else {
-		v, err := db.Get(key)
-		if err != nil {
-			return nil, err
-		} else if v == nil {
-			return nil, nil
-		} else {
-			return driver.GoSlice(v), nil
-		}
 	}
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	} else if v == nil {
+		return nil, nil
+	}
+	return driver.GoSlice(v), nil
 }

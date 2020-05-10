@@ -21,7 +21,7 @@ type info struct {
 
 	Server struct {
 		OS         string
-		ProceessId int
+		ProceessID int
 	}
 
 	Replication struct {
@@ -39,7 +39,7 @@ func newInfo(app *App) (i *info, err error) {
 	i.app = app
 
 	i.Server.OS = runtime.GOOS
-	i.Server.ProceessId = os.Getpid()
+	i.Server.ProceessID = os.Getpid()
 
 	return i, nil
 }
@@ -103,7 +103,7 @@ func (i *info) dumpServer(buf *bytes.Buffer) {
 	buf.WriteString("# Server\r\n")
 
 	i.dumpPairs(buf, infoPair{"os", i.Server.OS},
-		infoPair{"process_id", i.Server.ProceessId},
+		infoPair{"process_id", i.Server.ProceessID},
 		infoPair{"addr", i.app.cfg.Addr},
 		infoPair{"http_addr", i.app.cfg.HttpAddr},
 		infoPair{"readonly", i.app.cfg.Readonly},

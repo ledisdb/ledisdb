@@ -104,14 +104,14 @@ func syncCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	var logId uint64
+	var logID uint64
 	var err error
 
-	if logId, err = ledis.StrUint64(args[0], nil); err != nil {
+	if logID, err = ledis.StrUint64(args[0], nil); err != nil {
 		return ErrCmdParams
 	}
 
-	lastLogID := logId - 1
+	lastLogID := logID - 1
 
 	stat, err := c.app.ldb.ReplicationStat()
 	if err != nil {
@@ -119,7 +119,7 @@ func syncCommand(c *client) error {
 	}
 
 	if lastLogID > stat.LastID {
-		return fmt.Errorf("invalid sync logid %d > %d + 1", logId, stat.LastID)
+		return fmt.Errorf("invalid sync logid %d > %d + 1", logID, stat.LastID)
 	}
 
 	c.lastLogID.Set(lastLogID)
@@ -132,21 +132,20 @@ func syncCommand(c *client) error {
 
 	c.syncBuf.Write(dummyBuf)
 
-	if _, _, err := c.app.ldb.ReadLogsToTimeout(logId, &c.syncBuf, 1, c.app.quit); err != nil {
+	if _, _, err := c.app.ldb.ReadLogsToTimeout(logID, &c.syncBuf, 1, c.app.quit); err != nil {
 		return err
-	} else {
-		buf := c.syncBuf.Bytes()
-
-		stat, err = c.app.ldb.ReplicationStat()
-		if err != nil {
-			return err
-		}
-
-		binary.BigEndian.PutUint64(buf, stat.LastID)
-
-		c.resp.writeBulk(buf)
 	}
 
+	buf := c.syncBuf.Bytes()
+
+	stat, err = c.app.ldb.ReplicationStat()
+	if err != nil {
+		return err
+	}
+
+	binary.BigEndian.PutUint64(buf, stat.LastID)
+
+	c.resp.writeBulk(buf)
 	return nil
 }
 
@@ -171,11 +170,11 @@ func replconfCommand(c *client) error {
 			if _, err = num.ParseUint16(hack.String(args[i+1])); err != nil {
 				return err
 			}
-			if host, _, err = net.SplitHostPort(c.remoteAddr); err != nil {
+			host, _, err = net.SplitHostPort(c.remoteAddr)
+			if err != nil {
 				return err
-			} else {
-				c.slaveListeningAddr = net.JoinHostPort(host, hack.String(args[i+1]))
 			}
+			c.slaveListeningAddr = net.JoinHostPort(host, hack.String(args[i+1]))
 
 			c.app.addSlave(c)
 		default:
@@ -200,16 +199,16 @@ func roleCommand(c *client) error {
 
 	ay := make([]interface{}, 0, 5)
 
-	var lastId int64 = 0
+	var lastID int64 = 0
 
 	stat, _ := c.app.ldb.ReplicationStat()
 	if stat != nil {
-		lastId = int64(stat.LastID)
+		lastID = int64(stat.LastID)
 	}
 
 	if isMaster {
 		ay = append(ay, []byte("master"))
-		ay = append(ay, lastId)
+		ay = append(ay, lastID)
 
 		items := make([]interface{}, 0, 3)
 
@@ -229,7 +228,7 @@ func roleCommand(c *client) error {
 		ay = append(ay, []byte(host))
 		ay = append(ay, int64(port))
 		ay = append(ay, []byte(replStatetring(c.app.m.state.Get())))
-		ay = append(ay, lastId)
+		ay = append(ay, lastID)
 	}
 
 	c.resp.writeArray(ay)

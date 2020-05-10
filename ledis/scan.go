@@ -197,7 +197,7 @@ func (db *DB) decodeScanKey(storeDataType byte, ek []byte) (key []byte, err erro
 	return
 }
 
-// for specail data scan
+// for special data scan
 
 func (db *DB) buildDataScanKeyRange(storeDataType byte, key []byte, cursor []byte, reverse bool) (minKey []byte, maxKey []byte, err error) {
 	if !reverse {
@@ -232,7 +232,7 @@ func (db *DB) encodeDataScanMaxKey(storeDataType byte, key []byte, cursor []byte
 		return nil, err
 	}
 
-	// here, the last byte is the start seperator, set it to stop seperator
+	// here, the last byte is the start separator, set it to stop separator
 	k[len(k)-1] = k[len(k)-1] + 1
 	return k, nil
 }

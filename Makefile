@@ -32,6 +32,13 @@ build-commands:
 	go build -mod=vendor -o $(DIST)/ledis-load -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-load/*.go
 	go build -mod=vendor -o $(DIST)/ledis-repair -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-repair/*.go
 
+.PHONY: lint
+lint:
+	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		cd /tmp && GO111MODULE=on go get -u -v golang.org/x/lint/golint; \
+	fi
+	golint $(PACKAGES)
+
 vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
 
@@ -39,7 +46,7 @@ test:
 	go test -mod=vendor --race -tags '$(GO_BUILD_TAGS)' -cover -coverprofile coverage.out -timeout 10m $(PACKAGES)
 
 clean:
-	go clean -i ./...
+	go clean -i $(PACKAGES)
 
 fmt:
 	gofmt -w -s  . 2>&1 | grep -vE 'vendor' | awk '{print} END{if(NR>0) {exit 1}}'

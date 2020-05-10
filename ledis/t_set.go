@@ -596,7 +596,7 @@ func (db *DB) SMclear(keys ...[]byte) (int64, error) {
 	return int64(len(keys)), err
 }
 
-// SExpire expries the set.
+// SExpire expires the set.
 func (db *DB) SExpire(key []byte, duration int64) (int64, error) {
 	if duration <= 0 {
 		return 0, errExpireValue

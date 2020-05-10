@@ -28,13 +28,11 @@ func getCommand(c *client) error {
 
 	if v, err := c.db.GetSlice(args[0]); err != nil {
 		return err
+	} else if v == nil {
+		c.resp.writeBulk(nil)
 	} else {
-		if v == nil {
-			c.resp.writeBulk(nil)
-		} else {
-			c.resp.writeBulk(v.Data())
-			v.Free()
-		}
+		c.resp.writeBulk(v.Data())
+		v.Free()
 	}
 	return nil
 }
@@ -47,10 +45,8 @@ func setCommand(c *client) error {
 
 	if err := c.db.Set(args[0], args[1]); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -60,12 +56,11 @@ func getsetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.GetSet(args[0], args[1]); err != nil {
+	v, err := c.db.GetSet(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 }
 
@@ -75,12 +70,11 @@ func setnxCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SetNX(args[0], args[1]); err != nil {
+	n, err := c.db.SetNX(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -97,10 +91,8 @@ func setexCommand(c *client) error {
 
 	if err := c.db.SetEX(args[0], sec, args[2]); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -110,12 +102,11 @@ func existsCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Exists(args[0]); err != nil {
+	n, err := c.db.Exists(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -125,12 +116,11 @@ func incrCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Incr(c.args[0]); err != nil {
+	n, err := c.db.Incr(c.args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -140,12 +130,11 @@ func decrCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Decr(c.args[0]); err != nil {
+	n, err := c.db.Decr(c.args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -160,12 +149,11 @@ func incrbyCommand(c *client) error {
 		return ErrValue
 	}
 
-	if n, err := c.db.IncrBy(c.args[0], delta); err != nil {
+	n, err := c.db.IncrBy(c.args[0], delta)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -180,12 +168,11 @@ func decrbyCommand(c *client) error {
 		return ErrValue
 	}
 
-	if n, err := c.db.DecrBy(c.args[0], delta); err != nil {
+	n, err := c.db.DecrBy(c.args[0], delta)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -195,12 +182,11 @@ func delCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Del(args...); err != nil {
+	n, err := c.db.Del(args...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -218,10 +204,8 @@ func msetCommand(c *client) error {
 
 	if err := c.db.MSet(kvs...); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -235,12 +219,11 @@ func mgetCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.MGet(args...); err != nil {
+	v, err := c.db.MGet(args...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 }
 
@@ -255,12 +238,11 @@ func expireCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.Expire(args[0], duration); err != nil {
+	v, err := c.db.Expire(args[0], duration)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -275,12 +257,11 @@ func expireAtCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.ExpireAt(args[0], when); err != nil {
+	v, err := c.db.ExpireAt(args[0], when)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -290,12 +271,11 @@ func ttlCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.TTL(args[0]); err != nil {
+	v, err := c.db.TTL(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -305,12 +285,11 @@ func persistCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Persist(args[0]); err != nil {
+	n, err := c.db.Persist(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -320,11 +299,11 @@ func appendCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.Append(args[0], args[1]); err != nil {
+	n, err := c.db.Append(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -345,12 +324,11 @@ func getrangeCommand(c *client) error {
 		return err
 	}
 
-	if v, err := c.db.GetRange(key, start, end); err != nil {
+	v, err := c.db.GetRange(key, start, end)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 
 }
@@ -369,11 +347,11 @@ func setrangeCommand(c *client) error {
 
 	value := args[2]
 
-	if n, err := c.db.SetRange(key, offset, value); err != nil {
+	n, err := c.db.SetRange(key, offset, value)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -382,11 +360,11 @@ func strlenCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.StrLen(c.args[0]); err != nil {
+	n, err := c.db.StrLen(c.args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -419,11 +397,11 @@ func bitcountCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.BitCount(key, start, end); err != nil {
+	n, err := c.db.BitCount(key, start, end)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -437,12 +415,11 @@ func bitopCommand(c *client) error {
 	destKey := args[1]
 	srcKeys := args[2:]
 
-	if n, err := c.db.BitOP(op, destKey, srcKeys...); err != nil {
+	n, err := c.db.BitOP(op, destKey, srcKeys...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -462,11 +439,11 @@ func bitposCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.BitPos(key, bit, start, end); err != nil {
+	n, err := c.db.BitPos(key, bit, start, end)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -482,11 +459,11 @@ func getbitCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.GetBit(key, offset); err != nil {
+	n, err := c.db.GetBit(key, offset)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -507,11 +484,11 @@ func setbitCommand(c *client) error {
 		return err
 	}
 
-	if n, err := c.db.SetBit(key, offset, value); err != nil {
+	n, err := c.db.SetBit(key, offset, value)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 

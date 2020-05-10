@@ -59,7 +59,7 @@ func (wb *WriteBatch) Rollback() error {
 	return wb.wb.Rollback()
 }
 
-// the data will be undefined after commit or rollback
+// BatchData the data will be undefined after commit or rollback
 func (wb *WriteBatch) BatchData() *BatchData {
 	data := wb.wb.Data()
 	if wb.data == nil {
