@@ -1,10 +1,10 @@
 #!/bin/bash
 
 export LEDISTOP=$(pwd)
-export LEDISROOT="${LEDISROOT:-${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}}"
+export LEDISROOT="${LEDISROOT:-${LEDISTOP/\/src\/github.com\/ledisdb\/ledisdb/}}"
 # LEDISTOP sanity check
-if [[ "$LEDISTOP" == "${LEDISTOP/\/src\/github.com\/siddontang\/ledisdb/}" ]]; then
-    echo "WARNING: LEDISTOP($LEDISTOP) does not contain src/github.com/siddontang/ledisdb"
+if [[ "$LEDISTOP" == "${LEDISTOP/\/src\/github.com\/ledisdb\/ledisdb/}" ]]; then
+    echo "WARNING: LEDISTOP($LEDISTOP) does not contain src/github.com/ledisdb/ledisdb"
     false
 fi
 

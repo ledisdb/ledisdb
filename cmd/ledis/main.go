@@ -8,6 +8,9 @@ import (
 )
 
 var (
+	version  = "dev"
+	buildTag string
+
 	cmds = [][]string{
 		{"server", "run ledis server"},
 		{"cli", "run ledis client"},
@@ -29,6 +32,11 @@ func printCmd(cmd, description string) {
 }
 
 func main() {
+	fmt.Printf("Version %s", version)
+	if len(buildTag) > 0 {
+		fmt.Printf(" with tag %s", buildTag)
+	}
+	fmt.Println()
 	var subCmd string
 	if len(os.Args) == 1 {
 		subCmd = "server"

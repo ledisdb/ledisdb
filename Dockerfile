@@ -23,16 +23,16 @@ RUN apt-get update && \
     libgflags-dev
 
 # get LedisDB
-RUN wget -O ledisdb-src.tar.gz "https://github.com/siddontang/ledisdb/archive/v$LEDISDB_VERSION.tar.gz" && \
+RUN wget -O ledisdb-src.tar.gz "https://github.com/ledisdb/ledisdb/archive/v$LEDISDB_VERSION.tar.gz" && \
     tar -zxf ledisdb-src.tar.gz && \
-    mkdir -p /go/src/github.com/siddontang/ && \
-    mv ledisdb-$LEDISDB_VERSION /go/src/github.com/siddontang/ledisdb
+    mkdir -p /go/src/github.com/ledisdb/ && \
+    mv ledisdb-$LEDISDB_VERSION /go/src/github.com/ledisdb/ledisdb
 
 # build LevelDB
 RUN wget -O leveldb-src.tar.gz "https://github.com/google/leveldb/archive/$LEVELDB_VERSION.tar.gz" && \
     tar -zxf leveldb-src.tar.gz && \
     cd leveldb-$LEVELDB_VERSION && \
-    patch -p0 < /go/src/github.com/siddontang/ledisdb/tools/leveldb.patch && \
+    patch -p0 < /go/src/github.com/ledisdb/ledisdb/tools/leveldb.patch && \
     mkdir -p out-shared/db && \
     make -j "$(nproc)" && \
     mkdir /build/lib && \
@@ -59,7 +59,7 @@ RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/build/lib:/usr/lib && \
     export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/build/lib:/usr/lib && \
     mkdir -p /build/bin && \
     rm -rf /build/bin/* && \
-    cd /go/src/github.com/siddontang/ledisdb && \
+    cd /go/src/github.com/ledisdb/ledisdb && \
     GOGC=off go build -i -o /build/bin/ledis-server -tags "snappy leveldb rocksdb" cmd/ledis-server/* && \
     GOGC=off go build -i -o /build/bin/ledis-cli -tags "snappy leveldb rocksdb" cmd/ledis-cli/* && \
     GOGC=off go build -i -o /build/bin/ledis-benchmark -tags "snappy leveldb rocksdb" cmd/ledis-benchmark/* && \
@@ -84,7 +84,7 @@ FROM debian:stretch-slim
 
 COPY --from=builder /build/lib/* /usr/lib/
 COPY --from=builder /build/bin/ledis-* /bin/
-COPY --from=builder /go/src/github.com/siddontang/ledisdb/config/config-docker.toml /config.toml
+COPY --from=builder /go/src/github.com/ledisdb/ledisdb/config/config-docker.toml /config.toml
 COPY --from=builder /usr/local/bin/gosu /bin/
 
 RUN groupadd -r ledis && \

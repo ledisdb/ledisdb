@@ -1,6 +1,6 @@
 # LedisDB 
 
-[![Build Status](https://travis-ci.org/ledisdb/ledisdb.svg?branch=develop)](https://travis-ci.org/siddontang/ledisdb) [![codecov](https://codecov.io/gh/ledisdb/ledisdb/branch/master/graph/badge.svg)](https://codecov.io/gh/ledisdb/ledisdb)
+[![Build Status](https://travis-ci.org/ledisdb/ledisdb.svg?branch=develop)](https://travis-ci.org/ledisdb/ledisdb) [![codecov](https://codecov.io/gh/ledisdb/ledisdb/branch/master/graph/badge.svg)](https://codecov.io/gh/ledisdb/ledisdb)
 
 Ledisdb is a high-performance NoSQL database, similar to Redis, written in [Go](http://golang.org/). It supports many data structures including kv, list, hash, zset, set.
 
@@ -20,7 +20,7 @@ LedisDB now supports multiple different databases as backends.
 + HTTP API support, JSON/BSON/msgpack output.
 + Replication to guarantee data safety.
 + Supplies tools to load, dump, and repair database. 
-+ Supports cluster, use [xcodis](https://github.com/siddontang/xcodis)
++ Supports cluster, use [xcodis](https://github.com/ledisdb/xcodis)
 + Authentication (though, not via http)
 
 ## Build from source
@@ -145,7 +145,7 @@ Set slaveof in config or dynamiclly
 
 ## Cluster support
 
-LedisDB uses a proxy named [xcodis](https://github.com/siddontang/xcodis) to support cluster.
+LedisDB uses a proxy named [xcodis](https://github.com/ledisdb/xcodis) to support cluster.
 
 ## CONTRIBUTING
 

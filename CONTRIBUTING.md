@@ -22,7 +22,7 @@ This document explains how to contribute changes to the Ledisdb project.
 Please search the issues on the issue tracker with a variety of keywords
 to ensure your bug is not already reported.
 
-If unique, [open an issue](https://github.com/siddontang/ledisdb/issues/new)
+If unique, [open an issue](https://github.com/ledisdb/ledisdb/issues/new)
 and answer the questions so we can understand and reproduce the
 problematic behavior.
 
