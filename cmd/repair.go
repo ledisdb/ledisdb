@@ -7,7 +7,7 @@ import (
 	"github.com/ledisdb/ledisdb/store"
 )
 
-func CmdRepair() {
+func Repair() {
 	var fileName = flag.String("config", "", "ledisdb config file")
 
 	flag.Parse()

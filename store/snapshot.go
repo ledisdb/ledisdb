@@ -30,15 +30,14 @@ func (s *Snapshot) GetSlice(key []byte) (Slice, error) {
 		v, err := d.GetSlice(key)
 		s.st.statGet(v, err)
 		return v, err
+	}
+	v, err := s.Get(key)
+	if err != nil {
+		return nil, err
+	} else if v == nil {
+		return nil, nil
 	} else {
-		v, err := s.Get(key)
-		if err != nil {
-			return nil, err
-		} else if v == nil {
-			return nil, nil
-		} else {
-			return driver.GoSlice(v), nil
-		}
+		return driver.GoSlice(v), nil
 	}
 }
 

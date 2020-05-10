@@ -1,8 +1,8 @@
 # LedisDB 
 
-[![Build Status](https://travis-ci.org/ledisdb/ledisdb.svg?branch=develop)](https://travis-ci.org/ledisdb/ledisdb) [![codecov](https://codecov.io/gh/ledisdb/ledisdb/branch/master/graph/badge.svg)](https://codecov.io/gh/ledisdb/ledisdb)
+[![Build Status](https://travis-ci.org/ledisdb/ledisdb.svg?branch=develop)](https://travis-ci.org/ledisdb/ledisdb) [![codecov](https://codecov.io/gh/ledisdb/ledisdb/branch/master/graph/badge.svg)](https://codecov.io/gh/ledisdb/ledisdb) [![goreportcard](https://goreportcard.com/badge/github.com/ledisdb/ledisdb)](https://goreportcard.com/report/github.com/ledisdb/ledisdb)
 
-Ledisdb is a high-performance NoSQL database, similar to Redis, written in [Go](http://golang.org/). It supports many data structures including kv, list, hash, zset, set.
+Ledisdb is a high-performance NoSQL database library and server written in [Go](http://golang.org). It's similar to Redis but store data in disk. It supports many data structures including kv, list, hash, zset, set.
 
 LedisDB now supports multiple different databases as backends.
 

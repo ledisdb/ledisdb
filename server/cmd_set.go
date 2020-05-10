@@ -10,12 +10,11 @@ func saddCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SAdd(args[0], args[1:]...); err != nil {
+	n, err := c.db.SAdd(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -39,10 +38,8 @@ func soptGeneric(c *client, optType byte) error {
 
 	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 
 }
@@ -67,10 +64,8 @@ func soptStoreGeneric(c *client, optType byte) error {
 
 	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -80,12 +75,11 @@ func scardCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SCard(args[0]); err != nil {
+	n, err := c.db.SCard(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -112,12 +106,11 @@ func sismemberCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SIsMember(args[0], args[1]); err != nil {
+	n, err := c.db.SIsMember(args[0], args[1])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -127,12 +120,11 @@ func smembersCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.SMembers(args[0]); err != nil {
+	v, err := c.db.SMembers(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 
 }
@@ -143,12 +135,11 @@ func sremCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SRem(args[0], args[1:]...); err != nil {
+	n, err := c.db.SRem(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 
 }
@@ -167,12 +158,11 @@ func sclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SClear(args[0]); err != nil {
+	n, err := c.db.SClear(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -182,12 +172,11 @@ func smclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SMclear(args...); err != nil {
+	n, err := c.db.SMclear(args...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -202,12 +191,11 @@ func sexpireCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.SExpire(args[0], duration); err != nil {
+	v, err := c.db.SExpire(args[0], duration)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -222,12 +210,11 @@ func sexpireAtCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.SExpireAt(args[0], when); err != nil {
+	v, err := c.db.SExpireAt(args[0], when)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -237,12 +224,11 @@ func sttlCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.STTL(args[0]); err != nil {
+	v, err := c.db.STTL(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 
 }
@@ -253,12 +239,11 @@ func spersistCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.SPersist(args[0]); err != nil {
+	n, err := c.db.SPersist(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -267,11 +252,11 @@ func skeyexistsCommand(c *client) error {
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.SKeyExists(args[0]); err != nil {
+	n, err := c.db.SKeyExists(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 

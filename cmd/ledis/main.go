@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/ledisdb/ledisdb/cmd"
 )
 
@@ -46,18 +48,18 @@ func main() {
 
 	switch subCmd {
 	case "repair":
-		cmd.CmdRepair()
+		cmd.Repair()
 	case "benchmark":
-		cmd.CmdBenchmark()
+		cmd.Benchmark()
 	case "cli":
-		cmd.CmdCli()
+		cmd.Cli()
 	case "dump":
-		cmd.CmdDump()
+		cmd.Dump()
 	case "help":
 		printSubCmds()
 	case "server":
 		fallthrough
 	default:
-		cmd.CmdServer()
+		cmd.Server()
 	}
 }

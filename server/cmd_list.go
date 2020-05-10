@@ -16,12 +16,11 @@ func lpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LPush(args[0], args[1:]...); err != nil {
+	n, err := c.db.LPush(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -31,12 +30,11 @@ func rpushCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.RPush(args[0], args[1:]...); err != nil {
+	n, err := c.db.RPush(args[0], args[1:]...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -46,12 +44,11 @@ func lpopCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.LPop(args[0]); err != nil {
+	v, err := c.db.LPop(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 }
 
@@ -61,12 +58,11 @@ func rpopCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.RPop(args[0]); err != nil {
+	v, err := c.db.RPop(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 }
 
@@ -76,12 +72,11 @@ func llenCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LLen(args[0]); err != nil {
+	n, err := c.db.LLen(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -96,12 +91,11 @@ func lindexCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.LIndex(args[0], int32(index)); err != nil {
+	v, err := c.db.LIndex(args[0], int32(index))
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeBulk(v)
 	}
-
+	c.resp.writeBulk(v)
 	return nil
 }
 
@@ -125,12 +119,11 @@ func lrangeCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.LRange(args[0], int32(start), int32(stop)); err != nil {
+	v, err := c.db.LRange(args[0], int32(start), int32(stop))
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeSliceArray(v)
 	}
-
+	c.resp.writeSliceArray(v)
 	return nil
 }
 
@@ -158,12 +151,11 @@ func lclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LClear(args[0]); err != nil {
+	n, err := c.db.LClear(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -173,12 +165,11 @@ func lmclearCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LMclear(args...); err != nil {
+	n, err := c.db.LMclear(args...)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -193,12 +184,11 @@ func lexpireCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.LExpire(args[0], duration); err != nil {
+	v, err := c.db.LExpire(args[0], duration)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -213,12 +203,11 @@ func lexpireAtCommand(c *client) error {
 		return ErrValue
 	}
 
-	if v, err := c.db.LExpireAt(args[0], when); err != nil {
+	v, err := c.db.LExpireAt(args[0], when)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -228,12 +217,11 @@ func lttlCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if v, err := c.db.LTTL(args[0]); err != nil {
+	v, err := c.db.LTTL(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(v)
 	}
-
+	c.resp.writeInteger(v)
 	return nil
 }
 
@@ -243,12 +231,11 @@ func lpersistCommand(c *client) error {
 		return ErrCmdParams
 	}
 
-	if n, err := c.db.LPersist(args[0]); err != nil {
+	n, err := c.db.LPersist(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
-
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -258,11 +245,11 @@ func blpopCommand(c *client) error {
 		return err
 	}
 
-	if ay, err := c.db.BLPop(keys, timeout); err != nil {
+	ay, err := c.db.BLPop(keys, timeout)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeArray(ay)
 	}
+	c.resp.writeArray(ay)
 	return nil
 }
 
@@ -272,11 +259,11 @@ func brpopCommand(c *client) error {
 		return err
 	}
 
-	if ay, err := c.db.BRPop(keys, timeout); err != nil {
+	ay, err := c.db.BRPop(keys, timeout)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeArray(ay)
 	}
+	c.resp.writeArray(ay)
 	return nil
 
 }
@@ -408,11 +395,11 @@ func lkeyexistsCommand(c *client) error {
 	if len(args) != 1 {
 		return ErrCmdParams
 	}
-	if n, err := c.db.LKeyExists(args[0]); err != nil {
+	n, err := c.db.LKeyExists(args[0])
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(n)
 	}
+	c.resp.writeInteger(n)
 	return nil
 }
 
@@ -437,10 +424,8 @@ func lTrimCommand(c *client) error {
 
 	if err := c.db.LTrim(args[0], start, stop); err != nil {
 		return err
-	} else {
-		c.resp.writeStatus(OK)
 	}
-
+	c.resp.writeStatus(OK)
 	return nil
 }
 
@@ -458,12 +443,11 @@ func lTrimFrontCommand(c *client) error {
 		return ErrValue
 	}
 
-	if n, err := c.db.LTrimFront(args[0], trimSize); err != nil {
+	n, err := c.db.LTrimFront(args[0], trimSize)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(int64(n))
 	}
-
+	c.resp.writeInteger(int64(n))
 	return nil
 }
 
@@ -481,12 +465,11 @@ func lTrimBackCommand(c *client) error {
 		return ErrValue
 	}
 
-	if n, err := c.db.LTrimBack(args[0], trimSize); err != nil {
+	n, err := c.db.LTrimBack(args[0], trimSize)
+	if err != nil {
 		return err
-	} else {
-		c.resp.writeInteger(int64(n))
 	}
-
+	c.resp.writeInteger(int64(n))
 	return nil
 }
 

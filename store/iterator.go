@@ -18,7 +18,7 @@ const (
 	RangeOpen  uint8 = 0x11
 )
 
-// min must less or equal than max
+// Range min must less or equal than max
 //
 // range type:
 //
@@ -44,7 +44,7 @@ type Iterator struct {
 	st *Stat
 }
 
-// Returns a copy of key.
+// Key returns a copy of key.
 func (it *Iterator) Key() []byte {
 	k := it.it.Key()
 	if k == nil {
@@ -54,7 +54,7 @@ func (it *Iterator) Key() []byte {
 	return append([]byte{}, k...)
 }
 
-// Returns a copy of value.
+// Value returns a copy of value.
 func (it *Iterator) Value() []byte {
 	v := it.it.Value()
 	if v == nil {
@@ -64,19 +64,19 @@ func (it *Iterator) Value() []byte {
 	return append([]byte{}, v...)
 }
 
-// Returns a reference of key.
+// RawKey returns a reference of key.
 // you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawKey() []byte {
 	return it.it.Key()
 }
 
-// Returns a reference of value.
+// RawValue returns a reference of value.
 // you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawValue() []byte {
 	return it.it.Value()
 }
 
-// Copy key to b, if b len is small or nil, returns a new one.
+// BufKey copy key to b, if b len is small or nil, returns a new one.
 func (it *Iterator) BufKey(b []byte) []byte {
 	k := it.RawKey()
 	if k == nil {
@@ -90,7 +90,7 @@ func (it *Iterator) BufKey(b []byte) []byte {
 	return append(b, k...)
 }
 
-// Copy value to b, if b len is small or nil, returns a new one.
+// BufValue copy value to b, if b len is small or nil, returns a new one.
 func (it *Iterator) BufValue(b []byte) []byte {
 	v := it.RawValue()
 	if v == nil {
@@ -142,7 +142,7 @@ func (it *Iterator) Seek(key []byte) {
 	it.it.Seek(key)
 }
 
-// Finds by key, if not found, nil returns.
+// Find finds by key, if not found, nil returns.
 func (it *Iterator) Find(key []byte) []byte {
 	it.Seek(key)
 	if it.Valid() {
@@ -157,7 +157,7 @@ func (it *Iterator) Find(key []byte) []byte {
 	return nil
 }
 
-// Finds by key, if not found, nil returns, else a reference of value returns.
+// RawFind finds by key, if not found, nil returns, else a reference of value returns.
 // you must be careful that it will be changed after next iterate.
 func (it *Iterator) RawFind(key []byte) []byte {
 	it.Seek(key)

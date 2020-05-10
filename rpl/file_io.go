@@ -349,15 +349,13 @@ func (m *mmapReadFile) Name() string {
 func newWriteFile(useMmap bool, name string, size int64) (writeFile, error) {
 	if useMmap {
 		return newMmapWriteFile(name, size)
-	} else {
-		return newRawWriteFile(name, size)
 	}
+	return newRawWriteFile(name, size)
 }
 
 func newReadFile(useMmap bool, name string) (readFile, error) {
 	if useMmap {
 		return newMmapReadFile(name)
-	} else {
-		return newRawReadFile(name)
 	}
+	return newRawReadFile(name)
 }

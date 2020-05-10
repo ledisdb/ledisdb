@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -28,7 +27,7 @@ var rplSync = flag.Bool("rpl_sync", false, "enable sync replication or not")
 var ttlCheck = flag.Int("ttl_check", 0, "TTL check interval")
 var databases = flag.Int("databases", 0, "ledisdb maximum database number")
 
-func CmdServer() {
+func Server() {
 	var configFile = flag.String("config", "", "ledisdb config file")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())

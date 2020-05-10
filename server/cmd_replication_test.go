@@ -36,11 +36,11 @@ func checkDataEqual(master *App, slave *App) error {
 }
 
 func TestReplication(t *testing.T) {
-	data_dir := "/tmp/test_replication"
-	os.RemoveAll(data_dir)
+	dataDir := "/tmp/test_replication"
+	os.RemoveAll(dataDir)
 
 	masterCfg := config.NewConfigDefault()
-	masterCfg.DataDir = fmt.Sprintf("%s/master", data_dir)
+	masterCfg.DataDir = fmt.Sprintf("%s/master", dataDir)
 	masterCfg.Addr = "127.0.0.1:11182"
 	masterCfg.UseReplication = true
 	masterCfg.Replication.Sync = true
@@ -56,7 +56,7 @@ func TestReplication(t *testing.T) {
 	defer master.Close()
 
 	slaveCfg := config.NewConfigDefault()
-	slaveCfg.DataDir = fmt.Sprintf("%s/slave", data_dir)
+	slaveCfg.DataDir = fmt.Sprintf("%s/slave", dataDir)
 	slaveCfg.Addr = "127.0.0.1:11183"
 	slaveCfg.SlaveOf = masterCfg.Addr
 	slaveCfg.UseReplication = true
