@@ -123,7 +123,7 @@ func (s *FileStore) GetLog(id uint64, l *Log) error {
 }
 
 func (s *FileStore) FirstID() (uint64, error) {
-	id := uint64(0)
+	var id uint64
 
 	s.rm.RLock()
 	if len(s.rs) > 0 {
@@ -408,7 +408,6 @@ func (ts tableReaders) check() error {
 			return fmt.Errorf("invalid index %d in table %s", ts[i].index, ts[i])
 		}
 
-		first = ts[i].first
 		last = ts[i].last
 		index = ts[i].index
 	}
