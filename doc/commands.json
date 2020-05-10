@@ -200,6 +200,11 @@
         "group": "List",
         "readonly": true
     },
+    "LSET": {
+        "arguments": "key index value",
+        "group": "List",
+        "readonly": false
+    },
     "LTRIM": {
         "arguments": "key start stop",
         "group": "List",

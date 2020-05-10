@@ -75,6 +75,7 @@ Most of the Ledisdb's commands are the same as Redis's, you can see the redis co
   - [LMCLEAR key [key ...]](#lmclear-key-key-)
   - [LEXPIRE key seconds](#lexpire-key-seconds)
   - [LEXPIREAT key timestamp](#lexpireat-key-timestamp)
+  - [LSET key index value](#lset-key-index-value)
   - [LTRIM key start stop](#ltrim-key-start-stop)
   - [LTTL key](#lttl-key)
   - [LPERSIST key](#lpersist-key)
@@ -1029,6 +1030,28 @@ ledis> RPUSH a 'three'
 (integer) 3
 ledis> LPOP a
 one
+```
+
+### LSET key index value
+
+Sets a value to a list element according the index offset left of the list.
+
+**Return value**
+
+Return OK or error message.
+
+**Examples**
+
+```
+ledis> RPUSH a 'one'
+(integer) 1
+ledis> RPUSH a 'two'
+(integer) 2
+ledis> LSET a 1 'three'
+OK
+ledis> LRANGE a 0 10
+1)  "two"
+2)  "three"
 ```
 
 ### LRANGE key start stop
