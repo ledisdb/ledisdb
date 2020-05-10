@@ -106,13 +106,7 @@ func (l *Ledis) Dump(w io.Writer) error {
 		}
 	}
 
-	if err = wb.Flush(); err != nil {
-		return err
-	}
-
-	compressBuf = nil
-
-	return nil
+	return wb.Flush()
 }
 
 // LoadDumpFile clears all data and loads dump file to db
@@ -206,9 +200,6 @@ func (l *Ledis) LoadDump(r io.Reader) (*DumpHead, error) {
 	if err = wb.Commit(); err != nil {
 		return nil, err
 	}
-
-	deKeyBuf = nil
-	deValueBuf = nil
 
 	if l.r != nil {
 		if err := l.r.UpdateCommitID(h.CommitID); err != nil {
