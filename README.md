@@ -26,14 +26,16 @@ LedisDB now supports multiple different databases as backends.
 
 Create a workspace and checkout ledisdb source
 
-    git clone git@github.com:ledisdb/ledisdb.git
-    cd ledisdb
+```shell
+git clone git@github.com:ledisdb/ledisdb.git
+cd ledisdb
 
-    #set build and run environment 
-    source dev.sh
+#set build and run environment 
+source dev.sh
 
-    make
-    make test
+make
+make test
+```
 
 Then you will find all the binary build on `./bin` directory.
 
@@ -65,7 +67,6 @@ Then you will find all the binary build on `./bin` directory.
 
 
 If the RocksDB API changes, LedisDB may not build successfully. LedisDB currently supports RocksDB version 5.1 or later.
-    
 
 ## Choose store database
 
@@ -75,13 +76,13 @@ Choosing a store database to use is very simple.
 
 + Set in server config file
 
-        db_name = "leveldb"
+    db_name = "leveldb"
 
 + Set in command flag
 
-        ledis-server -config=/etc/ledis.conf -db_name=leveldb
+    ledis -config=/etc/ledis.conf -db_name=leveldb
 
-    Flag command set will overwrite config setting.
+Flag command set will overwrite config setting.
 
 ## Lua support
 
@@ -94,53 +95,58 @@ LedisDB uses [toml](https://github.com/toml-lang/toml) as the configuration form
 If you don't use a configuration, LedisDB will use the default for you.
 
 ## Server Example
-    
-    //set run environment if not
-    source dev.sh
 
-    ./bin/ledis-server -config=/etc/ledis.conf
+```shell
+//set run environment if not
+source dev.sh
 
-    //another shell
-    ./bin/ledis-cli -p 6380
-    
-    ledis 127.0.0.1:6380> set a 1
-    OK
-    ledis 127.0.0.1:6380> get a
-    "1"
+./bin/ledis -config=/etc/ledis.conf
 
-    //use curl
-    curl http://127.0.0.1:11181/SET/hello/world
-    → {"SET":[true,"OK"]}
+//another shell
+./bin/ledis cli -p 6380
 
-    curl http://127.0.0.1:11181/0/GET/hello?type=json
-    → {"GET":"world"}
+ledis 127.0.0.1:6380> set a 1
+OK
+ledis 127.0.0.1:6380> get a
+"1"
+
+//use curl
+curl http://127.0.0.1:11181/SET/hello/world
+→ {"SET":[true,"OK"]}
+
+curl http://127.0.0.1:11181/0/GET/hello?type=json
+→ {"GET":"world"}
+```
 
 
 ## Package Example
-    
-    import (
-      lediscfg "github.com/ledisdb/ledisdb/config"
-      "github.com/ledisdb/ledisdb/ledis"
-    )
 
-    # Use Ledis's default config
-    cfg := lediscfg.NewConfigDefault()
-    l, _ := ledis.Open(cfg)
-    db, _ := l.Select(0)
+```go
+import (
+    lediscfg "github.com/ledisdb/ledisdb/config"
+    "github.com/ledisdb/ledisdb/ledis"
+)
 
-    db.Set(key, value)
+# Use Ledis's default config
+cfg := lediscfg.NewConfigDefault()
+l, _ := ledis.Open(cfg)
+db, _ := l.Select(0)
 
-    db.Get(key)
+db.Set(key, value)
 
+db.Get(key)
+```
 
 ## Replication Example
 
 Set slaveof in config or dynamiclly
 
-    ledis-cli -p 6381 
+```shell
+ledis cli -p 6381 
 
-    ledis 127.0.0.1:6381> slaveof 127.0.0.1 6380
-    OK
+ledis 127.0.0.1:6381> slaveof 127.0.0.1 6380
+OK
+```
 
 ## Cluster support
 
@@ -179,7 +185,6 @@ See [Clients](https://github.com/ledisdb/ledisdb/wiki/Clients) to find or contri
 ## Related Repos
 
 + [pika](https://github.com/Qihoo360/pika)
-
 
 ## Donate
 
