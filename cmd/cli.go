@@ -74,6 +74,7 @@ var helpCommands = [][]string{
 	{"LPOP", "key", "List"},
 	{"LPUSH", "key value [value ...]", "List"},
 	{"LRANGE", "key start stop", "List"},
+	{"LSET", "key index value", "List"},
 	{"LTTL", "key", "List"},
 	{"MGET", "key [key ...]", "KV"},
 	{"MSET", "key value [key value ...]", "KV"},

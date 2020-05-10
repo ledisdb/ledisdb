@@ -134,6 +134,24 @@ func lrangeCommand(c *client) error {
 	return nil
 }
 
+func lsetCommand(c *client) error {
+	args := c.args
+	if len(args) != 3 {
+		return ErrCmdParams
+	}
+
+	index, err := ledis.StrInt64(args[1], nil)
+	if err != nil {
+		return ErrValue
+	}
+
+	if err := c.db.LSet(args[0], int32(index), args[2]); err != nil {
+		return err
+	}
+	c.resp.writeStatus(OK)
+	return nil
+}
+
 func lclearCommand(c *client) error {
 	args := c.args
 	if len(args) != 1 {
@@ -479,6 +497,7 @@ func init() {
 	register("llen", llenCommand)
 	register("lpop", lpopCommand)
 	register("lrange", lrangeCommand)
+	register("lset", lsetCommand)
 	register("lpush", lpushCommand)
 	register("rpop", rpopCommand)
 	register("rpush", rpushCommand)
