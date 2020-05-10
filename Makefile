@@ -22,15 +22,15 @@ all: build
 build: build-ledis
 
 build-ledis:
-	go build -mod=vendor -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $(DIST)/ledis cmd/ledis/*.go
+	go build -mod=vendor -o $(DIST)/ledis -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis/*.go
 
 build-commands:
-	go build -mod=vendor -o $(DIST)/ledis-server -tags '$(GO_BUILD_TAGS)' cmd/ledis-server/*.go
-	go build -mod=vendor -o $(DIST)/ledis-cli -tags '$(GO_BUILD_TAGS)' cmd/ledis-cli/*.go
-	go build -mod=vendor -o $(DIST)/ledis-benchmark -tags '$(GO_BUILD_TAGS)' cmd/ledis-benchmark/*.go
-	go build -mod=vendor -o $(DIST)/ledis-dump -tags '$(GO_BUILD_TAGS)' cmd/ledis-dump/*.go
-	go build -mod=vendor -o $(DIST)/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*.go
-	go build -mod=vendor -o $(DIST)/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*.go
+	go build -mod=vendor -o $(DIST)/ledis-server -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-server/*.go
+	go build -mod=vendor -o $(DIST)/ledis-cli -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-cli/*.go
+	go build -mod=vendor -o $(DIST)/ledis-benchmark -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-benchmark/*.go
+	go build -mod=vendor -o $(DIST)/ledis-dump -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-dump/*.go
+	go build -mod=vendor -o $(DIST)/ledis-load -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-load/*.go
+	go build -mod=vendor -o $(DIST)/ledis-repair -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-repair/*.go
 
 vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
