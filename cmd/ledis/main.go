@@ -14,12 +14,13 @@ var (
 	buildTag string
 
 	cmds = [][]string{
-		{"server", "run ledis server"},
-		{"cli", "run ledis client"},
-		{"repair", "repair ledis storage directory"},
-		{"dump", "create a snapshort of ledis"},
-		{"load", "load data from a snapshort"},
-		{"benchmark", "run the benchmarks with ledis"},
+		{"server", "Run ledis server"},
+		{"cli", "Run ledis client"},
+		{"repair", "Repair ledis storage directory"},
+		{"dump", "Create a snapshort of ledis"},
+		{"load", "Load data from a snapshort"},
+		{"benchmark", "Run the benchmarks with ledis"},
+		{"repair-ttl", "Repair a very serious bug for key expiration and TTL before v0.4"},
 	}
 )
 
@@ -55,6 +56,8 @@ func main() {
 		cmd.Cli()
 	case "dump":
 		cmd.Dump()
+	case "repair-ttl":
+		cmd.RepairTTL()
 	case "help":
 		printSubCmds()
 	case "server":

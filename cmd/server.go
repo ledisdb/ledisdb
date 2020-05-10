@@ -16,8 +16,6 @@ import (
 )
 
 var addr = flag.String("addr", "", "ledisdb listen address")
-var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
-var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 var usePprof = flag.Bool("pprof", false, "enable pprof")
 var pprofPort = flag.Int("pprof_port", 6060, "pprof http port")
 var slaveof = flag.String("slaveof", "", "make the server a slave of another instance")
@@ -28,6 +26,8 @@ var ttlCheck = flag.Int("ttl_check", 0, "TTL check interval")
 var databases = flag.Int("databases", 0, "ledisdb maximum database number")
 
 func Server() {
+	var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
+	var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
 	var configFile = flag.String("config", "", "ledisdb config file")
 
 	runtime.GOMAXPROCS(runtime.NumCPU())

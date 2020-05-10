@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/binary"
@@ -10,11 +10,11 @@ import (
 	"github.com/ledisdb/ledisdb/store"
 )
 
-var configPath = flag.String("config", "", "ledisdb config file")
-var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
-var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
+func RepairTTL() {
+	var configPath = flag.String("config", "", "ledisdb config file")
+	var dataDir = flag.String("data_dir", "", "ledisdb base data dir")
+	var dbName = flag.String("db_name", "", "select a db to use, it will overwrite the config's db name")
 
-func main() {
 	flag.Parse()
 
 	if len(*configPath) == 0 {

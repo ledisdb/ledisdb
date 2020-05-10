@@ -6,8 +6,6 @@ Ledisdb is a high-performance NoSQL database library and server written in [Go](
 
 LedisDB now supports multiple different databases as backends.
 
-### **You must run `ledis-upgrade-ttl` before using LedisDB version 0.4, I fixed a very serious bug for key expiration and TTL.**
-
 ## Features
 
 + Rich data structure: KV, List, Hash, ZSet, Set.
@@ -20,8 +18,9 @@ LedisDB now supports multiple different databases as backends.
 + HTTP API support, JSON/BSON/msgpack output.
 + Replication to guarantee data safety.
 + Supplies tools to load, dump, and repair database. 
-+ Supports cluster, use [xcodis](https://github.com/ledisdb/xcodis)
-+ Authentication (though, not via http)
++ Supports cluster, use [xcodis](https://github.com/ledisdb/xcodis).
++ Authentication (though, not via http).
++ Repair integrated: You can use `ledis repair` to repair broken databases and `ledis repair-ttl` to repair a very serious bug for key expiration and TTL if you upgraded from v0.4.
 
 ## Build from source
 
