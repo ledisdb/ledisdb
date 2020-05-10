@@ -35,7 +35,7 @@ build-commands:
 .PHONY: lint
 lint:
 	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		GO111MODULE=on && cd /tmp && go get -u -v golang.org/x/lint/golint; \
+		cd /tmp && GO111MODULE=on go get -u -v golang.org/x/lint/golint; \
 	fi
 	golint $(PACKAGES)
 
