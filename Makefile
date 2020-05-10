@@ -18,12 +18,12 @@ PACKAGES ?= $(shell GO111MODULE=on go list -mod=vendor ./... | grep -v /vendor/)
 all: build
 
 build:
-	go build -mod=vendor -o bin/ledis-server -tags '$(GO_BUILD_TAGS)' cmd/ledis-server/*
-	go build -mod=vendor -o bin/ledis-cli -tags '$(GO_BUILD_TAGS)' cmd/ledis-cli/*
-	go build -mod=vendor -o bin/ledis-benchmark -tags '$(GO_BUILD_TAGS)' cmd/ledis-benchmark/*
-	go build -mod=vendor -o bin/ledis-dump -tags '$(GO_BUILD_TAGS)' cmd/ledis-dump/*
-	go build -mod=vendor -o bin/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*
-	go build -mod=vendor -o bin/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*
+	go build -mod=vendor -o bin/ledis-server -tags '$(GO_BUILD_TAGS)' cmd/ledis-server/*.go
+	go build -mod=vendor -o bin/ledis-cli -tags '$(GO_BUILD_TAGS)' cmd/ledis-cli/*.go
+	go build -mod=vendor -o bin/ledis-benchmark -tags '$(GO_BUILD_TAGS)' cmd/ledis-benchmark/*.go
+	go build -mod=vendor -o bin/ledis-dump -tags '$(GO_BUILD_TAGS)' cmd/ledis-dump/*.go
+	go build -mod=vendor -o bin/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*.go
+	go build -mod=vendor -o bin/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*.go
 
 vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
