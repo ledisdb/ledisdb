@@ -12,18 +12,25 @@ export DYLD_LIBRARY_PATH
 export GO_BUILD_TAGS
 export GO111MODULE=on
 
-
 PACKAGES ?= $(shell GO111MODULE=on go list -mod=vendor ./... | grep -v /vendor/)
+DIST := bin
+VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+LDFLAGS := $(LDFLAGS) -X "main.version=$(VERSION)" -X "main.buildTags=$(GO_BUILD_TAGS)"
 
 all: build
 
-build:
-	go build -mod=vendor -o bin/ledis-server -tags '$(GO_BUILD_TAGS)' cmd/ledis-server/*.go
-	go build -mod=vendor -o bin/ledis-cli -tags '$(GO_BUILD_TAGS)' cmd/ledis-cli/*.go
-	go build -mod=vendor -o bin/ledis-benchmark -tags '$(GO_BUILD_TAGS)' cmd/ledis-benchmark/*.go
-	go build -mod=vendor -o bin/ledis-dump -tags '$(GO_BUILD_TAGS)' cmd/ledis-dump/*.go
-	go build -mod=vendor -o bin/ledis-load -tags '$(GO_BUILD_TAGS)' cmd/ledis-load/*.go
-	go build -mod=vendor -o bin/ledis-repair -tags '$(GO_BUILD_TAGS)' cmd/ledis-repair/*.go
+build: build-ledis
+
+build-ledis:
+	go build -mod=vendor -o $(DIST)/ledis -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis/*.go
+
+build-commands:
+	go build -mod=vendor -o $(DIST)/ledis-server -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-server/*.go
+	go build -mod=vendor -o $(DIST)/ledis-cli -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-cli/*.go
+	go build -mod=vendor -o $(DIST)/ledis-benchmark -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-benchmark/*.go
+	go build -mod=vendor -o $(DIST)/ledis-dump -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-dump/*.go
+	go build -mod=vendor -o $(DIST)/ledis-load -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-load/*.go
+	go build -mod=vendor -o $(DIST)/ledis-repair -tags '$(GO_BUILD_TAGS)' -ldflags '-s -w $(LDFLAGS)' cmd/ledis-repair/*.go
 
 vet:
 	go vet -mod=vendor -tags '$(GO_BUILD_TAGS)' ./...
