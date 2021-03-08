@@ -93,6 +93,10 @@ type DB struct {
 	filter *FilterPolicy
 }
 
+func (db *DB) GetStorageEngine() interface{} {
+	return db.db
+}
+
 func (db *DB) open() error {
 	db.initOptions(db.cfg)
 

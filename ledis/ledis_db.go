@@ -53,6 +53,10 @@ type DB struct {
 	lbkeys *lBlockKeys
 }
 
+func (db *DB) GetSDB() *store.DB {
+	return db.sdb
+}
+
 func (l *Ledis) newDB(index int) *DB {
 	d := new(DB)
 

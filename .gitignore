@@ -8,3 +8,4 @@ var*
 bin
 coverage.out
 .vscode
+.idea
