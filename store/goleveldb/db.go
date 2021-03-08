@@ -48,6 +48,10 @@ type DB struct {
 	filter filter.Filter
 }
 
+func (db *DB) GetStorageEngine() interface{} {
+	return db.db
+}
+
 func (s Store) Open(path string, cfg *config.Config) (driver.IDB, error) {
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err

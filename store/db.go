@@ -21,6 +21,10 @@ type DB struct {
 	m sync.Mutex
 }
 
+func (db *DB) GetDriver() driver.IDB {
+	return db.db
+}
+
 func (db *DB) Close() error {
 	return db.db.Close()
 }

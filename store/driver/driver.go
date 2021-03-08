@@ -18,6 +18,8 @@ type IDB interface {
 	NewSnapshot() (ISnapshot, error)
 
 	Compact() error
+
+	GetStorageEngine() interface{}
 }
 
 type ISnapshot interface {
