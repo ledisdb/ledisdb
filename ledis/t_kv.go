@@ -301,6 +301,11 @@ func (db *DB) Set(key []byte, value []byte) error {
 
 	t.Put(key, value)
 
+	_, err = db.rmExpire(t, KVType, key) //remove key ttl info
+	if err != nil {
+		return err
+	}
+
 	err = t.Commit()
 
 	return err
