@@ -292,19 +292,19 @@ func (db *DB) Set(key []byte, value []byte) error {
 	}
 
 	var err error
+	orginKey := key
 	key = db.encodeKVKey(key)
 
 	t := db.kvBatch
-
 	t.Lock()
 	defer t.Unlock()
 
-	_, err = db.rmExpire(t, KVType, key) //remove key ttl info
+	t.Put(key, value)
+
+	_, err = db.rmExpire(t, KVType, orginKey) //remove key ttl info
 	if err != nil {
 		return err
 	}
-
-	t.Put(key, value)
 
 	err = t.Commit()
 
