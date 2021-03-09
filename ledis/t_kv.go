@@ -299,12 +299,12 @@ func (db *DB) Set(key []byte, value []byte) error {
 	t.Lock()
 	defer t.Unlock()
 
-	t.Put(key, value)
-
 	_, err = db.rmExpire(t, KVType, key) //remove key ttl info
 	if err != nil {
 		return err
 	}
+
+	t.Put(key, value)
 
 	err = t.Commit()
 
