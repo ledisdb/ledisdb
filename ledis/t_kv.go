@@ -509,9 +509,11 @@ func (db *DB) StrLen(key []byte) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	n := s.Size()
-	s.Free()
+	n := 0
+	if s != nil {
+		n = s.Size()
+		s.Free()
+	}
 	return int64(n), nil
 }
 
