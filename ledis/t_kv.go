@@ -540,7 +540,7 @@ func (db *DB) StrLen(key []byte) (int64, error) {
 	return int64(n), nil
 }
 
-// Append appends the valFue to the data.
+// Append appends the value to the data.
 func (db *DB) Append(key []byte, value []byte) (int64, error) {
 	if len(value) == 0 {
 		return 0, nil
