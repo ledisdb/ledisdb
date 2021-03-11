@@ -365,6 +365,29 @@ func (db *DB) SetEX(key []byte, duration int64, value []byte) error {
 	return t.Commit()
 }
 
+// SetEXAT sets the data with a timestamp.
+func (db *DB) SetEXAT(key []byte, timestamp int64, value []byte) error {
+	if err := checkKeySize(key); err != nil {
+		return err
+	} else if err := checkValueSize(value); err != nil {
+		return err
+	} else if timestamp <= time.Now().Unix() {
+		return errExpireValue
+	}
+
+	ek := db.encodeKVKey(key)
+
+	t := db.kvBatch
+
+	t.Lock()
+	defer t.Unlock()
+
+	t.Put(ek, value)
+	db.expireAt(t, KVType, key, timestamp)
+
+	return t.Commit()
+}
+
 func (db *DB) flush() (drop int64, err error) {
 	t := db.kvBatch
 	t.Lock()
