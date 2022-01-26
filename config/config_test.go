@@ -40,3 +40,12 @@ func TestConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestConfigWithLock(t *testing.T) {
+	cfg, err := NewConfigWithFile("./config.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+        cfg.m.Lock()
+        cfg.m.Unlock()
+}

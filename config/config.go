@@ -173,6 +173,7 @@ func NewConfigWithData(data []byte) (*Config, error) {
 	}
 
 	cfg.adjust()
+	cfg.m = new(sync.RWMutex)
 
 	return cfg, nil
 }
@@ -217,6 +218,7 @@ func NewConfigDefault() *Config {
 	cfg.RocksDB.DisableWAL = false
 
 	cfg.adjust()
+	cfg.m = new(sync.RWMutex)
 
 	return cfg
 }
