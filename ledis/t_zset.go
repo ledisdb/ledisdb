@@ -566,7 +566,7 @@ func (db *DB) zRemRange(t *batch, key []byte, min int64, max int64, offset int, 
 			continue
 		}
 
-		if n, err := db.zDelItem(t, key, m, true); err != nil {
+		if n, err := db.zDelItem(t, key, m, false); err != nil {
 			return 0, err
 		} else if n == 1 {
 			num++
@@ -1042,17 +1042,31 @@ func (db *DB) ZRemRangeByLex(key []byte, min []byte, max []byte, rangeType uint8
 	it := db.bucket.RangeIterator(min, max, rangeType)
 	defer it.Close()
 
-	var n int64
+	var num int64
 	for ; it.Valid(); it.Next() {
-		t.Delete(it.RawKey())
-		n++
+		ek := it.RawKey()
+		_, m, err := db.zDecodeSetKey(ek)
+		if err != nil {
+			continue
+		}
+
+		if n, err := db.zDelItem(t, key, m, false); err != nil {
+			return 0, err
+		} else if n == 1 {
+			num++
+		}
+		t.Delete(ek)
+	}
+
+	if _, err := db.zIncrSize(t, key, -num); err != nil {
+		return 0, err
 	}
 
 	if err := t.Commit(); err != nil {
 		return 0, err
 	}
 
-	return n, nil
+	return num, nil
 }
 
 // ZLexCount gets the count of zset lexicographically.
