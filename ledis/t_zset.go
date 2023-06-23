@@ -571,8 +571,6 @@ func (db *DB) zRemRange(t *batch, key []byte, min int64, max int64, offset int, 
 		} else if n == 1 {
 			num++
 		}
-
-		t.Delete(sk)
 	}
 	it.Close()
 
@@ -1055,7 +1053,6 @@ func (db *DB) ZRemRangeByLex(key []byte, min []byte, max []byte, rangeType uint8
 		} else if n == 1 {
 			num++
 		}
-		t.Delete(ek)
 	}
 
 	if _, err := db.zIncrSize(t, key, -num); err != nil {
