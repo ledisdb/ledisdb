@@ -293,6 +293,8 @@ func (db *DB) zDelItem(t *batch, key []byte, member []byte, skipDelScore bool) (
 func (db *DB) zDelete(t *batch, key []byte) int64 {
 	delMembCnt, _ := db.zRemRange(t, key, MinScore, MaxScore, 0, -1)
 	//	todo : log err
+	sizeKey := db.zEncodeSizeKey(key)
+	t.Delete(sizeKey)
 	return delMembCnt
 }
 
