@@ -2,6 +2,7 @@ package rpl
 
 import (
 	"encoding/binary"
+	"io"
 	"os"
 	"path"
 	"sync"
@@ -227,7 +228,7 @@ func (r *Replication) Stat() (*Stat, error) {
 
 func (r *Replication) updateCommitID(id uint64, force bool) error {
 	if force {
-		if _, err := r.commitLog.Seek(0, os.SEEK_SET); err != nil {
+		if _, err := r.commitLog.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
 
