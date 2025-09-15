@@ -24,12 +24,16 @@ func (wb *WriteBatch) Close() {
 
 func (wb *WriteBatch) Put(key []byte, value []byte) {
 	wb.putNum++
+
 	wb.wb.Put(key, value)
+	wb.data.Put(key, value)
 }
 
 func (wb *WriteBatch) Delete(key []byte) {
 	wb.deleteNum++
+
 	wb.wb.Delete(key)
+	wb.data.Delete(key)
 }
 
 func (wb *WriteBatch) Commit() error {
@@ -56,23 +60,18 @@ func (wb *WriteBatch) Rollback() error {
 	wb.putNum = 0
 	wb.deleteNum = 0
 
+	wb.data.Reset()
+
 	return wb.wb.Rollback()
 }
 
 // BatchData the data will be undefined after commit or rollback
 func (wb *WriteBatch) BatchData() *BatchData {
-	data := wb.wb.Data()
-	if wb.data == nil {
-		wb.data = new(BatchData)
-	}
-
-	wb.data.Load(data)
 	return wb.data
 }
 
 func (wb *WriteBatch) Data() []byte {
-	b := wb.BatchData()
-	return b.Data()
+	return wb.data.Data()
 }
 
 /*
@@ -106,7 +105,15 @@ type BatchDataReplay interface {
 	Delete(key []byte)
 }
 
+type BatchType bool
+
+const (
+	PUT    BatchType = true
+	DELETE BatchType = false
+)
+
 type BatchItem struct {
+	Type  BatchType
 	Key   []byte
 	Value []byte
 }
@@ -114,18 +121,14 @@ type BatchItem struct {
 type batchItems []BatchItem
 
 func (bs *batchItems) Put(key, value []byte) {
-	*bs = append(*bs, BatchItem{key, value})
+	*bs = append(*bs, BatchItem{PUT, key, value})
 }
 
 func (bs *batchItems) Delete(key []byte) {
-	*bs = append(*bs, BatchItem{key, nil})
+	*bs = append(*bs, BatchItem{DELETE, key, nil})
 }
 
-func (d *BatchData) Replay(r BatchDataReplay) error {
-	return d.Batch.Replay(r)
-}
-
-func (d *BatchData) Items() ([]BatchItem, error) {
+func (d *BatchData) Items() (batchItems, error) {
 	is := make(batchItems, 0, d.Len())
 
 	if err := d.Replay(&is); err != nil {
@@ -133,4 +136,21 @@ func (d *BatchData) Items() ([]BatchItem, error) {
 	}
 
 	return []BatchItem(is), nil
+}
+
+func (r *WriteBatch) Replay(d *BatchData) error {
+	items, err := d.Items()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		if item.Type == PUT {
+			r.Put(item.Key, item.Value)
+		} else {
+			r.Delete(item.Key)
+		}
+	}
+
+	return nil
 }

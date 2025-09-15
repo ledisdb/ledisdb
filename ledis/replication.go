@@ -58,7 +58,7 @@ func (l *Ledis) handleReplication() error {
 		if bd, err := store.NewBatchData(rl.Data); err != nil {
 			log.Errorf("decode batch log error %s", err.Error())
 			return err
-		} else if err = bd.Replay(l.rbatch); err != nil {
+		} else if err = l.rbatch.Replay(bd); err != nil {
 			log.Errorf("replay batch log error %s", err.Error())
 		}
 
