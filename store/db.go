@@ -71,6 +71,7 @@ func (db *DB) NewWriteBatch() *WriteBatch {
 	wb.wb = db.db.NewWriteBatch()
 	wb.st = db.st
 	wb.db = db
+	wb.data = new(BatchData)
 	return wb
 }
 

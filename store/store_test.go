@@ -355,10 +355,10 @@ func testBatchData(db *DB, t *testing.T) {
 
 	d := w.BatchData()
 
-	expected := []BatchItem{
-		{[]byte("a"), []byte("1")},
-		{[]byte("b"), []byte{}},
-		{[]byte("c"), nil},
+	expected := batchItems{
+		{PUT, []byte("a"), []byte("1")},
+		{PUT, []byte("b"), nil},
+		{DELETE, []byte("c"), nil},
 	}
 
 	if kvs, err := d.Items(); err != nil {

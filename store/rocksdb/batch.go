@@ -57,7 +57,7 @@ func (w *WriteBatch) SyncCommit() error {
 }
 
 func (w *WriteBatch) Rollback() error {
-	if !w.commitOk {
+	if w.commitOk {
 		C.rocksdb_writebatch_clear(w.wbatch)
 	}
 	return nil
